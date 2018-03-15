@@ -24,8 +24,7 @@ import org.bzdev.util.SafeFormatter;
 
 public class EPTS {
     // resource bundle for messages used by exceptions and errors
-    static ResourceBundle exbundle = ResourceBundle.getBundle
-	("lpack.SCRunner");
+    static ResourceBundle exbundle = ResourceBundle.getBundle("EPTS");
 
     static String errorMsg(String key, Object... args) {
 	return (new SafeFormatter()).format(exbundle.getString(key), args)
