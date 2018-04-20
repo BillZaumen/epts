@@ -1,0 +1,52 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head>
+<title>EPTS Manual</title>
+</head>
+<body>
+<h1><a name="intro">Introduction</a></h1>
+
+EPTS (Edit PoinTS) is a special-purpose graphics editor. When using
+the BZDev class library's <code>graphs</code> and <code>anim2d</code>
+packages, there are three coordinate systems that are used:
+<UL>
+  <LI> the standard Java user-space coordinates, which measures
+    distances in units of "points" (1/72 inches) and where the
+    positive X direction points left and the positive Y direction
+    points down.
+  <LI> image space coordinates, in which one unit corresponds to a
+    pixel. The BZDev graphs package and the anim2d package will specify
+    if an image, before scaling, would be rendered so that one pixel's
+    height and width correspond to one unit in either user space or
+    graph coordinate space. EPTS assumes that graph coordinate space
+    was chosen, and allows an appropriate scale factor to be defined.
+  <LI> graph coordiante space coordinates, in which distances are
+    measured in application-specific coordinates (e.g., meters) and
+    where the positive X direction points left and the positive Y
+    direction points up.
+</UL>
+EPTS will display an image and allow one to overlay this image with
+points and B&eacute;zier curves, expressing their locations and control
+points in graph coordinate space units. It will also allow one to measure
+the distance between points in either image space or graph coordinate space
+units.
+
+
+
+<h1><a name="menus">Menus</a></h1>
+
+<h2><a name="fileMenu">The File menu</a></h2>
+
+<h2><a name="editMenu">The Edit menu</a></h2>
+
+<h2><a name="zoomMenu">The Zoom menu</a></h2>
+
+<h2><a name="measureMenu">The Measure-Distance menu</a></h2>
+
+<h2><a name="toolsMenu">The Tools menu</a></h2>
+
+<h2><a name ="helpMenu">The Help menu</a></h2>
+
+<h1><a name="cli">The command-line interface</a></h1>
+
+</body>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<toc>
+  <node title="Manual" uri="sresource:/manual/manual.html">
+    <node title="Introduction" uri="sresource:/manual/manual.html#intro"/>
+    <node title="Menus" uri="sresource:/manual/manual.html#menus">
+      <node title="The File menu" uri="sresource:/manual/manual.html#fileMenu"/>
+      <node title="The Edit menu" uri="sresource:/manual/manual.html#editMenu"/>
+      <node title="The Zoom menu" uri="sresource:/manual/manual.html#zoomMenu"/>
+      <node title="The Measure-Distance menu"
+	    uri="sresource:/manual/manual.html#measureMenu"/>
+      <node title="The Tools menu"
+	    uri="sresource:/manual/manual.html#toolsMenu"/>
+    </node>
+  </node>
+</toc>
