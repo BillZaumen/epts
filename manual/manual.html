@@ -1,10 +1,13 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-<html>
-<head>
-<title>EPTS Manual</title>
-</head>
-<body>
-<h1><a name="intro">Introduction</a></h1>
+<HTML>
+<HEAD>
+<TITLE>EPTS Manual</TITLE>
+</HEAD>
+<BODY>
+  <CENTER><FONT size="+3"><B>EPTS Manual</B></FONT></CENTER>
+<BR>
+<BR>
+<H1><A name="intro">Introduction</A></H1>
 
 EPTS (Edit PoinTS) is a special-purpose graphics editor. When using
 the BZDev class library's <code>graphs</code> and <code>anim2d</code>
@@ -20,7 +23,7 @@ packages, there are three coordinate systems that are used:
     height and width correspond to one unit in either user space or
     graph coordinate space. EPTS assumes that graph coordinate space
     was chosen, and allows an appropriate scale factor to be defined.
-  <LI> graph coordiante space coordinates, in which distances are
+  <LI> graph coordinate space coordinates, in which distances are
     measured in application-specific coordinates (e.g., meters) and
     where the positive X direction points left and the positive Y
     direction points up.
@@ -33,20 +36,302 @@ units.
 
 
 
-<h1><a name="menus">Menus</a></h1>
 
-<h2><a name="fileMenu">The File menu</a></h2>
+<H1><A name="menus">The menu bar</A></H1>
 
-<h2><a name="editMenu">The Edit menu</a></h2>
+The EPTS window provides a menu bar containing 6 menus:
+<UL>
+  <LI> the <CODE><A HREF="#fileMenu"></A>File</CODE> menu.
+  <LI> the <CODE><A HREF="#editMenu"></A>Edit</CODE> menu.
+  <LI> the <CODE><A HREF="#zoomMenu"></A>Zoom</CODE> menu.
+  <LI> the <CODE><A HREF="#measureMenu"></A>Measure Distance</CODE> menu.
+  <LI> the <CODE><A HREF="#toolsMenu"></A>Tools</CODE> menu.
+  <LI> the <CODE><A HREF="#helpMenu"></A>Help</CODE> menu.
+</UL>
+These menus are described below.
 
-<h2><a name="zoomMenu">The Zoom menu</a></h2>
+<H2><A name="fileMenu">The File menu</A></H2>
 
-<h2><a name="measureMenu">The Measure-Distance menu</a></h2>
+The <code>File</code> menu contains the following items:
+<UL>
+  <LI><code>Quit</code>. Choosing this menu item causes the program to
+    exit.
+  <LI><A name="config"><code>Configure CGS</code></A>. Choosing this
+    menu item will open a dialog box for configuring graph coordinate
+    space. This dialog box allows one to set a distance in user-spaced
+    units and the corresponding distance in graph coordinate space
+    units. The units for graph coordinate space are either custom
+    units (defined by the user) or meters. If another unit is
+    specified, it's value will be converted to meters. Canceling the
+    dialog box will restore the values to those that existed just
+    before the dialog box was opened.
+  <LI><code>Print Table</code>. Choosing this menu item will open
+    a 'print' dialog box to print the table.
+</UL>
 
-<h2><a name="toolsMenu">The Tools menu</a></h2>
+<H2><A name="editMenu">The Edit menu</A></H2>
 
-<h2><a name ="helpMenu">The Help menu</a></h2>
+The <code>Edit</code> menu contains the following items:
+<UL>
+  <LI><CODE>Undo point insertion</CODE>. This essentially removes
+    the last row (two rows for a closed path) from the table. If
+    a previous path is extended via the <CODE>Tools</CODE> menu's
+    <CODE>Add to B&eacute;zier Path</CODE> item, that path will be
+    moved to the end of the table. While creating a path, this option
+    undoes the last change.
+  <LI><CODE>Copy table as ECMAScript</CODE>. This option copies the
+    table to the clipboard after formatting it as a series of
+    ECMA script statements.
+  <LI><CODE>Set the location format</CODE>. This is a list of
+    radio buttons:
+    <UL>
+      <LI><CODE>Location as (X,Y)</CODE>.
+      <LI><CODE>Location as x: X, y: Y}</CODE>.
+      <LI><CODE>Location as {x: X, y: Y}</CODE>.
+      <LI><CODE>Location as V = {x: X, y: Y};</CODE>.
+    </UL>
+    The format is that shown by the menu-item name, excluding the
+    string "Location as ", where X is the X coordinate of the point,
+    Y is the Y coordinate of the point, and V is the name of a
+    variable to which the object "{x: X, y: Y}" will be assigned.
+</UL>
 
-<h1><a name="cli">The command-line interface</a></h1>
+<H2><A name="zoomMenu">The Zoom menu</A></H2>
+The <code>Zoom</code> menu contains the following items:
+<UL>
+  <LI><CODE>Reset</CODE>. This option resets the image size so that
+    one pixel on the image takes up one point on the screen.
+  <LI><CODE>Zoom in</CODE>. This option increases the zoom factor by a
+  factor of 2.
+  <LI><CODE>Zoom out</CODE>. This option decreases the zoom factor by a
+    factor of 2.
+</UL>
+The remaining items represent specific zoom factors numerically. The
+number of these entries depends on the image size.
 
-</body>
+<H2><A name="measureMenu">The Measure-Distance menu</A></H2>
+The <CODE>Measure Distance</CODE> menu contains the following items:
+<UL>
+  <LI><CODE>Image space distance</CODE>. This option measures distances
+    in image-space units. This is particularly useful just before using the
+    the <CODE>File</CODE> menu's <CODE>Configure GCS</CODE> option as the
+    valued measured will be automatically copied to the clipboard and
+    can be pasted into the the user-space-distance field which the
+    <CODE>Configure GCS</CODE> dialog box will show.
+  <LI><CODE>GCS distance</CODE>. This option measures distances in graph
+    coordinate space units. Until the <CODE>File</CODE> menu's
+    <CODE>Configure GCS</CODE> option is used, the ratio of GCS distances
+    to the corresponding image-space distances is 1 to 1.
+</UL>
+When either of these options is selected, the cursor will change to a
+cross-hair cursor.  One should then click on a starting point, followed by
+and ending point. Text will appear above the image providing instructions.
+In both cases, the distance measured will be displayed an automatically
+copied to the system clipboard so it can be pasted into any window
+or component that will accept text.
+
+<H2><A name="toolsMenu">The Tools menu</A></H2>
+
+The <CODE>Tools</CODE> menu allows points and curves to be created and
+displayed in textual form. This menu contains the following items:
+<UL>
+  <LI><CODE>Show PointTable</CODE>. Show a table containing each
+    location and curve, including the curve segments, with control
+    points for quadratic and cubic B&eacute; segments and with  knots
+    for spline segments. The only points contained in this table are
+    those created with a variable name.  All curves are included because
+    all of the curves have a variable name.
+  <LI><CODE>Create a Point</CODE>. This option will create a new,
+    isolated point. It will appear in the table if given a name.
+    A description of this point, in a format set by <CODE>Edit</CODE>
+    menu options, will be copied to the clipboard. Selecting an option
+    other than the one specifying a variable name will result in the
+    point not appearing in the table.
+  <LI><CODE>Create a B&eacute;zier Path.</CODE>. A new path will be
+    created. A dialog box will ask for a variable name for the path,
+    and the cursor will change to a cross-hair cursor, and the user
+    should select the initial point on the curve.  The point type shown
+    in the table is <CODE>MOVE_TO</CODE> - only one such point is
+    allowed for each curve.
+  <LI><CODE>Add to a B&eacute;zier Path</CODE>. The user will be asked to
+    select the name of a path, and adding points to the path will then
+    be possible.
+  <LI>A series of radio buttons specifying the type for
+      the next point along a curve:
+    <UL>
+      <LI><CODE>Spline Point(s)</CODE>. This option indicates that the
+	next point clicked will be a knot on a segment described by a
+	spline. The path will be a smooth path going through each of
+	the specified knots. While the spline is actually a sequence
+	of cubic B&eacute;zier curve segments, the inner control
+	points for those segments are not shown as these are
+	implicitly computed.
+      <LI><CODE>Control Point(s)</CODE>. This option indicates that
+	the next point is a control point. There can be at most two
+	control points in a row.
+      <LI><CODE>End Curve/Line Segment</CODE>. This option indicates
+	that the next point is the end of a segment. A segment with no
+	intermediate control or spline points is a straight-line segment.
+    </UL>
+  <LI>Options for ending a path.
+    <UL>
+      <LI><CODE>Loop</CODE>. The path will be closed by connecting the
+	last point entered to the first point on the path.  A loop
+	must have an end-of-segment point as the last point entered
+	unless all the points except the first point have a type
+	equal to <CODE>SPLINE</CODE>.
+      <LI><CODE>Path Ended</CODE>. This option ends the current path
+	without closing it.
+    </UL>
+    Menu items that are not applicable are disabled.
+</UL>
+
+<H2><A name ="helpMenu">The Help menu</A></H2>
+The <CODE>Help</CODE> menu provides several ways of viewing a
+manual. This menu contains the folowing items:
+<UL>
+  <LI><CODE>Manual</CODE>. This option shows the manual in a window
+    that contains two panes: one with a table of contents and the
+    other with the manual itself.
+  <LI><CODE>Print Manual</CODE>. This option opens a printer dialog
+    box and allows the user to produce a printed copy of the manual.
+  <LI><CODE>Browser</CODE>. This option opens the system's default
+    browser and displays the manual in it. As a side effect, an embedded
+    web server will also be started, and that web server can be accessed
+    by other users.
+</UL>
+
+<H1><A name="mouse">Using the mouse</A></H1>
+
+There are several combinations of mouse buttons and modifier keys
+that may be used, mostly to create or modify points (locations, control
+points, or spline points, all shown as filled circles overlayed on the
+image):
+<UL>
+  <LI> ALT key and primary mouse button pressed. The image
+    can be dragged, and scrollbars will move in the opposite direction
+    to that in which the cursor moves. The image, however, cannot be
+    dragged beyond the range that the scrollbars support.
+  <LI> Control Key and primary mouse button pressed. This combination is
+    used while creating a path or extending a path.  The mouse must be
+    positioned over a point when the left button is pressed. The point
+    can then be dragged to a new location.  The selected point will
+    have a circle around it.
+  <LI> No keys but the primary mouse button clicked. When a cross-hair
+    cursor is shown, a point will be added, either an isolated point
+    or an additional point along a curve. When the normal 'arrow' cursor
+    is shown, this option allows one to select or deselect a point.
+    A point is selected when the mouse is clicked while positioned over
+    it. A point is deselected by clicking on an area of the image that does
+    not contain a point. When a point is selected, a ring is drawn around it.
+  <LI> A pop-up menu is requested. The key sequence is system dependent.
+    On X-windows systems, one typically presses the button on the
+    opposite side of the mouse from the primary button.
+    In the Java look and feel, clicking the this mouse button will make
+    the pop-up menu stay up. Pop-Up menus are context sensitive. They can
+    appear when a point has been selected or when a cross-hair cursor
+    is shown and there is a previous point to modified.
+</UL>
+In most configurations, the primary mouse button is the left mouse
+button. Windows systems, however, may give the user the option of
+changing this.
+
+<H2><A name="popup">Popup Menus</A></H2>
+
+There are two popup menus that can be displayed. As stated above,
+these are context-sensitive.
+
+When a path is being created or extended, and a point has been added,
+a popup menu is available that will allow one to change the type of
+the last point entered.  The options are to change a mode to
+<CODE>SEG_END</CODE>, <CODE>SPLINE</CODE>, or <CODE>CONTROL</CODE>.
+Only the options that are applicable given the types of the
+previous points on the path will be enabled.
+
+When a path is not being created or extended, but a point on a path
+has been selected, a popup menu is also available. This menu provides
+the following options:
+<UL>
+  <LI><CODE>Delete Point</CODE>. This option deletes the selected point
+    from the path.
+  <LI><CODE>Change Point Type</CODE>. This option allows one to change
+    the type of the selected point. The choice types is dependent on
+    the types of the surrounding points.
+  <LI><CODE>Insert Before Point</CODE>. This option allows one to insert
+    a new point into a path before the selected point.
+  <LI><CODE>Insert After Point</CODE>.  This option allows one to insert
+    a new point into a path after the selected point.
+  <LI><CODE>Break Loop</CODE>. This option turns a closed path into an
+    open path.
+  <LI><CODE>Extend Path</CODE>. This option allows one to add new
+    points to a path. It will also re-order the table (for reasons
+    of convenience, when a path is extended, it is moved to the end
+    of the table).
+</UL>
+
+<H1><A name="shortcuts">Keyboard shortcuts</A></H1>
+
+Some shortcuts apply regardless of the current mode:
+<UL>
+  <LI> Control-Q. This will cause EPTS to terminate.
+  <LI> Control-P. This will print the table.
+  <LI> Control-Z. This is an "undo" operation.
+  <LI> Control-Minus. Zoom out.
+  <LI> Control-Plus.  Zoom in.
+  <LI> Control-0. Restore the zoom factor to the original size. (1 to 1).
+  <LI> Control-T. Display the table in a separate window.
+  <LI> Control-Right-Arrow. Move the horizontal scroll bar to the right.
+  <LI> Control-Left-Arrow. Move the horizontal scroll bar to the left.
+  <LI> Control-Up-Arrow. Move the vertical scroll bar up.
+  <LI> Control-Down-Arrow. Move the vertical scroll bar down.
+  <LI> Alt-A. Append points to a B&eacute;zier path.
+  <LI> Alt-I. Measure the image-space distance between two points.
+  <LI> Alt-G. Measure the graph-coordinate-space distance between two points.
+    To provide a meaningful distance, graph coordinate space must be
+    configured first. The <A href="#config"><CODE>Configure CGS</CODE></A>
+    menu item allows graph coordinate space to be configured.
+  <LI> Alt-P. Add an isolated point.  The user will be asked to supply a
+    variable name that has not been used before.
+  <LI> Alt-B. Add a B&eacute;zier path. The user will be asked to supply a
+    variable name that has not been used before.
+</UL>
+
+By contrast, some key combinations apply only when adding a point to
+a path or creating an isolated point at a specific location:
+<UL>
+  <LI> Right-Arrow. When this key is clicked, a cross-hair cursor will
+    move to the right.
+  <LI> Left-Arrow.  When this key is clicked, a cross-hair cursor will
+    move to the left.
+  <LI> Up-Arrow.  When this key is clicked, a cross-hair cursor will
+    move to up.
+  <LI> Down-Arrow. When this key is clicked, a cross-hair cursor will
+    move to down.
+  <LI> S. When the S key is pressed (without a modifier key, regardless
+    of whether the caps-lock key is in use), the next point will be
+    a spline point. If a spline point is not allowed, the keystroke
+    will be ignored.
+  <LI> C. When the C key is pressed (without a modifier key, regardless
+    of whether the caps-lock key is in use), the next point will be a
+    control point.  If a control point is not allwed, the keystroke
+    will be ignored.
+  <LI> E. When the E key is pressed (without a modifier key, regardless
+    of whether the caps-lock key is in use), the next point will be an
+    end-of-segment point.
+  <LI> L. When the L key is pressed (without a modifier key, regardless
+    of whether the caps-lock key is in use), the current path will be
+    ended in a loop. This option will be ignored if the last point is
+    a control point or if the last point is a spline point and there is
+    an end-of-segment point that is already part of the path.
+  <LI> Z. When the Z key is pressed (without a modifier key, regardless
+    of whether the caps-lock key is in use), the current path will remain
+    open and will be ended.  The type of the last point will be changed to
+    an end-of-segment point.
+</UL>
+
+<H1><A name="cli">The command-line interface</A></H1>
+
+</BODY>
+
+<!--  LocalWords:  EPTS PoinTS BZDev anim zier ECMA GCS
+ -->

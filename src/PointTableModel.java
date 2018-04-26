@@ -18,8 +18,7 @@ import javax.swing.JComponent;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
-public class PointTableModel implements
-				 TableModel {
+public class PointTableModel implements TableModel {
     Vector<TableModelListener> listeners = new Vector<>();
     ArrayList<PointTMR> rows = new ArrayList<>();
     TreeSet<String> names =new TreeSet<>();
@@ -302,6 +301,31 @@ public class PointTableModel implements
     };
 
     /**
+     * Notify listeners that columns 2 and 3, containing XY coordinates,
+     * may have changed.
+     */
+    public void fireXYChanged() {
+	int last = rows.size()-1;
+	TableModelEvent event1 = new TableModelEvent(this, 0,last, 2,
+						     TableModelEvent.UPDATE);
+	TableModelEvent event2 = new TableModelEvent(this, 0, last, 3,
+						     TableModelEvent.UPDATE);
+	for (TableModelListener listener: listeners) {
+	    listener.tableChanged(event1);
+	    listener.tableChanged(event2);
+	}
+    }
+
+    /**
+     * Indicate that the row has changed so the table can be updated.
+     * @param index the row index
+     */
+    public void fireRowChanged(int index) {
+	if (index == -1) return;
+	fireTableChanged(index, index, Mode.MODIFIED);
+    }
+
+    /**
      * Notify listeners.
      * @param start the starting index (inclusive)
      * @param end the ending index (inclusive)
@@ -367,12 +391,12 @@ public class PointTableModel implements
 	    if (mode == EPTS.Mode.PATH_START || mode == EPTS.Mode.PATH_END) {
 		return "";
 	    }
-	    return String.format("%10.3g", row.getX());
+	    return String.format("%s", row.getX());
 	case 3:
 	    if (mode == EPTS.Mode.PATH_START || mode == EPTS.Mode.PATH_END) {
 		return "";
 	    }
-	    return String.format("%10.3g", row.getY());
+	    return String.format("%s", row.getY());
 	default:
 	    throw new IndexOutOfBoundsException(BAD_COL + columnIndex);
 	}
@@ -480,8 +504,10 @@ public class PointTableModel implements
 		kmap2 = new TemplateProcessor.KeyMap();
 		kmap1.put("varname", row.getVariableName());
 		kmap1.put("location", kmap2);
-		kmap2.put("x", String.format((Locale)null, "%g", row.getX()));
-		kmap2.put("y", String.format((Locale)null, "%g", row.getY()));
+		kmap2.put("x", String.format((Locale)null, "%s", row.getX()));
+		kmap2.put("y", String.format((Locale)null, "%s", row.getY()));
+		kmap2.put("xp", String.format((Locale)null, "%s", row.getXP()));
+		kmap2.put("yp", String.format((Locale)null, "%s", row.getYP()));
 		list.add(kmap1);
 	    } else if (mode == EPTS.Mode.PATH_START) {
 		kmap1 = new TemplateProcessor.KeyMap();
@@ -507,9 +533,13 @@ public class PointTableModel implements
 		    TemplateProcessor.KeyMap
 			kmap4 = new TemplateProcessor.KeyMap();
 		    kmap4.put("x",
-			      String.format((Locale)null, "%g", row.getX()));
+			      String.format((Locale)null, "%s", row.getX()));
 		    kmap4.put("y",
-			      String.format((Locale)null, "%g", row.getY()));
+			      String.format((Locale)null, "%s", row.getY()));
+		    kmap4.put("xp",
+			      String.format((Locale)null, "%s", row.getXP()));
+		    kmap4.put("yp",
+			      String.format((Locale)null, "%s", row.getYP()));
 		    kmap3.put("xy", kmap4);
 		}
 		plist.add(kmap3);

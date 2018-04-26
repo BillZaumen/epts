@@ -9,6 +9,7 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.ResourceBundle;
 import java.util.Properties;
@@ -23,6 +24,11 @@ import org.bzdev.swing.ErrorMessage;
 import org.bzdev.util.SafeFormatter;
 
 public class EPTS {
+
+    public enum Mode {
+	LOCATION, PATH_START, PATH_END
+    }
+
     // resource bundle for messages used by exceptions and errors
     static ResourceBundle exbundle = ResourceBundle.getBundle("EPTS");
 
@@ -31,22 +37,21 @@ public class EPTS {
 	    .toString();
     }
 
-    private static final String pathSeparator =
-	System.getProperty("path.separator");
-
     private static final String JAVACMD = "java";
     private static String javacmd = JAVACMD;
 
     private static final String dotDotDot = "...";
     private static final String dotDotDotSep = dotDotDot + File.separator;
     private static final String tildeSep = "~" + File.separator;
+    private static String ourCodebase;
     private static String ourCodebaseDir;
     static {
 	try {
-	    ourCodebaseDir =
-		(new File(Scripting.class.getProtectionDomain()
-			  .getCodeSource().getLocation().toURI()))
-		.getCanonicalFile().getParentFile().getCanonicalPath();
+	    File f = (new File(EPTS.class.getProtectionDomain()
+			       .getCodeSource().getLocation().toURI()))
+		.getCanonicalFile();
+	    ourCodebase = f.getCanonicalPath();
+	    ourCodebaseDir = f.getParentFile().getCanonicalPath();
 	} catch (Exception e) {
 	    System.err.println(errorMsg("missingOwnCodebase"));
 	    System.exit(1);
@@ -65,7 +70,6 @@ public class EPTS {
 	return false;
     }
     private static String languageName = null;
-    private static LinkedList<String> classpath = new LinkedList<>();
 
     private static String getExtension(String pathname) throws Exception {
 	File file = new File(pathname);
@@ -84,9 +88,14 @@ public class EPTS {
 	return name.substring(index);
     }
 
+
     private static LinkedList<String> codebase = new LinkedList<>();
 
     private static StringBuilder sbcp = new StringBuilder();
+    static {
+	sbcp.append(ourCodebase);
+    }
+    static HashSet<String> sbcpAppended = new HashSet<>();
 
     private static void readConfigFiles(String languageName, String fileName) {
 	File file = new File (fileName);
@@ -197,8 +206,9 @@ public class EPTS {
 				    StringBuilder nv = new StringBuilder();
 				    int cnt = 0;
 				    for (String val:
-					     value.split(Pattern.quote
-							 (pathSeparator))) {
+					     value.split
+					     (Pattern.quote(File
+							    .pathSeparator))) {
 					if (val.startsWith("~/")) {
 					    val =
 						System.getProperty("user.home")
@@ -211,7 +221,7 @@ public class EPTS {
 					}
 					nv.append(val);
 					if ((cnt++) > 0) {
-					    nv.append(pathSeparator);
+					    nv.append(File.pathSeparator);
 					}
 				    }
 				    value = nv.toString();
@@ -267,31 +277,27 @@ public class EPTS {
 				line = ourCodebaseDir
 				    + File.separator + line.substring(4);
 			    }
-			    if (languageName == null) {
-				// occurs during the first pass where
-				// we have to make these files and directories
-				// available so that we can get data about
-				// scripting languages.
-				try {
-				    URL url;
-				    if (line.startsWith("file:")) {
-					url = new URL(line);
-				    } else {
-					url = (new File(line)).toURI().toURL();
-				    }
-				    URLClassLoaderOps.addURL(url);
-				} catch (Exception e) {
-				    int lno = reader.getLineNumber();
-				    String msg =
-					errorMsg("urlParse", fileName, lno);
-				    System.err.println(msg);
-				    System.exit(1);
+			    try {
+				URL url;
+				if (line.startsWith("file:")) {
+				    url = new URL(line);
+				    File f = new File(url.toURI());
+				    line = f.getCanonicalPath();
+				} else {
+				    url = (new File(line)).toURI().toURL();
 				}
-			    } else {
-				if (sbcp.length() > 0) {
-				    sbcp.append(pathSeparator);
+				URLClassLoaderOps.addURL(url);
+				if (!sbcpAppended.contains(line)) {
+				    sbcp.append(File.pathSeparator);
+				    sbcp.append(line);
+				    sbcpAppended.add(line);
 				}
-				sbcp.append((line));
+			    } catch (Exception e) {
+				int lno = reader.getLineNumber();
+				String msg =
+				    errorMsg("urlParse", fileName, lno);
+				System.err.println(msg);
+				System.exit(1);
 			    }
 			}
 		    }
@@ -313,7 +319,7 @@ public class EPTS {
     private static String sysconf = null;
     private static String usrconf = null;
 
-    static private void readConfigFiles(String languageName) {
+    private static void readConfigFiles(String languageName) {
 	if (sysconf != null) {
 	    readConfigFiles(languageName, sysconf);
 	}
@@ -322,22 +328,102 @@ public class EPTS {
 	}
     }
 
+    private static String defaultSysConfigFile() {
+	String fsep = System.getProperty("file.separator");
+	if (fsep.equals("/")) {
+	    // Unix file separator. Try to find it in /etc
+	    // or /etc/opt ; return null otherwise as the
+	    // location is unknown.
+	    Path p;
+	    try {
+		p = Paths.get(EPTS.class.getProtectionDomain()
+			      .getCodeSource().getLocation().toURI());
+	    } catch(Exception e) {
+		return null;
+	    }
+	    if (p.startsWith("/opt")) {
+		File cf = new File("/etc/opt/bzdev/scrunner.conf");
+		if (cf.canRead()) {
+		    return "/etc/opt/bzdev/scrunner.conf";
+		}
+	    } else if (p.startsWith("/usr/local")) {
+		File cf = new File("/usr/local/etc/bzdev/scrunner.conf");
+		if (cf.canRead()) {
+		    return "/usr/local/etc/bzdev/scrunner.conf";
+		}
+	    } else {
+		File cf = new File("/etc/bzdev/scrunner.conf");
+		if (cf.canRead()) {
+		    return "/etc/bzdev/scrunner.conf";
+		}
+	    }
+	    return null;
+	} else {
+	    // for Windows or other operating systems that do
+	    // not look like Unix, assume the configuration file
+	    // is in the same directory as the jar files.
+	    try {
+		File fp = new File
+		    (EPTS.class.getProtectionDomain()
+		     .getCodeSource().getLocation().toURI());
+		fp = fp.getParentFile();
+		return new File(fp, "scrunner.conf").getCanonicalPath();
+	    } catch (Exception e) {
+		return null;
+	    }
+	}
+    }
+
+    private static String defaultUsrConfigFile() {
+	String fsep = System.getProperty("file.separator");
+	if (fsep.equals("/")) {
+	    // Unix file separator. The file is in the user's
+	    // home directory in the  .config/bzdev subdirectory.
+	    // (This defines the location of the file - it is
+	    // not required to actually exist).
+	    return System.getProperty("user.home")
+		+ "/.config/bzdev/scrunner.conf";
+	} else {
+	    // For any other OS (primarily Windows in practice)
+	    // assume there is only a system config file. A startup
+	    // script can always define scrunner.usrconf to set the
+	    // file explicitly.
+	    return null;
+	}
+    }
+
+
     static void init(String argv[]) throws Exception {
 	int index = -1;
 	
+	int port = 0;
+
 	ArrayList<String> jargsList = new ArrayList<>();
-	boolean jcontinue = false;
+	ArrayList<String> targetList = new ArrayList<>();
+	boolean dryrun = false;
+	boolean jcontinue = true;
+	boolean scriptMode = false;
+	boolean imageMode = false;
 	boolean hasCodebase = false;
 	ArrayList<String> argsList = new ArrayList<>();
+
+	String alreadyForkedString = System.getProperty("epts.alreadyforked");
+	boolean alreadyForked = (alreadyForkedString != null)
+	    && alreadyForkedString.equals("true");
+	if (System.getProperty("epts.alreadyforked") == null
+	    || !(System.getProperty("epts.alreadyforked").equals("true"))) {
+	    sysconf = defaultSysConfigFile();
+	    usrconf = defaultUsrConfigFile();
+	}
 
 	while ((++index) < argv.length) {
 	    if (jcontinue) {
 		if (argv[index].startsWith("-D") ||
 		       argv[index].startsWith("-J-D")) {
 		    // These -D arguments are provided *after*
-		    // org.bzdev.bin.scrunner.SCRunnerCmd appears on the
+		    // EPTS appears on the
 		    // java command line, but will be put *before*
-		    // org.bzdev.bin.scrunner.SCRunner appears on the java
+		    // ETPS appears on the java
 		    // command line that this program generates
 		    String arg = argv[index];
 		    if (arg.startsWith("-J")) arg = arg.substring(2);
@@ -368,6 +454,9 @@ public class EPTS {
 		} else if (argv[index].startsWith("-J")) {
 		    jargsList.add(argv[index].substring(2));
 		    continue;
+		} else if (argv[index].equals("--dryrun")) {
+		    dryrun = true;
+		    argsList.add(argv[index]);
 		} else if (argv[index].equals("-L")) {
 		    index++;
 		    languageName = argv[index];
@@ -376,24 +465,90 @@ public class EPTS {
 		    continue;
 		} else if (argv[index].equals("--codebase")) {
 		    hasCodebase = true;
-		    argsList.add(argv[index]);
+		    if (!alreadyForked) {
+			argsList.add(argv[index]);
+		    }
 		    index++;
+		    if (!alreadyForked) {
+			argsList.add(argv[index]);
+		    }
+		    codebase.add(argv[index]);
+		} else if (argv[index].equals("--script")) {
+		    scriptMode = true;
 		    argsList.add(argv[index]);
-		    classpath.add(argv[index]);
+		} else if (argv[index].equals("--image")) {
+		    imageMode = true;
+		    argsList.add(argv[index]);
+		} else if (argv[index].equals("--port")) {
+		    index++;
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    try {
+			port = Integer.parseInt(argv[index]);
+		    } catch (Exception e) {
+			System.err.println
+			    (errorMsg("notInteger", argv[index]));
+			System.exit(1);
+					   
+		    }
 		} else if (argv[index].equals("--")) {
 		    argsList.add(argv[index]);
 		    jcontinue = false;
+		} else if (argv[index].startsWith("-")) {
+		    System.err.println(errorMsg("unknownOption", argv[index]));
+		    System.exit(1);
 		} else {
+		    if (scriptMode && languageName == null) {
+			int extInd = argv[index].lastIndexOf('.');
+			int lastSlash = argv[index].lastIndexOf('/');
+			int lastSep = argv[index]
+			    .lastIndexOf(File.separatorChar);
+			if (extInd>0 && extInd>lastSlash && extInd>lastSep) {
+			    extInd++;
+			    if (extInd < argv[index].length()) {
+				languageName = argv[index].substring(extInd);
+			    }
+			}
+		    }
 		    argsList.add(argv[index]);
+		    targetList.add(argv[index]);
+		    jcontinue = false;
 		}
+	    } else {
+		argsList.add(argv[index]);
+		targetList.add(argv[index]);
 	    }
 	}
+
+	if ((imageMode ^ scriptMode) == false) {
+	    System.err.println("imageMode = " + imageMode);
+	    System.err.println("scriptMode = " + scriptMode);
+	    System.err.println(errorMsg("modes"));
+	    System.exit(1);
+	}
+
+	if (imageMode && targetList.size() != 1) {
+	    System.err.println(errorMsg("targetLength1"));
+	    System.exit(1);
+	}
+
+	if (scriptMode && targetList.size() == 0) {
+	    System.err.println(errorMsg("targetLength0"));
+	    System.exit(1);
+	}
+
+	// We use a scripting language only if there is a script to
+	// process.
+	if (scriptMode == false) languageName = null;
 	
-	// need to extend class path because scripting-language-independent
-	// class path entries in the configuration files may be needed for
-	// scripting languages to be recognized.
-	readConfigFiles(null);
 	if (languageName != null) {
+	    // need to extend class path because scripting-language-independent
+	    // class path entries in the configuration files may be needed for
+	    // scripting languages to be recognized.
+	    readConfigFiles(null);
 	    if (!Scripting.supportsLanguage(languageName)) {
 		String ln =
 		    Scripting.getLanguageNameByAlias(languageName);
@@ -410,21 +565,24 @@ public class EPTS {
 	readConfigFiles(languageName);
 
 	if (defs.size() > 0) {
-	    if (defs.getProperty("java.system.class.loader").equals("-none-")) {
+	    String svalue = defs.getProperty("java.system.class.loader");
+	    if (svalue != null && svalue.equals("-none-")) {
 		defs.remove("java.system.class.loader");
 	    }
 	    for (String name: defs.stringPropertyNames()) {
 		String value = defs.getProperty(name);
-		if (name.equals("java.system.class.loader")
-		    && value.equals("-none-")) {
-		    continue;
-		}
 		jargsList.add("-D" + name + "=" + value);
 	    }
 	}
 
-	if (jargsList.size() > 0 || javacmd != JAVACMD) {
-	    String policyFile = defs.getProperty("java.security.policy");
+
+	boolean mustFork = (jargsList.size() > 0 || javacmd != JAVACMD);
+	String policyFile = defs.getProperty("java.security.policy");
+	if (policyFile == null && scriptMode) mustFork = true;
+	if (!alreadyForked &&  mustFork) {
+	    jargsList.add("EPTS");
+	    jargsList.add(0, sbcp.toString());
+	    jargsList.add(0, "-classpath");
 	    if (policyFile == null) {
 		try {
 		    File pf = new File(EPTS.class.getProtectionDomain()
@@ -443,8 +601,17 @@ public class EPTS {
 		jargsList.add(0, "-Djava.system.class.loader="
 			      + "org.bzdev.lang.DMClassLoader");
 	    }
+	    jargsList.add(0, "-Depts.alreadyforked=true");
 	    jargsList.add(0, javacmd);
 	    jargsList.addAll(argsList);
+	    if (dryrun) {
+		System.out.print("Command: ");
+		for (String s: jargsList) {
+		    System.out.print(s);
+		    System.out.print(" ");
+		}
+		System.out.println();
+	    }
 	    ProcessBuilder pb = new ProcessBuilder(jargsList);
 	    pb.inheritIO();
 	    try {
@@ -454,12 +621,22 @@ public class EPTS {
 		System.err.println(errorMsg("scException", e.getMessage()));
 		System.exit(1);
 	    }
+	} else if (dryrun) {
+	    System.out.println("image mode  = " + imageMode);
+	    System.out.println("scriptMode = " + scriptMode);
+	    if (languageName != null) {
+		System.out.println("scripting language = " + languageName);
+	    }
+	    for (String s: targetList) {
+		System.out.println("target = " + s);
+	    }
+	    System.exit(0);
 	}
-
-	// We should reach this point in the code only if there is no
-	// reason to restart the Java virtual machine.
-	String[] args = new String[argsList.size()];
-	args = argsList.toArray(args);
+	try {
+	    org.bzdev.protocols.Handlers.enable();
+	} catch (Exception e) {
+	    e.printStackTrace(System.err);
+	}
 
 	if (codebase.size() > 0) {
 	    for (String cp: codebase) {
@@ -475,15 +652,9 @@ public class EPTS {
 	    }
 	}
 
-	index = 0;
-	while (index < args.length && args[index].startsWith("-")) {
-	    if (args[index].equals("--measureDistance")) {
-	    } else if (argv[index].equals("--points")) {
-	    } else if (argv[index].equals("--script")) {
-	    } else if (argv[index].equals("--image")) {
-	    } else if (argv[index].equals("--")) {
-		break;
-	    }
+	if (imageMode) {
+	    Image image = ImageIO.read(new File(targetList.get(0)));
+	    new EPTSWindow(image, port, targetList);
 	}
     }
 
@@ -493,6 +664,7 @@ public class EPTS {
 	    init(argv);
 	} catch (Exception e) {
 	    ErrorMessage.display(e);
+	    e.printStackTrace();
 	    System.exit(1);
 	}
 

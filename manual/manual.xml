@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <toc>
-  <node title="Manual" uri="sresource:/manual/manual.html">
+  <node title="The EPTS manual" uri="sresource:/manual/manual.html">
     <node title="Introduction" uri="sresource:/manual/manual.html#intro"/>
-    <node title="Menus" uri="sresource:/manual/manual.html#menus">
+    <node title="The menu bar" uri="sresource:/manual/manual.html#menus">
       <node title="The File menu" uri="sresource:/manual/manual.html#fileMenu"/>
       <node title="The Edit menu" uri="sresource:/manual/manual.html#editMenu"/>
       <node title="The Zoom menu" uri="sresource:/manual/manual.html#zoomMenu"/>
@@ -10,6 +10,14 @@
 	    uri="sresource:/manual/manual.html#measureMenu"/>
       <node title="The Tools menu"
 	    uri="sresource:/manual/manual.html#toolsMenu"/>
+      <node title="The Help menu"
+	    uri="sresource:/manual/manual.html#helpMenu"/>
     </node>
+    <node title="Using the mouse" uri="sresource:/manual/manual.html#mouse">
+      <node title="Popup menus" uri="sresource:/manual/manual.html#popup" />
+    </node>
+    <node title="Keyboard shortcuts"
+	  uri="sresource:/manual/manual.html#shortcuts"/>
+    <node title="The CLI" uri="sresource:/manual/manual.html#cli"/>
   </node>
 </toc>

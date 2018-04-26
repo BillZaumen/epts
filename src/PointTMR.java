@@ -40,13 +40,14 @@ public class PointTMR {
 	return yp;
     }
 
-    public void setX(double x, int xp) {
+    public void setX(double x, double xp) {
 	this.x = x;
 	this.xp = xp;
     }
 
-    public void setY(double y, int yp) {
+    public void setY(double y, double yp) {
 	this.y = y;
 	this.yp = yp;
     }
+
 }

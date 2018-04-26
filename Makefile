@@ -106,6 +106,10 @@ HELPFILES =
 
 JFILES = $(wildcard src/*.java)
 PROPERTIES = src/EPTS.properties
+TEMPLATES = templates/ECMAScript.tpl templates/save.tpl
+RESOURCES = manual/manual.xml \
+	manual/manual.html \
+	manual/manual.css
 
 FILES = $(JFILES) $(PROPERTIES)
 
@@ -136,7 +140,7 @@ $(CLASSES):
 # because the old ones would otherwise still be there and end up
 # being installed.
 #
-$(JROOT_JARDIR)/epts-$(VERSION).jar: $(FILES)
+$(JROOT_JARDIR)/epts-$(VERSION).jar: $(FILES) $(TEMPLATES) $(RESOURCES)
 	mkdir -p $(CLASSES)
 	javac -Xlint:unchecked -Xlint:deprecation \
 		-d $(CLASSES) -classpath $(CLASSES):$(EXTLIBS) \
@@ -145,8 +149,13 @@ $(JROOT_JARDIR)/epts-$(VERSION).jar: $(FILES)
 		$(CLASSES)
 	mkdir -p $(JROOT_JARDIR)
 	rm -f $(JROOT_JARDIR)/epts-*.jar
+	cp templates/*.tpl $(CLASSES)
+	mkdir -p $(CLASSES)/manual
+	for i in $(RESOURCES) ; do cp $$i $(CLASSES)/$$i ; done
 	jar cfm $(JROOT_JARDIR)/epts-$(VERSION).jar epts.mf \
 		-C $(CLASSES) .
+	( cd jar ; rm -f epts.jar ; ln -s epts-$(VERSION).jar epts.jar )
+
 
 $(JROOT_BIN)/epts: epts.sh MAJOR MINOR \
 		$(JROOT_JARDIR)/epts-$(VERSION).jar

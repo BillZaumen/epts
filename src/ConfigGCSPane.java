@@ -2,6 +2,7 @@ import java.awt.*;
 import java.util.Vector;
 import javax.swing.*;
 import javax.swing.text.AbstractDocument;
+import org.bzdev.lang.UnexpectedExceptionError;
 import org.bzdev.math.RealValuedFunction;
 import org.bzdev.graphs.RefPointName;
 import org.bzdev.swing.*;
@@ -9,6 +10,34 @@ import org.bzdev.swing.text.*;
 import org.bzdev.util.units.MKS;
 
 public class ConfigGCSPane extends JPanel {
+
+    // Need to be able to save the state just before
+    // a dialog box appears so we can restore it if
+    // the user hits the 'cancel' button.
+    int savedUnitIndex;
+    int savedRefPointIndex;
+    String savedXString;
+    String savedYString;
+    String savedUsDistString;
+    String savedGcsDistString;
+
+    public void saveState() {
+	savedUnitIndex = unitComboBox.getSelectedIndex();
+	savedRefPointIndex = rpComboBox.getSelectedIndex() ;
+	savedXString = xtf.getText().trim();
+	savedYString = ytf.getText().trim();
+	savedUsDistString = utf.getText().trim();
+	savedGcsDistString = gcstf.getText().trim();
+    }
+    
+    public void restoreState() {
+	unitComboBox.setSelectedIndex(savedUnitIndex);
+	rpComboBox.setSelectedIndex(savedRefPointIndex);
+	xtf.setText(savedXString);
+	ytf.setText(savedYString);
+	utf.setText(savedUsDistString);
+	gcstf.setText(savedGcsDistString);
+    }
 
     static final Vector<String> units = new Vector<>(24);
     static final RealValuedFunction convert[] = {
@@ -61,22 +90,13 @@ public class ConfigGCSPane extends JPanel {
     }
 
     public double getScaleFactor() {
-	/*
-	System.out.println ("gcsDist = " + gcsDist);
-	System.out.println ("usDist = " + usDist);
-	System.out.println("selectedIndex = "
-			   + unitComboBox.getSelectedIndex());
-	System.out.println("conversion multipies by "
-			   + convert[unitComboBox.getSelectedIndex()]
-			   .valueAt(1.0));
-	*/
 	return convert[unitComboBox.getSelectedIndex()].valueAt(gcsDist)
 	    / usDist;
     }
     
     public void setDist(double distance) {
 	usDist = distance;
-	utf.setText(String.format("%10.3g", distance));
+	utf.setText(String.format("%10.3g", distance).trim());
     }
 
     double usDist = 1.0;
@@ -95,8 +115,11 @@ public class ConfigGCSPane extends JPanel {
 		String string = tf.getText();
 		try {
 		    double value = new Double(string);
-		    if (value > 0.0) return true;
-		    else return false;
+		    if (value > 0.0) {
+			return true;
+		    } else {
+			return false;
+		    }
 		} catch (Exception e) {
 		    return false;
 		}
@@ -124,12 +147,18 @@ public class ConfigGCSPane extends JPanel {
 	super();
 	cdf.setAllowedChars("09eeEE..,,++--");
 	JLabel ul = new JLabel("User-Space Distance");
-	utf = new VTextField(String.format("%10.3g", 1.0), 10) {
+	utf = new VTextField(String.format("%10.3g", 1.0).trim(), 10) {
 		@Override
 		protected void onAccepted() {
 		    try {
-			usDist = Double.valueOf(getText());
+			String text = getText();
+			if (text == null || text.length() == 0) {
+			    usDist = 1.0;
+			} else {
+			    usDist = Double.valueOf(getText());
+			}
 		    } catch (Exception e) {
+			throw new UnexpectedExceptionError(e);
 		    }
 		}
 		@Override
@@ -144,7 +173,7 @@ public class ConfigGCSPane extends JPanel {
 	utf.setInputVerifier(vtfiv);
 	JLabel points = new JLabel("pts (1/72 in.)");
 	JLabel gcsl = new JLabel("GCS Distance");
-	gcstf = new VTextField(String.format("%10.3g", 1.0), 10) {
+	gcstf = new VTextField(String.format("%10.3g", 1.0).trim(), 10) {
 		protected void onAccepted() {
 		    try {
 			gcsDist = Double.valueOf(getText());
