@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!ELEMENT epts (image, targetList?, gcsconfig, table)>
+<!ATTLIST epts
+	  xmlns CDATA #FIXED "http://bzdev.org/DTD/epts-1.0">
+
+<!ELEMENT image EMPTY>
+<!ATTLIST image
+	  width CDATA #REQUIRED
+	  height CDATA #REQUIRED
+	  imageURIExists (true|false) #IMPLIED>
+
+<!ELEMENT targetList (argument*)>
+
+<!ELEMENT argument (#PCDATA)>
+
+<!ELEMENT gcsconfig EMPTY>
+<!ATTLIST gcsconfig
+	  unitIndex CDATA #REQUIRED
+	  refPointIndex CDATA #REQUIRED
+	  userSpaceDistance CDATA #REQUIRED
+	  gcsDistance CDATA #REQUIRED
+          xorigin CDATA #REQUIRED
+	  yorigin CDATA #REQUIRED>
+
+<!ELEMENT table (row*)>
+
+<!ELEMENT row EMPTY>
+<!ATTLIST row
+	  varname CDATA #IMPLIED
+	  type (LOCATION|PATH_START|PATH_END|MOVE_TO|SPLINE|CONTROL|SEG_END|CLOSE) #IMPLIED
+	  x CDATA #IMPLIED
+	  y CDATA #IMPLIED
+	  xp CDATA #IMPLIED
+	  yp CDATA #IMPLIED>

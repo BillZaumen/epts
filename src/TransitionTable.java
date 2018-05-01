@@ -24,6 +24,10 @@ class Transition {
 
 public class TransitionTable {
 
+    static String localeString(String key) {
+	return EPTS.localeString(key);
+    }
+
     public static class Pair {
 	Enum state;
 	JMenuItem menuItem;
@@ -66,16 +70,18 @@ public class TransitionTable {
 
     static {
 	createMenuItem(SplinePathBuilder.CPointType.SPLINE,
-		       "Spline Point(s)", KeyEvent.VK_S, false, false);
+		       localeString("SplinePoints"),
+		       KeyEvent.VK_S, false, false);
 	createMenuItem(SplinePathBuilder.CPointType.CONTROL,
-		       "Control Point(s)", KeyEvent.VK_C, false, false);
+		       localeString("ControlPoints"),
+		       KeyEvent.VK_C, false, false);
 	createMenuItem(SplinePathBuilder.CPointType.SEG_END,
-		       "End Curve/Line Segment", KeyEvent.VK_E, false, false);
+		       localeString("EndCurveLineSegment"),
+		       KeyEvent.VK_E, false, false);
 	createMenuItem(SplinePathBuilder.CPointType.CLOSE,
-		       "Loop (Close Path))", KeyEvent.VK_L,
-		       false, false);
-	createMenuItem(EPTS.Mode.PATH_END,
-		       "Path Ended", KeyEvent.VK_Z, false, false);
+		       localeString("Loop"), KeyEvent.VK_L, false, false);
+	createMenuItem(EPTS.Mode.PATH_END, localeString("PathEnded"),
+		       KeyEvent.VK_Z, false, false);
     }
     
     public static List<JMenuItem> getMenuItems() {

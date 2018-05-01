@@ -174,12 +174,14 @@ public class ConfigGCSPane extends JPanel {
 	JLabel points = new JLabel("pts (1/72 in.)");
 	JLabel gcsl = new JLabel("GCS Distance");
 	gcstf = new VTextField(String.format("%10.3g", 1.0).trim(), 10) {
+		@Override
 		protected void onAccepted() {
 		    try {
 			gcsDist = Double.valueOf(getText());
 		    } catch (Exception e) {
 		    }
 		}
+		@Override
 		protected boolean handleError() {
 		    JOptionPane.showMessageDialog
 			(this, "Must enter a positive number",
@@ -189,37 +191,41 @@ public class ConfigGCSPane extends JPanel {
 	    };
 	((AbstractDocument)gcstf.getDocument()).setDocumentFilter(cdf);
 	gcstf.setInputVerifier(vtfiv);
-	xtf = new VTextField(String.format("%10.3g", 0.0), 10) {
-		protected void onAccept() {
+	xtf = new VTextField(String.format("%4.3g", 0.0), 10) {
+		@Override
+		protected void onAccepted() {
 		    try {
 			x = Double.valueOf(getText());
 		    } catch (Exception e) {
 		    }
 		}
+		@Override
 		protected boolean handleError() {
 		    JOptionPane.showMessageDialog
-			(this, "Must enter a positive number",
+			(this, "Must enter a real number",
 			 "Error", JOptionPane.ERROR_MESSAGE);
 		    return false;
 		}
 	    };
-	((AbstractDocument)gcstf.getDocument()).setDocumentFilter(cdf);
+	((AbstractDocument)xtf.getDocument()).setDocumentFilter(cdf);
 	xtf.setInputVerifier(xytfiv);
-	ytf = new VTextField(String.format("%10.3g", 0.0), 10) {
-		protected void onAccept() {
+	ytf = new VTextField(String.format("%4.3g", 0.0), 10) {
+		@Override
+		protected void onAccepted() {
 		    try {
 			y = Double.valueOf(getText());
 		    } catch (Exception e) {
 		    }
 		}
+		@Override
 		protected boolean handleError() {
 		    JOptionPane.showMessageDialog
-			(this, "Must enter a positive number",
+			(this, "Must enter a real number",
 			 "Error", JOptionPane.ERROR_MESSAGE);
 		    return false;
 		}
 	    };
-	((AbstractDocument)gcstf.getDocument()).setDocumentFilter(cdf);
+	((AbstractDocument)ytf.getDocument()).setDocumentFilter(cdf);
 	ytf.setInputVerifier(xytfiv);
 	JLabel xl = new JLabel("X Origin ");
 	JLabel yl = new JLabel("Y Origin");

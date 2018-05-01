@@ -2,9 +2,11 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.LineNumberReader;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,6 +37,10 @@ public class EPTS {
     static String errorMsg(String key, Object... args) {
 	return (new SafeFormatter()).format(exbundle.getString(key), args)
 	    .toString();
+    }
+
+    static  String localeString(String key) {
+	return exbundle.getString(key);
     }
 
     private static final String JAVACMD = "java";
@@ -524,10 +530,12 @@ public class EPTS {
 	}
 
 	if ((imageMode ^ scriptMode) == false) {
-	    System.err.println("imageMode = " + imageMode);
-	    System.err.println("scriptMode = " + scriptMode);
-	    System.err.println(errorMsg("modes"));
-	    System.exit(1);
+	    if (imageMode || scriptMode) {
+		System.err.println("imageMode = " + imageMode);
+		System.err.println("scriptMode = " + scriptMode);
+		System.err.println(errorMsg("modes"));
+		System.exit(1);
+	    }
 	}
 
 	if (imageMode && targetList.size() != 1) {
@@ -655,6 +663,45 @@ public class EPTS {
 	if (imageMode) {
 	    Image image = ImageIO.read(new File(targetList.get(0)));
 	    new EPTSWindow(image, port, targetList);
+	} else if (targetList.size() == 1) {
+	    EPTSParser parser = new EPTSParser();
+	    String filename = targetList.get(0);
+	    if (filename.endsWith(".epts")) {
+		try {
+		    File parent  = new File(filename).getParentFile();
+		    if (parent != null) {
+			System.setProperty("user.dir",
+					   parent.getCanonicalPath());
+		    }
+		    parser.parse(new FileInputStream(filename));
+		    new EPTSWindow(parser);
+		    /*
+		    System.out.println("width " + parser.getWidth());
+		    System.out.println("height " + parser.getHeight());
+		    System.out.println("hasImage " + parser.imageURIExists());
+		    System.out.println("imageURI " + parser.getImageURI());
+		    System.out.println("user-space dist "
+				       + parser.getUserSpaceDistance());
+		    System.out.println("GCS dist "
+				       + parser.getGcsDistance());
+		    System.out.println("number of rows = "
+				       +parser.getRows().length);
+		    for (PointTMR row: parser.getRows()) {
+
+			System.out.format("%s, %s, %s, %s, %s, %s\n",
+					  row.getVariableName(),
+					  row.getMode(),
+					  row.getX(),
+					  row.getY(),
+					  row.getXP(),
+					  row.getYP());
+		    }
+		    */
+		} catch (Exception e) {
+		    e.printStackTrace();
+		    System.exit(1);
+		}
+	    }
 	}
     }
 

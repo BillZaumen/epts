@@ -1,0 +1,19 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=EPTS
+Comment=Create scaled images or web pages with thumbnail images
+Exec=epts %u
+TryExec=epts
+MimeType=application/x.epts+xml;
+Terminal=false
+Type=Application
+Icon=/usr/share/icons/hicolor/scalable/apps/epts.svg
+Categories=Application;Graphics;
+X-Ayatana-Desktop-Shortcuts=New
+OnlyShowIn=GNOME;Unity;
+StartupNotify=true
+
+[New Shortcut Group]
+Name=New EPTS Window
+Exec=epts
+TargetEnvironment=Unity

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns='http://www.freedesktop.org/standards/shared-mime-info'>
+  <mime-type type="application/x.epts+xml">
+    <comment>EPTS saved-state file</comment>
+    <sub-class-of type='application/xml; charset="utf-8"'/>
+    <magic priority="80">
+      <match type="string" offset="5:256"
+	     value='&lt;!DOCTYPE epts PUBLIC "-//BZDev//EPTS-'
+	     />
+      <!-- match when a byte order mark is present -->
+      <match type="big32" value="0xefbbbf3c" offset="0">
+	<match type="string" offset="8:256"
+	     value='&lt;!DOCTYPE epts PUBLIC "-//BZDev//EPTS-'
+	     />
+      </match>
+    </magic>
+    <glob pattern="*.epts"/>  
+    <root-XML namespaceURI="http://bzdev.org/DTD/epts-1.0.dtd"
+              localName="epts"/>
+  </mime-type>
+</mime-info>

@@ -19,6 +19,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Set;
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.filechooser.FileFilter;
@@ -44,6 +45,13 @@ import org.bzdev.swing.ErrorMessage;
 import org.bzdev.swing.HtmlWithTocPane;
 
 public class EPTSWindow {
+    static String errorMsg(String key, Object... args) {
+	return EPTS.errorMsg(key, args);
+    }
+    static String localeString(String key) {
+	return EPTS.localeString(key);
+    }
+
     JFrame frame;
     JLabel modeline;
     JScrollPane scrollPane;
@@ -101,6 +109,9 @@ public class EPTSWindow {
 		   String.format("%d", configGCSPane.savedRefPointIndex));
 	keymap.put("userSpaceDistance", configGCSPane.savedUsDistString);
 	keymap.put("gcsDistance", configGCSPane.savedGcsDistString);
+	keymap.put("xorigin", configGCSPane.savedXString);
+	keymap.put("yorigin", configGCSPane.savedYString);
+
 	keymap.put("width", String.format("%d", width));
 	keymap.put("height", String.format("%d", height));
 	TemplateProcessor.KeyMap km = ptmodel.getKeyMap();
@@ -111,6 +122,9 @@ public class EPTSWindow {
 	OutputStream os = new FileOutputStream(f);
 	Writer writer = new OutputStreamWriter(os, "UTF-8");
 	tp.processSystemResource("save.tpl", "UTF-8", writer);
+    }
+
+    public void restore(EPTSParser parser) {
     }
 
     void setupTable(JComponent pane) {
@@ -149,6 +163,7 @@ public class EPTSWindow {
 	tableScrollPane.setOpaque(true);
 	ptable.setFillsViewportHeight(true);
 	tableFrame.setContentPane(tableScrollPane);
+	tableFrame.setIconImages(iconList);
   	tableFrame.pack();
     }
 
@@ -228,22 +243,26 @@ public class EPTSWindow {
 
     static EmbeddedWebServer ews = null;
     static URI manualURI;
+    public void startManualWebServerIfNeeded() throws Exception
+    {
+	if (ews == null) {
+	    ews = new EmbeddedWebServer(port, 5, 2, false);
+	    if (port == 0) port = ews.getPort();
+	    ews.add("/", ResourceWebMap.class, "manual/",
+		    null, true, false, true);
+	    manualURI = new URL("http://localhost:"
+				+ port +"/manual.html").toURI();
+	    ews.start();
+	}
+    }
+
     private void showManualInBrowser() {
 	try {
-	    if (ews == null) {
-		ews = new EmbeddedWebServer(port, 5, 2, false);
-		
-		ews.add("/", ResourceWebMap.class, "manual/",
-			null, true, false, true);
-		manualURI =
-		    new URL("http://localhost:"
-			    + port +"/manual.html").toURI();
-		ews.start();
-	    }		
+	    startManualWebServerIfNeeded();
 	    Desktop.getDesktop().browse(manualURI);
 	    
 	} catch (Exception e) {
-	    setModeline("Browser cannot be opened");
+	    setModeline(localeString("cannotOpenBrowser"));
 	    e.printStackTrace();
 	}
     }
@@ -284,35 +303,32 @@ public class EPTSWindow {
 		(SplinePathBuilder.CPointType) ns;
 	    switch (pstate) {
 	    case MOVE_TO:
-		setModeline("Left click to start path (GCS); ESC to abort");
+		setModeline(localeString("leftClickStart"));
 		break;
 	    case SPLINE:
-		setModeline("Left click for next spline "
-			    + "point; ESC to abort");
+		setModeline(localeString("leftClickSpline"));
 		break;
 	    case CONTROL:
-		setModeline("Left click for next control "
-			    + "point; ESC to abort");
+		setModeline(localeString("leftClickControl"));
 		break;
 	    case SEG_END:
-		setModeline("Left click for a segment's "
-			    + "last point; ESC to abort");
+		setModeline(localeString("leftClickEnd"));
 		break;
 	    case CLOSE:
-		setModeline("Path Complete");
+		setModeline(localeString("pathComplete"));
 		break;
 	    }
 	} else if (ns instanceof EPTS.Mode) {
 	    EPTS.Mode emode = (EPTS.Mode) ns;
 	    switch (emode) {
 	    case LOCATION:
-		setModeline("Location Computed");
+		setModeline(localeString("locationCreated"));
 		break;
 	    case PATH_START:
-		setModeline("Starting a B\u00e9zier Path");
+		setModeline(localeString("pathStarting"));
 		break;
 	    case PATH_END:
-		setModeline("Path Complete");
+		setModeline(localeString("pathComplete"));
 		break;
 	    }
 	}
@@ -326,8 +342,8 @@ public class EPTSWindow {
 	    // check and remove the last partial path.
 	    int result = (force)? JOptionPane.OK_OPTION:
 		JOptionPane.showConfirmDialog(frame,
-					      "Undo current path segments?",
-					      "Cancel Current Path",
+					      localeString("confirmUndoCP"),
+					      localeString("confirmCancelCP"),
 					      JOptionPane
 					      .OK_CANCEL_OPTION,
 					      JOptionPane.
@@ -372,10 +388,10 @@ public class EPTSWindow {
     private void setMenus(JFrame frame, double w, double h) {
 	JMenuBar menubar = new JMenuBar();
 	JMenuItem menuItem;
-	JMenu fileMenu = new JMenu("File");
+	JMenu fileMenu = new JMenu(localeString("File"));
 	fileMenu.setMnemonic(KeyEvent.VK_F);
 	menubar.add(fileMenu);
-	menuItem = new JMenuItem("Quit", KeyEvent.VK_Q);
+	menuItem = new JMenuItem(localeString("Quit"), KeyEvent.VK_Q);
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK));
 	menuItem.addActionListener(new ActionListener() {
@@ -384,7 +400,7 @@ public class EPTSWindow {
 		}
 	    });
 	fileMenu.add(menuItem);
-	saveMenuItem = new JMenuItem("Save", KeyEvent.VK_S);
+	saveMenuItem = new JMenuItem(localeString("Save"), KeyEvent.VK_S);
 	saveMenuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
 	saveMenuItem.addActionListener(new ActionListener() {
@@ -395,8 +411,8 @@ public class EPTSWindow {
 				.getCanonicalFile();
 			    JFileChooser chooser = new JFileChooser(cdir);
 			    FileNameExtensionFilter filter =
-				new FileNameExtensionFilter("EPTS State",
-							    "epts");
+				new FileNameExtensionFilter
+				(localeString("EptsState"), "epts");
 			    chooser.setFileFilter(filter);
 			    chooser.setSelectedFile(savedFile);
 			    int status = chooser.showSaveDialog(frame);
@@ -420,13 +436,13 @@ public class EPTSWindow {
 	    });
 	fileMenu.add(saveMenuItem);
 	
-	menuItem = new JMenuItem("Configure GCS", KeyEvent.VK_C);
+	menuItem = new JMenuItem(localeString("ConfigureGCS"), KeyEvent.VK_C);
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    configGCSPane.saveState();
 		     int status = JOptionPane.showConfirmDialog
 			(frame, configGCSPane,
-			 "Configure Graph Coordiate Space (GCS)",
+			 localeString("ConfigureGCSDialog"),
 			 JOptionPane.OK_CANCEL_OPTION);
 		     if (status == JOptionPane.OK_OPTION) {
 			 scaleFactor = configGCSPane.getScaleFactor();
@@ -495,7 +511,7 @@ public class EPTSWindow {
 	    });
 	fileMenu.add(menuItem);
 
-	menuItem = new JMenuItem("Print Table", KeyEvent.VK_P);
+	menuItem = new JMenuItem(localeString("PrintTable"), KeyEvent.VK_P);
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK));
 	menuItem.addActionListener(new ActionListener() {
@@ -510,11 +526,12 @@ public class EPTSWindow {
 	    });
 	fileMenu.add(menuItem);
 
-	JMenu editMenu = new JMenu("Edit");
+	JMenu editMenu = new JMenu(localeString("Edit"));
 	editMenu.setMnemonic(KeyEvent.VK_E);
 	menubar.add(editMenu);
 
-	menuItem = new JMenuItem("Undo Point Insertion", KeyEvent.VK_U);
+	menuItem = new JMenuItem(localeString("UndoPointInsertion"),
+				 KeyEvent.VK_U);
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_Z, InputEvent.CTRL_DOWN_MASK));
 	menuItem.addActionListener(new ActionListener() {
@@ -573,7 +590,7 @@ public class EPTSWindow {
 	    });
 	editMenu.add(menuItem);
 
-	menuItem = new JMenuItem("Append to a B\u00e9zier Path", KeyEvent.VK_A);
+	menuItem = new JMenuItem(localeString("AppendBezier"), KeyEvent.VK_A);
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_A, InputEvent.ALT_DOWN_MASK));
 	addToPathMenuItem = menuItem;
@@ -586,8 +603,8 @@ public class EPTSWindow {
 		    String[] vnames =
 			vnameSet.toArray(new String[vnameSet.size()]);
 		    String vname = (String)JOptionPane.showInputDialog
-			(frame, "Select a path to extend:",
-			 "Select Path",
+			(frame, localeString("SelectPathExtend"),
+			 localeString("SelectPath"),
 			 JOptionPane.PLAIN_MESSAGE, null,
 			 vnames, vnames[0]);
 		    if (vname == null || vname.length() == 0) return;
@@ -617,12 +634,13 @@ public class EPTSWindow {
 	    });
 	editMenu.add(menuItem);
 
-	menuItem = new JMenuItem("Copy Table as ECMAScript", KeyEvent.VK_E);
+	menuItem = new JMenuItem(localeString("CopyTableECMAScript"),
+				 KeyEvent.VK_E);
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    try {
 			StringWriter writer = new
-			    StringWriter(48*ptmodel.getRowCount());
+			    StringWriter(128*ptmodel.getRowCount());
 			TemplateProcessor tp =
 			    new TemplateProcessor(ptmodel.getKeyMap());
 			tp.processSystemResource("ECMAScript.tpl",
@@ -641,35 +659,35 @@ public class EPTSWindow {
 	editMenu.add(menuItem);
 	
 	editMenu.addSeparator();
-	editMenu.add(new JLabel("Location Format"));
+	editMenu.add(new JLabel(localeString("LocationFormat")));
 	ButtonGroup bg = new ButtonGroup();
-	menuItem = new JRadioButtonMenuItem("location as (X,Y)");
+	menuItem = new JRadioButtonMenuItem(localeString("LocationFormat1"));
 	menuItem.addActionListener
 	    (createLMIActionListener(LocationFormat.COORD));
 	bg.add(menuItem);
 	editMenu.add(menuItem);
-	menuItem = new JRadioButtonMenuItem("location as x: X, y: Y");
+	menuItem = new JRadioButtonMenuItem(localeString("LocationFormat2"));
 	menuItem.addActionListener
 	    (createLMIActionListener(LocationFormat.EXPRESSION));
 	bg.add(menuItem);
 	editMenu.add(menuItem);
-	menuItem = new JRadioButtonMenuItem("location as {x: X, y: Y}");
+	menuItem = new JRadioButtonMenuItem(localeString("LocationFormat3"));
 	menuItem.addActionListener
 	    (createLMIActionListener(LocationFormat.OBJECT));
 	bg.add(menuItem);
 	editMenu.add(menuItem);
-	menuItem = new JRadioButtonMenuItem("location as V = {x: X, y: Y};");
+	menuItem = new JRadioButtonMenuItem(localeString("LocationFormat4"));
 	menuItem.addActionListener
 	    (createLMIActionListener(LocationFormat.STATEMENT));
 	menuItem.setSelected(true);
 	bg.add(menuItem);
 	editMenu.add(menuItem);
 
-	JMenu zoomMenu = new JMenu("Zoom");
+	JMenu zoomMenu = new JMenu(localeString("Zoom"));
 	zoomMenu.setMnemonic(KeyEvent.VK_Z);
 	menubar.add(zoomMenu);
 
-	menuItem = new JMenuItem("Reset");
+	menuItem = new JMenuItem(localeString("Reset"));
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_0, InputEvent.CTRL_DOWN_MASK));
 	menuItem.addActionListener(new ActionListener() {
@@ -683,7 +701,7 @@ public class EPTSWindow {
 	    });
 	zoomMenu.add(menuItem);
 
-	menuItem = new JMenuItem("Zoom In");
+	menuItem = new JMenuItem(localeString("ZoomIn"));
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_EQUALS,
 				 InputEvent.CTRL_DOWN_MASK));
@@ -701,7 +719,7 @@ public class EPTSWindow {
 	    });
 	zoomMenu.add(menuItem);
 
-	menuItem = new JMenuItem("Zoom Out");
+	menuItem = new JMenuItem(localeString("ZoomOut"));
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_MINUS, InputEvent.CTRL_DOWN_MASK));
 	menuItem.addActionListener(new ActionListener() {
@@ -762,10 +780,10 @@ public class EPTSWindow {
 	    i++;
 	}
 
-	JMenu measureMenu = new JMenu("Measure Distance");
+	JMenu measureMenu = new JMenu(localeString("MeasureDistance"));
 	measureMenu.setMnemonic(KeyEvent.VK_M);
 	menubar.add(measureMenu);
-	menuItem = new JMenuItem("Image-Space Distance",
+	menuItem = new JMenuItem(localeString("ImageSpaceDistance"),
 				 KeyEvent.VK_I);
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
@@ -776,7 +794,7 @@ public class EPTSWindow {
 				(KeyEvent.VK_I, InputEvent.ALT_DOWN_MASK));
 	measureMenu.add(menuItem);
 
-	menuItem = new JMenuItem("GCS Distance",
+	menuItem = new JMenuItem(localeString("GCSDistance"),
 				 KeyEvent.VK_G);
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_G, InputEvent.ALT_DOWN_MASK));
@@ -787,11 +805,11 @@ public class EPTSWindow {
 	    });
 	measureMenu.add(menuItem);
 
-	JMenu toolMenu = new JMenu("Tools");
+	JMenu toolMenu = new JMenu(localeString("Tools"));
 	toolMenu.setMnemonic(KeyEvent.VK_T);
 	menubar.add(toolMenu);
  
-	menuItem = new JMenuItem("Show Point Table", KeyEvent.VK_S);
+	menuItem = new JMenuItem(localeString("ShowPointTable"), KeyEvent.VK_S);
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK));
 	menuItem.addActionListener(new ActionListener() {
@@ -801,7 +819,7 @@ public class EPTSWindow {
 	    });
 	toolMenu.add(menuItem);
 
-	menuItem = new JMenuItem("Create a Point", KeyEvent.VK_P);
+	menuItem = new JMenuItem(localeString("CreatePoint"), KeyEvent.VK_P);
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_P, InputEvent.ALT_DOWN_MASK));
 	menuItem.addActionListener(new ActionListener() {
@@ -809,8 +827,8 @@ public class EPTSWindow {
 		    if (!cleanupPartialPath(false)) return;
 		    if (locationFormat == LocationFormat.STATEMENT) {
 			varname = JOptionPane.showInputDialog
-			    (frame, "Please enter a variable name:",
-			     "Scripting-language Variable Name",
+			    (frame, localeString("PleaseEnterVariableName"),
+			     localeString("ScriptingLanguageVariableName"),
 			     JOptionPane.PLAIN_MESSAGE);
 			if (varname == null) return;
 		    }
@@ -819,7 +837,8 @@ public class EPTSWindow {
 	    });
 	toolMenu.add(menuItem);
 
-	menuItem = new JMenuItem("Create a B\u00e9zier Path", KeyEvent.VK_B);
+	menuItem = new JMenuItem(localeString("CreateBezierPath"),
+				 KeyEvent.VK_B);
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_B, InputEvent.ALT_DOWN_MASK));
 	menuItem.addActionListener(new ActionListener() {
@@ -832,7 +851,7 @@ public class EPTSWindow {
 
 
 	toolMenu.addSeparator();
-	toolMenu.add(new JLabel("B\u00e9zier Path Options"));
+	toolMenu.add(new JLabel(localeString("BezierPathOptions")));
 	JMenuItem lastMI = null;
 	for (TransitionTable.Pair pair:
 		 TransitionTable.getMenuItemsWithState()) {
@@ -843,8 +862,8 @@ public class EPTSWindow {
 		    != (mi instanceof JRadioButtonMenuItem)) {
 		    toolMenu.addSeparator();
 		    if (!(mi instanceof JRadioButtonMenuItem)) {
-		    toolMenu.add(new
-				 JLabel("Options to end a B\u00e9zier Path"));
+		    toolMenu.add
+			(new JLabel(localeString("OptionsToEndBezierPath")));
 		    }
 		}
 	    }
@@ -864,7 +883,7 @@ public class EPTSWindow {
 					       0.0, 0.0, 0.0, 0.0);
 				// setModeline("Path Complete");
 				resetState();
-				setModeline("Loop Complete");
+				setModeline(localeString("LoopComplete"));
 
 			    }
 			} else if (state instanceof EPTS.Mode) {
@@ -894,10 +913,10 @@ public class EPTSWindow {
 		});
 	}
 
-	JMenu helpMenu = new JMenu("Help");
+	JMenu helpMenu = new JMenu(localeString("Help"));
 	helpMenu.setMnemonic(KeyEvent.VK_H);
 	menubar.add(helpMenu);
-	menuItem = new JMenuItem("Manual", KeyEvent.VK_M);
+	menuItem = new JMenuItem(localeString("Manual"), KeyEvent.VK_M);
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    showManual();
@@ -905,7 +924,7 @@ public class EPTSWindow {
 	    });
 	helpMenu.add(menuItem);
 
-	menuItem = new JMenuItem("Print Manual", KeyEvent.VK_P);
+	menuItem = new JMenuItem(localeString("PrintManual"), KeyEvent.VK_P);
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    printManual();
@@ -913,7 +932,7 @@ public class EPTSWindow {
 	    });
 	helpMenu.add(menuItem);
 
-	menuItem = new JMenuItem("Browser", KeyEvent.VK_B);
+	menuItem = new JMenuItem(localeString("Browser"), KeyEvent.VK_B);
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    showManualInBrowser();
@@ -985,9 +1004,7 @@ public class EPTSWindow {
 		throw new UnexpectedExceptionError();
 	    }
 	    resetState();
-	    setModeline(String.format("Left click to insert before the "
-				      + "selected point (type = %s); "
-				      + "ESC to abort",
+	    setModeline(String.format(localeString("leftClickInsertBefore"),
 				      insertMode));
 	    savedCursorDist = panel.getCursor();
 	    panel.setCursor
@@ -1057,9 +1074,7 @@ public class EPTSWindow {
 	    default:
 		throw new UnexpectedExceptionError();
 	    }
-	    setModeline(String.format("Left click to insert after the "
-				      + "selected point (type = %s); "
-				      + "ESC to abort",
+	    setModeline(String.format(localeString("leftClickInsertAfter"),
 				      insertMode));
 	    savedCursorDist = panel.getCursor();
 	    panel.setCursor
@@ -1316,8 +1331,8 @@ public class EPTSWindow {
 	    }
 	    if (options != null) {
 		Enum nm = (Enum)JOptionPane.showInputDialog
-		    (frame, "Choose new point type.",
-		     "Change-Type Options",
+		    (frame, localeString("ChooseNewPointType"),
+		     localeString("ChangeTypeOptions"),
 		     JOptionPane.PLAIN_MESSAGE, null,
 		     options, preferred);
 		if (nm != null) {
@@ -1434,7 +1449,7 @@ public class EPTSWindow {
 
     private void setPopupMenus() {
 	popupMenu = new JPopupMenu();
-	deleteMenuItem = new JMenuItem("Delete Point");
+	deleteMenuItem = new JMenuItem(localeString("DeletePoint"));
 	deleteMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    onDelete();
@@ -1442,7 +1457,7 @@ public class EPTSWindow {
 	    });
 	popupMenu.add(deleteMenuItem);
 
-	changeMenuItem = new JMenuItem("Change Point Type");
+	changeMenuItem = new JMenuItem(localeString("ChangePointType"));
 	changeMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    onChangeType();
@@ -1450,7 +1465,7 @@ public class EPTSWindow {
 	    });
 	popupMenu.add(changeMenuItem);
 
-	insertBeforeMenuItem = new JMenuItem("Insert Before Point");
+	insertBeforeMenuItem = new JMenuItem(localeString("InsertBeforePoint"));
 	insertBeforeMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    onInsertBefore();
@@ -1458,7 +1473,7 @@ public class EPTSWindow {
 	    });
 	popupMenu.add(insertBeforeMenuItem);
 
-	insertAfterMenuItem = new JMenuItem("Insert After Point");
+	insertAfterMenuItem = new JMenuItem(localeString("InsertAfterPoint"));
 	insertAfterMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    onInsertAfter();
@@ -1466,7 +1481,7 @@ public class EPTSWindow {
 	    });
 	popupMenu.add(insertAfterMenuItem);
 
-	breakLoopMenuItem = new JMenuItem("Break loop");
+	breakLoopMenuItem = new JMenuItem(localeString("BreakLoop"));
 	breakLoopMenuItem.setEnabled(false);
 	breakLoopMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
@@ -1475,7 +1490,7 @@ public class EPTSWindow {
 	    });
 	popupMenu.add(breakLoopMenuItem);
 
-	extendPathMenuItem = new JMenuItem("Extend path");
+	extendPathMenuItem = new JMenuItem(localeString("ExtendPath"));
 	extendPathMenuItem.setEnabled(true);
 	extendPathMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
@@ -1485,7 +1500,7 @@ public class EPTSWindow {
 	popupMenu.add(extendPathMenuItem);
 
 	editingMenu = new JPopupMenu();
-	toSegEndMenuItem = new JMenuItem("mode -> SEG_END");
+	toSegEndMenuItem = new JMenuItem(localeString("ModeToSEGEND"));
 	toSegEndMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    ptmodel.setLastRowMode
@@ -1501,7 +1516,7 @@ public class EPTSWindow {
 		}
 	    });
 	editingMenu.add(toSegEndMenuItem);
-	toSplineMenuItem = new JMenuItem("mode -> SPLINE");
+	toSplineMenuItem = new JMenuItem(localeString("ModeToSPLINE"));
 	toSplineMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    ptmodel.setLastRowMode(SplinePathBuilder.CPointType.SPLINE);
@@ -1516,7 +1531,7 @@ public class EPTSWindow {
 		}
 	    });
 	editingMenu.add(toSplineMenuItem);
-	toControlMenuItem = new JMenuItem("mode -> CONTROL");
+	toControlMenuItem = new JMenuItem(localeString("ModeToCONTROL"));
 	toControlMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    ptmodel.setLastRowMode
@@ -1745,9 +1760,8 @@ public class EPTSWindow {
 			default:
 			    throw new UnexpectedExceptionError();
 			}
-			setModeline(String.format("Location ---  %s "
-						  + "(copied to clipboard)",
-						  location));
+			setModeline(String.format
+				    (localeString("LocationCopied"), location));
 			Clipboard cb = panel.getToolkit().getSystemClipboard();
 			StringSelection selection =
 			    new StringSelection(location);
@@ -1789,9 +1803,8 @@ public class EPTSWindow {
 				x1 = 0; y1 = 0;
 				String distString = String.format("%g", dist);
 				setModeline(String.format
-						 ("Distance = %s "
-						  + "(%s; copied to clipboard)",
-						  distString, space));
+					    (localeString("DistanceIs"),
+					     distString, space));
 				Clipboard cb =
 				    panel.getToolkit().getSystemClipboard();
 				StringSelection selection =
@@ -1893,8 +1906,8 @@ public class EPTSWindow {
 		    scrollPane.repaint();
 		} else {
 		    if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
-			String frameText = "Cancel current Operation?";
-			String frameTitle = "Cancel";
+			String frameText = localeString("CancelCurrentOps");
+			String frameTitle = localeString("Cancel");
 			if (insertRowIndex != -1) {
 			    insertRowIndex = -1;
 			    selectedRow = -1;
@@ -1910,8 +1923,9 @@ public class EPTSWindow {
 			    setModeline("");
 			    return;
 			} else if (nextState != null) {
-			    frameText = "Undo current path segments?";
-			    frameTitle = "Cancel Current Path";
+			    frameText = localeString("UndoCurrentPathSegs");
+			    frameTitle =
+				localeString("UndoCurrentPathSegsTitle");
 			} else if (selectedRow != -1) {
 			    ptmodel.changeCoords(selectedRow,
 						 lastXSelected, lastYSelected,
@@ -2042,7 +2056,7 @@ public class EPTSWindow {
     public void measureDistance(boolean gcs) {
 	resetState();
 	distInGCS = gcs;
-	setModeline("Left click the first point; ESC to abort");
+	setModeline(localeString("LeftClickFirstPoint"));
 	distState = 2;
 	locState = false;
 	savedCursorDist = panel.getCursor();
@@ -2053,7 +2067,7 @@ public class EPTSWindow {
 
     public void createLocation() {
 	resetState();
-	setModeline("Left click to create a point (GCS) ; ESC to abort");
+	setModeline(localeString("LeftClickCreate"));
 	distState = 0; 
 	locState = true;
 	savedCursorDist = panel.getCursor();
@@ -2068,8 +2082,8 @@ public class EPTSWindow {
 	resetState();
 	nextState = SplinePathBuilder.CPointType.MOVE_TO;
 	varname = JOptionPane.showInputDialog
-	    (frame, "Please enter a variable name:",
-	     "Scripting-language Variable Name",
+	    (frame, localeString("PleaseEnterVariableName"),
+	     localeString("ScriptingLanguageVariableName"),
 	     JOptionPane.PLAIN_MESSAGE);
 	if (varname == null) return;
 	ptmodel.addRow(varname, EPTS.Mode.PATH_START, 0.0, 0.0, 0.0, 0.0);
@@ -2173,8 +2187,7 @@ public class EPTSWindow {
 			mouseTracked = true;
 			x1 = p.x / zoom;
 			y1 = p.y / zoom;
-			setModeline("Left click the second point; "
-				    + "ESC to abort");
+			setModeline(localeString("LeftClickSecondPoint"));
 			lastx = x1;
 			lasty = y1;
 			startx = lastx;
@@ -2196,7 +2209,7 @@ public class EPTSWindow {
 			x1 = 0; y1 = 0;
 			String distString = String.format("%g", dist);
 			setModeline(String.format
-				    ("Distance = %s (%s; copied to clipboard)",
+				    (localeString("DistanceIs"),
 				     distString, space));
 			Clipboard cb = panel.getToolkit().getSystemClipboard();
 			StringSelection selection =
@@ -2234,7 +2247,7 @@ public class EPTSWindow {
 			    xpoff = lastXPSelected - xp;
 			    ypoff = lastYPSelected - yp;
 			    setModeline(String.format
-					("Selected point (index %d), type %s",
+					(localeString("SelectedPoint"),
 					 selectedRow, row.getMode()));
 			    
 			}
@@ -2259,7 +2272,7 @@ public class EPTSWindow {
 			    xpoff = row.getXP() - xp;
 			    ypoff = row.getYP() - yp;
 			    setModeline(String.format
-					("Selected point (index %d), type %s",
+					(localeString("SelectedPoint"),
 					 selectedRow, row.getMode()));
 			}
 			panel.repaint();
@@ -2530,7 +2543,70 @@ public class EPTSWindow {
 	g2d.draw(pb.getPath());
     }
 
-    public EPTSWindow(Image image, int port, ArrayList<String> targetList)
+    static java.util.List<Image> iconList = new LinkedList<Image>();
+    static {
+	try {
+	    iconList.add((new
+			  ImageIcon((ClassLoader.getSystemClassLoader()
+				     .getResource("eptsicon16.png")
+				     ))).getImage());
+	    iconList.add((new
+			  ImageIcon((ClassLoader.getSystemClassLoader()
+				     .getResource("eptsicon20.png")
+				     ))).getImage());
+	    iconList.add((new
+			  ImageIcon((ClassLoader.getSystemClassLoader()
+				     .getResource("eptsicon22.png")
+				     ))).getImage());
+	    iconList.add((new
+			  ImageIcon((ClassLoader.getSystemClassLoader()
+				     .getResource("eptsicon24.png")
+				     ))).getImage());
+	    iconList.add((new
+			  ImageIcon((ClassLoader.getSystemClassLoader()
+				     .getResource("eptsicon32.png")
+				     ))).getImage());
+	    iconList.add((new
+			  ImageIcon((ClassLoader.getSystemClassLoader()
+				     .getResource("eptsicon36.png")
+				     ))).getImage());
+	    iconList.add((new
+			  ImageIcon((ClassLoader.getSystemClassLoader()
+				     .getResource("eptsicon48.png")
+				     ))).getImage());
+	    iconList.add((new
+			  ImageIcon((ClassLoader.getSystemClassLoader()
+				     .getResource("eptsicon64.png")
+				     ))).getImage());
+	    iconList.add((new
+			  ImageIcon((ClassLoader.getSystemClassLoader()
+				     .getResource("eptsicon72.png")
+				     ))).getImage());
+	    iconList.add((new
+			  ImageIcon((ClassLoader.getSystemClassLoader()
+				     .getResource("eptsicon96.png")
+				     ))).getImage());
+	    iconList.add((new
+			  ImageIcon((ClassLoader.getSystemClassLoader()
+				     .getResource("eptsicon128.png")
+				     ))).getImage());
+	    iconList.add((new
+			  ImageIcon((ClassLoader.getSystemClassLoader()
+				     .getResource("eptsicon192.png")
+				     ))).getImage());
+	    iconList.add((new
+			  ImageIcon((ClassLoader.getSystemClassLoader()
+				     .getResource("eptsicon256.png")
+				     ))).getImage());
+	    iconList.add((new
+			  ImageIcon((ClassLoader.getSystemClassLoader()
+				     .getResource("eptsicon512.png")
+				     ))).getImage());
+	} catch(Exception e) {
+	}
+    }
+
+    void init(Image image, int port, ArrayList<String> targetList)
 	throws IOException, InterruptedException
     {
 	this.targetList = targetList;
@@ -2538,6 +2614,12 @@ public class EPTSWindow {
 	width = image.getWidth(null);
 	height = image.getHeight(null);
 	this.port = port;
+	if (port != 0) {
+	    try {
+		startManualWebServerIfNeeded();
+	    } catch (Exception e) {
+	    }
+	}
 	Graph graph = new Graph(width, height,
 				Graph.ImageType.INT_ARGB_PRE);
 	graph.setRanges(0.0, 0.0, 0.0, 0.0, 1.0, 1.0);
@@ -2641,9 +2723,69 @@ public class EPTSWindow {
 		    frame.setContentPane(container);
 		    frame.pack();
 		    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		    frame.setIconImages(iconList);
 		    configGCSPane = new ConfigGCSPane();
 		    frame.setVisible(true);
 		}
 	    });
+    }
+
+    public EPTSWindow(final EPTSParser parser)
+	throws IllegalStateException, IOException, InterruptedException
+    {
+	if (parser.imageURIExists()) {
+	    URI uri = parser.getImageURI();
+	    if (uri != null)  {
+		if (!uri.isAbsolute()) {
+		    File cdir =
+			new File(System.getProperty("user.dir"));
+		    uri = cdir.toURI().resolve(uri);
+		}
+		Image image;
+		try {
+		    image = ImageIO.read(uri.toURL());
+		} catch (IOException e) {
+		    throw new
+			IOException(errorMsg("loadImageError", uri.toString()));
+		}
+		if (parser.getWidth() != image.getWidth(null)) {
+		    throw new IllegalStateException
+			("save-state width not equal to image width");
+		}
+		if (parser.getHeight() != image.getHeight(null)) {
+		    throw new IllegalStateException
+			("save-state height not equal to image height");
+		}
+		init(image, port, targetList);
+		// now restore state.
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+			    configGCSPane.savedUnitIndex
+				= parser.getUnitIndex();
+			    configGCSPane.savedRefPointIndex
+				= parser.getRefPointIndex();
+			    configGCSPane.savedUsDistString =
+				parser.getUserSpaceDistance();
+			    configGCSPane.savedGcsDistString =
+				parser.getGcsDistance();
+			    configGCSPane.savedXString = parser.getXOrigin();
+			    configGCSPane.savedYString = parser.getYOrigin();
+			    configGCSPane.restoreState();
+			    for (PointTMR row: parser.getRows()) {
+				ptmodel.addRow(row);
+			    }
+			}
+		    });
+	    } else {
+		throw new IllegalStateException
+		    ("URI missing from saved state");
+	    }
+	}
+    }
+
+    public EPTSWindow(Image image, int port, ArrayList<String> targetList)
+	throws IOException, InterruptedException
+    {
+	init(image, port, targetList);
     }
 }

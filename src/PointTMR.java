@@ -3,6 +3,10 @@
  */
 public class PointTMR {
 
+    static String localeString(String key) {
+	return EPTS.localeString(key);
+    }
+
     String varname;
     Enum<?> mode;
     double x;

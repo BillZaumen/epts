@@ -19,6 +19,11 @@ import javax.swing.event.*;
 import javax.swing.table.*;
 
 public class PointTableModel implements TableModel {
+
+    static String localeString(String key) {
+	return EPTS.localeString(key);
+    }
+
     Vector<TableModelListener> listeners = new Vector<>();
     ArrayList<PointTMR> rows = new ArrayList<>();
     TreeSet<String> names =new TreeSet<>();
@@ -86,7 +91,7 @@ public class PointTableModel implements TableModel {
 	    && (varname != null || varname.length() != 0)) {
 	    if (names.contains(varname)) {
 		throw new IllegalStateException
-		    (String.format("name \"%s\" in use", varname));
+		    (String.format(localeString("NameInUse"), varname));
 	    }
 	    names.add(varname);
 	    if (rmode == EPTS.Mode.PATH_START) {
@@ -133,7 +138,7 @@ public class PointTableModel implements TableModel {
 	     && varname != null && varname.length() != 0) {
 	    if (names.contains(varname)) {
 		throw new IllegalStateException
-		    (String.format("name \"%s\" in use", varname));
+		    (String.format(localeString("NameInUse"), varname));
 	    }
 	    names.add(varname);
 	    if (mode == EPTS.Mode.PATH_START) {
@@ -152,7 +157,7 @@ public class PointTableModel implements TableModel {
 	    varname = varname.trim();
 	    if (names.contains(varname)) {
 		throw new IllegalStateException
-		    (String.format("name \"%s\" in use", varname));
+		    (String.format(localeString("NameInUse"), varname));
 	    }
 	    names.add(varname);
 	    if (mode == EPTS.Mode.PATH_START) {
@@ -181,7 +186,7 @@ public class PointTableModel implements TableModel {
 	    varname = varname.trim();
 	    if (names.contains(varname)) {
 		throw new IllegalStateException
-		    (String.format("name \"%s\" in use", varname));
+		    (String.format(localeString("NameInUse"), varname));
 	    }
 	    names.add(varname);
 	    if (mode == EPTS.Mode.PATH_START) {
@@ -359,13 +364,13 @@ public class PointTableModel implements TableModel {
     public String getColumnName(int columnIndex) {
 	switch(columnIndex) {
 	case 0:
-	    return "Variable";
+	    return localeString("Variable");
 	case 1:
-	    return "Mode";
+	    return localeString("Mode");
 	case 2:
-	    return "X (GCS)";
+	    return localeString("XGCS");
 	case 3:
-	    return "Y (GCS)";
+	    return localeString("YGCS");
 	default:
 	    throw new IndexOutOfBoundsException(BAD_COL + columnIndex);
 	}
@@ -388,12 +393,14 @@ public class PointTableModel implements TableModel {
 	case 1:
 	    return row.getMode();
 	case 2:
-	    if (mode == EPTS.Mode.PATH_START || mode == EPTS.Mode.PATH_END) {
+	    if (mode == EPTS.Mode.PATH_START || mode == EPTS.Mode.PATH_END
+		|| mode == SplinePathBuilder.CPointType.CLOSE) {
 		return "";
 	    }
 	    return String.format("%s", row.getX());
 	case 3:
-	    if (mode == EPTS.Mode.PATH_START || mode == EPTS.Mode.PATH_END) {
+	    if (mode == EPTS.Mode.PATH_START || mode == EPTS.Mode.PATH_END
+		|| mode == SplinePathBuilder.CPointType.CLOSE) {
 		return "";
 	    }
 	    return String.format("%s", row.getY());
@@ -401,7 +408,6 @@ public class PointTableModel implements TableModel {
 	    throw new IndexOutOfBoundsException(BAD_COL + columnIndex);
 	}
     }
-
 
     @Override
     public void setValueAt(Object value, int rowIndex, int columnIndex) {

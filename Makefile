@@ -66,25 +66,17 @@ ICON_DIR = $(DESTDIR)$(SYS_ICON_DIR)
 
 # Installed name of the icon to use for the EPTS application
 #
-SOURCEICON = Icons/eptsicon.svg
+SOURCEICON = icons/epts.svg
 TARGETICON = epts.svg
 TARGETICON_PNG = epts.png
-
 
 # Installed names of icons to use for epts document types
 # (originals in Icons subdirectory)
 #
-SOURCE_DOC_ICON = Icons/eptsdocicon.svg
-TARGET_DOC_ICON = application-x.epts+xml.svg
-TARGET_DOC_ICON_PNG = application-x.epts+xml.png
+SOURCE_FILE_ICON = icons/eptsfile.svg
+TARGET_FILE_ICON = application-x.epts+xml.svg
+TARGET_FILE_ICON_PNG = application-x.epts+xml.png
 
-SOURCE_LDOC_ICON = Icons/eptslayouticon.svg
-TARGET_LDOC_ICON = application-x.epts-layout+xml.svg
-TARGET_LDOC_ICON_PNG = application-x.epts-layout+xml.png
-
-SOURCE_TDOC_ICON = Icons/eptstmplicon.svg
-TARGET_TDOC_ICON = application-x.epts-template.svg
-TARGET_TDOC_ICON_PNG = application-x.epts-template.png
 
 JROOT_DOCDIR = $(JROOT)$(SYS_DOCDIR)
 JROOT_JARDIR = $(JROOT)/jar
@@ -97,19 +89,18 @@ BZDEVDIR = $(SYS_BZDEVDIR)
 EXTLIBS=$(EXTDIR)/libbzdev.jar
 
 
-MANS = $(JROOT_MANDIR)/man1/epts.1.gz
+MANS = $(JROOT_MANDIR)/man1/epts.1.gz $(JROOT_MANDIR)/man5/epts.5.gz
 
-ICONS = 
 
-HELPFILES = 
-
+ICONS = $(SOURCEICON) $(SOURCE_FILE_ICON)
 
 JFILES = $(wildcard src/*.java)
 PROPERTIES = src/EPTS.properties
 TEMPLATES = templates/ECMAScript.tpl templates/save.tpl
 RESOURCES = manual/manual.xml \
 	manual/manual.html \
-	manual/manual.css
+	manual/manual.css \
+	epts-1.0.dtd
 
 FILES = $(JFILES) $(PROPERTIES)
 
@@ -127,8 +118,6 @@ program: clean $(PROGRAM)
 testversion:
 	make program EXTDIR=$(JROOT_JARDIR)
 
-# all: program epts.desktop $(MANS) $(DOCS)
-
 all: $(ALL)
 
 include MajorMinor.mk
@@ -145,8 +134,11 @@ $(JROOT_JARDIR)/epts-$(VERSION).jar: $(FILES) $(TEMPLATES) $(RESOURCES)
 	javac -Xlint:unchecked -Xlint:deprecation \
 		-d $(CLASSES) -classpath $(CLASSES):$(EXTLIBS) \
 		-sourcepath src $(JFILES)
-	cp $(PROPERTIES) $(ICONS) $(HELPFILES) \
-		$(CLASSES)
+	cp $(PROPERTIES) $(CLASSES)
+	for i in $(ICON_WIDTHS) 512 ; do \
+		inkscape -w $$i -e $(CLASSES)/eptsicon$${i}.png \
+		icons/epts.svg ; \
+	done
 	mkdir -p $(JROOT_JARDIR)
 	rm -f $(JROOT_JARDIR)/epts-*.jar
 	cp templates/*.tpl $(CLASSES)
@@ -174,6 +166,12 @@ $(JROOT_MANDIR)/man1/epts.1.gz: epts.1
 	sed s/VERSION/$(VERSION)/g epts.1 | \
 	gzip -n -9 > $(JROOT_MANDIR)/man1/epts.1.gz
 
+$(JROOT_MANDIR)/man5/epts.5.gz: epts.5
+	mkdir -p $(JROOT_MANDIR)/man5
+	sed s/VERSION/$(VERSION)/g epts.5 | \
+	gzip -n -9 > $(JROOT_MANDIR)/man5/epts.5.gz
+
+
 clean:
 	rm -f $(CLASSES)/epts/* $(JROOT_JARDIR)/epts-$(VERSION).jar \
 	$(JROOT_MANDIR)/man1/* \
@@ -193,6 +191,7 @@ install: all
 	install -d $(BIN)
 	install -d $(MANDIR)
 	install -d $(MANDIR)/man1
+	install -d $(MANDIR)/man5
 	install -d $(JARDIRECTORY)
 	install -m 0644 -T $(SOURCEICON) $(APP_ICON_DIR)/$(TARGETICON)
 	for i in $(ICON_WIDTHS) ; do \
@@ -202,32 +201,16 @@ install: all
 			$(ICON_DIR)/$${i}x$${i}/$(APPS_DIR)/$(TARGETICON_PNG); \
 		rm tmp.png ; \
 	done
-	install -m 0644 -T MIME/epts.xml $(MIMEDIR)/packages/epts.xml
-	install -m 0644 -T $(SOURCE_DOC_ICON) \
-		$(MIME_ICON_DIR)/$(TARGET_DOC_ICON)
+	install -m 0644 -T mime/epts.xml $(MIMEDIR)/packages/epts.xml
+	install -m 0644 -T $(SOURCE_FILE_ICON) \
+		$(MIME_ICON_DIR)/$(TARGET_FILE_ICON)
 	for i in $(ICON_WIDTHS) ; do \
 	    install -d $(ICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR) ; \
 	done;
 	for i in $(ICON_WIDTHS) ; do \
-	    inkscape -w $$i -e tmp.png $(SOURCE_DOC_ICON) ; \
+	    inkscape -w $$i -e tmp.png $(SOURCE_FILE_ICON) ; \
 	    install -m 0644 -T tmp.png \
-	    $(ICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR)/$(TARGET_DOC_ICON_PNG); \
-	    rm tmp.png ; \
-	done
-	install -m 0644 -T $(SOURCE_LDOC_ICON) \
-		$(MIME_ICON_DIR)/$(TARGET_LDOC_ICON)
-	for i in $(ICON_WIDTHS) ; do \
-	    inkscape -w $$i -e tmp.png $(SOURCE_LDOC_ICON) ; \
-	    install -m 0644 -T tmp.png \
-	    $(ICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR)/$(TARGET_LDOC_ICON_PNG); \
-	    rm tmp.png ; \
-	done
-	install -m 0644 -T $(SOURCE_TDOC_ICON) \
-		$(MIME_ICON_DIR)/$(TARGET_TDOC_ICON)
-	for i in $(ICON_WIDTHS) ; do \
-	    inkscape -w $$i -e tmp.png $(SOURCE_TDOC_ICON) ; \
-	    install -m 0644 -T tmp.png \
-	    $(ICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR)/$(TARGET_TDOC_ICON_PNG); \
+	    $(ICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR)/$(TARGET_FILE_ICON_PNG); \
 	    rm tmp.png ; \
 	done
 	install -m 0644 $(JROOT_JARDIR)/epts-$(VERSION).jar \
@@ -246,19 +229,11 @@ uninstall:
 	   rm $(ICON_DIR)/$${i}x$${i}/$(APPS_DIR)/$(TARGETICON_PNG) \
 		|| echo .. rm $(TARGETICON_PNG) from $${i}x$${i} FAILED; \
 	done
-	@rm $(MIME_ICON_DIR)/$(TARGET_DOC_ICON)  || \
-		echo ... rm $(TARGET_DOC_ICON) FAILED
-	@rm $(MIME_ICON_DIR)/$(TARGET_LDOC_ICON)  || \
-		echo ... rm $(TARGET_LDOC_ICON) FAILED
-	@rm $(MIME_ICON_DIR)/$(TARGET_TDOC_ICON)  || \
-		echo ... rm $(TARGET_TDOC_ICON) FAILED
+	@rm $(MIME_ICON_DIR)/$(TARGET_FILE_ICON)  || \
+		echo ... rm $(TARGET_FILE_ICON) FAILED
 	@for i in $(ICON_WIDTHS) ; do \
-	  rm $(ICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR)/$(TARGET_DOC_ICON_PNG) \
-		|| echo rm $(TARGET_DOC_ICON_PNG) from $${i}x$${i} FAILED; \
-	  rm $(ICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR)/$(TARGET_LDOC_ICON_PNG) \
-		|| echo rm $(TARGET_LDOC_ICON_PNG) from $${i}x$${i} FAILED; \
-	  rm $(ICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR)/$(TARGET_TDOC_ICON_PNG) \
-		|| echo rm $(TARGET_TDOC_ICON_PNG) from $${i}x$${i} FAILED; \
+	  rm $(ICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR)/$(TARGET_FILE_ICON_PNG) \
+		|| echo rm $(TARGET_FILE_ICON_PNG) from $${i}x$${i} FAILED; \
 	done
 	@(cd $(MIMEDIR)/packages ; \
 	 rm epts.xml || echo rm .../webail.xml FAILED)
