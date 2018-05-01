@@ -1,0 +1,89 @@
+To integrate epts with a computer's window system, one will have to
+configure the window system to use epts's icons and to recognize
+file extensions and media types: that is, so that the epts
+application is shown with an icon specific to it by the window system,
+and epts-specific files are shown by a file manager with a
+epts-supplied icon.  This is not necessary for running epts as
+epts's GUI gets its icons from epts's JAR file.
+
+If epts is installed using Debian packages, the window system will
+be configured as part of the installation.  For other cases (e.g.,
+when using the installer), this currently has to be done manually.
+
+The epts directory (/usr/local/share/epts or /opt/epts for
+Unix/Linux/MacOs and %PROGRAMDATA%\epts for Windows) contains a
+file named share.zip. On systems that support the freedesktop.org
+standards one should look at the environment variables
+XDG_DATA_HOME and XDG_DATA_DIRS. These typically define directory
+search paths, and will typically have a directory /usr/share in
+one of these paths. With /usr/share as an example, running
+
+    sudo unzip share.zip -d /usr/share/
+    sudo update-mime-database
+
+will create the necessary files.  In other cases, one will have to
+follow whatever procedure that particular window system and operating
+system uses.
+
+To configure a window-system that does not follow the freedesktop.org
+standard, one should start by extracting various files from
+share.zip. Some of these files can be read as text files and provide
+specifications for how the window system should be configure.  Other
+files provide icons.  The file share.zip contains the following
+directories:
+
+    * mime/
+
+    * icons/
+
+    * applications/
+
+The file mime/packages/epts.xml uses the freedesktop.org format
+described in
+
+   <http://standards.freedesktop.org/shared-mime-info-spec/
+    shared-mime-info-spec-0.18.html#idm140001680036896>
+
+and describes what patterns in a file and what file-name extensions
+imply that the file has a particular media type.
+
+The icons directory contains a directory named hicolor, which
+contains directories name scalable and NxN, where N = 16, 20, 22, 24,
+32, 36, 48, 64, 72, 96, 128, 192, and 256. Each of these directories
+contains subdirectories named apps (each of which contains an icon used by
+the epts application) and mimetypes (which contains the icons used
+by a file manager to represent various file types).  The files are the
+following:
+
+    icons/hicolor/scalable/apps/epts.svg
+    icons/hicolor/NxN/apps/epts.png
+    icons/hicolor/scalable/mimetypes/application-x.epts+xml.svg
+    icons/hicolor/NxN/mimetypes/application-x.epts+xml.png
+
+where N = 16, 20, 22, 24, 32, 36, 48, 64, 72, 96, 128, 192, and
+256. The "scalable" directories represent icons with SVG (Scalable
+Vector Graphics) files so that icons of any desired size can be
+created.  The NxN directories contain PNG (Portable Network Graphics)
+files with the images having fixed sizes (N is the number of pixels
+for the width and height).  The icons whose names start
+with "application-" correspond to media types that start with the
+string "application/" so application-x.epts+xml.svg is an icon for
+the media type application/x.epts+xml.
+
+The applications directory contains the file
+
+    applications/epts.desktop
+
+whose syntax is described in
+<https://specifications.freedesktop.org/desktop-entry-spec/latest/>.
+This particular example uses a syntax appropriate for Ubuntu-Linux
+systems.
+
+The behavior one wants is to (a) show the appropriate icon for a file
+in a file manager window, (b) to allow the epts application to be
+easily started from a GUI, and (c) double clicking a file whose
+mime type is application-x.epts+xml (the preferred extension is "epts")
+should start the epts application by running
+       epts FILENAME
+where FILENAME is the name of a file whose extension is typically "epts"
+("xml" may be recognized as well).
