@@ -4,6 +4,7 @@ import java.awt.image.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.LineNumberReader;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -18,6 +19,7 @@ import java.util.Properties;
 import java.util.regex.Pattern;
 import javax.imageio.*;
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.bzdev.net.URLClassLoaderOps;
 import org.bzdev.net.URLPathParser;
@@ -659,7 +661,35 @@ public class EPTS {
 		}
 	    }
 	}
-
+	if (!imageMode && !scriptMode && targetList.size() == 0) {
+	    // No arguments that would indicate a saved state, image file,
+	    // or script files, so open a dialog box prompting for
+	    // the input to use.
+	    imageMode = true;
+	    SwingUtilities.invokeAndWait(new Runnable() {
+		    public void run() {
+			File cdir = new File(System.getProperty("user.dir"));
+			JFileChooser fc = new JFileChooser(cdir);
+			String[] extensions = ImageIO.getReaderFileSuffixes();
+			FileNameExtensionFilter filter =
+			    new FileNameExtensionFilter("Images", extensions);
+			fc.setFileFilter(filter);
+			int status = fc.showOpenDialog(null);
+			if (status == JFileChooser.APPROVE_OPTION) {
+			    File f = fc.getSelectedFile();
+			    try {
+				targetList.add(f.getCanonicalPath());
+			    } catch (IOException e) {
+				ErrorMessage.setComponent(null);
+				ErrorMessage.display(e);
+				System.exit(1);
+			    }
+			} else {
+			    System.exit(0);
+			}
+		    }
+		});
+	}
 	if (imageMode) {
 	    Image image = ImageIO.read(new File(targetList.get(0)));
 	    new EPTSWindow(image, port, targetList);
