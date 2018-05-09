@@ -2,4 +2,189 @@
 .SH NAME
 epts \- create points and Bezier curves/splines
 .SH SYNOPTSIS
-This file is a placeholder. The man page will be written later.
+.B epts
+[\fI\,SCROPTION\/\fR]...
+[\fI\,EFILE\/\fR]
+.br
+.B epts
+[\fI\,SCROPTION\/\fR]...
+.B \-\-image
+.I IFILE
+.br
+.SH DESCRIPTION
+EPTS (Edit PoinTS) is a special-purpose graphics editor. Its purpose
+is to make it easy to take a background, typically an image, overlay a
+series of points or curves on top of it, and then scale and/or
+translate the positions of the points and curves so that the locations
+of the points or control points are expressed in a specific coordinate
+system.
+.PP
+With no arguments, EPTS assumes the background is an image and will
+ask the user for an image file. For commands that specify an image
+file
+.I IFILE
+explicitly, that file will be used as the background.  For commands
+that specify an EPTS file
+.I EFILE
+explicitly, the state of a previously saved session will be restored.
+In this case, the current working directory will be set to the
+directory containing the file
+.IR EFILE .
+.SH OPTIONS
+.PP
+There are two types of options. An option referred to as
+.I SCROPTION
+in the synopsis is an option that is also used by the
+.B scrunner
+command. Such options can be used to configure the java virtual machine,
+to add additional java archives to the class path, to define or change
+various system properties, etc.  The remaining options are the
+following:
+.TP
+.B \-\-
+End of options.
+.TP
+.B \-\-image
+The first and only argument that is not an option is the name of an
+image file.
+.TP
+.BI \-\-port PORT
+When
+.I PORT
+is zero (the default) and the user requests to view the manual using
+a browser, an embedded web server will be started and a browser window
+will be brought up.  The web server will use a system-allocated port
+number.  If
+.I PORT
+is not zero, an embedded web server will be started and configured so
+that the file manual.html is available. The URL for this file will be
+<http://\fIHOST\fR:\fIPORT\fR/manual.html>, where
+.I HOST
+is the host name (or IP address) of the system on which EPTS is running.
+.TP
+.BI \-\-map MAPFILE
+The file
+.I MAPFILE
+must contain a series of lines, each starting with the token
+.BR MOVE_TO ,
+.BR SPLINE ,
+.BR CONTROL ,
+.BR SEG_END ,
+or
+.BR CLOSE .
+A replacement for the token, separated from the token by whitespace,
+continues to the end of the line. Any whitespace surrounding the
+replacement is removed. The mapping can be used to print the types
+of points along a path using a custom string instead of the defaults,
+which are based on enumeration constants. The map will set the value
+of a key whose name is
+.B atype
+for use by template processors.
+.TP
+.BI \-\-template TFILE
+The output will be formated based on a template provided by the
+file or URL
+.IR TFILE .
+.TP
+.BI \-o OUTFILE
+This option specifies the output file for template processing, and
+if missing template-processing will not occur. If the value of
+.I OUTFILE
+is
+.B \-
+then standard output is used.  Template processing requires that
+a template be specified with the
+.B \-\-template
+option and one may optionally provide a map using the
+.B \-\- map
+option. When the
+.B \-o
+option is used, EPTS operates in batch mode, and its input file should
+be an EPTS file (one with the file extension "epts"). EPTS files are
+created by EPTS when its "Save" menu item is used.
+.SH SCRUNNER OPTIONS
+.PP
+Most of the options ETPS supports are ones that are shared with the
+program
+.BR scrunner .
+Unless an exceedingly large image file is used or a custom image
+format has to be supported, these are generally not needed when the
+background is an image.  The
+.B scrunner
+options that are supported are:
+.TP
+.BI \-\-codebase\  URLPATH
+Defines directories and jar files to a class path.
+.I URLPATH
+may be a URL giving the location of the classes or a path name in the
+local file system.  The character "|" is used as a path separator, with
+the sequence "||" interpreted as a literal "|", so that for an odd number
+of "|" characters in a row, only the final one is treated as a path separator.
+If file name must start with "|", use a "file" URL and encode the "|" as
+%7C.
+If the starting sequence of a path component contains a ":" (the first one if
+there are more than one), and that sequence of characters is syntactically
+valid at the start of a URL, the path component is treated as a URL. Otherwise
+it is a file name.  This rule implies that Windows file names such as
+C:mycode.jar will be confused with a URL, so a URL should be used instead.
+If a file name is not absolute, it is interpreted
+relative to the current working directory. Multiple codebase options may be
+provided (to improve readability).
+Multiple
+.B \-\-codebase
+options are allowed. For file names, a leading "~" followed by the
+name separator ("/" for Unix) is expanded to the user\'s home
+directory, a file name consisting of only "~" is replaced with the
+user\'s home directory, a leading "~~" is replaced with "~", and a
+leading "..." followed by the name separator ("/" for Unix) is
+replaced by the directory in which the bzdev class library's JAR file
+is located.
+.TP
+.BI \-D NAME\fB=\fIVALUE
+Define the name of a Java property and give it a value.  See the java
+command for details.  The syntax for this argument is the same as that
+defined for the similarly named option for the
+.B java
+command.  The properties "java.system.class.loader", "java.security.manager",
+"scrunner.sysconf", and "scrunner.usrconf" cannot be altered by this
+option (or the corresponding
+.B \-J
+option).  If those must be changed, add a
+.B \-D
+option before the
+.B \-jar
+option in the
+.B scrunner
+shell script (or alternatively, create a new script).
+.TP
+.B \-\-dryrun
+Prints the java command that would be executed but does not actually
+execute it.
+.BI \-J \-JOPTION
+Causes a single-argument option
+.I \-JOPTION
+to be used by the java launcher that
+.B epts
+invokes.
+.TP
+.BI \-L\  LANGUAGE
+Specifies the scripting language
+.I LANGUAGE
+ in use.
+.SH FILES
+.TP
+.I /etc/bzdev/scrunner.conf\ \fRor\fI\ /etc/opt/bzdev/scrunner.conf
+System configuration file that allows a specific Java launcher, class-path
+entries, and property definitions to be used. The form starting with
+/etc/opt may be used on some systems (e.g. Solaris).
+.TP
+.I ~/.config/bzdev/scrunner.conf
+User configuration file that allows a specific Java launcher, class-path
+entries, and property definitions to be used.  property definitions in this
+file override those in the system configuration file.
+.SH SEE ALSO
+.BR scrunner (1)
+.br
+.BR scrunner.conf (5)
+.br
+.BR epts (5)

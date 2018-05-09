@@ -73,10 +73,23 @@ public class ConfigGCSPane extends JPanel {
 	    "nm", "um", "mm", "cm", "m", "km",
 	    "inches", "feet", "yards", "miles"
 	};
+	// explicity enumerate these inc ase the order in the bzdev
+	// class library changes at some point.
+	RefPointName[] names = {
+	    RefPointName.UPPER_LEFT,
+	    RefPointName.UPPER_CENTER,
+	    RefPointName.UPPER_RIGHT,
+	    RefPointName.CENTER_LEFT,
+	    RefPointName.CENTER,
+	    RefPointName.CENTER_RIGHT,
+	    RefPointName.LOWER_LEFT,
+	    RefPointName.LOWER_CENTER,
+	    RefPointName.LOWER_RIGHT
+	};
 	for (String unit: values) {
 	    units.add(unit);
 	}
-	for (RefPointName name: refpoints) {
+	for (RefPointName name: names) {
 	    refpointStrings.add(name.toString());
 	}
     }

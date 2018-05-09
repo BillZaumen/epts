@@ -1,17 +1,24 @@
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.ResourceBundle;
@@ -26,6 +33,7 @@ import org.bzdev.net.URLPathParser;
 import org.bzdev.scripting.Scripting;
 import org.bzdev.swing.ErrorMessage;
 import org.bzdev.util.SafeFormatter;
+import org.bzdev.util.TemplateProcessor;
 
 public class EPTS {
 
@@ -400,6 +408,22 @@ public class EPTS {
 	}
     }
 
+    static Map<String,String> createMap(File f) throws Exception {
+	InputStream is = new FileInputStream(f);
+	BufferedReader rd =
+	    new BufferedReader(new InputStreamReader(is, "UTF-8"));
+	Map<String,String> map = new HashMap<String,String>();
+	String line;
+	while ((line = rd.readLine()) != null) {
+	    String[] tokens = line.trim().split("\\s*", 2);
+	    if (tokens.length != 2) {
+		throw new Exception(errorMsg("needTwoFields", line));
+	    }
+	    map.put(tokens[0], tokens[1]);
+	}
+	return map;
+    }
+
 
     static void init(String argv[]) throws Exception {
 	int index = -1;
@@ -408,12 +432,16 @@ public class EPTS {
 
 	ArrayList<String> jargsList = new ArrayList<>();
 	ArrayList<String> targetList = new ArrayList<>();
+	Map<String,String> map = null;
 	boolean dryrun = false;
 	boolean jcontinue = true;
 	boolean scriptMode = false;
 	boolean imageMode = false;
 	boolean hasCodebase = false;
 	ArrayList<String> argsList = new ArrayList<>();
+	OutputStream out = null;
+	String outName = null;
+	URL templateURL = null;
 
 	String alreadyForkedString = System.getProperty("epts.alreadyforked");
 	boolean alreadyForked = (alreadyForkedString != null)
@@ -502,6 +530,65 @@ public class EPTS {
 			System.exit(1);
 					   
 		    }
+		} else if (argv[index].equals("--map")) {
+		    index++;
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    try {
+			File mapFile = new File(argv[index]);
+			if (mapFile.canRead()) {
+			    map = createMap(mapFile);
+			} else {
+			    System.err.println
+				(errorMsg("cannotRead", argv[index]));
+			    System.exit(1);
+			}
+		    } catch (Exception e) {
+			System.err.println
+			    (errorMsg("ioError", argv[index], e.getMessage()));
+			System.exit(1);
+		    }
+		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
+		} else if (argv[index].equals("--template")) {
+		    index++;
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    String tname = argv[index];
+		    if (tname.startsWith("sresource:")
+			|| tname.startsWith("file:")
+			|| tname.startsWith("http:")
+			|| tname.startsWith("https:")
+			|| tname.startsWith("ftp:")) {
+			templateURL = new URL(tname);
+		    } else {
+			templateURL = (new File(tname)).toURI().toURL();
+		    }
+		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
+		} else if (argv[index].equals("-o")) {
+		    index++;
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    outName = argv[index];
+		    if (!outName.equals("-")) {
+			if ((new File(outName).canWrite()) == false) {
+			    System.err.println
+				(errorMsg("cannotWrite", outName));
+			    System.exit(1);
+			}
+		    }
+		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--")) {
 		    argsList.add(argv[index]);
 		    jcontinue = false;
@@ -691,8 +778,10 @@ public class EPTS {
 		});
 	}
 	if (imageMode) {
+	    File ifile = new File(targetList.get(0));
+	    URI imageURI = ifile.getCanonicalFile().toURI();
 	    Image image = ImageIO.read(new File(targetList.get(0)));
-	    new EPTSWindow(image, port, targetList);
+	    new EPTSWindow(image, port, imageURI);
 	} else if (targetList.size() == 1) {
 	    EPTSParser parser = new EPTSParser();
 	    String filename = targetList.get(0);
@@ -704,7 +793,25 @@ public class EPTS {
 					   parent.getCanonicalPath());
 		    }
 		    parser.parse(new FileInputStream(filename));
-		    new EPTSWindow(parser);
+		    if (outName == null) {
+			new EPTSWindow(parser, new File(filename));
+		    } else {
+			OutputStream os;
+			if (outName.equals("-")) {
+			    os = System.out;
+			} else {
+			    os = new FileOutputStream(outName);
+			}
+			PointTableModel ptmodel = new PointTableModel(null);
+			for (PointTMR row: parser.getRows()) {
+			    ptmodel.addRow(row);
+			}
+			TemplateProcessor tp = new
+			    TemplateProcessor(ptmodel.getKeyMap(map));
+			tp.processURL(templateURL, "UTF-8", os);
+			os.flush();
+			System.exit(0);
+		    }
 		    /*
 		    System.out.println("width " + parser.getWidth());
 		    System.out.println("height " + parser.getHeight());
@@ -738,6 +845,7 @@ public class EPTS {
 
     public static void main(String argv[]) {
 	try {
+	    org.bzdev.protocols.Handlers.enable();
 	    init(argv);
 	} catch (Exception e) {
 	    ErrorMessage.display(e);

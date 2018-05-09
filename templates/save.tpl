@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.1" encoding="UTF-8"?>
 <!DOCTYPE epts PUBLIC "-//BZDev//EPTS-1.0//EN"
 	  "sresource:epts-1.0.dtd">
 <epts xmlns="http://bzdev.org/DTD/epts-1.0">

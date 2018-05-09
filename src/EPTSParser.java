@@ -55,7 +55,6 @@ public class EPTSParser {
     
     public int getWidth() {return width;}
     public int getHeight() {return height;}
-    public String[] getArgArray() {return argArray;}
     public boolean imageURIExists() {return imageURIExists;}
     public URI getImageURI() {return imageURI;}
     public int getUnitIndex() {return unitIndex;}
@@ -100,6 +99,10 @@ public class EPTSParser {
 	ErrorMessage.display(xmlFilename, locator.getLineNumber(), msg);
     }
 
+    ArrayList<String> argList = new ArrayList<>();
+    public ArrayList<String> getTargetList() {return argList;}
+
+
     StringBuilder text = new StringBuilder();
 
     class OurDefaultHandler extends DefaultHandler {
@@ -115,7 +118,7 @@ public class EPTSParser {
  
 	boolean mimeTypePISeen = false;
 
-	ArrayList<String> argList = new ArrayList<>();
+
 	ArrayList<PointTMR> rowList = new ArrayList<>();
 
 	public void startDocument() {

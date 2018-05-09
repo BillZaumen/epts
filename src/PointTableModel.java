@@ -10,6 +10,7 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.Vector;
@@ -61,6 +62,17 @@ public class PointTableModel implements TableModel {
 	return -1;
     }
 
+    public int findStart(int index) {
+	while (index > 0) {
+	    Enum mode = getRowMode(index);
+	    if (mode == EPTS.Mode.LOCATION || mode == EPTS.Mode.PATH_START) {
+		break;
+	    }
+	    index--;
+	}
+	return index;
+    }
+
     public int findEnd(int start) {
 	int n = rows.size();
 	if (start == -1 ||  start >= n) return -1;
@@ -71,6 +83,7 @@ public class PointTableModel implements TableModel {
 	}
 	return -1;
     }
+
 
     public PointTMR getLastRow()  {
 	int n = rows.size();
@@ -113,6 +126,10 @@ public class PointTableModel implements TableModel {
 	return rows.get(i).getMode();
     }
 
+    public String getVariableName(int index) {
+	if (index < 0 || index >= rows.size()) return null;
+	return rows.get(index).getVariableName();
+    }
 
     JComponent pane;		// for repaint();
 
@@ -450,7 +467,13 @@ public class PointTableModel implements TableModel {
      * "pathitem" is a list of keymaps, each of which contain  the
      * following keys:
      * <UL>
-     *   <LI> "type" This provides the type of a key segment.
+     *   <LI> "type". This provides the type of a point along the path.
+     *   <LI> "ltype". This provides an alternative name for the type of a
+     *         point along the path. The alternate uses the names appropriate
+     *         for configuring an animation-layer factory.
+     *   <LI> "atype". This provides a user-supplied alternative name for
+     *         the type of a point along the path. The alternate is
+     *         specified by a user-provided map.
      *   <LI> "xy" The value is either empty or a keymap containing the
      *        keys
      *        <UL>
@@ -471,9 +494,11 @@ public class PointTableModel implements TableModel {
      *     $(pathStatement)
      *          [can use $(varname)]
      *          $(pathItem:endPathItem)
-     *              [can use $(varname), $(type) and $(optcomma)]
+     *              [can use $(varname), $(type), $(ltype) $(atype), and
+     *               $(optcomma)]
      *              $(xy:endXY)
-     *                [can use $varname, $(type), $(optcomma), $(x), and $(y)]
+     *                [can use $varname, $(type), $(ltype), $(atype),
+     *                 $(optcomma), $(x), and $(y)]
      *              $(endXY)
      *          $(endPathItem)
      *     $(endPathStatement)
@@ -495,6 +520,11 @@ public class PointTableModel implements TableModel {
      * $(endItems)
      */
     public TemplateProcessor.KeyMap getKeyMap() {
+	return getKeyMap(null);
+    }
+
+    public TemplateProcessor.KeyMap getKeyMap(Map<String,String> tmap) {
+
 	TemplateProcessor.KeyMapList list = new TemplateProcessor.KeyMapList();
 	TemplateProcessor.KeyMap kmap1 = null;
 	TemplateProcessor.KeyMap kmap2 = null;
@@ -502,13 +532,18 @@ public class PointTableModel implements TableModel {
 	TemplateProcessor.KeyMapList plist = null;
 	int n = rows.size();
 	int index = 0;
+	int vindex = 0;
+	int pindex = 0;
 	for (PointTMR row: rows) {
 	    index++;
 	    Enum mode = row.getMode();
 	    if (mode == EPTS.Mode.LOCATION) {
+		vindex++;
 		kmap1 = new TemplateProcessor.KeyMap();
 		kmap2 = new TemplateProcessor.KeyMap();
 		kmap1.put("varname", row.getVariableName());
+		kmap1.put("vindex", ("" + vindex));
+		kmap1.put("index", ("" + index));
 		kmap1.put("location", kmap2);
 		kmap2.put("x", String.format((Locale)null, "%s", row.getX()));
 		kmap2.put("y", String.format((Locale)null, "%s", row.getY()));
@@ -516,12 +551,15 @@ public class PointTableModel implements TableModel {
 		kmap2.put("yp", String.format((Locale)null, "%s", row.getYP()));
 		list.add(kmap1);
 	    } else if (mode == EPTS.Mode.PATH_START) {
+		vindex++;
 		kmap1 = new TemplateProcessor.KeyMap();
 		kmap2 = new TemplateProcessor.KeyMap();
 		kmap1.put("varname", row.getVariableName());
+		kmap1.put("vindex", ("" + vindex));
 		kmap1.put("pathStatement", kmap2);
 		list.add(kmap1);
 		plist = new TemplateProcessor.KeyMapList();
+		pindex = 0;
 		kmap2.put("pathItem", plist);
 		kmap3 = null;
 	    } else if (mode instanceof SplinePathBuilder.CPointType) {
@@ -534,7 +572,23 @@ public class PointTableModel implements TableModel {
 		}
 		if (kmap3 != null) kmap3.put("optcomma", ",");
 		kmap3 = new TemplateProcessor.KeyMap();
+		kmap3.put("index", ("" + index));
+		pindex++;
+		kmap3.put("pindex", ("" + pindex));
 		kmap3.put("type", mode.toString());
+		if (mode == SplinePathBuilder.CPointType.CONTROL) {
+		    kmap3.put("ltype", "CONTROL_POINT");
+		} else if (mode == SplinePathBuilder.CPointType.SPLINE) {
+		    kmap3.put("ltype", "SPLINE_POINT");
+		} else if (mode == SplinePathBuilder.CPointType.CLOSE) {
+		    kmap3.put("ltype", "SEG_CLOSE");
+		} else {
+		    kmap3.put("ltype", mode.toString());
+		}
+		if (tmap != null) {
+		    String val = tmap.get(mode.toString());
+		    kmap3.put("atype", (val == null)? mode.toString(): val);
+		}
 		if (mode != SplinePathBuilder.CPointType.CLOSE) {
 		    TemplateProcessor.KeyMap
 			kmap4 = new TemplateProcessor.KeyMap();

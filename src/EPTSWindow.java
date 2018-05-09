@@ -66,9 +66,10 @@ public class EPTSWindow {
     LocationFormat locationFormat = LocationFormat.STATEMENT;
     String varname = null;
     ArrayList<String> targetList = null;
-    // true if targetList contains a file name of an image we laoded
+    // true if targetList contains a file name of an image we loaded
     boolean imageFileNameSeen = false;
-    
+    URI imageURI = null;
+
     PointTableModel ptmodel;
     JTable ptable;
     JFrame tableFrame;
@@ -81,6 +82,17 @@ public class EPTSWindow {
 	keymap.put("hasImageFile", imageFileNameSeen? "true": "false");
 	TemplateProcessor.KeyMapList tlist =
 	    new TemplateProcessor.KeyMapList();
+	if (imageFileNameSeen) {
+	    TemplateProcessor.KeyMap map = new TemplateProcessor.KeyMap();
+	    File fparent = f.getCanonicalFile().getParentFile();
+	    // we use relative URLs if the image file is in a
+	    // subdirectory of the directory containing the saved
+	    // state.
+	    String arg = fparent.toURI().relativize(imageURI).toString();
+	    map.put("arg", arg);
+	    tlist.add(map);
+	}
+	/*
 	for (String arg: targetList) {
 	    TemplateProcessor.KeyMap map = new TemplateProcessor.KeyMap();
 	    File af = new File(arg);
@@ -102,6 +114,7 @@ public class EPTSWindow {
 	    map.put("arg", arg);
 	    tlist.add(map);
 	}
+	*/
 	keymap.put("arglist", tlist);
 	keymap.put("unitIndex",
 		   String.format("%d", configGCSPane.savedUnitIndex));
@@ -122,13 +135,19 @@ public class EPTSWindow {
 	OutputStream os = new FileOutputStream(f);
 	Writer writer = new OutputStreamWriter(os, "UTF-8");
 	tp.processSystemResource("save.tpl", "UTF-8", writer);
+	needSave = false;
     }
 
-    public void restore(EPTSParser parser) {
-    }
+    boolean needSave = false;
+    TableModelListener tmlistener = new TableModelListener() {
+	    public void tableChanged(TableModelEvent e) {
+		needSave = true;
+	    }
+	};
 
     void setupTable(JComponent pane) {
 	ptmodel = new PointTableModel(pane);
+	ptmodel.addTableModelListener(tmlistener);
 	ptable = new JTable(ptmodel);
 	ptable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 	ptable.setRowSelectionAllowed(true);
@@ -382,8 +401,81 @@ public class EPTSWindow {
     }
 
     JMenuItem saveMenuItem;
+    JMenuItem saveAsMenuItem;
     JMenuItem addToPathMenuItem; // for Tools menu.
     File savedFile = null;
+
+    private void doSave(boolean mode) {
+	try {
+	    if (mode || savedFile == null) {
+		File cdir = new File(System.getProperty("user.dir"))
+		    .getCanonicalFile();
+		JFileChooser chooser = new JFileChooser(cdir);
+		FileNameExtensionFilter filter =
+		    new FileNameExtensionFilter
+		    (localeString("EptsState"), "epts");
+		chooser.setFileFilter(filter);
+		chooser.setSelectedFile(savedFile);
+		int status = chooser.showSaveDialog(frame);
+		if (status == JFileChooser.APPROVE_OPTION) {
+		    savedFile = chooser.getSelectedFile();
+		    String name = savedFile.getName();
+		    if (!(name.endsWith(".epts")
+			  || name.endsWith(".EPTS"))) {
+			savedFile =
+			    new File(savedFile.getParentFile(),
+				     name + ".epts");
+		    }
+		} else {
+		    return;
+		}
+	    }
+	    if (!savedFile.exists()) {
+		save(savedFile);
+	    } else {
+		File parent = savedFile.getCanonicalFile().getParentFile();
+		File tmp = File.createTempFile("eptstmp", ".epts",
+					       parent);
+		// tmp.deleteOnExit(); // make sure it goes away even if errors.
+		save(tmp);
+		File backup = new File(savedFile.getCanonicalPath() + "~");
+		if (backup.exists()) backup.delete();
+		savedFile.renameTo(backup);
+		tmp.renameTo(savedFile);
+	    }
+	} catch (Exception ee) {
+	    JOptionPane.showMessageDialog(frame,
+					  errorMsg("saveFailed",
+						   savedFile,
+						   ee.getMessage()),
+					  localeString("errorTitle"),
+					  JOptionPane.ERROR_MESSAGE);
+	}
+    }
+
+    private ActionListener quitListener = new ActionListener() {
+	    public void actionPerformed(ActionEvent e) {
+		if (needSave) {
+		    int result = JOptionPane.showConfirmDialog
+			(frame, localeString ("confirmSave"),
+			 localeString("confirmCancelSave"),
+			 JOptionPane.YES_NO_CANCEL_OPTION,
+			 JOptionPane.QUESTION_MESSAGE);
+		    switch (result) {
+		    case JOptionPane.OK_OPTION:
+			doSave(false);
+			break;
+		    case JOptionPane.CANCEL_OPTION:
+			return;
+		    default:
+			break;
+		    }
+		}
+		System.exit(0);
+	    }
+	};
+
+    JMenuItem quitMenuItem;
 
     private void setMenus(JFrame frame, double w, double h) {
 	JMenuBar menubar = new JMenuBar();
@@ -391,51 +483,30 @@ public class EPTSWindow {
 	JMenu fileMenu = new JMenu(localeString("File"));
 	fileMenu.setMnemonic(KeyEvent.VK_F);
 	menubar.add(fileMenu);
-	menuItem = new JMenuItem(localeString("Quit"), KeyEvent.VK_Q);
-	menuItem.setAccelerator(KeyStroke.getKeyStroke
-				(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK));
-	menuItem.addActionListener(new ActionListener() {
-		public void actionPerformed(ActionEvent e) {
-		    System.exit(0);
-		}
-	    });
-	fileMenu.add(menuItem);
+	quitMenuItem = new JMenuItem(localeString("Quit"), KeyEvent.VK_Q);
+	quitMenuItem.setAccelerator(KeyStroke.getKeyStroke
+				    (KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK));
+	quitMenuItem.addActionListener(quitListener);
+	fileMenu.add(quitMenuItem);
 	saveMenuItem = new JMenuItem(localeString("Save"), KeyEvent.VK_S);
 	saveMenuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
 	saveMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
-		    try {
-			if (savedFile == null) {
-			    File cdir = new File(System.getProperty("user.dir"))
-				.getCanonicalFile();
-			    JFileChooser chooser = new JFileChooser(cdir);
-			    FileNameExtensionFilter filter =
-				new FileNameExtensionFilter
-				(localeString("EptsState"), "epts");
-			    chooser.setFileFilter(filter);
-			    chooser.setSelectedFile(savedFile);
-			    int status = chooser.showSaveDialog(frame);
-			    if (status == JFileChooser.APPROVE_OPTION) {
-				savedFile = chooser.getSelectedFile();
-				String name = savedFile.getName();
-				if (!(name.endsWith(".epts")
-				      || name.endsWith(".EPTS"))) {
-				    savedFile =
-					new File(savedFile.getParentFile(),
-						 name + ".epts");
-				}
-			    } else {
-				return;
-			    }
-			}
-			save(savedFile);
-		    } catch (Exception ee) {
-		    }
+		    doSave(false);
 		}
 	    });
 	fileMenu.add(saveMenuItem);
-	
+
+	saveAsMenuItem = new JMenuItem(localeString("SaveAs"), KeyEvent.VK_A);
+	saveAsMenuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    doSave(true);
+		}
+	    });
+	fileMenu.add(saveAsMenuItem);
+
+
 	menuItem = new JMenuItem(localeString("ConfigureGCS"), KeyEvent.VK_C);
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
@@ -585,6 +656,7 @@ public class EPTSWindow {
 		    }
 		    if (nextState != null) {
 			saveMenuItem.setEnabled(false);
+			saveAsMenuItem.setEnabled(false);
 		    }
 		}
 	    });
@@ -823,6 +895,7 @@ public class EPTSWindow {
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_P, InputEvent.ALT_DOWN_MASK));
 	menuItem.addActionListener(new ActionListener() {
+		long pointIndex = 1;
 		public void actionPerformed(ActionEvent e) {
 		    if (!cleanupPartialPath(false)) return;
 		    if (locationFormat == LocationFormat.STATEMENT) {
@@ -831,6 +904,22 @@ public class EPTSWindow {
 			     localeString("ScriptingLanguageVariableName"),
 			     JOptionPane.PLAIN_MESSAGE);
 			if (varname == null) return;
+			varname = varname.trim();
+			if (varname.length() == 0) {
+			    varname = "pt" + (pointIndex++);
+			    while (ptmodel.getVariableNames()
+				   .contains(varname)) {
+				varname = "pt" + (pointIndex++);
+			    }
+			}
+			if (ptmodel.getVariableNames().contains(varname)) {
+			    JOptionPane.showMessageDialog
+				(frame,
+				 errorMsg("nameInUse", varname),
+				 localeString("errorTitle"),
+				 JOptionPane.ERROR_MESSAGE);
+			    return;
+			}
 		    }
 		    createLocation();
 		}
@@ -1423,7 +1512,10 @@ public class EPTSWindow {
 	    }
 	    ttable.setState(ptmodel, endIndex);
 	}
-	if (nextState != null) saveMenuItem.setEnabled(false);
+	if (nextState != null) {
+	    saveMenuItem.setEnabled(false);
+	    saveAsMenuItem.setEnabled(false);
+	}
     }
 
     private boolean hasLoop(int rowIndex) {
@@ -2042,6 +2134,7 @@ public class EPTSWindow {
 	    }
 	    nextState = null;
 	    saveMenuItem.setEnabled(true);
+	    saveAsMenuItem.setEnabled(true);
 	    ttable = null;
 	}
 
@@ -2077,15 +2170,29 @@ public class EPTSWindow {
     TransitionTable ttable = null;
     Enum nextState = null;
     Cursor savedCursorPath = null;
+    private long pathIndex = 1;
 
     private void createPath() {
 	resetState();
-	nextState = SplinePathBuilder.CPointType.MOVE_TO;
 	varname = JOptionPane.showInputDialog
 	    (frame, localeString("PleaseEnterVariableName"),
 	     localeString("ScriptingLanguageVariableName"),
 	     JOptionPane.PLAIN_MESSAGE);
 	if (varname == null) return;
+	varname = varname.trim();
+	if (varname.length() == 0) {
+	    varname = "path" + (pathIndex++);
+	    while (ptmodel.getVariableNames().contains(varname)) {
+		varname = "path" + (pathIndex++);
+	    }
+	}
+	if (ptmodel.getVariableNames().contains(varname)) {
+	    JOptionPane.showMessageDialog(frame, errorMsg("nameInUse", varname),
+					  localeString("errorTitle"),
+					  JOptionPane.ERROR_MESSAGE);
+	    return;
+	}
+	// nextState = SplinePathBuilder.CPointType.MOVE_TO;
 	ptmodel.addRow(varname, EPTS.Mode.PATH_START, 0.0, 0.0, 0.0, 0.0);
 	savedCursorPath = panel.getCursor();
 	panel.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
@@ -2098,6 +2205,7 @@ public class EPTSWindow {
 	nextState = SplinePathBuilder.CPointType.MOVE_TO;
 	addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	saveMenuItem.setEnabled(false);
+	saveAsMenuItem.setEnabled(false);
     }
 
     boolean mouseMoved = false;
@@ -2246,9 +2354,11 @@ public class EPTSWindow {
 			    lastYPSelected = row.getYP();
 			    xpoff = lastXPSelected - xp;
 			    ypoff = lastYPSelected - yp;
+			    String vn = ptmodel.getVariableName
+				(ptmodel.findStart(selectedRow));
 			    setModeline(String.format
 					(localeString("SelectedPoint"),
-					 selectedRow, row.getMode()));
+					 selectedRow, vn, row.getMode()));
 			    
 			}
 			selectedRowClick = true;
@@ -2271,9 +2381,11 @@ public class EPTSWindow {
 			    PointTMR row = ptmodel.getRow(selectedRow);
 			    xpoff = row.getXP() - xp;
 			    ypoff = row.getYP() - yp;
+			    String vn = ptmodel.getVariableName
+				(ptmodel.findStart(selectedRow));
 			    setModeline(String.format
 					(localeString("SelectedPoint"),
-					 selectedRow, row.getMode()));
+					 selectedRow, vn, row.getMode()));
 			}
 			panel.repaint();
 		    } else if ((modifiers & KEY_MASK)
@@ -2606,10 +2718,10 @@ public class EPTSWindow {
 	}
     }
 
-    void init(Image image, int port, ArrayList<String> targetList)
+    void init(Image image, int port/*, ArrayList<String> targetList*/)
 	throws IOException, InterruptedException
     {
-	this.targetList = targetList;
+	// this.targetList = targetList;
 	imageFileNameSeen = true;
 	width = image.getWidth(null);
 	height = image.getHeight(null);
@@ -2722,7 +2834,25 @@ public class EPTSWindow {
 		    container.add(scrollPane, BorderLayout.CENTER);
 		    frame.setContentPane(container);
 		    frame.pack();
-		    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		    // frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		    frame.addWindowListener(new WindowAdapter() {
+			    public void windowClosing(WindowEvent e) {
+				// quitListener does not check its
+				// action event.
+				if (quitMenuItem.isEnabled()) {
+				    quitListener.actionPerformed(null);
+				}
+				// If we get here, we didn't exit because
+				// the exit operation was canceled.
+				// In that case, we make the window
+				// visible again.
+				SwingUtilities.invokeLater(new Runnable() {
+					public void run() {
+					    frame.setVisible(true);
+					}
+				    });
+			    }
+			});
 		    frame.setIconImages(iconList);
 		    configGCSPane = new ConfigGCSPane();
 		    frame.setVisible(true);
@@ -2730,9 +2860,10 @@ public class EPTSWindow {
 	    });
     }
 
-    public EPTSWindow(final EPTSParser parser)
+    public EPTSWindow(final EPTSParser parser, File inputFile)
 	throws IllegalStateException, IOException, InterruptedException
     {
+	savedFile = inputFile;
 	if (parser.imageURIExists()) {
 	    URI uri = parser.getImageURI();
 	    if (uri != null)  {
@@ -2744,6 +2875,7 @@ public class EPTSWindow {
 		Image image;
 		try {
 		    image = ImageIO.read(uri.toURL());
+		    imageURI = uri;
 		} catch (IOException e) {
 		    throw new
 			IOException(errorMsg("loadImageError", uri.toString()));
@@ -2756,7 +2888,9 @@ public class EPTSWindow {
 		    throw new IllegalStateException
 			("save-state height not equal to image height");
 		}
-		init(image, port, targetList);
+		// ArrayList<String>list = new ArrayList<>();
+		// list.add(uri.toString());
+		init(image, port/*, new ArrayList<String>()*/);
 		// now restore state.
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
@@ -2783,9 +2917,10 @@ public class EPTSWindow {
 	}
     }
 
-    public EPTSWindow(Image image, int port, ArrayList<String> targetList)
+    public EPTSWindow(Image image, int port, URI imageURI)
 	throws IOException, InterruptedException
     {
-	init(image, port, targetList);
+	this.imageURI = imageURI;
+	init(image, port/*, targetList*/);
     }
 }

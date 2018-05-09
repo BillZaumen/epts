@@ -9,32 +9,48 @@
 <BR>
 <H1><A name="intro">Introduction</A></H1>
 
-EPTS (Edit PoinTS) is a special-purpose graphics editor. When using
-the BZDev class library's <code>graphs</code> and <code>anim2d</code>
-packages, there are three coordinate systems that are used:
+EPTS (Edit PoinTS) is a special-purpose graphics editor. Its purpose
+is to make it easy to take a background, typically an image, overlay a
+series of points or curves on top of it, and then scale and/or
+translate the positions of the points and curves so that the locations
+of the points or control points are expressed in a specific coordinate
+system.
+
+When using the BZDev class library's <code>graphs</code>
+and <code>anim2d</code> packages, there are three coordinate systems
+that are used:
 <UL>
   <LI> the standard Java user-space coordinates, which measures
     distances in units of "points" (1/72 inches) and where the
     positive X direction points left and the positive Y direction
-    points down.
+    points down. Without any explict scaling, the JRE (Java Runtime
+    Environment) will scale images so that one pixel covers a square
+    that is 1 point by 1 point in size. This may represent several
+    pixels on a display or output device (e.g., a high-resolution
+    printer).  User-space coordinates are floating point numbers.
+    As a result, if an output device contains 4 pixels for each
+    1x1 point square, and the image is scaled down by a factor of 2,
+    there will be no degradation in image quality.
   <LI> image space coordinates, in which one unit corresponds to a
-    pixel. The BZDev graphs package and the anim2d package will specify
-    if an image, before scaling, would be rendered so that one pixel's
-    height and width correspond to one unit in either user space or
-    graph coordinate space. EPTS assumes that graph coordinate space
-    was chosen, and allows an appropriate scale factor to be defined.
+    pixel of an image. The BZDev graphs package and the anim2d package
+    will specify if an image, before scaling, would be rendered so
+    that one pixel's height and width correspond to one unit in either
+    user space or graph coordinate space. EPTS assumes that graph
+    coordinate space was chosen, and allows an appropriate scale
+    factor to be defined so that a distance in image space will be
+    mapped to a corresponding distance in graph coordinate space.
   <LI> graph coordinate space coordinates, in which distances are
     measured in application-specific coordinates (e.g., meters) and
     where the positive X direction points left and the positive Y
-    direction points up.
+    direction points up. EPTS allows distances to be specified in either
+    custom units or meters.  If custom units are not used, all other
+    units will be converted to meters.
 </UL>
 EPTS will display an image and allow one to overlay this image with
 points and B&eacute;zier curves, expressing their locations and control
 points in graph coordinate space units. It will also allow one to measure
 the distance between points in either image space or graph coordinate space
 units.
-
-
 
 
 <H1><A name="menus">The menu bar</A></H1>
@@ -56,6 +72,11 @@ The <code>File</code> menu contains the following items:
 <UL>
   <LI><code>Quit</code>. Choosing this menu item causes the program to
     exit.
+  <LI><code>Save</code>. Choosing this menu item causes the program to
+    be saved.
+  <LI><code>Save As</code>. Choosing this menu item causes the program to
+    be saved with a new file name. This new file will become the default
+    file name for the <code>Save</code> menu item.
   <LI><A name="config"><code>Configure CGS</code></A>. Choosing this
     menu item will open a dialog box for configuring graph coordinate
     space. This dialog box allows one to set a distance in user-spaced
@@ -146,13 +167,19 @@ displayed in textual form. This menu contains the following items:
     A description of this point, in a format set by <CODE>Edit</CODE>
     menu options, will be copied to the clipboard. Selecting an option
     other than the one specifying a variable name will result in the
-    point not appearing in the table.
+    point not appearing in the table. If a variable name is requested
+    and the variable name is left as an empty string, a new variable
+    name will be generated, starting the string "pt" and followed by
+    a number (e.g., <code>pt7</code>.)
   <LI><CODE>Create a B&eacute;zier Path.</CODE>. A new path will be
     created. A dialog box will ask for a variable name for the path,
     and the cursor will change to a cross-hair cursor, and the user
-    should select the initial point on the curve.  The point type shown
-    in the table is <CODE>MOVE_TO</CODE> - only one such point is
-    allowed for each curve.
+    should select the initial point on the curve.  The point type
+    shown in the table is <CODE>MOVE_TO</CODE> - only one such point
+    is allowed for each curve. If a variable name is requested and the
+    variable name is left as an empty string, a new variable name will
+    be generated, starting the string "path" and followed by a number
+    (e.g., <code>path24</code.)
   <LI><CODE>Add to a B&eacute;zier Path</CODE>. The user will be asked to
     select the name of a path, and adding points to the path will then
     be possible.
@@ -203,20 +230,24 @@ manual. This menu contains the folowing items:
 
 <H1><A name="mouse">Using the mouse</A></H1>
 
-There are several combinations of mouse buttons and modifier keys
-that may be used, mostly to create or modify points (locations, control
-points, or spline points, all shown as filled circles overlayed on the
-image):
+There are several combinations of mouse buttons and modifier keys that
+may be used, mostly to create or modify points (locations, control
+points, segment ending points, or spline points), all shown as filled
+circles overlayed on the image):
 <UL>
-  <LI> ALT key and primary mouse button pressed. The image
-    can be dragged, and scrollbars will move in the opposite direction
-    to that in which the cursor moves. The image, however, cannot be
-    dragged beyond the range that the scrollbars support.
-  <LI> Control Key and primary mouse button pressed. This combination is
-    used while creating a path or extending a path.  The mouse must be
-    positioned over a point when the left button is pressed. The point
-    can then be dragged to a new location.  The selected point will
-    have a circle around it.
+  <LI> ALT key and primary mouse button pressed. The image can be
+    dragged, and scrollbars will move in the opposite direction to
+    that in which the cursor moves. The image, however, cannot be
+    dragged beyond the range that the scrollbars support. If a window
+    system has a short cut that uses the same key-mouse combination,
+    the window system's behavior may occur instead.
+  <LI> Control Key and primary mouse button pressed. This combination
+    is used while creating a path or extending a path.  The mouse must
+    be positioned over a point when the left button is pressed. The
+    point can then be dragged to a new location.  The selected point
+    will have a circle around it. If a window system has a short cut
+    that uses the same key-mouse combination, the window system's
+    behavior may occur instead.
   <LI> No keys but the primary mouse button clicked. When a cross-hair
     cursor is shown, a point will be added, either an isolated point
     or an additional point along a curve. When the normal 'arrow' cursor
@@ -286,14 +317,21 @@ Some shortcuts apply regardless of the current mode:
   <LI> Control-Down-Arrow. Move the vertical scroll bar down.
   <LI> Alt-A. Append points to a B&eacute;zier path.
   <LI> Alt-I. Measure the image-space distance between two points.
-  <LI> Alt-G. Measure the graph-coordinate-space distance between two points.
-    To provide a meaningful distance, graph coordinate space must be
-    configured first. The <A href="#config"><CODE>Configure CGS</CODE></A>
-    menu item allows graph coordinate space to be configured.
-  <LI> Alt-P. Add an isolated point.  The user will be asked to supply a
-    variable name that has not been used before.
-  <LI> Alt-B. Add a B&eacute;zier path. The user will be asked to supply a
-    variable name that has not been used before.
+  <LI> Alt-G. Measure the graph-coordinate-space distance between two
+    points.  To provide a meaningful distance, graph coordinate space
+    must be configured first. The
+    <A href="#config"><CODE>Configure CGS</CODE></A> menu item allows
+    graph coordinate space to be configured.
+  <LI> Alt-P. Add an isolated point.  The user will be asked to supply
+    a variable name that has not been used before. If that variable
+    name is not provided or consists of just whitespace, a name will
+    be generated.  A generated name starts with the
+    string <code>pt</code> and ends with a positive integer.
+  <LI> Alt-B. Add a B&eacute;zier path. The user will be asked to
+    supply a variable name that has not been used before. If that
+    variable name is not provided or consists of just whitespace, a
+    name will be generated.  A generated name starts with the
+    string <code>path</code> and ends with a positive integer.
 </UL>
 
 By contrast, some key combinations apply only when adding a point to
@@ -330,6 +368,8 @@ a path or creating an isolated point at a specific location:
 </UL>
 
 <H1><A name="cli">The command-line interface</A></H1>
+
+[To be provided later.]
 
 </BODY>
 

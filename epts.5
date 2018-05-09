@@ -2,5 +2,188 @@
 .SH NAME
 epts \- epts file format
 .SH DESCRIPTION
-This file is a placeholder. The man page documenting the file format
-has not yet been written.
+The program
+.B epts
+allows its state to be saved in XML files that use the file extension
+.BR epts .
+.PP
+This file starts with the following lines:
+.IP
+.B
+<?xml version="1.1" encoding="UTF-8"?>
+.br
+.B
+<!DOCTYPE\ images\ PUBLIC\ "-//BZDev//EPTS-1.0//EN"
+.br
+.B
+\ \ \ \ \ \ \ \ \ \ "sresource:epts-1.0.dtd">
+.br
+.B
+<epts xmlns="http://bzdev.org/DTD/epts-1.0">
+.PP
+This is followed by an "image" element:
+.IP
+.B
+<image width="\fIWIDTH\fB" height="\fIHEIGHT\fB" imageURIExists="\fIVALUE\fB"\>
+.PP
+where
+.I WIDTH
+is the image width,
+.I HEIGHT
+is the image height,
+and
+.I VALUE
+is
+.B true
+if an image file is specified, and
+.B false
+if not. When an image file is specified, the
+.B width
+and
+.B height
+fields for this element are those of the image. When the
+.B imageURIExists
+field is
+.BR true ,
+the image URI will be provided in the following
+.B targetList
+element described below and the specified dimensions are expected to
+match those of the image (this allows a crosscheck to verify that the
+image dimensions have not changed due to an update as the image itself is not
+part of this file).
+.PP
+The
+.B targetList
+element does not have any attributes, using a sequence of
+.B argument
+elements instead:
+.IP
+.B
+<targetList>
+.br
+.B
+\ \ \ \ <argument>\fICDATA\fB</argument> ...
+.br
+.B </targetList>
+.PP
+where
+.I CDATA
+is an XML character sequence. Predefined entities must be used
+to quote characters reserved by XML. Any other entity reference must
+not be used. For the case where the preceeding
+.B image
+element specified
+.B true
+for its
+.B imageURIExists
+atribute's value, there is a single argument that represents the URI
+for the image. When this URI is an relative URI, it must refer to a
+subdirectory of the directory in which the EPTS file is located, or
+that directory itself.
+.PP
+The target-list is followed by a
+.B gcsconfig
+element:
+.IP
+.B
+<gcsconfig unitIndex="\fIIND1\B" refPointIndex="\fIIND2\fB"
+.br
+\ \ \ \ \ \ \ userSpaceDistance="\fIUDIST\fB"
+.br
+\ \ \ \ \ \ \ gcsDistance="\fIGCSDIST\fB"
+.br
+\ \ \ \ \ \ \ xorigin="\fIXORIGIN\fB" yorigin="\fIYORIGIN\fB"/>
+.PP
+where
+.I IND1
+has values in the range [0, 10] corresponding to "custom units", "nm",
+"um", "mm", "cm", "m", "km","inches", "feet", "yards", and "miles"
+respectively.  Similarly,
+.I IND2
+has values in the range [0, 8] corresponding to "UPPER_LEFT",
+"UPPER_CENTER", "UPPER_RIGHT", "CENTER_LEFT", "CENTER",
+"CENTER_RIGHT", "LOWER_LEFT", "LOWER_CENTER", and "LOWER_RIGHT"
+respectively. The value
+.I UDIST
+is a distance in image-space (or user space) coordinates and
+.I GCSDIST
+is the corresponding distance in graph coordinate space, using the units
+corresponding to the value of
+.IR IND1 .
+Unless specified in custom units or meters, the
+.I GCSDIST
+value will be converted to meters before it is used.
+The values for
+.I XORIGIN
+and
+.I YORIGIN
+are the X-Y coordinates of the image's reference point
+in graph coordinate space units (custom units if
+.I IND1
+is 0; otherwise meters), so no unit conversion is used for these
+quantities.
+.PP
+The next element is a
+.B table
+element, which does not specify any attributes, but contains a sequence
+of
+.B row
+elements:
+.IP
+.B
+<table>
+.br
+.B
+\ \ \ <row varname="\fINAME\fB" type="\fITYPE\fB"
+.br
+.B
+\ \ \ \ \ \ \ \ x="X" y="Y" xp="XP" yp="YP"/>
+.br
+.B
+</table>
+.PP
+where there can be 0 or more rows. The value of TYPE can be
+.BR LOCATION ,
+.BR PATH_START ,
+.BR MOVE_TO ,
+.BR SPLINE ,
+.BR CONTROL ,
+.BR SEG_END ,
+.BR CLOSE ,
+or
+.BR PATH_END .
+The value of
+.I NAME
+is an empty string unless the value of
+.I TYPE
+is
+.B LOCATION
+or
+.BR PATH_START ,
+in which case
+.I NAME
+should be a variable name acceptable for use in a programming language
+(e.g., Java or ECMAScript). For the type
+.BR LOCATION ,
+.BR MOVE_TO ,
+.BR SPLINE ,
+.BR CONTROL ,
+or
+.BR SEG_END ,
+the values
+.I X
+and
+.I Y
+must be the coordinates of a corresponding point in graph-coordinate-space
+units, and XP and YP must be the corresponding coordinates in image-space
+units, measured from the lower-left corner of the image so that X values
+go from left to right and Y values go from bottom to top.
+.PP
+Finally, the file ends by closing the
+.B epts
+element:
+.IP
+.B
+</epts>
+.PP
+as required for a valid XML file.

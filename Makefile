@@ -96,7 +96,9 @@ ICONS = $(SOURCEICON) $(SOURCE_FILE_ICON)
 
 JFILES = $(wildcard src/*.java)
 PROPERTIES = src/EPTS.properties
-TEMPLATES = templates/ECMAScript.tpl templates/save.tpl
+TEMPLATES = templates/ECMAScript.tpl templates/save.tpl \
+	templates/ECMAScriptPaths.tpl templates/ECMAScriptLocations.tpl \
+	templates/ECMAScriptLayers.tpl
 RESOURCES = manual/manual.xml \
 	manual/manual.html \
 	manual/manual.css \
