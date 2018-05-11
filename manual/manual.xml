@@ -14,10 +14,11 @@
 	    uri="sresource:/manual/manual.html#helpMenu"/>
     </node>
     <node title="Using the mouse" uri="sresource:/manual/manual.html#mouse">
-      <node title="Popup menus" uri="sresource:/manual/manual.html#popup" />
+      <node title="Popup menus" uri="sresource:/manual/manual.html#popup"/>
     </node>
     <node title="Keyboard shortcuts"
 	  uri="sresource:/manual/manual.html#shortcuts"/>
+    <node title="Templates" uri="sresource:/manual/manual.html#templates"/>
     <node title="The CLI" uri="sresource:/manual/manual.html#cli"/>
   </node>
 </toc>

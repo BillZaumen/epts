@@ -367,9 +367,249 @@ a path or creating an isolated point at a specific location:
     an end-of-segment point.
 </UL>
 
+<H1><A name="templates">Templates</A></H1>
+<P>
+Templates specify an output format for points and paths using the
+syntax specified by the Java
+class <CODE>org.bzdev.util.TemplateProcessor</CODE>.  Instances of
+this class are constructed using a tree consisting of objects whose type
+is <CODE>org.bzdev.util.TemplateProcessor.KeyMap</CODE> or
+is <CODE>org.bzdev.util.TemplateProcessor.KeyMapList</CODE>. This
+tree determines the directives a give template processor supports
+and how those directives are used. Each value corresponding to a key
+is either a string (<CODE>java.lang.String</CODE>), a <CODE>KeyMap</CODE>,
+an array of <CODE>KeyMap</CODE>, or a <CODE>KeyMapList</CODE>. The
+keys name directives. When a key's value is a string, the directive is
+a simple directive.  Otherwise it is an iterative directive. When the
+value of an iterative directive is a single <CODE>KeyMap</CODE>, the
+iteration occurs once and this can be used a conditional (provided
+when the directive is defined and missing when it is not defined).
+<P>
+A template contains a mixture of text and directives stored in a text
+file. In a template, directives start with the sequence "$(" and end with a
+closing ")".  A simple directive contains a variable name and its
+value is a string that provides text that will be substituted for the
+directive.  For example, the directive "$(varname)" will be replaced
+by a string containing a variable name.  The directive "$$" is
+replaced with a single dollar sign.  An iterative directive consists
+of a name, a colon (":") and a second name. Its value is either a
+keymap (in which case it is treated like a list with a single value,
+or a list or array providing keymaps over which one iterates). A
+following simple directive containing the second name will then end
+the iterative block.
+<P>
+Directives can be globally defined or can be scoped to apply only
+within an iterative block.  When blocks are nested and a directive is
+defined at multiple levels, the most recent definition is used.
+<P>
+EPTS defines one global directive: <CODE>items</CODE>, which is an
+iterative directive.  This directive contains
+<UL>
+  <LI> <CODE>varname</CODE>. This is a simple directive defining a
+    variable name associated with a location or path.
+  <LI><CODE>index</CODE>. An overall index. This value is incremented
+    for each line in the table.
+  <LI><CODE>vindex</CODE>. An variable-name index. This value is
+    incremented whenever a variable name changes.
+  <LI> <CODE>location</CODE>. This is an iterative directive that
+    defines a specific, isolated point. While iterative, each
+    definition contains only a single point.
+  <LI> <CODE>pathStatement</CODE>. This is an iterative directive
+    that defines the control points for a path. While iterative, each
+    pathSegment definition contains a single keymap as its value
+</UL>
+For example,
+<BLOCKQUOTE><CODE><PRE>
+      $(items:endItems)$(varname)
+      $(endItems)
+</PRE></CODE></BLOCKQUOTE>
+will generate a list of variable names, one per line, for all the
+points and paths that are currently defined.
+<P>
+The value for <CODE>location</CODE> is a keymap containing
+the following keys describing a point:
+<UL>
+  <LI><CODE>x</CODE>. The X coordinate of the point in graph coordinate
+    space.
+  <LI><CODE>y</CODE>. The Y coordinate of the point in graph coordinate
+    space.
+  <LI><CODE>xp</CODE>. The X coordinate of the point in image space.
+  <LI><CODE>yp</CODE>. The Y coordinate of the point in image space,
+    measured from bottom to top (the reverse of the usual Java convention).
+  <LI><CODE>ypj</CODE>. The Y coordinate of the point in image space
+    measured from top to bottom (the normal Java convention).
+</UL>
+<P>
+Similarly, the value for <CODE>pathStatement</CODE> is a keymap
+containing the following directives:
+<UL>
+  <LI><CODE>pindex</CODE>. The value is "1" for the initial
+    MOVE_TO operation for a path and is incremented for each
+    control point, spline point, or end-of-segment point, along
+    the path, and for a final 'close' directive if there is one.
+  <LI><CODE>type</CODE>. This is the type of a point or operation
+    along the path (<CODE>MOVE_TO</CODE>, <CODE>SPLINE</CODE>,
+    <CODE>CONTROL</CODE>, <CODE>SEG_END</CODE>, or <CODE>CLOSE</CODE>.
+  <LI><CODE>ltype</CODE>. This is similar to the <CODE>type</CODE>
+    directive, but substitutes <CODE>CONTROL_POINT</CODE> for
+    <CODE>CONTROL</CODE>, and <CODE>SPLINE_POINT</CODE>
+    for <CODE>SPLINE</CODE>. The directive <CODE>ltype</CODE> is useful
+    for configuring an instance of the class
+    <CODE>org.bzdev.anim2d.AnimationLayer2DFactory</CODE>.
+  <LI><CODE>atype</CODE>.
+  <LI><CODE>xy</CODE>. This is an iterative directive, with 0 or 1
+    iterations. It defines the following directives (the same ones
+    as defined by the location directive) when the type
+    is <CODE>MOVE_TO</CODE>, <CODE>SPLINE</CODE>, <CODE>CONTROL</CODE>,
+    or <CODE>SEG_END</CODE>:
+    <UL>
+      <LI><CODE>x</CODE>. The X coordinate of the point in graph
+	coordinate space.
+      <LI><CODE>y</CODE>. The Y coordinate of the point in graph
+	coordinate space.
+      <LI><CODE>xp</CODE>. The X coordinate of the point in image
+	space.
+      <LI><CODE>yp</CODE>. The Y coordinate of the point in image
+	space, measured from bottom to top (the reverse of the usual Java
+	convention).
+      <LI><CODE>ypj</CODE>. The Y coordinate of the point in image
+	space measured from top to bottom (the normal Java convention).
+    </UL>
+    When the type is <CODE>CLOSE</CODE>, the <CODE>xy</CODE> directive
+    is not defined.
+</UL>
+<P>
+For example, the following template will create a set of statements
+suitable for use by ECMAScript (the template EPTS actually uses has
+less whitespace so that the output will contain fewer blank lines and
+will be indented properly for readability):
+<BLOCKQUOTE><CODE><PRE>
+  $(items:endItems)
+     $(location:endLocation)
+        var $(varname) = {x: $(x), y: $(y)};
+  $(endLocation)
+  $(pathStatement:endPathStatement)
+     var $(varname) = [
+         $(pathItem:endPathItem)
+            {type: "$(type)"
+            $(xy:endXY), x: $(x), y: $(y)$(endXY)}$(optcomma)
+         $(endPathItem)
+        ];
+  $(endPathStatement)
+$(endItems)
+</PRE></CODE></BLOCKQUOTE>
+
 <H1><A name="cli">The command-line interface</A></H1>
 
-[To be provided later.]
+EPTS can be as a window-system-based program or as a command-line
+program.  The command-line capabilities allow EPTS to be used (for
+example) in a Makefile, where it will generate files in user-specified
+formats. Meanwhile, EPTS's GUI can be used to edit a saved state.
+Options that generate files use the <CODE>--o</CODE> flag to set
+the name of the output file, with <CODE>-</CODE> indicating
+standard output.
+<P>
+If the epts command is run with no arguments, the program will
+open a dialog box asking for the name of an image file to open.
+This file will provide a background image that will appear in
+the program's main window. If the epts command is run with a
+single argument, the name of an EPTS file, the program will
+restore its state to the state that existed when this EPTS
+file was created (typically by saving a previous session).
+Usually a computer's window system will be configured so that
+one can simply double-click the EPTS file rather than having
+to run a specific command.
+
+
+<H2><A name="eptsOnlyOptions">Options specific to EPTS</A></H2>
+
+The options specific to the EPTS command are:
+<UL>
+  <LI><CODE>--image</CODE>.
+    This option implies that there will be one file argument specifying
+    the name of an image file.
+  <LI><CODE>--map</CODE> <EM>MAPFILE</EM>.
+    The file <EM>MAPFILE</EM> is a text file (UTF-8 encoded) whose
+    entries are a series of lines. Each line contains a token
+    that is the name of an enumeration constant whose type is
+    org.bzdev.geom.SplinePathBuilder.CPointType, followed by
+    whitespace separating that token from its replacement value.
+    Any trailing whitespace will be removed from the replacement.
+    Valid token values are <CODE>MOVE_TO</CODE>, <CODE>SPLINE</CODE>,
+    <CODE>CONTROL</CODE>, <CODE>SEG_END</CODE>, or <CODE>CLOSE</CODE>.
+    In templates, the tokens become the value for <CODE>$(type)</CODE>
+    and the replacements become the value for <CODE>$(atype)</CODE>.
+    If a mapping is not defined, the replacement is the same as the
+    original. The argument <EM>MAPFILE</EM> can be either a file
+    name or a URL. If the file named is a relative file, the name
+    is resolved using the current working directory when EPTS started.
+    This may not be the current working directory while EPTS is
+    running as the current working directory may be changed when an
+    EPTS file (one with a .epts extension) is processed.  If
+    <EM>MAPFILE</EM> starts with the string "sresource:",
+    "file:", "http:", "https:", or "ftp", then <EM>MAPFILE</EM> is
+    assumed to be a URL pointing to the object to read.
+  <LI><CODE>--template</CODE> <EM>TFILE</EM>.
+    When <EM>TFILE</EM> starts with the string  "sresource:",
+    "file:", "http:", "https:", or "ftp", <EM>TFILE</EM> is assumed
+    to be a URL. Otherwise is is assumed to be the name of a file.
+    The syntax of a template is describe in the section of this
+    manual entitled "<A href="#templates">Templates</A>". For the
+    <CODE>sresource</CODE> protocol, the template is embedded in the
+    EPTS application. Supported templates are
+    <UL>
+      <LI><CODE>ECMAScriptLayers</CODE>.
+      <LI><CODE>ECMAScriptLocations</CODE>.
+      <LI><CODE>ECMAScriptPaths</CODE>.
+      <LI><CODE>ECMAScript</CODE>.
+    </UL>
+  <LI><CODE>-o</CODE> <EM>OUTFILE</EM>.  This option specifies the
+    name of the output file for template processing.  If it is a
+    relative file, it will be resolved against the current working
+    directory that existed when EPTS was started.  If the file name is
+    "-", the output will be sent to standard output.
+  <LI><CODE>--</CODE>. End of options. This can be used
+    if file names start with the character '-'. Otherwise
+    it is not necessary.
+</UL>
+
+<H2><A name="scrunner">Scrunner options</A></H2>
+
+There are a set of command-line options that are the same as those
+provided by the scrunner command. These are
+<UL>
+  <LI><CODE>--cosebase</CODE> <EM>SPEC</EM>.
+    This option allows additional codebases to be available to the
+    JVM. Any number of <CODE>--codebase</CODE> options may be
+    provided, and each option can contain multiple codebases
+    with the character '|' used as a separator. A code base is specified
+    by either a URL or a path name of a file in (local) file system.
+    If there is a ':' in the file name and the preceding characters are
+    consistent with a protocol name in a URL, the file name will be treated
+    as a URL. In this case, use a "file:" URL to specify the code base.
+    Several characters are treated specially. A leading "~" followed by
+    the name separator ("/" for Unix) is expanded to the user's home
+    directory. A file name consisting only of "~" is replaced with the
+    user's hom directory. A leading "~~" is replaced with "~", and
+    a leading "..." followed by the name separator ("/" for Unix) is
+    replaced by the directory in which the EPTS program's JAR
+    file is located. This will typically be the same directory as
+    the BZDev class library's JAR file.
+  <LI><CODE>-D</CODE><EM>NAME</EM><CODE>=</CODE><EM>VALUE</EM>.
+    This option defines a system property whose name is <EM>Name</EM>
+    and whose value is <EM>VALUE</EM>.
+  <LI><CODE>--dryrun</CODE>. This options simply prints the java
+    command that will be used to start the JVM and run the program.
+    It is useful primarily for debugging.
+  <LI><CODE>-J</CODE><EM>OPTION</EM>. The string <EM>OPTION</EM>
+    is turned into an option passed to the 'java' command used
+    to start the JVM. It can be used, for example, to increase the
+    memory available to the JVM. If the option starts with a leading
+    '-', that must be provided explicitly.
+  <LI><CODE>-L</CODE> <EM>LNAME</EM>.
+    When scripting is used, this option explicitly indicates a
+    scripting language. <CODE>ECMAScript</CODE> is always supported.
+</UL>
 
 </BODY>
 

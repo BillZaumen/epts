@@ -408,8 +408,7 @@ public class EPTS {
 	}
     }
 
-    static Map<String,String> createMap(File f) throws Exception {
-	InputStream is = new FileInputStream(f);
+    static Map<String,String> createMap(InputStream is) throws Exception {
 	BufferedReader rd =
 	    new BufferedReader(new InputStreamReader(is, "UTF-8"));
 	Map<String,String> map = new HashMap<String,String>();
@@ -538,13 +537,23 @@ public class EPTS {
 			System.exit(1);
 		    }
 		    try {
-			File mapFile = new File(argv[index]);
-			if (mapFile.canRead()) {
-			    map = createMap(mapFile);
+			String mname = argv[index];
+			if (mname.startsWith("sresource:")
+			    || mname.startsWith("file:")
+			    || mname.startsWith("http:")
+			    || mname.startsWith("https:")
+			    || mname.startsWith("ftp:")) {
+			    URL mapURL = new URL(mname);
+			    map = createMap(mapURL.openStream());
 			} else {
-			    System.err.println
-				(errorMsg("cannotRead", argv[index]));
-			    System.exit(1);
+			    File mapFile = new File(mname);
+			    if (mapFile.canRead()) {
+				map = createMap(new FileInputStream(mapFile));
+			    } else {
+				System.err.println
+				    (errorMsg("cannotRead", argv[index]));
+				System.exit(1);
+			    }
 			}
 		    } catch (Exception e) {
 			System.err.println
@@ -807,7 +816,10 @@ public class EPTS {
 			    ptmodel.addRow(row);
 			}
 			TemplateProcessor tp = new
-			    TemplateProcessor(ptmodel.getKeyMap(map));
+			    TemplateProcessor(ptmodel.getKeyMap(map,
+								(double)
+								parser
+								.getHeight()));
 			tp.processURL(templateURL, "UTF-8", os);
 			os.flush();
 			System.exit(0);

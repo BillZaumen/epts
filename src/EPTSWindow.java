@@ -127,7 +127,7 @@ public class EPTSWindow {
 
 	keymap.put("width", String.format("%d", width));
 	keymap.put("height", String.format("%d", height));
-	TemplateProcessor.KeyMap km = ptmodel.getKeyMap();
+	TemplateProcessor.KeyMap km = ptmodel.getKeyMap((double)height);
 	if (km != null && km.size() > 0) {
 	    keymap.put("table", km);
 	}
@@ -714,7 +714,8 @@ public class EPTSWindow {
 			StringWriter writer = new
 			    StringWriter(128*ptmodel.getRowCount());
 			TemplateProcessor tp =
-			    new TemplateProcessor(ptmodel.getKeyMap());
+			    new TemplateProcessor(ptmodel.getKeyMap((double)
+								    height));
 			tp.processSystemResource("ECMAScript.tpl",
 						 "UTF-8", writer);
 			Clipboard cb = panel.getToolkit().getSystemClipboard();

@@ -462,10 +462,9 @@ public class PointTableModel implements TableModel {
      *    <LI> "x". This provides an X coordinate.
      *    <LI> "y". This provides a Y coordinate.
      * </UL>
-     * The value for "pathStatement" is a list, each element of which
-     * is a keymap that contains the key "pathItem".  The value for
-     * "pathitem" is a list of keymaps, each of which contain  the
-     * following keys:
+     * The value for "pathStatement" is a keymap containing the key
+     * "pathItem".  The value for "pathitem" is a list of keymaps,
+     * each of which contain the following keys:
      * <UL>
      *   <LI> "type". This provides the type of a point along the path.
      *   <LI> "ltype". This provides an alternative name for the type of a
@@ -477,8 +476,14 @@ public class PointTableModel implements TableModel {
      *   <LI> "xy" The value is either empty or a keymap containing the
      *        keys
      *        <UL>
-     *           <LI> $(x). This provides an X coordinate.
-     *           <LI> $(y). This provides a Y coordinate.
+     *           <LI> $(x). This provides an GCS X coordinate.
+     *           <LI> $(y). This provides a GCS Y coordinate.
+     *           <LI> $(xp). This provides an image-space X coordinate.
+     *           <LI> $(yp). This provides an image-space  Y coordinate
+     *                measured from the lower-left corner of the image.
+     *           <LI> $(ypj). This provides an image-space Y coordinate
+     *                measured from the upper-left corner of the image
+     *                (the normal Java convention).
      *        </UL>
      *   <LI> "optcomma". This is either empty of the string "," and
      *        is used as list-element separator. In a template, $(optcomma)
@@ -489,7 +494,7 @@ public class PointTableModel implements TableModel {
      * $(items:endItems)
      *    [can use $(varname)]
      *     $(location:endLocation)
-     *         [can use $(varname) $(x), $(y) ]
+     *         [can use $(varname) $(x), $(y), $(xp), $(yp), $(ypj]
      *     $(endLocation)
      *     $(pathStatement)
      *          [can use $(varname)]
@@ -498,7 +503,7 @@ public class PointTableModel implements TableModel {
      *               $(optcomma)]
      *              $(xy:endXY)
      *                [can use $varname, $(type), $(ltype), $(atype),
-     *                 $(optcomma), $(x), and $(y)]
+     *                 $(optcomma), $(x), and $(y), $(xp), $(yp) and $(ypj)]
      *              $(endXY)
      *          $(endPathItem)
      *     $(endPathStatement)
@@ -519,11 +524,12 @@ public class PointTableModel implements TableModel {
      *     $(endPathStatement)
      * $(endItems)
      */
-    public TemplateProcessor.KeyMap getKeyMap() {
-	return getKeyMap(null);
+    public TemplateProcessor.KeyMap getKeyMap(double height) {
+	return getKeyMap(null, height);
     }
 
-    public TemplateProcessor.KeyMap getKeyMap(Map<String,String> tmap) {
+    public TemplateProcessor.KeyMap getKeyMap(Map<String,String> tmap,
+					      double height) {
 
 	TemplateProcessor.KeyMapList list = new TemplateProcessor.KeyMapList();
 	TemplateProcessor.KeyMap kmap1 = null;
@@ -549,12 +555,15 @@ public class PointTableModel implements TableModel {
 		kmap2.put("y", String.format((Locale)null, "%s", row.getY()));
 		kmap2.put("xp", String.format((Locale)null, "%s", row.getXP()));
 		kmap2.put("yp", String.format((Locale)null, "%s", row.getYP()));
+		kmap2.put("ypj", String.format((Locale)null, "%s",
+						height - row.getYP()));
 		list.add(kmap1);
 	    } else if (mode == EPTS.Mode.PATH_START) {
 		vindex++;
 		kmap1 = new TemplateProcessor.KeyMap();
 		kmap2 = new TemplateProcessor.KeyMap();
 		kmap1.put("varname", row.getVariableName());
+		kmap1.put("index", ("" + index));
 		kmap1.put("vindex", ("" + vindex));
 		kmap1.put("pathStatement", kmap2);
 		list.add(kmap1);
@@ -600,6 +609,8 @@ public class PointTableModel implements TableModel {
 			      String.format((Locale)null, "%s", row.getXP()));
 		    kmap4.put("yp",
 			      String.format((Locale)null, "%s", row.getYP()));
+		    kmap4.put("ypj", String.format((Locale)null, "%s",
+						    height - row.getYP()));
 		    kmap3.put("xy", kmap4);
 		}
 		plist.add(kmap3);
