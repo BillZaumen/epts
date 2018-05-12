@@ -1,24 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="manual.xsl"?>
 <toc>
-  <node title="The EPTS manual" uri="sresource:/manual/manual.html">
-    <node title="Introduction" uri="sresource:/manual/manual.html#intro"/>
-    <node title="The menu bar" uri="sresource:/manual/manual.html#menus">
-      <node title="The File menu" uri="sresource:/manual/manual.html#fileMenu"/>
-      <node title="The Edit menu" uri="sresource:/manual/manual.html#editMenu"/>
-      <node title="The Zoom menu" uri="sresource:/manual/manual.html#zoomMenu"/>
+  <node title="The EPTS manual" uri="sresource:/manual/manual.html"
+	href="manual.html">
+    <node title="Introduction" uri="sresource:/manual/manual.html#intro"
+	href="manual.html#intro"/>
+    <node title="The menu bar" uri="sresource:/manual/manual.html#menus"
+	href="manual.html#menus">
+      <node title="The File menu" uri="sresource:/manual/manual.html#fileMenu"
+	href="manual.html#fileMenu"/>
+      <node title="The Edit menu" uri="sresource:/manual/manual.html#editMenu"
+	href="manual.html#editMenu"/>
+      <node title="The Zoom menu" uri="sresource:/manual/manual.html#zoomMenu"
+	href="manual.html#zoomMenu"/>
       <node title="The Measure-Distance menu"
-	    uri="sresource:/manual/manual.html#measureMenu"/>
+	    uri="sresource:/manual/manual.html#measureMenu"
+	href="manual.html#measureMenu"/>
       <node title="The Tools menu"
-	    uri="sresource:/manual/manual.html#toolsMenu"/>
+	    uri="sresource:/manual/manual.html#toolsMenu"
+	href="manual.html#toolsMenu"/>
       <node title="The Help menu"
-	    uri="sresource:/manual/manual.html#helpMenu"/>
+	    uri="sresource:/manual/manual.html#helpMenu"
+	href="manual.html#helpMenu"/>
     </node>
-    <node title="Using the mouse" uri="sresource:/manual/manual.html#mouse">
-      <node title="Popup menus" uri="sresource:/manual/manual.html#popup"/>
+    <node title="Using the mouse" uri="sresource:/manual/manual.html#mouse"
+	href="manual.html#mouse">
+      <node title="Popup menus" uri="sresource:/manual/manual.html#popup"
+	href="manual.html#popup"/>
     </node>
     <node title="Keyboard shortcuts"
-	  uri="sresource:/manual/manual.html#shortcuts"/>
-    <node title="Templates" uri="sresource:/manual/manual.html#templates"/>
-    <node title="The CLI" uri="sresource:/manual/manual.html#cli"/>
+	  uri="sresource:/manual/manual.html#shortcuts"
+	href="manual.html#shortcuts"/>
+    <node title="Templates" uri="sresource:/manual/manual.html#templates"
+	href="manual.html#templates"/>
+    <node title="The CLI" uri="sresource:/manual/manual.html#cli"
+	href="manual.html#cli"/>
   </node>
 </toc>

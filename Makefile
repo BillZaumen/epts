@@ -100,6 +100,8 @@ TEMPLATES = templates/ECMAScript.tpl templates/save.tpl \
 	templates/ECMAScriptPaths.tpl templates/ECMAScriptLocations.tpl \
 	templates/ECMAScriptLayers.tpl
 RESOURCES = manual/manual.xml \
+	manual/manual.xsl \
+	manual/index.html \
 	manual/manual.html \
 	manual/manual.css \
 	epts-1.0.dtd

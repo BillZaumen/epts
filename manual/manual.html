@@ -23,7 +23,7 @@ that are used:
   <LI> the standard Java user-space coordinates, which measures
     distances in units of "points" (1/72 inches) and where the
     positive X direction points left and the positive Y direction
-    points down. Without any explict scaling, the JRE (Java Runtime
+    points down. Without any explicit scaling, the JRE (Java Runtime
     Environment) will scale images so that one pixel covers a square
     that is 1 point by 1 point in size. This may represent several
     pixels on a display or output device (e.g., a high-resolution
@@ -215,7 +215,7 @@ displayed in textual form. This menu contains the following items:
 
 <H2><A name ="helpMenu">The Help menu</A></H2>
 The <CODE>Help</CODE> menu provides several ways of viewing a
-manual. This menu contains the folowing items:
+manual. This menu contains the following items:
 <UL>
   <LI><CODE>Manual</CODE>. This option shows the manual in a window
     that contains two panes: one with a table of contents and the
@@ -351,7 +351,7 @@ a path or creating an isolated point at a specific location:
     will be ignored.
   <LI> C. When the C key is pressed (without a modifier key, regardless
     of whether the caps-lock key is in use), the next point will be a
-    control point.  If a control point is not allwed, the keystroke
+    control point.  If a control point is not allowed, the keystroke
     will be ignored.
   <LI> E. When the E key is pressed (without a modifier key, regardless
     of whether the caps-lock key is in use), the next point will be an
@@ -393,8 +393,8 @@ directive.  For example, the directive "$(varname)" will be replaced
 by a string containing a variable name.  The directive "$$" is
 replaced with a single dollar sign.  An iterative directive consists
 of a name, a colon (":") and a second name. Its value is either a
-keymap (in which case it is treated like a list with a single value,
-or a list or array providing keymaps over which one iterates). A
+key map (in which case it is treated like a list with a single value,
+or a list or array providing key maps over which one iterates). A
 following simple directive containing the second name will then end
 the iterative block.
 <P>
@@ -403,7 +403,8 @@ within an iterative block.  When blocks are nested and a directive is
 defined at multiple levels, the most recent definition is used.
 <P>
 EPTS defines one global directive: <CODE>items</CODE>, which is an
-iterative directive.  This directive contains
+iterative directive.  This directive iterates through a list,
+setting values for the following directives:
 <UL>
   <LI> <CODE>varname</CODE>. This is a simple directive defining a
     variable name associated with a location or path.
@@ -413,10 +414,16 @@ iterative directive.  This directive contains
     incremented whenever a variable name changes.
   <LI> <CODE>location</CODE>. This is an iterative directive that
     defines a specific, isolated point. While iterative, each
-    definition contains only a single point.
+    definition contains only a single point. Both
+    <CODE>location</CODE> and <CODE>pathStatement</CODE> will not
+    both be present at a specific iteration, although one of the
+    two will be present.
   <LI> <CODE>pathStatement</CODE>. This is an iterative directive
     that defines the control points for a path. While iterative, each
-    pathSegment definition contains a single keymap as its value
+    pathSegment definition contains a single key map as its value. Both
+    <CODE>location</CODE> and <CODE>pathStatement</CODE> will not
+    both be present at a specific iteration, although one of the
+    two will be present.
 </UL>
 For example,
 <BLOCKQUOTE><CODE><PRE>
@@ -426,7 +433,7 @@ For example,
 will generate a list of variable names, one per line, for all the
 points and paths that are currently defined.
 <P>
-The value for <CODE>location</CODE> is a keymap containing
+The value for <CODE>location</CODE> is a key map containing
 the following keys describing a point:
 <UL>
   <LI><CODE>x</CODE>. The X coordinate of the point in graph coordinate
@@ -440,7 +447,7 @@ the following keys describing a point:
     measured from top to bottom (the normal Java convention).
 </UL>
 <P>
-Similarly, the value for <CODE>pathStatement</CODE> is a keymap
+Similarly, the value for <CODE>pathStatement</CODE> is a key map
 containing the following directives:
 <UL>
   <LI><CODE>pindex</CODE>. The value is "1" for the initial
@@ -449,19 +456,22 @@ containing the following directives:
     the path, and for a final 'close' directive if there is one.
   <LI><CODE>type</CODE>. This is the type of a point or operation
     along the path (<CODE>MOVE_TO</CODE>, <CODE>SPLINE</CODE>,
-    <CODE>CONTROL</CODE>, <CODE>SEG_END</CODE>, or <CODE>CLOSE</CODE>.
+    <CODE>CONTROL</CODE>, <CODE>SEG_END</CODE>, or <CODE>CLOSE</CODE>).
   <LI><CODE>ltype</CODE>. This is similar to the <CODE>type</CODE>
     directive, but substitutes <CODE>CONTROL_POINT</CODE> for
     <CODE>CONTROL</CODE>, and <CODE>SPLINE_POINT</CODE>
     for <CODE>SPLINE</CODE>. The directive <CODE>ltype</CODE> is useful
     for configuring an instance of the class
     <CODE>org.bzdev.anim2d.AnimationLayer2DFactory</CODE>.
-  <LI><CODE>atype</CODE>.
+  <LI><CODE>atype</CODE>. This is is similar to <CODE>type</CODE> but
+    with an alternative value defined by the user via a command-line
+    argument that provides the name of a file mapping types to their
+    replacement strings.
   <LI><CODE>xy</CODE>. This is an iterative directive, with 0 or 1
     iterations. It defines the following directives (the same ones
-    as defined by the location directive) when the type
-    is <CODE>MOVE_TO</CODE>, <CODE>SPLINE</CODE>, <CODE>CONTROL</CODE>,
-    or <CODE>SEG_END</CODE>:
+    as defined by the location directive) when the value of
+    <CODE>type</CODE>is <CODE>MOVE_TO</CODE>, <CODE>SPLINE</CODE>,
+    <CODE>CONTROL</CODE>, or <CODE>SEG_END</CODE>:
     <UL>
       <LI><CODE>x</CODE>. The X coordinate of the point in graph
 	coordinate space.
@@ -509,17 +519,15 @@ Options that generate files use the <CODE>--o</CODE> flag to set
 the name of the output file, with <CODE>-</CODE> indicating
 standard output.
 <P>
-If the epts command is run with no arguments, the program will
-open a dialog box asking for the name of an image file to open.
-This file will provide a background image that will appear in
-the program's main window. If the epts command is run with a
-single argument, the name of an EPTS file, the program will
-restore its state to the state that existed when this EPTS
-file was created (typically by saving a previous session).
-Usually a computer's window system will be configured so that
-one can simply double-click the EPTS file rather than having
-to run a specific command.
-
+If the <CODE>epts</CODE> command is run with no arguments, the program
+will open a dialog box asking for the name of an image file to open.
+This file will provide a background image that will appear in the
+program's main window. If the epts command is run with a single
+argument, the name of an EPTS file, the program will restore its state
+to the state that existed when this EPTS file was created (typically
+by saving a previous session).  Usually a computer's window system
+will be configured so that one can simply double-click the EPTS file
+rather than having to run a specific command.
 
 <H2><A name="eptsOnlyOptions">Options specific to EPTS</A></H2>
 
@@ -579,9 +587,9 @@ There are a set of command-line options that are the same as those
 provided by the scrunner command. These are
 <UL>
   <LI><CODE>--cosebase</CODE> <EM>SPEC</EM>.
-    This option allows additional codebases to be available to the
+    This option allows additional code bases to be available to the
     JVM. Any number of <CODE>--codebase</CODE> options may be
-    provided, and each option can contain multiple codebases
+    provided, and each option can contain multiple code bases
     with the character '|' used as a separator. A code base is specified
     by either a URL or a path name of a file in (local) file system.
     If there is a ':' in the file name and the preceding characters are
@@ -590,7 +598,7 @@ provided by the scrunner command. These are
     Several characters are treated specially. A leading "~" followed by
     the name separator ("/" for Unix) is expanded to the user's home
     directory. A file name consisting only of "~" is replaced with the
-    user's hom directory. A leading "~~" is replaced with "~", and
+    user's home directory. A leading "~~" is replaced with "~", and
     a leading "..." followed by the name separator ("/" for Unix) is
     replaced by the directory in which the EPTS program's JAR
     file is located. This will typically be the same directory as
@@ -613,5 +621,11 @@ provided by the scrunner command. These are
 
 </BODY>
 
-<!--  LocalWords:  EPTS PoinTS BZDev anim zier ECMA GCS
+<!--  LocalWords:  EPTS PoinTS BZDev anim zier ECMA GCS JRE Runtime
+ -->
+<!--  LocalWords:  overlayed scrollbars whitespace varname Makefile
+ -->
+<!--  LocalWords:  pathSegment EPTS's epts MAPFILE UTF sresource http
+ -->
+<!--  LocalWords:  https TFILE OUTFILE Scrunner scrunner JVM LNAME
  -->

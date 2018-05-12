@@ -70,13 +70,13 @@ where
 .I CDATA
 is an XML character sequence. Predefined entities must be used
 to quote characters reserved by XML. Any other entity reference must
-not be used. For the case where the preceeding
+not be used. For the case where the preceding
 .B image
 element specified
 .B true
 for its
 .B imageURIExists
-atribute's value, there is a single argument that represents the URI
+attribute's value, there is a single argument that represents the URI
 for the image. When this URI is an relative URI, it must refer to a
 subdirectory of the directory in which the EPTS file is located, or
 that directory itself.
@@ -187,3 +187,190 @@ element:
 </epts>
 .PP
 as required for a valid XML file.
+.SH TEMPLATE FORMAT
+EPTS can generate text files based on a template.
+Templates specify an output format for points and paths using the
+syntax specified by the Java
+class
+.BR org.bzdev.util.TemplateProcessor</CODE> .
+Instances of this class are constructed using a tree consisting of
+objects whose type is
+.B org.bzdev.util.TemplateProcessor.KeyMap
+or
+.BR org.bzdev.util.TemplateProcessor.KeyMapList .
+This tree determines the directives a give template processor supports
+and how those directives are used. Each value corresponding to a key
+is either a string (\fBjava.lang.String\fR), a
+.BR KeyMap ,
+an array of
+.BR KeyMap , or a
+.BR KeyMapList .
+The keys name directives. When a key's value is a string, the
+directive is a simple directive.  Otherwise it is an iterative
+directive. When the value of an iterative directive is a single
+.BR KeyMap , the
+iteration occurs once and this can be used a conditional (provided
+when the directive is defined and missing when it is not defined).
+.PP
+A template contains a mixture of text and directives stored in a text
+file. In a template, directives start with the sequence "$(" and end with a
+closing ")".  A simple directive contains a variable name and its
+value is a string that provides text that will be substituted for the
+directive.  For example, the directive "$(varname)" will be replaced
+by a string containing a variable name.  The directive "$$" is
+replaced with a single dollar sign.  An iterative directive consists
+of a name, a colon (":") and a second name. Its value is either a
+key map (in which case it is treated like a list with a single value,
+or a list or array providing key maps over which one iterates). A
+following simple directive containing the second name will then end
+the iterative block.
+.PP
+Directives can be globally defined or can be scoped to apply only
+within an iterative block.  When blocks are nested and a directive is
+defined at multiple levels, the most recent definition is used.
+.PP
+EPTS defines one global directive: <CODE>items</CODE>, which is an
+iterative directive.  This directive iterates over a list, each
+element of which contains the following directives:
+.TP
+.BR varname .
+This is a simple directive defining a variable name associated with a
+location or path.
+.TP
+.BR index .
+An overall index. This value is incremented for each line in the
+table.
+.TP
+.BR vindex .
+An variable-name index. This value is incremented whenever a variable
+name changes.
+.TP
+.BR location .
+This is an iterative directive that defines a specific, isolated
+point. While iterative, each definition contains only a single
+point. Both
+.B location
+and
+.B pathStatement
+will not both be present at a specific iteration, although one of the
+two will be present.
+.TP
+.BR pathStatement .
+This is an iterative directive
+that defines the control points for a path. While iterative, each
+pathSegment definition contains a single key map as its value. Both
+.B location
+and
+.B pathStatement
+will not both be present at a specific iteration, although one of the
+two will be present.
+.PP
+The value for
+.B location
+is a key map whose keys are the following:
+.TP
+.BR x .
+The X coordinate of the point in graph coordinate space.
+.TP
+.BR y .
+The Y coordinate of the point in graph coordinate space.
+.TP
+.BR xp .
+The X coordinate of the point in image space.
+.TP
+.BR yp .
+The Y coordinate of the point in image space, measured from bottom to
+top (the reverse of the usual Java convention).
+.TP
+.BR ypj .
+The Y coordinate of the point in image space measured from top to
+bottom (the normal Java convention).
+.PP
+These keys define the location of an isolated point.
+.PP
+Similarly, the value for <CODE>pathStatement</CODE> is a key map
+containing the following directives:
+.TP
+.BR pindex .
+The value is "1" for the initial
+.B MOVE_TO
+operation for a path and is incremented for each control point, spline
+point, or end-of-segment point, along the path, and for a
+final 'close' directive if there is one.
+.TP
+.BR type .
+This is the type of a point or operation
+along the path (\fBMOVE_TO\fR>,
+.BR SPLINE ,
+.BR CONTROL ,
+.BR SEG_END ,
+or
+.BR CLOSE ).
+.TP
+.BR ltype .
+This is similar to the
+.B type
+directive, but substitutes
+.B CONTROL_POINT
+for
+.BR CONTROL , and
+.B SPLINE_POINT
+for
+.BR SPLINE .
+The directive
+.B ltype is useful
+for configuring an instance of the class
+.BR org.bzdev.anim2d.AnimationLayer2DFactory .
+.TP
+.BR atype .
+This is is similar to
+.B type
+but with an alternative value defined by the user via a command-line
+argument that provides the name of a file mapping types to their
+replacement strings.
+.BR xy .
+This is an iterative directive, with 0 or 1
+iterations. It defines the following directives, the same ones
+as defined by the location directive, when the type
+is
+.BR MOVE_TO< ,
+.BR SPLINE ,
+.BR CONTROL ,
+or
+.BR SEG_END :
+.BR x ,
+.BR y ,
+.BR xp ,
+.BR yp ,
+and
+.BR ypj ,
+with the same meaning as used in  the
+.B location
+directive.
+.SH MAP FILES
+The
+.B epts
+command has an option
+.B \-\-map
+that specifies the strings for the "$(atype)" directive described above.
+This argument takes a file name or URL as its argument. The file must
+use UTF-8 as its character set. The format is trivial: a series of
+lines.  Each line starts with one of the tokens provided by "$(type)":
+.BR MOVE_TO ,
+.BR SPLINE ,
+.BR CONTROL ,
+.BR SEG_END ,
+or
+.BR CLOSE .
+This is separated from its replacement by whitespace.  Leading or
+trailing whitespace is removed.
+.SH SEE ALSO
+.BR epts (1)
+\"  LocalWords:  EPTS epts xml UTF br DOCTYPE xmlns fIWIDTH fB URI nm
+\"  LocalWords:  fIHEIGHT imageURIExists fIVALUE targetList fICDATA
+\"  LocalWords:  CDATA subdirectory gcsconfig unitIndex fIIND fIUDIST
+\"  LocalWords:  refPointIndex userSpaceDistance gcsDistance xorigin
+\"  LocalWords:  fIGCSDIST fIXORIGIN yorigin fIYORIGIN UDIST GCSDIST
+\"  LocalWords:  varname fINAME fITYPE xp XP yp YP SEG fR KeyMap TP
+\"  LocalWords:  KeyMapList vindex pathStatement pathSegment ypj xy
+\"  LocalWords:  pindex fBMOVE ltype atype whitespace
