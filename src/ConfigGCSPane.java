@@ -254,11 +254,11 @@ public class ConfigGCSPane extends JPanel {
 	c.ipady = 5;
 	c.anchor = GridBagConstraints.LINE_START;
 	c.gridwidth = 1;
-		gridbag.setConstraints(ul, c);
+	gridbag.setConstraints(ul, c);
 	add(ul);
 	gridbag.setConstraints(utf, c);
 	add(utf);
-		c.gridwidth = GridBagConstraints.REMAINDER;
+	c.gridwidth = GridBagConstraints.REMAINDER;
 	gridbag.setConstraints(points, c);
 	add(points);
 	c.gridwidth = 1;

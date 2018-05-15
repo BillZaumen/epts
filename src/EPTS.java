@@ -32,6 +32,7 @@ import org.bzdev.net.URLClassLoaderOps;
 import org.bzdev.net.URLPathParser;
 import org.bzdev.scripting.Scripting;
 import org.bzdev.swing.ErrorMessage;
+import org.bzdev.swing.WholeNumbTextField;
 import org.bzdev.util.SafeFormatter;
 import org.bzdev.util.TemplateProcessor;
 
@@ -424,6 +425,9 @@ public class EPTS {
     }
 
 
+    static int width = 1024;
+    static int height = 1024;
+
     static void init(String argv[]) throws Exception {
 	int index = -1;
 	
@@ -437,6 +441,7 @@ public class EPTS {
 	boolean scriptMode = false;
 	boolean imageMode = false;
 	boolean hasCodebase = false;
+	boolean webserverOnly = false;
 	ArrayList<String> argsList = new ArrayList<>();
 	OutputStream out = null;
 	String outName = null;
@@ -529,6 +534,8 @@ public class EPTS {
 			System.exit(1);
 					   
 		    }
+		} else if (argv[index].equals("--web")) {
+		    webserverOnly = true;
 		} else if (argv[index].equals("--map")) {
 		    index++;
 		    if (index == argv.length) {
@@ -757,6 +764,12 @@ public class EPTS {
 		}
 	    }
 	}
+
+	if (webserverOnly) {
+	    EPTSWindow.setPort(port);
+	    return;
+	}
+
 	if (!imageMode && !scriptMode && targetList.size() == 0) {
 	    // No arguments that would indicate a saved state, image file,
 	    // or script files, so open a dialog box prompting for
@@ -780,17 +793,81 @@ public class EPTS {
 				ErrorMessage.display(e);
 				System.exit(1);
 			    }
-			} else {
+			}/* else {
 			    System.exit(0);
-			}
+			    }*/
 		    }
 		});
 	}
 	if (imageMode) {
-	    File ifile = new File(targetList.get(0));
-	    URI imageURI = ifile.getCanonicalFile().toURI();
-	    Image image = ImageIO.read(new File(targetList.get(0)));
-	    new EPTSWindow(image, port, imageURI);
+	    URI imageURI = null;
+	    Image image;
+	    if (targetList.size() == 0) {
+		SwingUtilities.invokeAndWait(new Runnable() {
+			public void run() {
+			    InputVerifier iv = new InputVerifier() {
+				    @Override
+				    public boolean verify(JComponent input) {
+					WholeNumbTextField wntf
+					    = (WholeNumbTextField) input;
+					return (wntf.getValue() > 0);
+				    }
+				};
+			    WholeNumbTextField wtf = new WholeNumbTextField(8);
+			    WholeNumbTextField htf = new WholeNumbTextField(8);
+			    wtf.setDefaultValue(0);
+			    htf.setDefaultValue(0);
+			    wtf.setText("1024");
+			    htf.setText("1024");
+			    wtf.setInputVerifier(iv);
+			    htf.setInputVerifier(iv);
+			    JPanel panel = new JPanel();
+			    GridBagLayout gridbag = new GridBagLayout();
+			    GridBagConstraints c = new GridBagConstraints();
+			    panel.setLayout(gridbag);
+			    JLabel wl = new JLabel(localeString("widthLabel"));
+			    JLabel hl = new JLabel(localeString("heightLabel"));
+			    c.insets = new Insets(5, 5, 5, 5);
+			    c.ipadx = 5;
+			    c.ipady = 5;
+			    c.anchor = GridBagConstraints.LINE_START;
+			    c.gridwidth = 1;
+			    gridbag.setConstraints(wl, c);
+			    panel.add(wl);
+			    c.gridwidth = GridBagConstraints.REMAINDER;
+			    gridbag.setConstraints(wtf, c);
+			    panel.add(wtf);
+			    c.gridwidth = 1;
+			    gridbag.setConstraints(hl, c);
+			    panel.add(hl);
+			    c.gridwidth = GridBagConstraints.REMAINDER;
+			    gridbag.setConstraints(htf, c);
+			    panel.add(htf);
+			    int status = JOptionPane.showConfirmDialog
+				(null, panel,
+				 localeString("widthHeightTitle"),
+				 JOptionPane.OK_CANCEL_OPTION,
+				 JOptionPane.QUESTION_MESSAGE);
+			    width = htf.getValue();
+			    height = htf.getValue();
+			    if (status != JOptionPane.OK_OPTION) {
+				System.exit(0);
+			    }
+			}
+		    });
+		BufferedImage bi = new
+		    BufferedImage(width,height,BufferedImage.TYPE_INT_ARGB_PRE);
+		Graphics2D g2d = bi.createGraphics();
+		g2d.setBackground(Color.WHITE);
+		g2d.clearRect(0, 0, width, height);
+		image = bi;
+	    } else {
+		File ifile = new File(targetList.get(0));
+		imageURI = ifile.getCanonicalFile().toURI();
+		image = ImageIO.read(new File(targetList.get(0)));
+	    }
+	    EPTSWindow.setPort(port);
+	    new EPTSWindow(image, imageURI);
 	} else if (targetList.size() == 1) {
 	    EPTSParser parser = new EPTSParser();
 	    String filename = targetList.get(0);
@@ -803,6 +880,7 @@ public class EPTS {
 		    }
 		    parser.parse(new FileInputStream(filename));
 		    if (outName == null) {
+			EPTSWindow.setPort(port);
 			new EPTSWindow(parser, new File(filename));
 		    } else {
 			OutputStream os;
@@ -824,28 +902,6 @@ public class EPTS {
 			os.flush();
 			System.exit(0);
 		    }
-		    /*
-		    System.out.println("width " + parser.getWidth());
-		    System.out.println("height " + parser.getHeight());
-		    System.out.println("hasImage " + parser.imageURIExists());
-		    System.out.println("imageURI " + parser.getImageURI());
-		    System.out.println("user-space dist "
-				       + parser.getUserSpaceDistance());
-		    System.out.println("GCS dist "
-				       + parser.getGcsDistance());
-		    System.out.println("number of rows = "
-				       +parser.getRows().length);
-		    for (PointTMR row: parser.getRows()) {
-
-			System.out.format("%s, %s, %s, %s, %s, %s\n",
-					  row.getVariableName(),
-					  row.getMode(),
-					  row.getX(),
-					  row.getY(),
-					  row.getXP(),
-					  row.getYP());
-		    }
-		    */
 		} catch (Exception e) {
 		    e.printStackTrace();
 		    System.exit(1);

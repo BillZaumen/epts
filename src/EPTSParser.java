@@ -150,12 +150,20 @@ public class EPTSParser {
 	    } else if (qName.equals("image")) {
 		try {
 		    width = Integer.parseInt(attr.getValue("width"));
+		    if (width <= 0) {
+			throw new NumberFormatException
+			    (errorMsg("notPositive"));
+		    }
 		} catch (NumberFormatException e) {
 		    throw new
 			SAXException(errorMsg("widthError", e.getMessage()));
 		}
 		try {
 		    height = Integer.parseInt(attr.getValue("height"));
+		    if (height <= 0) {
+			throw new NumberFormatException
+			    (errorMsg("notPositive"));
+		    }
 		} catch (NumberFormatException e) {
 		    throw new
 			SAXException(errorMsg("heightError", e.getMessage()));

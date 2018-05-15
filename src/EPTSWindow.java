@@ -74,7 +74,7 @@ public class EPTSWindow {
     JTable ptable;
     JFrame tableFrame;
 
-    int port;
+    static int port;
 
     public void save(File f) throws IOException {
 	TemplateProcessor.KeyMap keymap = new TemplateProcessor.KeyMap();
@@ -82,7 +82,7 @@ public class EPTSWindow {
 	keymap.put("hasImageFile", imageFileNameSeen? "true": "false");
 	TemplateProcessor.KeyMapList tlist =
 	    new TemplateProcessor.KeyMapList();
-	if (imageFileNameSeen) {
+	if (imageFileNameSeen && imageURI != null) {
 	    TemplateProcessor.KeyMap map = new TemplateProcessor.KeyMap();
 	    File fparent = f.getCanonicalFile().getParentFile();
 	    // we use relative URLs if the image file is in a
@@ -262,13 +262,18 @@ public class EPTSWindow {
 
     static EmbeddedWebServer ews = null;
     static URI manualURI;
-    public void startManualWebServerIfNeeded() throws Exception
+    public static synchronized void startManualWebServerIfNeeded()
+	throws Exception
     {
 	if (ews == null) {
 	    ews = new EmbeddedWebServer(port, 5, 2, false);
 	    if (port == 0) port = ews.getPort();
 	    ews.add("/", ResourceWebMap.class, "manual/",
 		    null, true, false, true);
+	    WebMap wmap = ews.getWebMap("/");
+	    if (wmap != null) {
+		wmap.addWelcome("index.html");
+	    }
 	    manualURI = new URL("http://localhost:"
 				+ port +"/manual.html").toURI();
 	    ews.start();
@@ -2719,7 +2724,17 @@ public class EPTSWindow {
 	}
     }
 
-    void init(Image image, int port/*, ArrayList<String> targetList*/)
+    public static void setPort(int port) {
+	EPTSWindow.port = port;
+	if (port != 0) {
+	    try {
+		startManualWebServerIfNeeded();
+	    } catch (Exception e) {
+	    }
+	}
+    }
+
+    void init(Image image)
 	throws IOException, InterruptedException
     {
 	// this.targetList = targetList;
@@ -2727,12 +2742,6 @@ public class EPTSWindow {
 	width = image.getWidth(null);
 	height = image.getHeight(null);
 	this.port = port;
-	if (port != 0) {
-	    try {
-		startManualWebServerIfNeeded();
-	    } catch (Exception e) {
-	    }
-	}
 	Graph graph = new Graph(width, height,
 				Graph.ImageType.INT_ARGB_PRE);
 	graph.setRanges(0.0, 0.0, 0.0, 0.0, 1.0, 1.0);
@@ -2867,13 +2876,13 @@ public class EPTSWindow {
 	savedFile = inputFile;
 	if (parser.imageURIExists()) {
 	    URI uri = parser.getImageURI();
+	    Image image;
 	    if (uri != null)  {
 		if (!uri.isAbsolute()) {
 		    File cdir =
 			new File(System.getProperty("user.dir"));
 		    uri = cdir.toURI().resolve(uri);
 		}
-		Image image;
 		try {
 		    image = ImageIO.read(uri.toURL());
 		    imageURI = uri;
@@ -2889,39 +2898,46 @@ public class EPTSWindow {
 		    throw new IllegalStateException
 			("save-state height not equal to image height");
 		}
-		// ArrayList<String>list = new ArrayList<>();
-		// list.add(uri.toString());
-		init(image, port/*, new ArrayList<String>()*/);
-		// now restore state.
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-			    configGCSPane.savedUnitIndex
-				= parser.getUnitIndex();
-			    configGCSPane.savedRefPointIndex
-				= parser.getRefPointIndex();
-			    configGCSPane.savedUsDistString =
-				parser.getUserSpaceDistance();
-			    configGCSPane.savedGcsDistString =
-				parser.getGcsDistance();
-			    configGCSPane.savedXString = parser.getXOrigin();
-			    configGCSPane.savedYString = parser.getYOrigin();
-			    configGCSPane.restoreState();
-			    for (PointTMR row: parser.getRows()) {
-				ptmodel.addRow(row);
-			    }
-			}
-		    });
 	    } else {
-		throw new IllegalStateException
-		    ("URI missing from saved state");
+		// No image URL, so width and height were from
+		// a buffered image and we just create it.
+		int width = parser.getWidth();
+		int height = parser.getHeight();
+		BufferedImage bi = new
+		    BufferedImage(width,height,BufferedImage.TYPE_INT_ARGB_PRE);
+		Graphics2D g2d = bi.createGraphics();
+		g2d.setBackground(Color.WHITE);
+		g2d.clearRect(0, 0, width, height);
+		g2d.dispose();
+		image = bi;
 	    }
+	    init(image);
+	    // now restore state.
+	    SwingUtilities.invokeLater(new Runnable() {
+		    public void run() {
+			configGCSPane.savedUnitIndex
+			    = parser.getUnitIndex();
+			configGCSPane.savedRefPointIndex
+			    = parser.getRefPointIndex();
+			configGCSPane.savedUsDistString =
+			    parser.getUserSpaceDistance();
+			configGCSPane.savedGcsDistString =
+			    parser.getGcsDistance();
+			configGCSPane.savedXString = parser.getXOrigin();
+			configGCSPane.savedYString = parser.getYOrigin();
+			configGCSPane.restoreState();
+			for (PointTMR row: parser.getRows()) {
+			    ptmodel.addRow(row);
+			}
+		    }
+		});
 	}
     }
 
-    public EPTSWindow(Image image, int port, URI imageURI)
+    public EPTSWindow(Image image, URI imageURI)
 	throws IOException, InterruptedException
     {
 	this.imageURI = imageURI;
-	init(image, port/*, targetList*/);
+	init(image);
     }
 }
