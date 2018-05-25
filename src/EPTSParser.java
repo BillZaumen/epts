@@ -50,7 +50,7 @@ public class EPTSParser {
     String userSpaceDistance = "1.0";
     String gcsDistance = "1.0";
     String xorigin = "0.0";
-    String yorigin = ").0";
+    String yorigin = "0.0";
     PointTMR[] rows = null;
     
     public int getWidth() {return width;}
@@ -176,8 +176,20 @@ public class EPTSParser {
 	    } else if (qName.equals("argument")) {
 		text.setLength(0);
 	    } else if (qName.equals("gcsconfig")) {
-		unitIndex = Integer.parseInt(attr.getValue(unitIndex));
-		refPointIndex = Integer.parseInt(attr.getValue(unitIndex));
+		try {
+		    unitIndex = Integer.parseInt(attr.getValue("unitIndex"));
+		} catch (Exception e) {
+		    throw new SAXException
+			(errorMsg("attrError", "unitIndex", e.getMessage()));
+		}
+		try {
+		    refPointIndex =
+			Integer.parseInt(attr.getValue("refPointIndex"));
+		} catch (Exception e) {
+		    String msg =
+			errorMsg("attrError", "refPointIndex", e.getMessage());
+		    throw new SAXException(msg);
+		}
 		userSpaceDistance = attr.getValue("userSpaceDistance");
 		if (userSpaceDistance == null) {
 		    userSpaceDistance = "1.0";

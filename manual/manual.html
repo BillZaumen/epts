@@ -39,7 +39,7 @@ that are used:
     coordinate space was chosen, and allows an appropriate scale
     factor to be defined so that a distance in image space will be
     mapped to a corresponding distance in graph coordinate space.
-  <LI> graph coordinate space coordinates, in which distances are
+  <LI> GCS (Graph Coordinate Space) coordinates, in which distances are
     measured in application-specific coordinates (e.g., meters) and
     where the positive X direction points left and the positive Y
     direction points up. EPTS allows distances to be specified in either
@@ -401,10 +401,13 @@ the iterative block.
 Directives can be globally defined or can be scoped to apply only
 within an iterative block.  When blocks are nested and a directive is
 defined at multiple levels, the most recent definition is used.
+
+<H2><A name="tbltemplate">Table Templates</A></H2>
 <P>
-EPTS defines one global directive: <CODE>items</CODE>, which is an
-iterative directive.  This directive iterates through a list,
-setting values for the following directives:
+EPTS provides key maps appropriate for representing its table entries.
+for these tables, EPTS defines one global directive: <CODE>items</CODE>,
+which is an iterative directive.  This directive iterates through a
+list, setting values for the following directives:
 <UL>
   <LI> <CODE>varname</CODE>. This is a simple directive defining a
     variable name associated with a location or path.
@@ -442,9 +445,10 @@ the following keys describing a point:
     space.
   <LI><CODE>xp</CODE>. The X coordinate of the point in image space.
   <LI><CODE>yp</CODE>. The Y coordinate of the point in image space,
-    measured from bottom to top (the reverse of the usual Java convention).
-  <LI><CODE>ypj</CODE>. The Y coordinate of the point in image space
-    measured from top to bottom (the normal Java convention).
+    measured from top to bottom(the stadard Java convention).
+  <LI><CODE>ypr</CODE>. The Y coordinate of the point in image space
+    measured from bottom to  (the reverse of the standard Java convention,
+    following the convention used in mathematics instead).
 </UL>
 <P>
 Similarly, the value for <CODE>pathStatement</CODE> is a key map
@@ -480,10 +484,12 @@ containing the following directives:
       <LI><CODE>xp</CODE>. The X coordinate of the point in image
 	space.
       <LI><CODE>yp</CODE>. The Y coordinate of the point in image
-	space, measured from bottom to top (the reverse of the usual Java
+	space, measured from top to bottom (the standard Java
 	convention).
-      <LI><CODE>ypj</CODE>. The Y coordinate of the point in image
-	space measured from top to bottom (the normal Java convention).
+      <LI><CODE>ypr</CODE>. The Y coordinate of the point in image
+	space measured from bottom to top (the reverse of the
+	standard Java convention, following the convention
+	used in mathematics instead).
     </UL>
     When the type is <CODE>CLOSE</CODE>, the <CODE>xy</CODE> directive
     is not defined.
@@ -509,6 +515,115 @@ will be indented properly for readability):
 $(endItems)
 </PRE></CODE></BLOCKQUOTE>
 
+<H2><A name="pitemplates">Path-Iterator Templates</A></H2>
+
+Path-Iterator templates allow one to list the values provided by
+Java path iterators.  Command-line options determine the path iterator
+to use. The key map contains the following directives:
+<UL>
+  <LI><CODE>varname</CODE>. This directive provides the name of the
+    varible whose value is the path that the following directives
+    describe.
+  <LI><CODE>windingRule</CODE>.
+    This directive determines the winding rule. Its values are
+    either <CODE>WIND_EVEN_ODD</CODE> or <CODE>WIND_NON_ZERO</CODE>.
+    <CODE>WIND_EVEN_ODD</CODE> indicates that a point is inside a
+    closed path if a ray drawn to infinity crosses path segments an
+    odd number of times. <CODE>WIND_NON_ZERO</CODE> indicates that a
+    point is inside a closed path if a ray drawn to infinity crosses
+    segments drawn in the counterclockwise direction a different
+    number of times than segments drawn in the clockwise direction.
+  <LI><CODE>segments</CODE>.
+    This is an iterative directive that provides data for a sequence of
+    path segments. A <CODE>MOVE_TO</CODE> segment sets the current point
+    and the other path segments describe how to extend the path from
+    the current point.
+</UL>
+The following directives can be used within the scope of a
+<CODE>segments</CODE> directive:
+<UL>
+  <LI><CODE>type</CODE>. This directive is always provided.  Its value
+    can be either <CODE>SEG_CLOSE</CODE>, <CODE>SEG_MOVETO</CODE>,
+    <CODE>SEG_CUBICTO</CODE>, <CODE>SEG_LINETO</CODE>, or
+    <CODE>SEG_QUADTO</CODE>.
+  <LI><CODE>method</CODE>. This directive is always provided.  Its value
+    can be either <CODE>closePath</CODE>, <CODE>moveTo</CODE>,
+    <CODE>lineTo</CODE>, <CODE>quadTo</CODE>,or <CODE>cubicTo</CODE>.
+    These are the names of the Java methods used to construct a path.
+  <LI><CODE>hasClose</CODE>. This is an iterative directive providing
+    0 or 1 iterations. When provided, it indicates that the path is to
+    be closed, terminating at the position give by the
+    last <CODE>MOVETO</CODE> operation.  If necessary, a
+    straight-line segment will be added to close the path.
+  <LI><CODE>hasMoveTo</CODE>. This is an iterative directive providing
+    0 or 1 iterations. When provided, it indicates that the path has
+    a section that starts at a specific point whose coordinates are the
+    values of the <CODE>x0</CODE> and <CODE>y0</CODE> directives.
+  <LI><CODE>hasLineTo</CODE>. This is an iterative directive providing
+    0 or 1 iterations. When provided, it indicates that the current
+    segment is a straight line ending at a new current point whose
+    coordinates are given by the values of the <CODE>x0</CODE>
+    and <CODE>y0</CODE> directives.
+  <LI><CODE>hasQuadTo</CODE>. This is an iterative directive
+    providing 0 or 1 iterations. When provided, it indicates that the
+    current segment is a quadratic B&eacute;zier curve whose
+    first control point is given by the values of the <CODE>x0</CODE>
+    and <CODE>y0</CODE> directives, and whose final point (the new
+    current point) is given by the values of the  <CODE>x1</CODE>
+    and <CODE>y1</CODE> directives.
+  <LI><CODE>hasCubicTo</CODE>. This is an iterative directive
+    providing 0 or 1 iterations. When provided, it indicates that
+    current segment is a cubic B&eacute;zier curve whose first control
+    point is given by the values of the <CODE>x0</CODE>
+    and <CODE>y0</CODE> directives, whose second control point is
+    given by the values of the <CODE>x1</CODE> and <CODE>y1</CODE>
+    directives, and whose final point (the new current point) is given
+    by the values of the <CODE>x2</CODE> and <CODE>y2</CODE>
+    directives.
+  <LI><CODE>x0</CODE>. This directive, when present, gives the X coordinate
+    for a point that is either the starting point provided for a
+    <CODE>SEG_MOVETO</CODE> operation, the ending point for a
+    <CODE>SEG_LINETO</CODE> operation, or the first control point for a
+    <CODE>SEG_QUADTO</CODE> or <CODE>SEG_CUBICTO</CODE> operation.
+  <LI><CODE>y0</CODE> This directive, when present, gives the Y coordinate
+    for a point that is either the starting point provided for a
+    <CODE>SEG_MOVETO</CODE> operation, the ending point for a
+    <CODE>SEG_LINETO</CODE> operation, or the first control point for a
+    <CODE>SEG_QUADTO</CODE> or <CODE>SEG_CUBICTO</CODE> operation.
+  <LI><CODE>x1</CODE> This directive, when present, gives the X coordinate
+    for a point that is either the final point for a <CODE>SEG_QUADTO</CODE>
+    operation of the second control point for a <CODE>SEG_CUBICTO</CODE>
+    operation.
+  <LI><CODE>y1</CODE> This directive, when present, gives the Y
+    coordinate for a point that is either the final point for
+    a <CODE>SEG_QUADTO</CODE> operation of the second control point
+    for a <CODE>SEG_CUBICTO</CODE> operation.
+  <LI><CODE>x2</CODE>. This directive, when present, gives the X
+    coordinate for a point that is the final point for a
+    <CODE>SEG_CUBICTO</CODE> operation.
+  <LI><CODE>y2</CODE>. This directive, when present, gives the Y
+    coordinate for a point that is the final point for a
+    <CODE>SEG_CUBICTO</CODE> operation.
+</UL>
+In addition, as an alternative to the directives
+<CODE>hasClose</CODE>, <CODE>hasMoveTo</CODE>, <CODE>hasLineTo</CODE>,
+<CODE>hasQuadTo</CODE>, and <CODE>hasCubicTo</CODE>, one may use
+the following directives:
+<UL>
+  <LI><CODE>has0</CODE> This is an iterative directive with 1
+     iteration that indicates that the directives <CODE>x0</CODE>
+     and <CODE>y0</CODE> have non-empty values.
+  <LI><CODE>has1</CODE> This is an iterative directive with 1
+     iteration that indicates that the directives <CODE>x1</CODE>
+     and <CODE>y1</CODE> have non-empty values.
+  <LI><CODE>has2</CODE> This is an iterative directive with 1
+     iteration that indicates that the directives <CODE>x2</CODE>
+     and <CODE>y2</CODE> have non-empty values.
+
+</UL>
+
+
+
 <H1><A name="cli">The command-line interface</A></H1>
 
 EPTS can be as a window-system-based program or as a command-line
@@ -533,9 +648,39 @@ rather than having to run a specific command.
 
 The options specific to the EPTS command are:
 <UL>
+  <LI><CODE>--elevate</CODE>. This option applies when the
+    <CODE>--pname</CODE> option is set and is ignored otherwise. When
+    set, the dgree of linear and quadratic B&eacute;zier curve
+    segements will be elevated so that all segments are cubic
+    B&eacute;zier curve segements.
+  <LI><CODE>--fill</CODE> <EM>COLOR</EM>. This option sets
+    the <CODE>fill</CODE> attribute to <EM>COLOR</EM> in an SVG
+    path. It applies to a path specified by the
+    next <CODE>--pname</CODE> option.  The value of
+    <EM>COLOR</EM> can be any color specification accepted by SVG
+    (the same as those defined by the CSS2 specification).
+    A value of none indicates that no color is specified and
+    the path will not be filled
+  <LI><CODE>--fill-rule</CODE> <EM>RULE</EM>. This option sets the
+    <CODE>fill-rull</CODE> attribute to <EM>RULE</EM> in an SVG path.
+    It applies to a path specified by the next <CODE>--pname</CODE>
+    option.  <EM>RULE</EM> may be the constants <CODE>nonzero</CODE>
+    or <CODE>evenodd</CODE>.
+  <LI><CODE>--flatness</CODE> <EM>FLATNESS</EM>. This option applies when
+    the <CODE>--pname</CODE> option is set and is ignored otherwise.
+    When <EM>FLATNESS</EM> is zero, the <CODE>--limit</CODE> option
+    determiens the number of times a segment will be partitioned.
+    Otherwise control points must deviate from a straight line along
+    each segment by at most the value of <EM>FLATNESS</EM>.
+  <LI><CODE>--gcs</CODE>. This option applies when the
+    <CODE>--pname</CODE> option is set and is ignored otherwise, but may
+    not be used with the <CODE>--svg</CODE> option. When
+    present, it indicates that coordinates will be in GCS units. Otherwise
+    user-space or image space units are used.
   <LI><CODE>--image</CODE>.
     This option implies that there will be one file argument specifying
     the name of an image file.
+  <LI><CODE>--limit</CODE> <EM>LIMIT</EM>.
   <LI><CODE>--map</CODE> <EM>MAPFILE</EM>.
     The file <EM>MAPFILE</EM> is a text file (UTF-8 encoded) whose
     entries are a series of lines. Each line contains a token
@@ -557,6 +702,56 @@ The options specific to the EPTS command are:
     <EM>MAPFILE</EM> starts with the string "sresource:",
     "file:", "http:", "https:", or "ftp", then <EM>MAPFILE</EM> is
     assumed to be a URL pointing to the object to read.
+  <LI><CODE>-o</CODE> <EM>OUTFILE</EM>.  This option specifies the
+    name of the output file for template processing.  If it is a
+    relative file, it will be resolved against the current working
+    directory that existed when EPTS was started.  If the file name is
+    "-", the output will be sent to standard output.
+  <LI><CODE>--pname</CODE> <EM>PNAME</EM>. This option selects a
+    variable name, <EM>PNAME</EM>, that must match the name of a path.
+    It is used with templates that use the
+    <A href="#pitemplates">path-iterator format</A>. When
+    the <CODE>--svg</CODE> option is used, <EM>PNAME</EM> may consist
+    of an identifier, immediately followed by a ":", in turn followed
+    by a series of comma-separated path names.  This in effect creates
+    a path with a new name that is a concatenation of paths specified
+    in EPTS's table. The main use of this variant is to create shapes
+    that may have holes in them. The attributes <CODE>--fill</CODE>,
+    <CODE>--fillRule</CODE>, <CODE>--stroke</CODE>,
+    and <CODE>--stroke-width</CODE> that are used are the ones between
+    the current <CODE>--pname</CODE> option and any preceding
+    <CODE>--pname</CODE> option, or the start of the command if there
+    is no preceding <CODE>--pname</CODE> option.  After
+    a <CODE>--pname</CODE> these fill and stroke options are reset to
+    their defaults for use by following <CODE>--pname</CODE> options.
+  <LI><CODE>--port</CODE> <EM>PORT</EM>.  When this flag is used, it
+    sets the TCP port number for an embedded web server that will
+    provide the on-line manual. The port number <EM>PORT</EM> must be
+    a valid TCP port number (1 to 65535 inclusive, but some ports are
+    reserved or require system privileges).
+  <LI><CODE>--straight</CODE>.  This option applies when the
+    <CODE>--pname</CODE> option is set and is ignored otherwise.
+    When set, the selected path will be flattened and converted to
+    straight-line segments.
+    <LI><CODE>--stroke</CODE> <EM>COLOR</EM>.  This option sets the
+      stroke attribute to <EM>COLOR</EM> in an SVG path.  It applies
+      to a path specified by the next <CODE>--pname</CODE> option. The
+      value of <EM>COLOR</EM> can be any color specification accepted
+      by SVG (the same as those defined by the CSS2 specification). A
+      value of none indicates that no color is specified and the path
+      will not be drawn.
+    <LI><CODE>--stroke-width</CODE> <EM>WIDTH</EM>.  This option sets
+      the <CODE>stroke-width</CODE> attribute to <EM>WIDTH</EM> in an
+      SVG path. It applies to a path specified by the next
+      <CODE>--pname</CODE> option.  The value of <EM>WIDTH</EM> is any
+      width acceptable to SVG: a number pos‐ sibly followed by a unit
+      or a '%' symbol.
+    <LI><CODE>--svg</CODE> This option, if present, must precede all
+      <CODE>--pname</CODE> options.  It indicates that the output
+      will be an SVG (Scaleable Vector Graphics) file.  The
+      <CODE>--template</CODE>, <CODE>--flatness</CODE>,
+      <CODE>--straigth</CODE>, and/or <CODE>--elevate</CODE> options
+      must not be used with this option.
   <LI><CODE>--template</CODE> <EM>TFILE</EM>.
     When <EM>TFILE</EM> starts with the string  "sresource:",
     "file:", "http:", "https:", or "ftp", <EM>TFILE</EM> is assumed
@@ -564,18 +759,27 @@ The options specific to the EPTS command are:
     The syntax of a template is describe in the section of this
     manual entitled "<A href="#templates">Templates</A>". For the
     <CODE>sresource</CODE> protocol, the template is embedded in the
-    EPTS application. Supported templates are
+    EPTS application. Supported table templates are
     <UL>
-      <LI><CODE>ECMAScriptLayers</CODE>.
-      <LI><CODE>ECMAScriptLocations</CODE>.
-      <LI><CODE>ECMAScriptPaths</CODE>.
-      <LI><CODE>ECMAScript</CODE>.
+      <LI><CODE>sresource:ECMAScriptLayers.tpl</CODE> - the table
+	in a form that can be used to configure an instance of
+	org.bzdev.anim2d.AnimationLayer2DFactory, and that contains
+	only paths, using ECMA script.
+      <LI><CODE>sresource:ECMAScriptLocations.tpl</CODE> - the
+	table table for locations but not paths, using ECMA script.
+      <LI><CODE>sresource:ECMAScriptPaths.tpl</CODE> - the table in
+	a form that can be used to configure an instance of
+	org.bzdev.anim2d,AnimationPath2DFactory, using ECMA script.
+      <LI><CODE>sresource:ECMAScript.tpl</CODE> - both locations
+	and paths from the table as ECMAScript statements.
     </UL>
-  <LI><CODE>-o</CODE> <EM>OUTFILE</EM>.  This option specifies the
-    name of the output file for template processing.  If it is a
-    relative file, it will be resolved against the current working
-    directory that existed when EPTS was started.  If the file name is
-    "-", the output will be sent to standard output.
+    These must be used without the <CODE>--pname</CODE> option.
+    Supported path-iterator templates are
+    <UL>
+      <LI><CODE>sresource:SegmentsCSV.tpl</CODE> - the table in CSV
+	format.
+    </UL>
+    These must be used with the <CODE>--pname</CODE> option.
   <LI><CODE>--web</CODE>. The <CODE>--port</CODE> option should also be
     used to provide a non-zero port number. This option will start
     an embedded web server allowing the manual to be shown.

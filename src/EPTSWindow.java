@@ -31,6 +31,8 @@ import javax.swing.text.html.StyleSheet;
 
 import org.bzdev.ejws.*;
 import org.bzdev.ejws.maps.*;
+import org.bzdev.geom.FlatteningPathIterator2D;
+import org.bzdev.geom.Path2DInfo;
 import org.bzdev.geom.SplinePathBuilder;
 import org.bzdev.geom.SplinePathBuilder.CPointType;
 import org.bzdev.graphs.Graph;
@@ -41,6 +43,7 @@ import org.bzdev.net.WebEncoder;
 import org.bzdev.util.CopyUtilities;
 import org.bzdev.util.TemplateProcessor;
 import org.bzdev.util.TemplateProcessor.KeyMap;
+import org.bzdev.util.TemplateProcessor.KeyMapList;
 import org.bzdev.swing.ErrorMessage;
 import org.bzdev.swing.HtmlWithTocPane;
 
@@ -1921,7 +1924,7 @@ public class EPTSWindow {
 			    (SplinePathBuilder.CPointType) nextState;
 			Point p = panel.getMousePosition();
 			if (p != null) {
-			    double xp =(p.x/zoom);
+			    double xp = (p.x/zoom);
 			    double yp = (p.y/zoom);
 			    double x = xp;
 			    double y = height - yp;
@@ -2552,6 +2555,210 @@ public class EPTSWindow {
     double hw = w/2;
     double lw = w*1.3;
     double lhw = hw*1.3;
+
+    public static TemplateProcessor.KeyMap
+	getPathKeyMap(PointTableModel ptmodel, String name,
+		      String[] vnames,
+		      double flatness, int limit, boolean straight,
+		      boolean elevate, boolean gcs)
+    {
+	Path2D path = getPath(ptmodel, vnames, gcs);
+	if (path == null) return null;
+	PathIterator pi = path.getPathIterator(null);
+	if (limit > 0) {
+	    if (straight) {
+		pi = new FlatteningPathIterator(pi, flatness, limit);
+	    } else {
+		pi = new FlatteningPathIterator2D(pi, flatness, limit);
+	    }
+	}
+	double[] coords = new double[6];
+	double[] ncoords = elevate? new double[6]: null;
+	TemplateProcessor.KeyMap kmap = new TemplateProcessor.KeyMap();
+	kmap.put("varname", name);
+	int irule = pi.getWindingRule();
+	String rule = null;
+	switch(irule) {
+	case PathIterator.WIND_EVEN_ODD:
+	    rule = "WIND_EVEN_ODD";
+	    break;
+	case PathIterator.WIND_NON_ZERO:
+	    rule = "WIND_NON_ZERO";
+	    break;
+	}
+	if (rule != null) {
+	    kmap.put("windingRule", rule);
+	}
+	TemplateProcessor.KeyMapList list = new TemplateProcessor.KeyMapList();
+	kmap.put("segments", list);
+	double lastx = 0.0;
+	double lasty = 0.0;
+	double movex = 0.0;
+	double movey = 0.0;
+	// Key map indicating that a single iteration exists.
+	// It doens't have to include any directives as all the needed
+	// ones are defined at a higher level.
+	TemplateProcessor.KeyMap emap = new TemplateProcessor.KeyMap();
+	while (!pi.isDone()) {
+	    int current = pi.currentSegment(coords);
+	    TemplateProcessor.KeyMap imap = new TemplateProcessor.KeyMap();
+	    String mode;
+	    switch (current) {
+	    case PathIterator.SEG_CLOSE:
+		imap.put("type", "SEG_CLOSE");
+		imap.put("method", "closePath");
+		imap.put("hasClose", emap);
+		lastx = movex;
+		lasty = movey;
+		break;
+	    case PathIterator.SEG_CUBICTO:
+		imap.put("type", "SEG_CUBICTO");
+		imap.put("method", "curveTo");
+		imap.put("hasCubicTo", emap);
+		imap.put("has0", emap);
+		imap.put("has1", emap);
+		imap.put("has2", emap);
+		imap.put("x0", String.format("%s", coords[0]));
+		imap.put("y0", String.format("%s", coords[1]));
+		imap.put("x1", String.format("%s", coords[2]));
+		imap.put("y1", String.format("%s", coords[3]));
+		imap.put("x2", String.format("%s", coords[4]));
+		imap.put("y2", String.format("%s", coords[5]));
+		lastx = coords[4];
+		lasty = coords[5];
+		break;
+	    case PathIterator.SEG_LINETO:
+		if (elevate) {
+		    Path2DInfo.elevateDegree(1, ncoords, lastx, lasty, coords);
+		    Path2DInfo.elevateDegree(2, coords, lastx, lasty, ncoords);
+		    imap.put("type", "SEG_CUBICTO");
+		    imap.put("method", "curveTo");
+		    imap.put("hasCubicTo", emap);
+		    imap.put("has0", emap);
+		    imap.put("has1", emap);
+		    imap.put("has2", emap);
+		    imap.put("x0", String.format("%s", ncoords[0]));
+		    imap.put("y0", String.format("%s", ncoords[1]));
+		    imap.put("x1", String.format("%s", ncoords[2]));
+		    imap.put("y1", String.format("%s", ncoords[3]));
+		    imap.put("x2", String.format("%s", ncoords[4]));
+		    imap.put("y2", String.format("%s", ncoords[5]));
+		    lastx = ncoords[4];
+		    lasty = ncoords[5];
+		} else {
+		    imap.put("type", "SEG_LINETO");
+		    imap.put("method", "lineTo");
+		    imap.put("hasLineTo", emap);
+		    imap.put("has0", emap);
+		    imap.put("x0", String.format("%s", coords[0]));
+		    imap.put("y0", String.format("%s", coords[1]));
+		    lastx = coords[0];
+		    lasty = coords[1];
+		}
+		break;
+	    case PathIterator.SEG_MOVETO:
+		imap.put("type", "SEG_MOVETO");
+		imap.put("method", "moveTo");
+		imap.put("hasMoveTo", emap);
+		imap.put("has0", emap);
+		imap.put("x0", String.format("%s", coords[0]));
+		imap.put("y0", String.format("%s", coords[1]));
+		lastx = coords[0];
+		lasty = coords[0];
+		movex = lastx;
+		movey = lasty;
+		break;
+	    case PathIterator.SEG_QUADTO:
+		if (elevate) {
+		    Path2DInfo.elevateDegree(2, ncoords, lastx, lasty, coords);
+		    imap.put("type", "SEG_CUBIC");
+		    imap.put("method", "curveTo");
+		    imap.put("hasCubicTo", emap);
+		    imap.put("has0", emap);
+		    imap.put("has1", emap);
+		    imap.put("has2", emap);
+		    imap.put("x0", String.format("%s", ncoords[0]));
+		    imap.put("y0", String.format("%s", ncoords[1]));
+		    imap.put("x1", String.format("%s", ncoords[2]));
+		    imap.put("y1", String.format("%s", ncoords[3]));
+		    imap.put("x2", String.format("%s", ncoords[4]));
+		    imap.put("x2", String.format("%s", ncoords[5]));
+		} else {
+		    imap.put("type", "SEG_QUADTO");
+		    imap.put("hasQuadTo", emap);
+		    imap.put("method", "quadTo");
+		    imap.put("has0", emap);
+		    imap.put("has1", emap);
+		    imap.put("x0", String.format("%s", coords[0]));
+		    imap.put("y0", String.format("%s", coords[1]));
+		    imap.put("x1", String.format("%s", coords[2]));
+		    imap.put("y1", String.format("%s", coords[3]));
+		}
+		lastx = coords[2];
+		lasty = coords[3];
+		break;
+	    }
+	    list.add(imap);
+	    pi.next();
+	}
+	return kmap;
+    }
+
+    private static boolean isOurPath(String[] names, String name) {
+	for (String s: names) {
+	    if (name.equals(s)) {
+		return true;
+	    }
+	}
+	return false;
+    }
+
+    private static Path2D getPath(PointTableModel ptmodel, String[] names,
+				  boolean gcs)
+    {
+	SplinePathBuilder pb = new SplinePathBuilder();
+	pb.initPath();
+	boolean ignore = true;
+	boolean ok = false;
+	int nrows = ptmodel.getRowCount();
+	int index = 0;
+	for (PointTMR row: ptmodel.getRows()) {
+	    Enum mode = row.getMode();
+	    if (ignore) {
+		if (mode == EPTS.Mode.PATH_START
+		    && isOurPath(names, row.getVariableName())) {
+		    ignore = false;
+		}
+	    } else {
+		if (mode instanceof SplinePathBuilder.CPointType) {
+		    SplinePathBuilder.CPointType smode =
+			(SplinePathBuilder.CPointType) mode;
+		    double x = gcs? row.getX(): row.getXP();
+		    double y = gcs? row.getY(): row.getYP();
+		    ok = true;
+		    switch (smode) {
+		    case CLOSE:
+			pb.append(new SplinePathBuilder.CPoint(smode));
+			break;
+		    default:
+			if (index == nrows-1) {
+			    pb.append(new SplinePathBuilder.CPoint
+				      (SplinePathBuilder.CPointType.SEG_END,
+				       x,  y));
+			} else {
+			    pb.append(new SplinePathBuilder.CPoint(smode,
+								   x, y));
+			}
+			break;
+		    }
+		} else if (mode == EPTS.Mode.PATH_END) {
+		    ignore = true;
+		}
+	    }
+	    index++;
+	}
+	return ok? pb.getPath(): null;
+    }
 
     private void drawRows(PointTableModel ptmodel, Graphics2D g2d) {
 	double prevx = -1;

@@ -44,25 +44,86 @@ following:
 .B \-\-
 End of options.
 .TP
+.B \-\-elevate
+This flag applies when the
+.B \-\-pname
+option is used and is ignored otherwise. It will increase the
+degree of linear and quadratic Bezier-path segments so that
+all segments are cubic segments.
+.TP
+.BI \-\-fill\  COLOR
+This option sets the
+.B fill
+attribute to
+.I COLOR
+in an SVG path. It applies to a path specified by the next
+.B \-\-pname
+option. The value of
+.I COLOR
+can be any color specification accepted by SVG (the same as those
+defined by the CSS2 specification). A value of
+.B none
+indicates that no color is specified and the path will not be filled.
+.TP
+.BI \-\-fill-rule\  RULE
+This option sets the
+.B fill-rull
+attribute to
+.I RULE
+in an SVG path. It applies to a path specified by the next
+.B \-\-pname
+option.
+.I RULE
+may be the constants
+.B nonzero
+or
+.BR evenodd .
+.TP
+.BI \-\-flatness\  FLATNESS
+This option applies when the
+.B \-\-pname
+option is used and is ignored otherwise, but must jnot be used with
+the
+.B \-\-svg
+option. When
+.I FLATNESS
+is zero, the
+.B \-\-limit
+option determines the number of times a segment will be partitioned. Otherwise
+control points must deviate from a straight line along each segment
+by at most the value of
+.IR FLATNESS ,
+which must not be a negative number.
+.TP
+.B \-\-gcs
+This flag applies when the
+.B \-\-pname
+option is used and is ignored otherwise, but may not be used with the
+.B \-\-svg
+option. When set, the coordinates of the path's control points will be
+expressed in GCS (Graph Coordinate Space) units.  Otherwise the
+control points are given in Java user-space units, where distances are
+in points and where the origin is at the upper-left corner of the
+image or frame, with the positive X axis pointing right and the
+positive Y axis pointing down. In GCS units, by constrast, the X axis
+points right, the Y axis points down, and the scale is user-defined,
+with the origin placed anywhere on or off the image or frame as
+desired.
+.TP
 .B \-\-image
 The first and only argument that is not an option is the name of an
 image file.
 .TP
-.BI \-\-port PORT
-When
-.I PORT
-is zero (the default) and the user requests to view the manual using
-a browser, an embedded web server will be started and a browser window
-will be brought up.  The web server will use a system-allocated port
-number.  If
-.I PORT
-is not zero, an embedded web server will be started and configured so
-that the file manual.html is available. The URL for this file will be
-<http://\fIHOST\fR:\fIPORT\fR/manual.html>, where
-.I HOST
-is the host name (or IP address) of the system on which EPTS is running.
+.BI \-\-limit\  LIMIT
+This flag applies when the
+.B \-\-pname
+option is used and is ignored otherwise. This parameter limits the
+amount of recursion used when paths are split to meet a flatness
+criteria. When
+.I LIMIT
+is zero, paths will not be partitioned.
 .TP
-.BI \-\-map MAPFILE
+.BI \-\-map\  MAPFILE
 The file
 .I MAPFILE
 must contain a series of lines, each starting with the token
@@ -81,12 +142,7 @@ of a key whose name is
 .B atype
 for use by template processors.
 .TP
-.BI \-\-template TFILE
-The output will be formated based on a template provided by the
-file or URL
-.IR TFILE .
-.TP
-.BI \-o OUTFILE
+.BI \-o\  OUTFILE
 This option specifies the output file for template processing, and
 if missing template-processing will not occur. If the value of
 .I OUTFILE
@@ -96,12 +152,128 @@ then standard output is used.  Template processing requires that
 a template be specified with the
 .B \-\-template
 option and one may optionally provide a map using the
-.B \-\- map
-option. When the
+.B \-\-map
+option when the
+.B \-\-pname
+option is not used. When the
 .B \-o
 option is used, EPTS operates in batch mode, and its input file should
 be an EPTS file (one with the file extension "epts"). EPTS files are
 created by EPTS when its "Save" menu item is used.
+.TP
+.BI \-\-pname\  PNAME
+This option's argument
+.I PNAME
+provides the name of a variable that names a path.  When this option is
+provided, an alternative key map is used for template processing as
+described by the manual page
+.BR epts (5)
+and by the manual for
+.BR epts .
+This keymap describes a path as a series of straight-line segments,
+quadratic Bezier curves, or cubic Bezier curves. Segments starting or
+terminating with a spline point are converted to cubic Bezier curves.
+When the
+.B \-\-svg
+option is used,
+.I PNAME
+may consist of an identifier, immediately followed by a ":", in turn
+followed by a series of comma-separated path names.  This in effect
+creates a path with a new name that is a concatenation of paths specified
+in EPTS's table. The main use of this variant is to create shapes that
+may have holes in them. The attributes
+.BR \-\-fill ,
+.BR \-\-fillRule ,
+.BR \-\-stroke ,
+and
+.B \-\-stroke-width
+that are used are the ones between the current
+.B \-\-pname
+option and any preceding
+.B \-\-pname
+option, or the start of the command if there is no preceding
+.B \-\-pname
+option. After a
+.B \-\-pname
+these fill and stroke options are reset to their defaults for use
+by following
+.B \-\-pname
+options.
+.TP
+.BI \-\-port\  PORT
+When
+.I PORT
+is zero (the default) and the user requests to view the manual using
+a browser, an embedded web server will be started and a browser window
+will be brought up.  The web server will use a system-allocated port
+number.  If
+.I PORT
+is not zero, an embedded web server will be started and configured so
+that the file manual.html is available. The URL for this file will be
+<http://\fIHOST\fR:\fIPORT\fR/manual.html>, where
+.I HOST
+is the host name (or IP address) of the system on which EPTS is running.
+Valid port numbers range from 1 to 65535 inclusive, although many are
+reserved for other purposes or require system privileges.
+.TP
+.B \-\-straight
+This flag applies when the
+.B \-\-pname
+option is used and is ignored otherwise. When set, the path will be
+flattened and converted to straight-line segments.
+.TP
+.BI \-\-stroke\  COLOR
+This option sets the
+.B stroke
+attribute to
+.I COLOR
+in an SVG path. It applies to a path specified by the next
+.B \-\-pname
+option. The value of
+.I COLOR
+can be any color specification accepted by SVG (the same as those
+defined by the CSS2 specification). A value of
+.B none
+indicates that no color is specified and the path will not be drawn.
+.TP
+.BI \-\-stroke-width\  WIDTH
+This option sets the
+.B stroke-width
+attribute to
+.I WIDTH
+in an SVG path. It applies to a path specified by the next
+.B \-\-pname
+option. The value of
+.I WIDTH
+is any width acceptable to SVG: a number possibly followed by a unit
+or a '%' symbol.
+.TP
+.B \-\-svg
+This option, if present, must precede all
+.B \-\-pname
+options.  It indicates that the output will be an SVG (Scaleable
+Vector Graphics) file.  The
+.BR \-\-template ,
+.BR \-\-flatness ,
+.BR \-\-straigth ,
+and/or
+.B \-\-elevate
+options must not be used with this option.
+.TP
+.BI \-\-template\  TFILE
+The output will be formated based on a template provided by the
+file or URL
+.IR TFILE .
+The format of the template file depends on whether or not the
+.B \-\-pname
+flag has been set: when set, a path-iterator template must be used;
+otherwise a table template must be used. There are a number of
+built-in templates whose URLs start with the protocol "sresource"
+For table templates, these are <sresource:ECMAScriptLayers.tpl>,
+<sresource:EMCAScriptLocations.tpl>, <sresource:EMCAScriptPaths.tpl>,
+and <sresource:ECMAScript.tpl>, where "<" and ">" as usual are not
+part of the URLs. For path-iterator templates, the URL is
+<sresource:SegmentsCSV.tpl>.
 .TP
 .B \-\-web
 This option indicates that a web server will be started and the GUI will

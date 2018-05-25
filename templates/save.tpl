@@ -10,12 +10,11 @@
 	  userSpaceDistance="$(userSpaceDistance)"
 	  gcsDistance="$(gcsDistance)"
 	  xorigin="$(xorigin)" yorigin="$(yorigin)"/>
-  $(table:endTable)<table>$(items:endItems)$(location:endLocation)
-     <row varname="$(varname)" type="LOCATION"
+  $(table:endTable)<table>
+$(items:endItems)$(location:endLocation)       <row varname="$(varname)" type="LOCATION"
        x="$(x)" y="$(y)" xp="$(xp)" yp="$(yp)" />
-  $(endLocation)$(pathStatement:endPathStatement)
-      <row varname="$(varname)" type="PATH_START"/>$(pathItem:endPathItem)
-      <row type="$(type)"$(xy:endXY) x="$(x)" y="$(y)" xp="$(xp)" yp="$(yp)"$(endXY)/>$(endPathItem)
-      <row type="PATH_END"/>
-  $(endPathStatement)$(endItems)</table>$(endTable)
+$(endLocation)$(pathStatement:endPathStatement)       <row varname="$(varname)" type="PATH_START"/>
+$(pathItem:endPathItem)       <row type="$(type)"$(xy:endXY) x="$(x)" y="$(y)" xp="$(xp)" yp="$(yp)"$(endXY)/>
+$(endPathItem)       <row type="PATH_END"/>
+$(endPathStatement)$(endItems)  </table>$(endTable)
 </epts>

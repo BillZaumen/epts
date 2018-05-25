@@ -98,7 +98,8 @@ JFILES = $(wildcard src/*.java)
 PROPERTIES = src/EPTS.properties
 TEMPLATES = templates/ECMAScript.tpl templates/save.tpl \
 	templates/ECMAScriptPaths.tpl templates/ECMAScriptLocations.tpl \
-	templates/ECMAScriptLayers.tpl
+	templates/ECMAScriptLayers.tpl templates/SegmentsCSV.tpl \
+	templates/SVG.tpl
 RESOURCES = manual/manual.xml \
 	manual/manual.xsl \
 	manual/index.html \

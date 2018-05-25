@@ -428,6 +428,16 @@ public class EPTS {
     static int width = 1024;
     static int height = 1024;
 
+    private static class SVGInfo {
+	String pname;
+	String[] pnameArray;
+	String stroke = "#000000";
+	String strokeWidth = "1.0";
+	String fill = "none";
+	String fillRule = "evenodd";
+	public SVGInfo() {}
+    }
+
     static void init(String argv[]) throws Exception {
 	int index = -1;
 	
@@ -445,7 +455,24 @@ public class EPTS {
 	ArrayList<String> argsList = new ArrayList<>();
 	OutputStream out = null;
 	String outName = null;
+	String pname = null;
+	String[] pnameArray = null;
 	URL templateURL = null;
+
+	double flatness = 0.0;
+	int limit = 10;
+	boolean straight = false;
+	boolean elevate = false;
+	boolean gcs = false;
+	boolean svg = false;
+	/*
+	String stroke = "#000000";
+	String strokeWidth = "1.0";
+	String fill = "none";
+	String fillRule = "evenodd";
+	*/
+	SVGInfo svgInfo = new SVGInfo();
+	ArrayList<SVGInfo> svgInfoList = new ArrayList<>();
 
 	String alreadyForkedString = System.getProperty("epts.alreadyforked");
 	boolean alreadyForked = (alreadyForkedString != null)
@@ -534,6 +561,31 @@ public class EPTS {
 			System.exit(1);
 					   
 		    }
+		} else if (argv[index].equals("--svg")) {
+		    if (svg == false) {
+			if (flatness != 0.0 || templateURL != null
+			    || straight || elevate) {
+			    System.err.println
+				(errorMsg("noSVG"));
+			    System.exit(1);
+			}
+		    }
+		    svg = true;
+		    limit = 0;
+		    flatness = 0.0;
+		    templateURL = new URL("sresource:SVG.tpl");
+		} else if (argv[index].equals("--fill-rule")) {
+		    index++;
+		    svgInfo.fillRule = argv[index];
+		} else if (argv[index].equals("--stroke")) {
+		    index++;
+		    svgInfo.stroke = argv[index];
+		} else if (argv[index].equals("--stroke-width")) {
+		    index++;
+		    svgInfo.strokeWidth=argv[index];
+		} else if (argv[index].equals("--fill")) {
+		    index++;
+		    svgInfo.fill = argv[index];
 		} else if (argv[index].equals("--web")) {
 		    webserverOnly = true;
 		} else if (argv[index].equals("--map")) {
@@ -569,7 +621,94 @@ public class EPTS {
 		    }
 		    argsList.add(argv[index-1]);
 		    argsList.add(argv[index]);
+		} else if (argv[index].equals("--pname")) {
+		    index++;
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    pname = argv[index].trim();
+		    if (pname.indexOf(':') != -1) {
+			pnameArray = pname.split(":", 2);
+			pname = pnameArray[0];
+			pnameArray = pnameArray[1].split(",");
+			for (int i = 0; i < pnameArray.length; i++) {
+			    pnameArray[i] = pnameArray[i].trim();
+			}
+		    } else {
+			pnameArray = new String[1];
+			pnameArray[0] = pname;
+		    }
+		    if (svg) {
+			svgInfo.pname = pname;
+			svgInfo.pnameArray = pnameArray;
+			svgInfoList.add(svgInfo);
+			svgInfo = new SVGInfo();
+			pname = null;
+			pnameArray = null;
+		    }
+		} else if (argv[index].equals("--flatness")) {
+		    if (svg) {
+			System.err.println
+			    (errorMsg("svgmode","--flatness"));
+			System.exit(1);
+		    }
+		    index++;
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    flatness = Double.parseDouble(argv[index]);
+		    if (flatness < 0)  {
+			throw new IllegalArgumentException
+			    (errorMsg("negative", argv[index]));
+		    }
+		} else if (argv[index].equals("--limit")) {
+		    if (svg) {
+			System.err.println
+			    (errorMsg("svgmode","--limit"));
+			System.exit(1);
+		    }
+		    index++;
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    limit = Integer.parseInt(argv[index]);
+		    if (limit < 0) {
+			throw new IllegalArgumentException
+			    (errorMsg("negative", argv[index]));
+		    }
+		} else if (argv[index].equals("--straight")) {
+		    if (svg) {
+			System.err.println
+			    (errorMsg("svgmode","--straight"));
+			System.exit(1);
+		    }
+		    straight = true;
+		} else if (argv[index].equals("--elevate"))  {
+		    if (svg) {
+			System.err.println
+			    (errorMsg("svgmode","--elevate"));
+			System.exit(1);
+		    }
+		    elevate = true;
+		} else if (argv[index].equals("--gcs")) {
+		    if (svg) {
+			System.err.println
+			    (errorMsg("svgmode","--gcs"));
+			System.exit(1);
+		    }
+		    gcs = true;
 		} else if (argv[index].equals("--template")) {
+		    if (svg) {
+			System.err.println
+			    (errorMsg("svgmode","--template"));
+			System.exit(1);
+		    }
 		    index++;
 		    if (index == argv.length) {
 			System.err.println
@@ -893,11 +1032,46 @@ public class EPTS {
 			for (PointTMR row: parser.getRows()) {
 			    ptmodel.addRow(row);
 			}
-			TemplateProcessor tp = new
-			    TemplateProcessor(ptmodel.getKeyMap(map,
-								(double)
-								parser
-								.getHeight()));
+			TemplateProcessor tp;
+			if (pname != null) {
+			    TemplateProcessor.KeyMap kmap
+				= EPTSWindow.getPathKeyMap(ptmodel, pname,
+							   pnameArray,
+							   flatness, limit,
+							   straight, elevate,
+							   gcs);
+			    kmap.put("width", "" + parser.getWidth());
+			    kmap.put("height", "" + parser.getHeight());
+			    tp  = new TemplateProcessor(kmap);
+			} else if (svg) {
+			    TemplateProcessor.KeyMap svgmap =
+				new TemplateProcessor.KeyMap();
+			    svgmap.put("width", "" + parser.getWidth());
+			    svgmap.put("height", "" + parser.getHeight());
+			    TemplateProcessor.KeyMapList kmaplist =
+				new TemplateProcessor.KeyMapList();
+			    for (SVGInfo info: svgInfoList) {
+				TemplateProcessor.KeyMap kmap
+				    = EPTSWindow.getPathKeyMap(ptmodel,
+							       info.pname,
+							       info.pnameArray,
+							       flatness, limit,
+							       straight,
+							       elevate,
+							       gcs);
+				kmap.put("fillRule", info.fillRule);
+				kmap.put("stroke", info.stroke);
+				kmap.put("strokeWidth", info.strokeWidth);
+				kmap.put("fill", info.fill);
+				kmaplist.add(kmap);
+			    }
+			    svgmap.put("paths", kmaplist);
+			    tp = new TemplateProcessor(svgmap);
+			} else {
+			    tp = new TemplateProcessor
+				(ptmodel.getKeyMap(map,
+						   (double)parser.getHeight()));
+			}
 			tp.processURL(templateURL, "UTF-8", os);
 			os.flush();
 			System.exit(0);

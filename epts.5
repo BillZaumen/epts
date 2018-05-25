@@ -187,12 +187,11 @@ element:
 </epts>
 .PP
 as required for a valid XML file.
-.SH TEMPLATE FORMAT
-EPTS can generate text files based on a template.
+.SH TEMPLATE SYNTAX
 Templates specify an output format for points and paths using the
 syntax specified by the Java
 class
-.BR org.bzdev.util.TemplateProcessor</CODE> .
+.BR org.bzdev.util.TemplateProcessor .
 Instances of this class are constructed using a tree consisting of
 objects whose type is
 .B org.bzdev.util.TemplateProcessor.KeyMap
@@ -208,42 +207,46 @@ an array of
 The keys name directives. When a key's value is a string, the
 directive is a simple directive.  Otherwise it is an iterative
 directive. When the value of an iterative directive is a single
-.BR KeyMap , the
-iteration occurs once and this can be used a conditional (provided
+.BR KeyMap ,
+the iteration occurs once and this can be used a conditional (provided
 when the directive is defined and missing when it is not defined).
 .PP
 A template contains a mixture of text and directives stored in a text
-file. In a template, directives start with the sequence "$(" and end with a
-closing ")".  A simple directive contains a variable name and its
-value is a string that provides text that will be substituted for the
-directive.  For example, the directive "$(varname)" will be replaced
-by a string containing a variable name.  The directive "$$" is
-replaced with a single dollar sign.  An iterative directive consists
-of a name, a colon (":") and a second name. Its value is either a
-key map (in which case it is treated like a list with a single value,
-or a list or array providing key maps over which one iterates). A
-following simple directive containing the second name will then end
-the iterative block.
+file. In a template, directives start with the sequence "$(" and end
+with a closing ")".  A simple directive contains a variable name and
+its value is a string that provides text that will be substituted for
+the directive.  For example, the directive "$(varname)" will be
+replaced by a string containing a variable name.  The directive "$$"
+is replaced with a single dollar sign.  An iterative directive
+consists of a name, a colon (":") and a second name. Its value is
+either a key map (in which case it is treated like a list with a
+single value, or a list or array providing key maps over which one
+iterates). A following simple directive containing the second name
+will then end the iterative block.
 .PP
 Directives can be globally defined or can be scoped to apply only
 within an iterative block.  When blocks are nested and a directive is
 defined at multiple levels, the most recent definition is used.
+.SH TABLE TEMPLATE FORMAT
+EPTS can generate text files, describing all paths and locations
+stored in EPTS's table, based on a template.
 .PP
-EPTS defines one global directive: <CODE>items</CODE>, which is an
-iterative directive.  This directive iterates over a list, each
-element of which contains the following directives:
+For a table template, EPTS defines one global directive:
+.BR items ,
+which is an iterative directive.  This directive iterates over a list,
+each element of which contains the following directives:
 .TP
 .BR varname .
 This is a simple directive defining a variable name associated with a
 location or path.
 .TP
 .BR index .
-An overall index. This value is incremented for each line in the
-table.
+This directive provides an overall index. Its value is incremented for
+each line in the table.
 .TP
 .BR vindex .
-An variable-name index. This value is incremented whenever a variable
-name changes.
+This directive provides a variable-name index. This value is
+incremented whenever a variable name changes.
 .TP
 .BR location .
 This is an iterative directive that defines a specific, isolated
@@ -256,51 +259,55 @@ will not both be present at a specific iteration, although one of the
 two will be present.
 .TP
 .BR pathStatement .
-This is an iterative directive
-that defines the control points for a path. While iterative, each
-pathSegment definition contains a single key map as its value. Both
+This is an iterative directive that defines the control points for a
+path. While iterative, each pathSegment definition contains a single
+key map as its value. Both
 .B location
 and
 .B pathStatement
 will not both be present at a specific iteration, although one of the
 two will be present.
 .PP
-The value for
+While
 .B location
-is a key map whose keys are the following:
+is an iterative directive, it acts as if there was a single
+iteration. During this iteration, the following keys are defined:
 .TP
 .BR x .
-The X coordinate of the point in graph coordinate space.
+This directive provides the X coordinate of the point in graph
+coordinate space.
 .TP
 .BR y .
-The Y coordinate of the point in graph coordinate space.
+This directive provides the Y coordinate of the point in graph
+coordinate space.
 .TP
 .BR xp .
-The X coordinate of the point in image space.
+This directive provides the X coordinate of the point in image space
+measured from left to right (the standard Java convention).
 .TP
 .BR yp .
-The Y coordinate of the point in image space, measured from bottom to
-top (the reverse of the usual Java convention).
+This directive provides the Y coordinate of the point in image space,
+measured from top to bottom (the standard Java convention).
 .TP
-.BR ypj .
-The Y coordinate of the point in image space measured from top to
-bottom (the normal Java convention).
+.BR ypr .
+This directive provides the Y coordinate of the point in image space
+measured from bottom to top (the reverse of the standard Java convention,
+instead matching the convention used in mathematics).
 .PP
-These keys define the location of an isolated point.
-.PP
-Similarly, the value for <CODE>pathStatement</CODE> is a key map
-containing the following directives:
+Similarly, the value for
+.B pathStatement
+is a key map containing the following directives:
 .TP
 .BR pindex .
 The value is "1" for the initial
 .B MOVE_TO
 operation for a path and is incremented for each control point, spline
 point, or end-of-segment point, along the path, and for a
-final 'close' directive if there is one.
+final 'close' if there is one.
 .TP
 .BR type .
-This is the type of a point or operation
-along the path (\fBMOVE_TO\fR>,
+This is the type of a control point or operation
+along the path (\fBMOVE_TO\fR,
 .BR SPLINE ,
 .BR CONTROL ,
 .BR SEG_END ,
@@ -319,7 +326,7 @@ for
 .BR SPLINE .
 The directive
 .B ltype is useful
-for configuring an instance of the class
+for templates used to configure an instance of the class
 .BR org.bzdev.anim2d.AnimationLayer2DFactory .
 .TP
 .BR atype .
@@ -327,13 +334,15 @@ This is is similar to
 .B type
 but with an alternative value defined by the user via a command-line
 argument that provides the name of a file mapping types to their
-replacement strings.
+replacement strings. The format of this file is described below. It
+is useful for printing a representation of a table that will be used
+in a report where terminology used for software is not appropriate.
 .BR xy .
 This is an iterative directive, with 0 or 1
 iterations. It defines the following directives, the same ones
 as defined by the location directive, when the type
 is
-.BR MOVE_TO< ,
+.BR MOVE_TO ,
 .BR SPLINE ,
 .BR CONTROL ,
 or
@@ -347,6 +356,184 @@ and
 with the same meaning as used in  the
 .B location
 directive.
+.SH PATH-ITERATOR TEMPLATE FORMAT
+These templates describe individual paths.
+The global directives are
+.TP
+.BR varname .
+This directive provides the name of the varible whose value is
+the path that the following directives describe.
+.TP
+.BR windingRule .
+This directive describes a winding rule, and is useful when a path
+is closed, possibly containing muliple disjoint sections. The value
+for this director is either
+.B WIND_EVEN_ODD
+or
+.BR WIND_NON_ZERO .
+.B WIND_EVEN_ODD
+indicates that a point is inside a closed path if a ray drawn to infinity
+crosses path segments an odd number of times.
+.B WIND_NON_ZERO
+indicates that a point is inside a closed path if a ray drawn to infinity
+crosses segments drawn in the counterclockwise direction a different
+number of times than segments drawn in the clockwise direction.
+.TP
+.B segments
+This directive is an iterative directive.
+.PP
+The
+.B segments
+directive iterates over a list of keymaps, each of which contains
+the following directives, all but one which are optional:
+.TP
+.B type
+This is a mandatory directive. Its value can be
+.BR SEG_CLOSE ,
+.BR SEG_MOVETO ,
+.BR SEG_LINETO ,
+.BR SEG_QUADTO ,
+or
+.BR SEG_CUBICTO .
+For each value, there is a corresponding iterative directive described
+below.
+.TP
+.B method
+This is a mandatory directive. Its value can be
+.BR closePath ,
+.BR moveTo ,
+.BR lineTo ,
+.BR quadTo ,
+.BR curveTo .
+These values correspond to the values provided for the
+.B type
+directive, but provide Java method names used by the
+.B Path
+class rather than constants provided by the class
+.BR PathIterator .
+.TP
+.B hasClose
+This is an iterative directive indicating that the type for the
+current segment is
+.B SEG_CLOSE .
+.TP
+.B hasMoveTo
+This is an iterative directive indicating that the type for the
+current segment is
+.B SEG_MOVETO .
+.TB
+.B hasLineTo
+This is an iterative directive indicating that the type for the
+current segment is
+.B SEG_LINETO .
+.TP
+.B hasQuadTo
+This is an iterative directive indicating that the type for the
+current segment is
+.B SEG_QUADTO .
+.TP
+.B hasCubicTo
+This is an iterative directive indicating that the type for the
+current segment is
+.B SEG_CUBICTO .
+.PP
+Each segment directive also contains the following optional
+directives that provide the X and Y coordinates of a segment's
+points:
+.TP
+.B x0
+The X coordinate of the first control point. When the type
+is
+.BR SEG_MOVETO ,
+this value represents the X coordinate of the start of a segment.
+When the type is
+.BR SEG_CLOSE ,
+this value is not included in the key map and will therefore be
+treated as zero-length text.  When the type is
+.BR SEG_LINETO ,
+this value represents the X coordinate at the end of the segment.
+.TP
+.B y0
+The Y coordinate of the first control point. When the type
+is
+.BR SEG_MOVETO ,
+this value represents the Y coordinate of the start of a segment.
+When the type is
+.BR SEG_CLOSE ,
+this value is not included in the key map and will therefore be
+treated as zero-length text. When the type is
+.BR SEG_LINETO ,
+this value represents the Y coordinate at the end of the segment.
+.TP
+.B x1
+The X coordinate of the second control point. When the type is
+.BR SEG_QUADTO ,
+this value represents the X coordinate at the end of the segment.
+It is empty when the type is
+.B SEG_LINETO
+or
+.BR SEG_CLOSE .
+.TP
+.B y1
+The Y coordinate of the second control point. When the type is
+.BR SEG_QUADTO ,
+this value represents the Y coordinate at the end of the segment.
+It is empty when the type is
+.B SEG_LINETO
+or
+.BR SEG_CLOSE .
+.B x2
+The X coordinate of the third control point. When the type is
+.BR SEG_CUBICTO ,
+this value represents the X coordinate at the end of the segment.
+Otherwise, it is empty.
+.TP
+.B y2
+The Y coordinate of the third control point. When the type is
+.BR SEG_CUBICTO ,
+this value represents the Y coordinate at the end of the segment.
+Otherwise, it is empty.
+.PP
+There are several directives that indicate when
+.BR x0 ,
+.BR y0 ,
+.BR x1 ,
+.BR y1 ,
+.BR x2 ,
+or
+.BR y2
+exist and can be used as an alternative to the directives
+.BR hasMoveTo ,
+.BR hasLineTo ,
+.BR hasQuadTo ,
+.BR hasCubicTo .
+. These directivesare the following
+.TP
+.B has0
+This is an iterative directive indicating that
+.B x0
+and
+.B y0
+exist.
+.TP
+.B has1
+This is an iterative directive indicating that
+.BR x0 ,
+.BR y0 ,
+.B x1
+and
+.B y1
+exist.
+.TP
+.B has2
+.BR x0 ,
+.BR y0 ,
+.BR x1 ,
+.BR y1 ,
+.B x2
+and
+.B y2
+exist.
 .SH MAP FILES
 The
 .B epts

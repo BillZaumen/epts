@@ -554,8 +554,8 @@ public class PointTableModel implements TableModel {
 		kmap2.put("x", String.format((Locale)null, "%s", row.getX()));
 		kmap2.put("y", String.format((Locale)null, "%s", row.getY()));
 		kmap2.put("xp", String.format((Locale)null, "%s", row.getXP()));
-		kmap2.put("yp", String.format((Locale)null, "%s", row.getYP()));
-		kmap2.put("ypj", String.format((Locale)null, "%s",
+		kmap2.put("yp", String.format((Locale) null, "%s", row.getYP()));
+		kmap2.put("ypr", String.format((Locale)null, "%s",
 						height - row.getYP()));
 		list.add(kmap1);
 	    } else if (mode == EPTS.Mode.PATH_START) {
@@ -609,7 +609,7 @@ public class PointTableModel implements TableModel {
 			      String.format((Locale)null, "%s", row.getXP()));
 		    kmap4.put("yp",
 			      String.format((Locale)null, "%s", row.getYP()));
-		    kmap4.put("ypj", String.format((Locale)null, "%s",
+		    kmap4.put("ypr", String.format((Locale)null, "%s",
 						    height - row.getYP()));
 		    kmap3.put("xy", kmap4);
 		}

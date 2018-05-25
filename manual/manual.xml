@@ -32,7 +32,14 @@
 	  uri="sresource:/manual/manual.html#shortcuts"
 	href="manual.html#shortcuts"/>
     <node title="Templates" uri="sresource:/manual/manual.html#templates"
-	href="manual.html#templates"/>
+	  href="manual.html#templates">
+      <node title="Table Templates"
+	    uri="sresource:/manual/manual.html#tbltemplates"
+	    href="manual.html#tbltemplates"/>
+      <node title="Path-Iterator Templates"
+	    uri="sresource:/manual/manual.html#pitemplates"
+	    href="manual.html#pitemplates"/>
+    </node>
     <node title="The CLI" uri="sresource:/manual/manual.html#cli"
 	href="manual.html#cli"/>
   </node>
