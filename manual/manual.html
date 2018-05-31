@@ -368,6 +368,95 @@ a path or creating an isolated point at a specific location:
 </UL>
 
 <H1><A name="templates">Templates</A></H1>
+
+Templates allow output files to be produced in a variety of formats.
+A template is specified by using the <CODE>--template</CODE>
+command-line option.  The value is either a URI or a file name.
+There are a number of built-in templates that are accessible by
+using a URI whose scheme is <CODE>sresource</CODE>. These  fit
+into two categories: table templates and path-iterator templates.
+
+<H2><A name="builtins">Built-in Templates</A></H2>
+
+The built-in table templates are the following:
+<UL>
+  <LI><CODE>sresource:ECMAScript</CODE>.  This option will print the
+    information included in the EPTS table. Each path or location is
+    represented by an ECMAScript variable. For locations, the value
+    assigned to the variable is an object whose properties
+    <CODE>x</CODE> and <CODE>y</CODE> provide the coordinates of the
+    point. For paths, the value assigned to a variable is an array of
+    objects, each providing the properties <CODE>type</CODE>,
+    <CODE>x</CODE>, and <CODE>y</CODE>.  The value for
+    <CODE>type</CODE> is a string, and the values for <CODE>x</CODE>
+    and <CODE>y</CODE> are numbers giving coordinates. The values for
+    <CODE>type</CODE> are <CODE>"CLOSE"</CODE>, <CODE>"MOVE_TO"</CODE>,
+    <CODE>"SEG_END"</CODE>, <CODE>"CONTROL"</CODE>, or
+    <CODE>"SPLINE"</CODE>.  The units for <CODE>x</CODE> and
+    <CODE>y</CODE>are graph-coordinate-space units. One may use the
+    <CODE>--tname</CODE> option to include only specific paths and
+    optionally to use a new variable name that represents a single
+    path or the concatenation of multiple paths.  The list of objects
+    provided can be used to configure instance of the Java
+    class <CODE>org.bzdev.AnimationPath2DFactory</CODE>.
+  <LI><CODE>sresource:ECMAScriptLayers</CODE>.
+    This option will print the information included in the EPTS
+    table. Each path is represented by an ECMAScript variable. Location
+    entries are ignored.  For paths, the value assigned to a variable is
+    an array of objects, all providing the property
+    <CODE>type</CODE>, and most providing the
+    properties <CODE>x</CODE> and <CODE>y</CODE>.  The value for
+    <CODE>type</CODE> is a string and the values for <CODE>x</CODE> and
+    <CODE>y</CODE> are numbers giving coordinates. The values for
+    <CODE>type</CODE> are <CODE>"PATH_START"</CODE>,
+    <CODE>"SEG_CLOSE"</CODE>, <CODE>"MOVE_TO"</CODE>,
+    <CODE>"SEG_END"</CODE>, <CODE>"CONTROL_POINT"</CODE>,
+    <CODE>"SPLINE_POINT"</CODE>, and <CODE>"PATH_END"</CODE>.  The
+    units for <CODE>x</CODE> and <CODE>y</CODE> are
+    graph-coordinate-space units. For the types
+    <CODE>"PATH_START"</CODE>, <CODE>"SEG_CLOSE"</CODE>, and
+    <CODE>"PATH_END"</CODE>, the <CODE>x</CODE> and <CODE>y</CODE>
+    properties are omitted. One may use the
+    <CODE>--tname</CODE> option to include only specific paths and
+    optionally to use a new variable name that represents a single
+    path or the concatenation of multiple paths. When the
+    <CODE>--tname</CODE> option is used, a <CODE>windingRule</CODE>
+    property may be present in objects whose <CODE>type</CODE>
+    property is <CODE>"PATH_START"</CODE>.
+    This template differs from the <CODE>sresource:ECMAScript</CODE>
+    template in that the list of objects generated are ones that can be
+    used to create animation layers using a factory, as described in the
+    documentation for  <CODE>org.bzdev.anim2d.AnimationLayer2DFactory</CODE>.
+  <LI><CODE>sresource:EMCAScriptLocations</CODE>.
+    This template provides the same ECMAScript statements that the
+    <CODE>sresource:ECMAScript</CODE> template produces, but only
+    locations are included, not paths.
+  <LI><CODE>sresource:ECMAScriptPaths</CODE>.
+    This template provides the same ECMAScript statements that the
+    <CODE>sresource:ECMAScript</CODE> template produces, but only
+    paths are included, not locations.
+</UL>
+
+The built-in path-iterator templates are
+<UL>
+  <LI><CODE>sresource:SegmentsCSV</CODE>.
+    This template requires the use of a
+    <CODE>pname</CODE> option to specify a path name, or to create a
+    new path that is the concatenation of several existing paths.  The
+    template will create its out in CSV (Comma Separated Values)
+    format, describing the specified path. The name of the path will
+    not appear in the output.  The CSV values contain 7 columns, some
+    of which may be empty.  The first is <CODE>type</CODE>,
+    whose value can be <CODE>SEG_CLOSE</CODE>, <CODE>SEG_CUBICTO</CODE>,
+    <CODE>SEG_LINETO</CODE>, <CODE>SEG_MOVETO</CODE>, or
+    <CODE>SEG_QUADTO</CODE>, matching names defined by the class
+    <CODE>java.awt.geom.PathIterator</CODE>. The remaining values are
+    <CODE>x0</CODE>, <CODE>y0</CODE>, <CODE>x1</CODE>, <CODE>y1</CODE>,
+    <CODE>x2</CODE>, and <CODE>y2</CODE>. The values for these are
+    numbers or empty strings.
+</UL>
+
+<H2><A name="templateSyntax">Template Syntax</A></H2>
 <P>
 Templates specify an output format for points and paths using the
 syntax specified by the Java
@@ -453,6 +542,17 @@ the following keys describing a point:
 <P>
 Similarly, the value for <CODE>pathStatement</CODE> is a key map
 containing the following directives:
+<UL>
+  <LI><CODE>hasWindingRule</CODE>. This is an iterative directive
+    what will provide at most a single iteration. When present (i.e.,
+    when the iteration count is 1), there is a single directive:
+    <CODE>windingRule</CODE>, whose value is <CODE>WIND_EVEN_ODD</CODE>
+    or <CODE>WIND_NON_ZERO</CODE>.
+  <LI><CODE>pathItem</CODE>. This is an iterative directive that
+    will list a series of objects representing a path.
+</UL>
+In turen, the <CODE>pathItem</CODE> directive contains the following
+directives:
 <UL>
   <LI><CODE>pindex</CODE>. The value is "1" for the initial
     MOVE_TO operation for a path and is incremented for each
@@ -657,10 +757,17 @@ The options specific to the EPTS command are:
     the <CODE>fill</CODE> attribute to <EM>COLOR</EM> in an SVG
     path. It applies to a path specified by the
     next <CODE>--pname</CODE> option.  The value of
-    <EM>COLOR</EM> can be any color specification accepted by SVG
-    (the same as those defined by the CSS2 specification).
-    A value of none indicates that no color is specified and
-    the path will not be filled
+    <EM>COLOR</EM> can be any color specification accepted by SVG (the
+    same as those defined by the CSS2 specification).  A value of none
+    indicates that no color is specified and the path will not be
+    filled. Named colors are listed at
+    &lt;https://upload.wikimedia.org/wikipedia/commons/2/2b/SVG_Recognized_color_keyword_names.svg&gt;.
+    A <CODE>#</CODE> followed immediately by 6 hexadecimal digits
+    gives the RGB values (two hexadecimal digits in that order). One
+    can also use the
+    expression <CODE>rgb(</CODE><EM>R</EM><CODE>,</CODE><EM>G</EM><CODE>,</CODE><EM>B</EM><CODE>)</CODE>
+    where <EM>R</EM , <EM>B</EM> , and <EM>G</EM> vary from 0 to 255
+    or 0% to 100%.
   <LI><CODE>--fill-rule</CODE> <EM>RULE</EM>. This option sets the
     <CODE>fill-rull</CODE> attribute to <EM>RULE</EM> in an SVG path.
     It applies to a path specified by the next <CODE>--pname</CODE>
@@ -739,7 +846,14 @@ The options specific to the EPTS command are:
       value of <EM>COLOR</EM> can be any color specification accepted
       by SVG (the same as those defined by the CSS2 specification). A
       value of none indicates that no color is specified and the path
-      will not be drawn.
+      will not be drawn. Named colors are listed at
+      &lt;https://upload.wikimedia.org/wikipedia/commons/2/2b/SVG_Recognized_color_keyword_names.svg&gt;.
+      A <CODE>#</CODE> followed immediately by 6 hexadecimal digits
+      gives the RGB values (two hexadecimal digits in that order). One
+      can also use the
+      expression <CODE>rgb(</CODE><EM>R</EM><CODE>,</CODE><EM>G</EM><CODE>,</CODE><EM>B</EM><CODE>)</CODE>
+      where <EM>R</EM , <EM>B</EM> , and <EM>G</EM> vary from 0 to
+      255 or 0% to 100%.
     <LI><CODE>--stroke-width</CODE> <EM>WIDTH</EM>.  This option sets
       the <CODE>stroke-width</CODE> attribute to <EM>WIDTH</EM> in an
       SVG path. It applies to a path specified by the next
@@ -780,9 +894,34 @@ The options specific to the EPTS command are:
 	format.
     </UL>
     These must be used with the <CODE>--pname</CODE> option.
+  <LI><CODE>--tname</CODE> <EM>TNAME</EM> This option's
+    argument <EM>TNAME</EM> provides the name of a variable that names
+    a path.  When this option is provided, a table template must be
+    used and the keymap is the table keymap as described by the manual
+    page <CODE>epts(5)</CODE> and by the on-line manual for
+    <CODE>epts</CODE>. <EM>TNAME</EM> may be an existing identifier for
+    a path or a location in an EPTS table, or it may consist of an
+    identifier, immediately followed by a ":", in turn followed by a
+    series of comma-separated path names.  This in effect creates a
+    path with a new name that is a concatenation of paths specified
+    in EPTS's table. Before each <CODE>--tname</CODE> option, there
+    may be a <CODE>--windingRule</CODE> option.
   <LI><CODE>--web</CODE>. The <CODE>--port</CODE> option should also be
     used to provide a non-zero port number. This option will start
     an embedded web server allowing the manual to be shown.
+  <LI><CODE>--windingRule</CODE> <EM>RULE</EM>.  This option, when
+    present, adds a winding rule for use with table templates when
+    the <CODE>--tname</CODE>option is used, and must precede that
+    option. After a <CODE>--tname</CODE>option is seen, the winding
+    rule removed.  The values of <EM>RULE</EM> may be
+    <CODE>evenodd</CODE> or <EM>nonzero</EM>, the same names as used
+    by the <CODE>--fillRule</CODE> option that is used with the
+    <CODE>--svg</CODE> option. The <CODE>--windingRule</CODE> option
+    sets a template-table keymap directive as described in the
+    documentation for <CODE>epts</CODE>(5) and in the on-line
+    manual. It is an error to use this option when a
+    <CODE>--tname</CODE> option is not present or when this option
+    does not precede a <CODE>--tname</CODE> option.
   <LI><CODE>--</CODE>. End of options. This can be used
     if file names start with the character '-'. Otherwise
     it is not necessary.

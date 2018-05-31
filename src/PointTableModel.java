@@ -620,4 +620,141 @@ public class PointTableModel implements TableModel {
 	map.put("items", list);
 	return map;
     }
+
+    private static boolean isOurPath(String[] names, String name) {
+	for (String s: names) {
+	    if (name.equals(s)) {
+		return true;
+	    }
+	}
+	return false;
+    }
+
+    public TemplateProcessor.KeyMap getKeyMap(EPTS.FilterInfo[] filters,
+					      Map<String,String> tmap,
+					      double height)
+	throws IllegalArgumentException
+    {
+	TemplateProcessor.KeyMapList list = new TemplateProcessor.KeyMapList();
+	TemplateProcessor.KeyMap kmap1 = null;
+	TemplateProcessor.KeyMap kmap2 = null;
+	TemplateProcessor.KeyMap kmap3 = null;
+	TemplateProcessor.KeyMapList plist = null;
+	int n = rows.size();
+	int index = 0;
+	int vindex = 0;
+	int pindex = 0;
+	for (EPTS.FilterInfo filter: filters) {
+	    boolean ignore =  true;
+	    boolean addname = true;
+	    String name = filter.name;
+	    String[] names  = filter.nameArray;
+	    String windingRule = filter.windingRule;
+	    for (PointTMR row: rows) {
+		index++;
+		Enum mode = row.getMode();
+		if (mode == EPTS.Mode.LOCATION) {
+		    if (isOurPath(names, row.getVariableName())) {
+			if (names.length != 1) {
+			    throw new IllegalArgumentException
+				("Cannot concatenate locations");
+			}
+			vindex++;
+			kmap1 = new TemplateProcessor.KeyMap();
+			kmap2 = new TemplateProcessor.KeyMap();
+			kmap1.put("varname", name);
+			kmap1.put("vindex", ("" + vindex));
+			kmap1.put("index", ("" + index));
+			kmap1.put("location", kmap2);
+			kmap2.put("x", String.format((Locale)null, "%s",
+						     row.getX()));
+			kmap2.put("y", String.format((Locale)null, "%s",
+						     row.getY()));
+			kmap2.put("xp", String.format((Locale)null, "%s",
+						      row.getXP()));
+			kmap2.put("yp", String.format((Locale) null, "%s",
+						      row.getYP()));
+			kmap2.put("ypr", String.format((Locale)null, "%s",
+						       height - row.getYP()));
+			list.add(kmap1);
+			break;
+		    }
+		} else if (mode == EPTS.Mode.PATH_START) {
+		    if (isOurPath(names, row.getVariableName())) {
+			ignore = false;
+			if (addname) {
+			    vindex++;
+			    kmap1 = new TemplateProcessor.KeyMap();
+			    kmap2 = new TemplateProcessor.KeyMap();
+			    kmap1.put("varname", name);
+			    kmap1.put("index", ("" + index));
+			    kmap1.put("vindex", ("" + vindex));
+			    kmap1.put("pathStatement", kmap2);
+			    list.add(kmap1);
+			    plist = new TemplateProcessor.KeyMapList();
+			    pindex = 0;
+			    if (windingRule != null) {
+				kmap2.put("windingRule", windingRule);
+				kmap2.put("hasWindingRule",
+					  new TemplateProcessor.KeyMap());
+			    }
+			    kmap2.put("pathItem", plist);
+			    kmap3 = null;
+			    addname = false;
+			}
+		    }
+		} else if (mode instanceof SplinePathBuilder.CPointType) {
+		    if (ignore) continue;
+		    if (index == n) {
+			if (mode == SplinePathBuilder.CPointType.CONTROL
+			    || mode == SplinePathBuilder.CPointType.SPLINE) {
+			    // terminate a partial path
+			    mode = SplinePathBuilder.CPointType.SEG_END;
+			}
+		    }
+		    if (kmap3 != null) kmap3.put("optcomma", ",");
+		    kmap3 = new TemplateProcessor.KeyMap();
+		    kmap3.put("index", ("" + index));
+		    pindex++;
+		    kmap3.put("pindex", ("" + pindex));
+		    kmap3.put("type", mode.toString());
+		    if (mode == SplinePathBuilder.CPointType.CONTROL) {
+			kmap3.put("ltype", "CONTROL_POINT");
+		    } else if (mode == SplinePathBuilder.CPointType.SPLINE) {
+			kmap3.put("ltype", "SPLINE_POINT");
+		    } else if (mode == SplinePathBuilder.CPointType.CLOSE) {
+			kmap3.put("ltype", "SEG_CLOSE");
+		    } else {
+			kmap3.put("ltype", mode.toString());
+		    }
+		    if (tmap != null) {
+			String val = tmap.get(mode.toString());
+			kmap3.put("atype", (val == null)? mode.toString(): val);
+		    }
+		    if (mode != SplinePathBuilder.CPointType.CLOSE) {
+			TemplateProcessor.KeyMap
+			    kmap4 = new TemplateProcessor.KeyMap();
+			kmap4.put("x",
+				  String.format((Locale)null, "%s", row.getX()));
+			kmap4.put("y",
+				  String.format((Locale)null, "%s", row.getY()));
+			kmap4.put("xp",
+				  String.format((Locale)null, "%s", row.getXP()));
+			kmap4.put("yp",
+				  String.format((Locale)null, "%s", row.getYP()));
+			kmap4.put("ypr", String.format((Locale)null, "%s",
+						       height - row.getYP()));
+			kmap3.put("xy", kmap4);
+		    }
+		    plist.add(kmap3);
+		} else if (mode == EPTS.Mode.PATH_END) {
+		    ignore = true;
+		}
+	    }
+	}
+	TemplateProcessor.KeyMap map = new TemplateProcessor.KeyMap();
+	map.put("items", list);
+	return map;
+    }
+
 }

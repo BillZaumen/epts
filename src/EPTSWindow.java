@@ -2551,6 +2551,8 @@ public class EPTSWindow {
     double radius2 = 2*radius;
     double lradius = radius*1.3;
     double lradius2 = radius2*1.3;
+    double llradius = radius*1.4;
+    double llradius2 = radius2*1.4;
     double w = radius2/Math.sqrt(2.0);
     double hw = w/2;
     double lw = w*1.3;
@@ -2760,7 +2762,9 @@ public class EPTSWindow {
 	return ok? pb.getPath(): null;
     }
 
-    private void drawRows(PointTableModel ptmodel, Graphics2D g2d) {
+    private void drawRows(PointTableModel ptmodel, Graphics2D g2d,
+			  Graphics2D g2d2)
+    {
 	double prevx = -1;
 	double prevy = -1;
 	double w = radius2/Math.sqrt(2.0);
@@ -2778,9 +2782,14 @@ public class EPTSWindow {
 		EPTS.Mode emode = (EPTS.Mode)mode;
 		switch(emode) {
 		case LOCATION:
+		    g2d2.draw(new Ellipse2D.Double
+			     (x-radius, y-radius, radius2, radius2));
 		    g2d.fill(new Ellipse2D.Double
 			     (x-radius, y-radius, radius2, radius2));
 		    if (index == selectedRow) {
+			g2d2.draw(new Ellipse2D.Double
+				 (x-llradius, y-llradius,
+				  llradius2, llradius2));
 			g2d.draw(new Ellipse2D.Double
 				 (x-lradius, y-lradius, lradius2, lradius2));
 		    }
@@ -2796,9 +2805,14 @@ public class EPTSWindow {
 		    (SplinePathBuilder.CPointType) mode;
 		switch(smode) {
 		case MOVE_TO:
+		    g2d2.draw(new Ellipse2D.Double
+			     (x-radius, y-radius, radius2, radius2));
 		    g2d.fill(new Ellipse2D.Double
 			     (x-radius, y-radius, radius2, radius2));
 		    if (index == selectedRow) {
+			g2d2.draw(new Ellipse2D.Double
+				 (x-llradius, y-llradius,
+				  llradius2, llradius2));
 			g2d.draw(new Ellipse2D.Double
 				 (x-lradius, y-lradius, lradius2, lradius2));
 		    }
@@ -2807,9 +2821,14 @@ public class EPTSWindow {
 		    prevy = y;
 		    break;
 		case SPLINE:
+		    g2d2.draw(new Ellipse2D.Double
+			     (x-radius, y-radius, radius2, radius2));
 		    g2d.fill(new Ellipse2D.Double
 			     (x-radius, y-radius, radius2, radius2));
 		    if (index == selectedRow) {
+			g2d2.draw(new Ellipse2D.Double
+				 (x-llradius, y-llradius,
+				  llradius2, llradius2));
 			g2d.draw(new Ellipse2D.Double
 				 (x-lradius, y-lradius, lradius2, lradius2));
 		    }
@@ -2824,13 +2843,19 @@ public class EPTSWindow {
 		    prevy = y;
 		    break;
 		case SEG_END:
+		    g2d2.draw(new Ellipse2D.Double
+			     (x-radius, y-radius, radius2, radius2));
 		    g2d.fill(new Ellipse2D.Double
 			     (x-radius, y-radius, radius2, radius2));
 		    if (index == selectedRow) {
+			g2d2.draw(new Ellipse2D.Double
+				 (x-llradius, y-llradius,
+				  llradius2, llradius2));
 			g2d.draw(new Ellipse2D.Double
 				 (x-lradius, y-lradius, lradius2, lradius2));
 		    }
 		    if (lastMode == SplinePathBuilder.CPointType.CONTROL) {
+			g2d2.draw(new Line2D.Double(prevx, prevy, x, y));
 			g2d.draw(new Line2D.Double(prevx, prevy, x, y));
 		    }
 		    pb.append(new SplinePathBuilder.CPoint(smode, x, y));
@@ -2838,13 +2863,19 @@ public class EPTSWindow {
 		    prevy = y;
 		    break;
 		case CONTROL:
+		    g2d2.draw(new Rectangle.Double
+			     (x-radius, y-radius, radius2, radius2));
 		    g2d.fill(new Rectangle2D.Double(x-hw, y-hw, w, w));
 		    if (index == selectedRow) {
+			g2d2.draw(new Rectangle2D.Double
+				 (x-llradius, y-llradius,
+				  llradius2, llradius2));
 			g2d.draw(new Rectangle2D.Double
 				 (x-lhw, y-lhw, lw, lw));
 		    }
 		    if (lastMode == SplinePathBuilder.CPointType.SEG_END
 			|| lastMode == SplinePathBuilder.CPointType.MOVE_TO) {
+			g2d2.draw(new Line2D.Double(prevx, prevy, x, y));
 			g2d.draw(new Line2D.Double(prevx, prevy, x, y));
 		    }
 		    if (index == nrows-1) {
@@ -2865,6 +2896,7 @@ public class EPTSWindow {
 	    } 
 	    index++;
 	}
+	g2d2.draw(pb.getPath());
 	g2d.draw(pb.getPath());
     }
 
@@ -2973,21 +3005,29 @@ public class EPTSWindow {
 				    Graphics2D g2d = (Graphics2D)g;
 				    g2d.setPaintMode();
 				    g2d.drawImage(bi, af, null);
+				    Graphics2D g2d2 = (Graphics2D)g2d.create();
 				    Stroke savedStroke = g2d.getStroke();
 				    Color savedColor = g2d.getColor();
 				    try {
-					g2d.setStroke(new BasicStroke(1.5F));
-					g2d.setColor(Color.WHITE);
-					g2d.setXORMode(Color.BLACK);
+					g2d.setStroke(new BasicStroke(2.0F));
+					g2d.setColor(Color.BLACK);
+					g2d2.setStroke(new BasicStroke(4.0F));
+					g2d2.setColor(Color.WHITE);
 					if (ptmodel.getRowCount() > 0) {
-					    drawRows(ptmodel, g2d);
+					    drawRows(ptmodel, g2d, g2d2);
 					}
+					// g2d.setColor(Color.WHITE);
+					// g2d.setXORMode(Color.BLACK);
 					if (mouseTracked) {
+					    g2d2.draw(new Line2D.Double
+						      (startx*zoom, starty*zoom,
+						       lastx*zoom, lasty*zoom));
 					    g2d.draw(new Line2D.Double
 						     (startx*zoom, starty*zoom,
 						      lastx*zoom, lasty*zoom));
 					}
 				    } finally {
+					g2d2.dispose();
 					g2d.setStroke(savedStroke);
 					g2d.setColor(savedColor);
 					g2d.setPaintMode();

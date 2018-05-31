@@ -32,7 +32,13 @@
 	  uri="sresource:/manual/manual.html#shortcuts"
 	href="manual.html#shortcuts"/>
     <node title="Templates" uri="sresource:/manual/manual.html#templates"
-	  href="manual.html#templates">
+	  href="manual.html#templates" >
+      <node title="Built-in Templates"
+	    uri="sresource:/manual/manual.html#builtins"
+	    href="manual.html#builtins"/>
+      <node title="Template Syntax"
+	    uri="sresource:/manual/manual.html#templateSyntax"
+	    href="manual.html#templateSyntax"/>
       <node title="Table Templates"
 	    uri="sresource:/manual/manual.html#tbltemplates"
 	    href="manual.html#tbltemplates"/>

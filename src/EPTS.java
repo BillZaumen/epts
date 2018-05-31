@@ -438,6 +438,13 @@ public class EPTS {
 	public SVGInfo() {}
     }
 
+    public static class FilterInfo {
+	String name;
+	String[] nameArray;
+	String windingRule = null;
+    }
+
+
     static void init(String argv[]) throws Exception {
 	int index = -1;
 	
@@ -465,14 +472,10 @@ public class EPTS {
 	boolean elevate = false;
 	boolean gcs = false;
 	boolean svg = false;
-	/*
-	String stroke = "#000000";
-	String strokeWidth = "1.0";
-	String fill = "none";
-	String fillRule = "evenodd";
-	*/
 	SVGInfo svgInfo = new SVGInfo();
 	ArrayList<SVGInfo> svgInfoList = new ArrayList<>();
+	ArrayList<FilterInfo> filterInfoList = new ArrayList<>();
+	String windingRule = null;
 
 	String alreadyForkedString = System.getProperty("epts.alreadyforked");
 	boolean alreadyForked = (alreadyForkedString != null)
@@ -727,6 +730,44 @@ public class EPTS {
 		    }
 		    argsList.add(argv[index-1]);
 		    argsList.add(argv[index]);
+		} else if (argv[index].equals("--tname")) {
+		    index++;
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    String tname = argv[index].trim();
+		    String[] tnameArray;
+		    if (tname.indexOf(':') != -1) {
+			tnameArray = tname.split(":", 2);
+			tname = tnameArray[0];
+			tnameArray = tnameArray[1].split(",");
+			for (int i = 0; i < tnameArray.length; i++) {
+			    tnameArray[i] = tnameArray[i].trim();
+			}
+		    } else {
+			tnameArray = new String[1];
+			tnameArray[0] = tname;
+		    }
+		    FilterInfo fi = new FilterInfo();
+		    fi.name = tname;
+		    fi.nameArray = tnameArray;
+		    if (windingRule != null) {
+			if (windingRule.equals("evenodd")) {
+			    fi.windingRule = "WIND_EVEN_ODD";
+			} else if (windingRule.equals("nonzero")) {
+			    fi.windingRule = "WIND_NON_ZERO";
+			} else {
+			    System.err.println
+				("unrecognized winding rule: " + windingRule);
+			    System.exit(1);
+			}
+		    } else {
+			fi.windingRule = null;
+		    }
+		    windingRule  = null;
+		    filterInfoList.add(fi);
 		} else if (argv[index].equals("-o")) {
 		    index++;
 		    if (index == argv.length) {
@@ -744,6 +785,14 @@ public class EPTS {
 		    }
 		    argsList.add(argv[index-1]);
 		    argsList.add(argv[index]);
+		} else if (argv[index].equals("--windingRule")) {
+		    index++;
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    windingRule = argv[index];
 		} else if (argv[index].equals("--")) {
 		    argsList.add(argv[index]);
 		    jcontinue = false;
@@ -1067,6 +1116,13 @@ public class EPTS {
 			    }
 			    svgmap.put("paths", kmaplist);
 			    tp = new TemplateProcessor(svgmap);
+			} else if (filterInfoList.size() > 0) {
+			    FilterInfo[] filters =
+				new FilterInfo[filterInfoList.size()];
+			    filters = filterInfoList.toArray(filters);
+			    tp = new TemplateProcessor
+				(ptmodel.getKeyMap(filters, map,
+						   (double)parser.getHeight()));
 			} else {
 			    tp = new TemplateProcessor
 				(ptmodel.getKeyMap(map,

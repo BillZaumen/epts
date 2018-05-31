@@ -96,10 +96,14 @@ ICONS = $(SOURCEICON) $(SOURCE_FILE_ICON)
 
 JFILES = $(wildcard src/*.java)
 PROPERTIES = src/EPTS.properties
+
 TEMPLATES = templates/ECMAScript.tpl templates/save.tpl \
 	templates/ECMAScriptPaths.tpl templates/ECMAScriptLocations.tpl \
-	templates/ECMAScriptLayers.tpl templates/SegmentsCSV.tpl \
+	templates/ECMAScriptLayers.tpl templates/ECMAScriptLayerPaths.tpl \
 	templates/SVG.tpl
+
+CRLF_TEMPLATES = templates/SegmentsCSV.tpl
+
 RESOURCES = manual/manual.xml \
 	manual/manual.xsl \
 	manual/index.html \
@@ -134,7 +138,8 @@ $(CLASSES):
 # because the old ones would otherwise still be there and end up
 # being installed.
 #
-$(JROOT_JARDIR)/epts-$(VERSION).jar: $(FILES) $(TEMPLATES) $(RESOURCES)
+$(JROOT_JARDIR)/epts-$(VERSION).jar: $(FILES) $(TEMPLATES) $(CRLF_TEMPLATES)\
+	$(RESOURCES)
 	mkdir -p $(CLASSES)
 	javac -Xlint:unchecked -Xlint:deprecation \
 		-d $(CLASSES) -classpath $(CLASSES):$(EXTLIBS) \
@@ -146,7 +151,10 @@ $(JROOT_JARDIR)/epts-$(VERSION).jar: $(FILES) $(TEMPLATES) $(RESOURCES)
 	done
 	mkdir -p $(JROOT_JARDIR)
 	rm -f $(JROOT_JARDIR)/epts-*.jar
-	cp templates/*.tpl $(CLASSES)
+	for i in $(TEMPLATES) ; do tname=`basename $$i .tpl`; \
+		cp $$i $(CLASSES)/$$tname; done
+	for i in $(CRLF_TEMPLATES) ; do tname=`basename $$i .tpl`; \
+		cat $$i | sed -e 's/.*/\0\r/' > $(CLASSES)/$$tname; done
 	mkdir -p $(CLASSES)/manual
 	for i in $(RESOURCES) ; do cp $$i $(CLASSES)/$$i ; done
 	jar cfm $(JROOT_JARDIR)/epts-$(VERSION).jar epts.mf \
@@ -180,6 +188,7 @@ $(JROOT_MANDIR)/man5/epts.5.gz: epts.5
 clean:
 	rm -f $(CLASSES)/epts/* $(JROOT_JARDIR)/epts-$(VERSION).jar \
 	$(JROOT_MANDIR)/man1/* \
+	$(JROOT_MANDIR)/man5/* \
 	$(JROOT_BIN)/epts \
 	$(CLASSES)/*.dtd
 	[ -d $(CLASSES)/epts ] && rmdir $(CLASSES)/epts || true

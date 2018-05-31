@@ -298,6 +298,15 @@ Similarly, the value for
 .B pathStatement
 is a key map containing the following directives:
 .TP
+.BR hasWindingRule .
+This is an iterative directive containing a single iteration. When
+present, one may use the
+.B windingRule
+directive, whose values are
+.B WIND_NON_ZERO
+and
+.BR WIND_EVEN_ODD .
+.TP
 .BR pindex .
 The value is "1" for the initial
 .B MOVE_TO

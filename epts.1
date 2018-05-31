@@ -64,6 +64,18 @@ can be any color specification accepted by SVG (the same as those
 defined by the CSS2 specification). A value of
 .B none
 indicates that no color is specified and the path will not be filled.
+Named colors are listed at
+<https://upload.wikimedia.org/wikipedia/commons/2/2b/SVG_Recognized_color_keyword_names.svg>.
+A '#' followed immediately by 6 hexadecimal digits gives the RGB values
+(two hexadecimal digits in  that order). One can also use the
+expression
+.B rgb(\fIR\fB,\fIG\fB,\fIB\fB)
+where
+.IR R ,
+.IR B ,
+and
+.I G
+vary from 0 to 255, or 0% to 100%.
 .TP
 .BI \-\-fill-rule\  RULE
 This option sets the
@@ -164,11 +176,12 @@ created by EPTS when its "Save" menu item is used.
 .BI \-\-pname\  PNAME
 This option's argument
 .I PNAME
-provides the name of a variable that names a path.  When this option is
-provided, an alternative key map is used for template processing as
-described by the manual page
+provides the name of a variable that names a path.  When this option
+is provided, a path-iterator template must be used and the keymap is
+the path-iterator keymap, not the table keymap, as described by the
+manual page
 .BR epts (5)
-and by the manual for
+and by the on-line manual for
 .BR epts .
 This keymap describes a path as a series of straight-line segments,
 quadratic Bezier curves, or cubic Bezier curves. Segments starting or
@@ -235,6 +248,18 @@ can be any color specification accepted by SVG (the same as those
 defined by the CSS2 specification). A value of
 .B none
 indicates that no color is specified and the path will not be drawn.
+Named colors are listed at
+<https://upload.wikimedia.org/wikipedia/commons/2/2b/SVG_Recognized_color_keyword_names.svg>.
+A '#' followed immediately by 6 hexadecimal digits gives the RGB values
+(two hexadecimal digits in  that order). One can also use the
+expression
+.B rgb(\fIR\fB,\fIG\fB,\fIB\fB)
+where
+.IR R ,
+.IR B ,
+and
+.I G
+vary from 0 to 255, or 0% to 100%.
 .TP
 .BI \-\-stroke-width\  WIDTH
 This option sets the
@@ -269,11 +294,33 @@ The format of the template file depends on whether or not the
 flag has been set: when set, a path-iterator template must be used;
 otherwise a table template must be used. There are a number of
 built-in templates whose URLs start with the protocol "sresource"
-For table templates, these are <sresource:ECMAScriptLayers.tpl>,
-<sresource:EMCAScriptLocations.tpl>, <sresource:EMCAScriptPaths.tpl>,
-and <sresource:ECMAScript.tpl>, where "<" and ">" as usual are not
+For table templates, these are <sresource:ECMAScriptLayers>,
+<sresource:ECMAScriptLayerPaths>,
+<sresource:EMCAScriptLocations>, <sresource:EMCAScriptPaths>,
+and <sresource:ECMAScript.>, where "<" and ">" as usual are not
 part of the URLs. For path-iterator templates, the URL is
-<sresource:SegmentsCSV.tpl>.
+<sresource:SegmentsCSV>. These templates are described below.
+.TP
+.BI \-\-tname\  TNAME
+This option's argument
+.I TNAME
+provides the name of a variable that names a path.  When this option
+is provided, a table template must be used and the keymap is
+the table keymap as described by the
+manual page
+.BR epts (5)
+and by the on-line manual for
+.BR epts .
+.I TNAME
+may be an existing identifier for a path or a location in an EPTS table,
+or it may consist of an identifier, immediately followed by a ":", in turn
+followed by a series of comma-separated path names.  This in effect
+creates a path with a new name that is a concatenation of paths specified
+in EPTS's table. Before each
+.B \-\-tname
+option, there may be a
+.B \-\-windingRule
+option.
 .TP
 .B \-\-web
 This option indicates that a web server will be started and the GUI will
@@ -282,6 +329,33 @@ The
 .B \-\-port
 option should be used as well and should set the port number to a non-zero
 value.
+.TP
+.BI \-\-windingRule\  RULE
+This option, when present, adds a winding rule for use with table
+templates when the
+.B \-\-tname
+option is used, and must precede that option. After a
+.B \-\-tname
+option is seen, the winding rule removed.  The values of
+.I RULE
+may be
+.B evenodd
+or
+.BR nonzero ,
+the same names as used by the
+.B \-\-fillRule
+option that is used with the
+.B \-\-svg
+option. The
+.B \-\-windingRule
+option sets a template-table keymap directive as described in the
+documentation for
+.BR epts (5)
+and in the on-line manual. It is an error to use this option when a
+.B \-\-tname
+option is not present or when this option does not precede a
+.B \-\-tname
+option.
 .SH SCRUNNER OPTIONS
 .PP
 Most of the options EPTS supports are ones that are shared with the
@@ -351,6 +425,165 @@ invokes.
 Specifies the scripting language
 .I LANGUAGE
  in use.
+.SH BUILT-IN TEMPLATES
+EPTS includes several templates, which can be grouped into two categories:
+table templates and path-iterator templates.  A template must be a table
+template when the
+.B \-\-template
+option is used and the
+.B \-\-pname
+option is not used.  If the
+.B \-\-template
+optionis used and the
+.B \-\-pname
+is used, the template should be a path-iterator template.
+.PP
+The table templates are the following:
+.TP
+.B sresource:ECMAScript
+This option will print the information included in the EPTS table. Each
+path or location is represented by an ECMAScript variable. For locations,
+the value assigned to the variable is an object whose properties
+.B x and
+.B y
+provide the coordinates of the point. For paths, the value assigned
+to a variable is an array of objects, each providing the properties
+.BR type ,
+.BR x ,
+and
+.BR y .  The value for
+.B type
+is a string and the values
+for
+.B x
+and
+.B y
+are numbers giving coordinates. The values for
+.B type
+are
+.BR "CLOSE" ,
+.BR "MOVE_TO" ,
+.BR "SEG_END" ,
+.BR "CONTROL" ,
+or
+.BR "SPLINE" .
+The units for
+.B x
+and
+.B y
+are graph-coordinate-space units. One may use the
+.B \-\-tname
+option to include only specific paths and optionally to use a new variable name
+that represents a single path or the concatenation of multiple paths.
+The list of objects provided can be used to configure instance of the
+Java class
+.BR org.bzdev.AnimationPath2DFactory .
+.TP
+.B sresource:ECMAScriptLayers
+This option will print the information included in the EPTS
+table. Each path is represented by an ECMAScript variable. Location
+entries are ignored.  For paths, the value assigned to a variable is
+an array of objects, all providing the property
+.BR type ,
+and most providing the properties
+.B x
+and
+.BR y .
+The value for
+.B type
+is a string and the values for
+.B x and
+.B y
+are numbers giving coordinates. The values for
+.B type are
+.BR "PATH_START" ,
+.BR "SEG_CLOSE" ,
+.BR "MOVE_TO" ,
+.BR "SEG_END",
+.BR "CONTROL_POINT",
+.BR "SPLINE_POINT" ,
+and
+.BR "PATH_END" .
+The units for
+.B x and
+.B y
+aregraph-coordinate-space units. For the types
+.BR "PATH_START" ,
+.BR "SEG_CLOSE" ,
+and
+.BR "PATH_END",
+the "x" and "y" properties are omitted.
+One may use the
+.B \-\-tname
+option to include only specific paths and optionally to use a new
+variable name that represents a single path or the concatenation of
+multiple paths. When the
+.B \-\-tname
+option is used, a
+.B windingRule
+property may be present in objects whose
+.B type
+property is
+.B "PATH_START".
+This template differs from the
+.B sresource:ECMAScript
+template in that the list of objects generated are ones that can be
+used to create animation layers using a factory, as described in the
+documentation for
+.BR org.bzdev.anim2d.AnimationLayer2DFactory .
+.TP
+.B sresource:ECMAScriptLayerPaths
+This option provides the same objects as produced
+by the
+.B sresource:ECMAScriptLayers
+except that the objects whose
+.B type
+properties have the values
+.B "PATH_START"
+and
+.B "PATH_END"
+are omitted.
+.TP
+.B sresource:ECMAScriptLocations
+This template provides the same ECMAScript statements that the
+.B sresource:ECMAScript
+template produces, but only locations are included, not paths.
+.TP
+.B sresource:ECMAScriptPaths
+This template provides the same ECMAScript statements that the
+.B sresource:ECMAScript
+template produces, but only paths are included, not locations.
+.PP
+The path-iterator templates are the following:
+.TP
+.B sresource:SegmentsCSV
+This template requires the use of a
+.B pname
+option to specify a path name, or to create a new path that is the
+concatenation of several existing paths.  The template will create its
+out in CSV (Comma Separated Values) format, describing the specified
+path. The name of the path will not appear in the output.
+The CSV values contain 7 columns, some of which may be empty.
+The first is
+.BR type ,
+whose value can be
+.BR SEG_CLOSE ,
+.BR SEG_CUBICTO ,
+.BR SEG_LINETO ,
+.BR SEG_MOVETO ,
+or
+.BR SEG_QUADTO ,
+matching names defined by the class
+.BR java.awt.geom.PathIterator .
+The remaining values are
+.BR x0 ,
+.BR y0 ,
+.BR x1 ,
+.BR y1 ,
+.BR x2 ,
+and
+.BR y2 .
+The values for these are numbers or empty strings.
 .SH FILES
 .TP
 .I /etc/bzdev/scrunner.conf\ \fRor\fI\ /etc/opt/bzdev/scrunner.conf
