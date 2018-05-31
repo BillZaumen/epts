@@ -763,6 +763,18 @@ public class EPTSWindow {
 	menuItem.setSelected(true);
 	bg.add(menuItem);
 	editMenu.add(menuItem);
+	editMenu.addSeparator();
+	menuItem = new JCheckBoxMenuItem(localeString("dragImageMode"), false);
+	menuItem.setMnemonic(KeyEvent.VK_D);
+	menuItem.setAccelerator(KeyStroke.getKeyStroke
+				(KeyEvent.VK_D, InputEvent.ALT_DOWN_MASK));
+	menuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    toggledAltD = ((JCheckBoxMenuItem)e.getSource())
+			.isSelected();
+		}
+	    });
+	editMenu.add(menuItem);
 
 	JMenu zoomMenu = new JMenu(localeString("Zoom"));
 	zoomMenu.setMnemonic(KeyEvent.VK_Z);
@@ -2227,6 +2239,7 @@ public class EPTSWindow {
     double xpoff = 0.0;
     double ypoff = 0.0;
     boolean altPressed = false;
+    boolean toggledAltD = false;
 
     MouseInputAdapter mia = new MouseInputAdapter() {
 	    public void mouseClicked(MouseEvent e) {
@@ -2397,7 +2410,7 @@ public class EPTSWindow {
 					 selectedRow, vn, row.getMode()));
 			}
 			panel.repaint();
-		    } else if ((modifiers & KEY_MASK)
+		    } else if (toggledAltD || (modifiers & KEY_MASK)
 			       == InputEvent.ALT_DOWN_MASK) {
 			altPressed = true;
 			JViewport vp = scrollPane.getViewport();

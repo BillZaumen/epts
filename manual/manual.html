@@ -14,8 +14,14 @@ is to make it easy to take a background, typically an image, overlay a
 series of points or curves on top of it, and then scale and/or
 translate the positions of the points and curves so that the locations
 of the points or control points are expressed in a specific coordinate
-system.
-
+system.  Because EPTS is designed to support a specific set of tasks,
+there are a large number of keyboard shortcuts.  It also uses a
+template processor that makes it relatively easy to diplay paths
+textually in a variety of formats, including user-defined formats.
+Command-line options used with templates make it easy to use EPTS as
+part of a 'build' environment (Java programs such as ANT or the
+traditional Unix/Linux use of Makefiles).
+<P>
 When using the BZDev class library's <code>graphs</code>
 and <code>anim2d</code> packages, there are three coordinate systems
 that are used:
@@ -115,6 +121,12 @@ The <code>Edit</code> menu contains the following items:
     string "Location as ", where X is the X coordinate of the point,
     Y is the Y coordinate of the point, and V is the name of a
     variable to which the object "{x: X, y: Y}" will be assigned.
+  <LI><A name="dragImage"><CODE>Drag-Image Mode</CODE></A>. This menu
+    item determines if dragging the mouse drags the image as opposed
+    to selecting points.  While one can alternatively press the ALT
+    key and then press the primary mouse button, some window systems
+    have shortcuts that process this combination and do not pass it
+    on to applications.
 </UL>
 
 <H2><A name="zoomMenu">The Zoom menu</A></H2>
@@ -240,7 +252,9 @@ circles overlayed on the image):
     that in which the cursor moves. The image, however, cannot be
     dragged beyond the range that the scrollbars support. If a window
     system has a short cut that uses the same key-mouse combination,
-    the window system's behavior may occur instead.
+    the window system's behavior may occur instead. In this case, use
+    the <A href="#dragImage">drag-image mode</A> Edit menu option to
+    put EPTS into the desired state.
   <LI> Control Key and primary mouse button pressed. This combination
     is used while creating a path or extending a path.  The mouse must
     be positioned over a point when the left button is pressed. The
@@ -316,6 +330,10 @@ Some shortcuts apply regardless of the current mode:
   <LI> Control-Up-Arrow. Move the vertical scroll bar up.
   <LI> Control-Down-Arrow. Move the vertical scroll bar down.
   <LI> Alt-A. Append points to a B&eacute;zier path.
+  <LI> Alt-D. This toggles whether
+    <A href="#dragImage">drag-image mode</A> is in effect, and can
+    be used when a window system provides shortcuts that use the
+    ALT key with the primary mouse button.
   <LI> Alt-I. Measure the image-space distance between two points.
   <LI> Alt-G. Measure the graph-coordinate-space distance between two
     points.  To provide a meaningful distance, graph coordinate space
