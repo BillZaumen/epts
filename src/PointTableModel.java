@@ -118,6 +118,7 @@ public class PointTableModel implements TableModel {
 
 
     public PointTMR getRow(int i) throws IndexOutOfBoundsException {
+	if (i < 0 || i >= rows.size()) return null;
 	return rows.get(i);
     }
 

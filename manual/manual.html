@@ -122,11 +122,12 @@ The <code>Edit</code> menu contains the following items:
     Y is the Y coordinate of the point, and V is the name of a
     variable to which the object "{x: X, y: Y}" will be assigned.
   <LI><A name="dragImage"><CODE>Drag-Image Mode</CODE></A>. This menu
-    item determines if dragging the mouse drags the image as opposed
-    to selecting points.  While one can alternatively press the ALT
-    key and then press the primary mouse button, some window systems
-    have shortcuts that process this combination and do not pass it
-    on to applications.
+    item determines if dragging the mouse drags the image..  While one
+    can alternatively press the ALT key and then press the primary
+    mouse button, some window systems have shortcuts that process this
+    combination and do not pass it on to applications. The image will
+    not be dragged when this mode is in effect and a distance is being
+    measured or a path (or point) is being created or modified.
 </UL>
 
 <H2><A name="zoomMenu">The Zoom menu</A></H2>
@@ -457,9 +458,30 @@ The built-in table templates are the following:
 
 The built-in path-iterator templates are
 <UL>
+  <LI><CODE>sresource:area</CODE>. This template requires the use of
+    a <CODE>--pname</CODE> option to specify a path name, or to create a
+    new path that is the concatenation of several existing paths.  It
+    provides the area enclosed by the path; "NaN" if the path contains
+    any open segments. If the command was run with the
+    <CODE>--gcs</CODE> option, the units are graph-coordinate-space
+    units; otherwise they are user-space units.
+  <LI><CODE>sresource:circumference</CODE>. This template requires
+    the use of a <CODE>--pname</CODE> option to specify a path name, or
+    to create a new path that is the concatenation of several existing
+    paths.  It provides the circumference the path; "NaN" if the path
+    contains any open segments. If the command was run with the
+    <CODE>--gcs</CODE> option, the units are graph-coordinate-space
+    units; otherwise they are user-space units.
+  <LI><CODE>sresource:pathlength</CODE>. This template requires
+    the use of a <CODE>--pname</CODE> option to specify a path name, or
+    to create a new path that is the concatenation of several existing
+    paths.  It provides the length of the path (the sum of the lengths
+    of all its segments). If the command was run with the
+    <CODE>--gcs</CODE> option, the units are graph-coordinate-space
+    units; otherwise they are user-space units.
   <LI><CODE>sresource:SegmentsCSV</CODE>.
     This template requires the use of a
-    <CODE>pname</CODE> option to specify a path name, or to create a
+    <CODE>--pname</CODE> option to specify a path name, or to create a
     new path that is the concatenation of several existing paths.  The
     template will create its out in CSV (Comma Separated Values)
     format, describing the specified path. The name of the path will
@@ -639,6 +661,26 @@ Path-Iterator templates allow one to list the values provided by
 Java path iterators.  Command-line options determine the path iterator
 to use. The key map contains the following directives:
 <UL>
+  <LI><CODE>area</CODE>. This directive contains the area of the
+    shape. If constructed from multiple paths, all of these paths must
+    be closed paths: otherwise the value will be "NaN". The units are
+    either user-space units or GCS units, depending on flags passed to
+    <CODE>epts</CODE>. When the <CODE>epts</CODE> command contains the
+    <CODE>--gcs</CODE> option, GCS units are used; otherwise
+    user-space units are used.
+  <LI><CODE>circumference</CODE>.  This directive contains the
+    circumference of the shape. If constructed from multiple paths,
+    all of these paths must be closed paths: otherwise the value will
+    be "NaN". The units are either user-space units or GCS units,
+    depending on flags passed to <CODE>epts</CODE>. When the
+    <CODE>epts</CODE> command contains the <CODE>--gcs</CODE> option,
+    GCS units are used; otherwise user-space units are used.
+  <LI><CODE>pathLength</CODE>. This directive contains the path length
+    for the boundary of a shape, regardless of whether it encloses an
+    area.  The units are either user-space units or GCS units,
+    depending on flags passed to <CODE>epts</CODE>. When the
+    <CODE>epts</CODE> command contains the <CODE>--gcs</CODE> option,
+    GCS units are used; otherwise user-space units are used.
   <LI><CODE>varname</CODE>. This directive provides the name of the
     varible whose value is the path that the following directives
     describe.

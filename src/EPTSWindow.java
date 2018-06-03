@@ -367,9 +367,14 @@ public class EPTSWindow {
 	    && lastrow.getMode() instanceof
 	    SplinePathBuilder.CPointType) {
 	    // check and remove the last partial path.
+	    int lastrowInd = ptmodel.getRowCount()-1;
 	    int result = (force)? JOptionPane.OK_OPTION:
 		JOptionPane.showConfirmDialog(frame,
-					      localeString("confirmUndoCP"),
+					      String.format
+					      (localeString("confirmUndoCP"),
+					       ptmodel.getRow(ptmodel.findStart
+							      (lastrowInd))
+					       .getVariableName()),
 					      localeString("confirmCancelCP"),
 					      JOptionPane
 					      .OK_CANCEL_OPTION,
@@ -764,7 +769,7 @@ public class EPTSWindow {
 	bg.add(menuItem);
 	editMenu.add(menuItem);
 	editMenu.addSeparator();
-	menuItem = new JCheckBoxMenuItem(localeString("dragImageMode"), false);
+	menuItem = new JCheckBoxMenuItem(localeString("dragImageMode"), true);
 	menuItem.setMnemonic(KeyEvent.VK_D);
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_D, InputEvent.ALT_DOWN_MASK));
@@ -2036,7 +2041,12 @@ public class EPTSWindow {
 			    setModeline("");
 			    return;
 			} else if (nextState != null) {
-			    frameText = localeString("UndoCurrentPathSegs");
+			    int lastrowInd = ptmodel.getRowCount()-1;
+			    int lastStart = ptmodel.findStart(lastrowInd);
+			    String vname = ptmodel.getRow(lastStart)
+				.getVariableName();
+			    frameText = String.format
+				(localeString("UndoCurrentPathSegs"), vname);
 			    frameTitle =
 				localeString("UndoCurrentPathSegsTitle");
 			} else if (selectedRow != -1) {
@@ -2063,6 +2073,13 @@ public class EPTSWindow {
 			}
 		    } else if (selectedRow != -1) {
 			PointTMR row = ptmodel.getRow(selectedRow);
+			if (row == null) {
+			    selectedRow = -1;
+			    resetState();
+			    setModeline("");
+			    panel.repaint();
+			    return;
+			}
 			Enum rmode = row.getMode();
 			if (rmode instanceof SplinePathBuilder.CPointType
 			    && rmode != SplinePathBuilder.CPointType.CLOSE) {
@@ -2231,15 +2248,21 @@ public class EPTSWindow {
 
     boolean mouseMoved = false;
     int selectedRow = -1;
-    boolean selectedRowClick = false;
+    // boolean selectedRowClick = false;
     double lastXSelected = 0.0;
     double lastYSelected = 0.0;
     double lastXPSelected = 0.0;
     double lastYPSelected = 0.0;
     double xpoff = 0.0;
     double ypoff = 0.0;
+    // pressed the alt key or in drag-image mode with the mouse
+    // pressed while a point was not selected or a curve or point
+    // was not being created.
     boolean altPressed = false;
-    boolean toggledAltD = false;
+    // actually pressed the ALT key instead of just being in
+    // drag image mode with other constraints satisfied
+    boolean altReallyPressed = false;
+    boolean toggledAltD = true;
 
     MouseInputAdapter mia = new MouseInputAdapter() {
 	    public void mouseClicked(MouseEvent e) {
@@ -2311,6 +2334,7 @@ public class EPTSWindow {
 			    savedCursorDist = null;
 			}
 			locState = false;
+			panel.repaint();
 		    } else if (distState == 2) {
 			// g2d.setXORMode(Color.BLACK);
 			// g2d.setStroke(new BasicStroke(1.0F));
@@ -2382,8 +2406,10 @@ public class EPTSWindow {
 					(localeString("SelectedPoint"),
 					 selectedRow, vn, row.getMode()));
 			    
+			} else {
+			    setModeline("");
 			}
-			selectedRowClick = true;
+			// selectedRowClick = true;
 			panel.repaint();
 		    }
 		}
@@ -2393,6 +2419,8 @@ public class EPTSWindow {
 		mouseButton = e.getButton();
 		if (mouseButton == MouseEvent.BUTTON1) {
 		    int modifiers = e.getModifiersEx();
+		    altReallyPressed =
+			(modifiers & KEY_MASK) == InputEvent.ALT_DOWN_MASK;
 		    if ((modifiers & KEY_MASK) == InputEvent.CTRL_DOWN_MASK) {
 			Point p = panel.getMousePosition();
 			double xp =(p.x/zoom);
@@ -2410,8 +2438,7 @@ public class EPTSWindow {
 					 selectedRow, vn, row.getMode()));
 			}
 			panel.repaint();
-		    } else if (toggledAltD || (modifiers & KEY_MASK)
-			       == InputEvent.ALT_DOWN_MASK) {
+		    } else if (toggledAltD || altReallyPressed) {
 			altPressed = true;
 			JViewport vp = scrollPane.getViewport();
 			Point p = vp.getViewPosition();
@@ -2440,6 +2467,7 @@ public class EPTSWindow {
 				       + ", expecting " + e.getButton());
 		}
 		if (mouseButton == MouseEvent.BUTTON1) {
+		    altReallyPressed = false;
 		    if (altPressed) {
 			JViewport vp = scrollPane.getViewport();
 			Point p = vp.getViewPosition();
@@ -2450,7 +2478,7 @@ public class EPTSWindow {
 			    ptmodel.fireRowChanged(selectedRow);
 			}
 			selectedRow = -1;
-			selectedRowClick = false;
+			// selectedRowClick = false;
 			if (nextState == null) {
 			    setModeline("");
 			} else if (nextState instanceof
@@ -2480,7 +2508,10 @@ public class EPTSWindow {
 		    // only for button 1 because the mouse might be
 		    // dragged with button 3 pushed if one accidentally
 		    // moves the mouse outside of a popup menu.
-		    if (selectedRow != -1) {
+		    // If the alt key is pressed, we preferentially scroll
+		    // the viewport by appearing to move the underlying
+		    // image.
+		    if (selectedRow != -1 && altReallyPressed == false) {
 			Point p = panel.getMousePosition();
 			if (p == null) return;
 			double xp =(p.x/zoom) + xpoff;
@@ -2518,7 +2549,8 @@ public class EPTSWindow {
 	    }
 
 	    public void mousePressed(MouseEvent e) {
-		if (altPressed) {
+		if ((altPressed && selectedRow == -1 && nextState == null)
+		    || altReallyPressed) {
 		    x1 = (int)Math.round(e.getX());
 		    y1 = (int)Math.round(e.getY());
 		    JViewport vport = scrollPane.getViewport();
@@ -2534,6 +2566,8 @@ public class EPTSWindow {
 		}
 	    }
 	    public void mouseReleased(MouseEvent e) {
+		// if altReallyPressed was true when the mouse
+		// was pressed, altPressed is also true
 		if (altPressed) {
 		    if (savedCursor != null) {
 			panel.setCursor(savedCursor);
@@ -2614,6 +2648,9 @@ public class EPTSWindow {
 	// It doens't have to include any directives as all the needed
 	// ones are defined at a higher level.
 	TemplateProcessor.KeyMap emap = new TemplateProcessor.KeyMap();
+	boolean allClosed = true;
+	boolean closeSeen = false;
+	boolean firstMoveTo = true;
 	while (!pi.isDone()) {
 	    int current = pi.currentSegment(coords);
 	    TemplateProcessor.KeyMap imap = new TemplateProcessor.KeyMap();
@@ -2625,6 +2662,7 @@ public class EPTSWindow {
 		imap.put("hasClose", emap);
 		lastx = movex;
 		lasty = movey;
+		closeSeen = true;
 		break;
 	    case PathIterator.SEG_CUBICTO:
 		imap.put("type", "SEG_CUBICTO");
@@ -2682,6 +2720,12 @@ public class EPTSWindow {
 		lasty = coords[0];
 		movex = lastx;
 		movey = lasty;
+		if (firstMoveTo) {
+		    firstMoveTo = false;
+		} else {
+		    if (!closeSeen) allClosed = false;
+		}
+		closeSeen = false;
 		break;
 	    case PathIterator.SEG_QUADTO:
 		if (elevate) {
@@ -2716,6 +2760,15 @@ public class EPTSWindow {
 	    list.add(imap);
 	    pi.next();
 	}
+	if (closeSeen == false) allClosed = false;
+	if (allClosed) {
+	    kmap.put("area", "" + Path2DInfo.areaOf(path));
+	    kmap.put("circumference", "" + Path2DInfo.circumferenceOf(path));
+	} else {
+	    kmap.put("area", "NaN");
+	    kmap.put("circumference", "NaN");
+	}
+	kmap.put("pathLength", "" + Path2DInfo.pathLength(path));
 	return kmap;
     }
 

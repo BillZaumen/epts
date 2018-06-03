@@ -369,6 +369,42 @@ directive.
 These templates describe individual paths.
 The global directives are
 .TP
+.BR area .
+This directive contains the area of the shape. If constructed
+from multiple paths, all of these paths must be closed paths: otherwise
+the value will be "NaN". The units are either user-space units or GCS
+units, depending on flags passed to
+.BR epts .
+When the
+.BR epts
+command contains the
+.B \-\-gcs
+option, GCS units are used; otherwise user-space units are used.
+.TP
+.BR circumference .
+This directive contains the circumference of the shape. If constructed
+from multiple paths, all of these paths must be closed paths: otherwise
+the value will be "NaN". The units are either user-space units or GCS
+units, depending on flags passed to
+.BR epts .
+When the
+.BR epts
+command contains the
+.B \-\-gcs
+option, GCS units are used; otherwise user-space units are used.
+
+.TP
+.BR pathLength .
+This directive contains the path length for the boundary of a shape
+regardless of whether it encloses an area. The units are either
+user-space units or GCS units, depending on flags passed to
+.BR epts .
+When the
+.BR epts
+command contains the
+.B \-\-gcs
+option, GCS units are used; otherwise user-space units are used.
+.TP
 .BR varname .
 This directive provides the name of the varible whose value is
 the path that the following directives describe.

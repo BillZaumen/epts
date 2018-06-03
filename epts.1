@@ -298,7 +298,8 @@ For table templates, these are <sresource:ECMAScriptLayers>,
 <sresource:ECMAScriptLayerPaths>,
 <sresource:EMCAScriptLocations>, <sresource:EMCAScriptPaths>,
 and <sresource:ECMAScript.>, where "<" and ">" as usual are not
-part of the URLs. For path-iterator templates, the URL is
+part of the URLs. For path-iterator templates, the URLs are
+<sresource:area>, <sresource:circumference>, <sresource:pathlength>, and
 <sresource:SegmentsCSV>. These templates are described below.
 .TP
 .BI \-\-tname\  TNAME
@@ -555,6 +556,39 @@ This template provides the same ECMAScript statements that the
 template produces, but only paths are included, not locations.
 .PP
 The path-iterator templates are the following:
+.TP
+.B sresource:area
+This template requires the use of a
+.B \-\-pname
+option to specify a path name, or to create a new path that is the
+concatenation of several existing paths.  It provides the area
+enclosed by the path; "NaN" if the path contains any open segments. If
+the command was run with the
+.B \-\-gcs
+option, the units are graph-coordinate-space units; otherwise they are
+user-space units.
+.TP
+.B sresource:circumference
+This template requires the use of a
+.B \-\-pname
+option to specify a path name, or to create a new path that is the
+concatenation of several existing paths.  It provides the
+circumference of the area enclosed by the path; "NaN" if the path
+contains any open segments. If the command was run with the
+.B \-\-gcs
+option, the units are graph-coordinate-space units; otherwise they are
+user-space units.
+.TP
+.B sresource:pathlength
+This template requires the use of a
+.B \-\-pname
+option to specify a path name, or to create a new path that is the
+concatenation of several existing paths.  It provides the
+path length, summed over all segments making up the path. If the command was run with the
+.B \-\-gcs
+option, the units are graph-coordinate-space units; otherwise they are
+user-space units.
+
 .TP
 .B sresource:SegmentsCSV
 This template requires the use of a
