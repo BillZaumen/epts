@@ -1,0 +1,1 @@
+area for $(varname) = $(area)
