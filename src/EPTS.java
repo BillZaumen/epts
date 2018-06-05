@@ -564,6 +564,8 @@ public class EPTS {
 			System.exit(1);
 					   
 		    }
+		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--svg")) {
 		    if (svg == false) {
 			if (flatness != 0.0 || templateURL != null
@@ -577,20 +579,30 @@ public class EPTS {
 		    limit = 0;
 		    flatness = 0.0;
 		    templateURL = new URL("sresource:SVG.tpl");
+		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--fill-rule")) {
 		    index++;
 		    svgInfo.fillRule = argv[index];
+		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--stroke")) {
 		    index++;
 		    svgInfo.stroke = argv[index];
+		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--stroke-width")) {
 		    index++;
 		    svgInfo.strokeWidth=argv[index];
+		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--fill")) {
 		    index++;
 		    svgInfo.fill = argv[index];
+		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--web")) {
 		    webserverOnly = true;
+		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--map")) {
 		    index++;
 		    if (index == argv.length) {
@@ -651,6 +663,8 @@ public class EPTS {
 			pname = null;
 			pnameArray = null;
 		    }
+		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--flatness")) {
 		    if (svg) {
 			System.err.println
@@ -668,6 +682,8 @@ public class EPTS {
 			throw new IllegalArgumentException
 			    (errorMsg("negative", argv[index]));
 		    }
+		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--limit")) {
 		    if (svg) {
 			System.err.println
@@ -685,6 +701,8 @@ public class EPTS {
 			throw new IllegalArgumentException
 			    (errorMsg("negative", argv[index]));
 		    }
+		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--straight")) {
 		    if (svg) {
 			System.err.println
@@ -692,6 +710,7 @@ public class EPTS {
 			System.exit(1);
 		    }
 		    straight = true;
+		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--elevate"))  {
 		    if (svg) {
 			System.err.println
@@ -699,6 +718,7 @@ public class EPTS {
 			System.exit(1);
 		    }
 		    elevate = true;
+		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--gcs")) {
 		    if (svg) {
 			System.err.println
@@ -706,6 +726,7 @@ public class EPTS {
 			System.exit(1);
 		    }
 		    gcs = true;
+		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--template")) {
 		    if (svg) {
 			System.err.println
@@ -729,6 +750,11 @@ public class EPTS {
 			templateURL = (new File(tname)).toURI().toURL();
 		    }
 		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
+		} else if (argv[index].startsWith("--template:")) {
+		    String resource = argv[index].substring(11);
+		    String tname = "resource:" + resource;
+		    templateURL = new URL(tname);
 		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--tname")) {
 		    index++;
@@ -768,6 +794,8 @@ public class EPTS {
 		    }
 		    windingRule  = null;
 		    filterInfoList.add(fi);
+		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
 		} else if (argv[index].equals("-o")) {
 		    index++;
 		    if (index == argv.length) {
@@ -793,6 +821,8 @@ public class EPTS {
 			System.exit(1);
 		    }
 		    windingRule = argv[index];
+		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--")) {
 		    argsList.add(argv[index]);
 		    jcontinue = false;

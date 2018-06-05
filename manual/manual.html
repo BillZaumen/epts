@@ -900,38 +900,41 @@ The options specific to the EPTS command are:
     <CODE>--pname</CODE> option is set and is ignored otherwise.
     When set, the selected path will be flattened and converted to
     straight-line segments.
-    <LI><CODE>--stroke</CODE> <EM>COLOR</EM>.  This option sets the
-      stroke attribute to <EM>COLOR</EM> in an SVG path.  It applies
-      to a path specified by the next <CODE>--pname</CODE> option. The
-      value of <EM>COLOR</EM> can be any color specification accepted
-      by SVG (the same as those defined by the CSS2 specification). A
-      value of none indicates that no color is specified and the path
-      will not be drawn. Named colors are listed at
-      &lt;https://upload.wikimedia.org/wikipedia/commons/2/2b/SVG_Recognized_color_keyword_names.svg&gt;.
-      A <CODE>#</CODE> followed immediately by 6 hexadecimal digits
-      gives the RGB values (two hexadecimal digits in that order). One
-      can also use the
-      expression <CODE>rgb(</CODE><EM>R</EM><CODE>,</CODE><EM>G</EM><CODE>,</CODE><EM>B</EM><CODE>)</CODE>
-      where <EM>R</EM , <EM>B</EM> , and <EM>G</EM> vary from 0 to
-      255 or 0% to 100%.
-    <LI><CODE>--stroke-width</CODE> <EM>WIDTH</EM>.  This option sets
-      the <CODE>stroke-width</CODE> attribute to <EM>WIDTH</EM> in an
-      SVG path. It applies to a path specified by the next
-      <CODE>--pname</CODE> option.  The value of <EM>WIDTH</EM> is any
-      width acceptable to SVG: a number pos‐ sibly followed by a unit
-      or a '%' symbol.
-    <LI><CODE>--svg</CODE> This option, if present, must precede all
-      <CODE>--pname</CODE> options.  It indicates that the output
-      will be an SVG (Scaleable Vector Graphics) file.  The
-      <CODE>--template</CODE>, <CODE>--flatness</CODE>,
-      <CODE>--straigth</CODE>, and/or <CODE>--elevate</CODE> options
-      must not be used with this option.
-  <LI><CODE>--template</CODE> <EM>TFILE</EM>.
-    When <EM>TFILE</EM> starts with the string  "sresource:",
-    "file:", "http:", "https:", or "ftp", <EM>TFILE</EM> is assumed
-    to be a URL. Otherwise is is assumed to be the name of a file.
-    The syntax of a template is describe in the section of this
-    manual entitled "<A href="#templates">Templates</A>". For the
+  <LI><CODE>--stroke</CODE> <EM>COLOR</EM>.  This option sets the
+    stroke attribute to <EM>COLOR</EM> in an SVG path.  It applies
+    to a path specified by the next <CODE>--pname</CODE> option. The
+    value of <EM>COLOR</EM> can be any color specification accepted
+    by SVG (the same as those defined by the CSS2 specification). A
+    value of none indicates that no color is specified and the path
+    will not be drawn. Named colors are listed at
+    &lt;https://upload.wikimedia.org/wikipedia/commons/2/2b/SVG_Recognized_color_keyword_names.svg&gt;.
+    A <CODE>#</CODE> followed immediately by 6 hexadecimal digits
+    gives the RGB values (two hexadecimal digits in that order). One
+    can also use the
+    expression <CODE>rgb(</CODE><EM>R</EM><CODE>,</CODE><EM>G</EM><CODE>,</CODE><EM>B</EM><CODE>)</CODE>
+    where <EM>R</EM> , <EM>B</EM> , and <EM>G</EM> vary from 0 to
+    255 or 0% to 100%.
+  <LI><CODE>--stroke-width</CODE> <EM>WIDTH</EM>.  This option sets
+    the <CODE>stroke-width</CODE> attribute to <EM>WIDTH</EM> in an
+    SVG path. It applies to a path specified by the next
+    <CODE>--pname</CODE> option.  The value of <EM>WIDTH</EM> is any
+    width acceptable to SVG: a number pos‐ sibly followed by a unit
+    or a '%' symbol.
+  <LI><CODE>--svg</CODE> This option, if present, must precede all
+    <CODE>--pname</CODE> options.  It indicates that the output
+    will be an SVG (Scaleable Vector Graphics) file.  The
+    <CODE>--template</CODE>, <CODE>--flatness</CODE>,
+    <CODE>--straigth</CODE>, and/or <CODE>--elevate</CODE> options
+    must not be used with this option.
+  <LI><CODE>--template:</CODE><EM>RESOURCE</EM>.
+    This option is a shortcut that behaves like the option
+    <CODE>--template sresource:</CODE><EM>RESOURCE</EM>.
+  <LI><CODE>--template</CODE> <EM>TFILE</EM>.  When <EM>TFILE</EM>
+    starts with the string "sresource:", "file:", "http:", "https:",
+    or "ftp", <EM>TFILE</EM> is assumed to be a URL. Otherwise is is
+    assumed to be the name of a file.  The syntax of a template is
+    describe in the section of this manual entitled
+    "<A href="#templates">Templates</A>". For the
     <CODE>sresource</CODE> protocol, the template is embedded in the
     EPTS application. Supported table templates are
     <UL>
