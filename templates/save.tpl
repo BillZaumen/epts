@@ -3,13 +3,16 @@
 	  "sresource:epts-1.0.dtd">
 <epts xmlns="http://bzdev.org/DTD/epts-1.0">
   <image width="$(width)" height="$(height)" imageURIExists="$(hasImageFile)"/>
-  <targetList>$(arglist:arglistEnd)
+  $(hasScript:endScript)  <scripting language="$(language)" animation="$(animation)">$(hasBindings:endBindings)
+      <binding name="$(bindingName)" type="$(bindingType)">$(bindingValue)</binding>$(endBindings)
+    </scripting>
+$(endScript)  <targetList>$(arglist:arglistEnd)
      <argument>$(arg)</argument>$(arglistEnd)
   </targetList>
   <gcsconfig unitIndex="$(unitIndex)" refPointIndex="$(refPointIndex)"
 	  userSpaceDistance="$(userSpaceDistance)"
 	  gcsDistance="$(gcsDistance)"
-	  xorigin="$(xorigin)" yorigin="$(yorigin)"/>
+	  xrefpointGCS="$(xrefpoint)" yrefpointGCS="$(yrefpoint)"/>
   $(table:endTable)<table>
 $(items:endItems)$(location:endLocation)       <row varname="$(varname)" type="LOCATION"
        x="$(x)" y="$(y)" xp="$(xp)" yp="$(yp)" />

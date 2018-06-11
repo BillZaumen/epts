@@ -83,8 +83,11 @@ JROOT_JARDIR = $(JROOT)/jar
 JROOT_MANDIR = $(JROOT)/man
 JROOT_BIN = $(JROOT)/bin
 
+
 EXTDIR = $(SYS_JARDIRECTORY)
-BZDEVDIR = $(SYS_BZDEVDIR)
+EXTDIR_SED =  $(shell echo $(EXTDIR) | sed  s/\\//\\\\\\\\\\//g)
+BZDEVDIR = $(DESTDIR)$(SYS_BZDEVDIR)
+BZDEVDIR_SED = $(shell echo $(SYS_BZDEVDIR) | sed  s/\\//\\\\\\\\\\//g)
 
 EXTLIBS=$(EXTDIR)/libbzdev.jar
 
@@ -114,12 +117,20 @@ RESOURCES = manual/manual.xml \
 
 FILES = $(JFILES) $(PROPERTIES)
 
+
+
 PROGRAM = $(JROOT_BIN)/epts $(JROOT_JARDIR)/epts-$(VERSION).jar 
 ALL = $(PROGRAM) epts.desktop $(MANS) $(JROOT_BIN)/epts
 
 # program: $(JROOT_BIN)/epts $(JROOT_JARDIR)/epts-$(VERSION).jar 
 
 program: clean $(PROGRAM)
+
+BLDPOLICY = $(JROOT_JARDIR)/epts.policy
+$(BLDPOLICY): epts.policy
+	mkdir -p $(JROOT_JARDIR)
+	sed s/LOCATION/$(EXTDIR_SED)/g epts.policy > $(BLDPOLICY)
+
 
 #
 # Before using, set up a symbolic link for bzdevlib.jar in the ./jar directory.
@@ -140,7 +151,7 @@ $(CLASSES):
 # being installed.
 #
 $(JROOT_JARDIR)/epts-$(VERSION).jar: $(FILES) $(TEMPLATES) $(CRLF_TEMPLATES)\
-	$(RESOURCES)
+	$(RESOURCES) $(BLDPOLICY)
 	mkdir -p $(CLASSES)
 	javac -Xlint:unchecked -Xlint:deprecation \
 		-d $(CLASSES) -classpath $(CLASSES):$(EXTLIBS) \
@@ -158,21 +169,16 @@ $(JROOT_JARDIR)/epts-$(VERSION).jar: $(FILES) $(TEMPLATES) $(CRLF_TEMPLATES)\
 		cat $$i | sed -e 's/.*/\0\r/' > $(CLASSES)/$$tname; done
 	mkdir -p $(CLASSES)/manual
 	for i in $(RESOURCES) ; do cp $$i $(CLASSES)/$$i ; done
-	jar cfm $(JROOT_JARDIR)/epts-$(VERSION).jar epts.mf \
-		-C $(CLASSES) .
-	( cd jar ; rm -f epts.jar ; ln -s epts-$(VERSION).jar epts.jar )
+	jar cfm $(JROOT_JARDIR)/epts.jar epts.mf -C $(CLASSES) .
 
 
 $(JROOT_BIN)/epts: epts.sh MAJOR MINOR \
 		$(JROOT_JARDIR)/epts-$(VERSION).jar
 	(cd $(JROOT); mkdir -p $(JROOT_BIN))
-	sed s/VERSION/$(VERSION)/g epts.sh | \
-	sed s/JARDIRECTORY/$(JARDIR)/g > $(JROOT_BIN)/epts
+	sed s/BZDEVDIR/$(BZDEVDIR_SED)/g epts.sh > $(JROOT_BIN)/epts
 	chmod u+x $(JROOT_BIN)/epts
 	if [ "$(DESTDIR)" = "" ] ; \
 	then ln -sf $(EXTDIR)/libbzdev.jar $(JROOT_JARDIR)/libbzdev.jar ; \
-	     ln -sf $(BZDEVDIR)/libbzdev.policy \
-		$(JROOT_JARDIR)/libbzdev.policy ; \
 	fi
 
 $(JROOT_MANDIR)/man1/epts.1.gz: epts.1
@@ -205,9 +211,9 @@ install: all
 	install -d $(APPDIR)
 	install -d $(BIN)
 	install -d $(MANDIR)
+	install -d $(BZDEVDIR)
 	install -d $(MANDIR)/man1
 	install -d $(MANDIR)/man5
-	install -d $(JARDIRECTORY)
 	install -m 0644 -T $(SOURCEICON) $(APP_ICON_DIR)/$(TARGETICON)
 	for i in $(ICON_WIDTHS) ; do \
 		install -d $(ICON_DIR)/$${i}x$${i}/$(APPS_DIR) ; \
@@ -228,12 +234,16 @@ install: all
 	    $(ICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR)/$(TARGET_FILE_ICON_PNG); \
 	    rm tmp.png ; \
 	done
-	install -m 0644 $(JROOT_JARDIR)/epts-$(VERSION).jar \
-		$(JARDIRECTORY)
+	install -m 0644 $(JROOT_JARDIR)/epts.jar $(BZDEVDIR)
+	install -m 0644 $(JROOT_JARDIR)/epts.policy $(BZDEVDIR)
 	install -m 0755 $(JROOT_BIN)/epts $(BIN)
 	install -m 0644 epts.desktop $(APPDIR)
 	install -m 0644 $(JROOT_MANDIR)/man1/epts.1.gz $(MANDIR)/man1
 	install -m 0644 $(JROOT_MANDIR)/man5/epts.5.gz $(MANDIR)/man5
+
+install-links:
+	 [ -h $(BZDEVDIR)/libbzdev.jar ] || \
+		ln -s $(EXTDIR)/libbzdev.jar $(BZDEVDIR)/libbzdev.jar
 
 uninstall:
 	@rm $(MANDIR)/man1/epts.1.gz || echo ... rm epts.1.gz  FAILED

@@ -18,6 +18,7 @@ import java.nio.charset.Charset;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -62,16 +63,21 @@ public class EPTSWindow {
     BufferedImage bi;
     Graphics2D g2d;
     Graph graph;
+    String languageName = null;
+    String animationName = null;
+
     ConfigGCSPane configGCSPane;
     enum LocationFormat {
 	COORD, EXPRESSION, OBJECT, STATEMENT
     }
     LocationFormat locationFormat = LocationFormat.STATEMENT;
     String varname = null;
-    ArrayList<String> targetList = null;
+    List<String> targetList = null;
     // true if targetList contains a file name of an image we loaded
     boolean imageFileNameSeen = false;
     URI imageURI = null;
+    List<EPTS.NameValuePair> bindings = null;
+    boolean scriptMode = false;
 
     PointTableModel ptmodel;
     JTable ptable;
@@ -85,9 +91,9 @@ public class EPTSWindow {
 	keymap.put("hasImageFile", imageFileNameSeen? "true": "false");
 	TemplateProcessor.KeyMapList tlist =
 	    new TemplateProcessor.KeyMapList();
+	File fparent = f.getCanonicalFile().getParentFile();
 	if (imageFileNameSeen && imageURI != null) {
 	    TemplateProcessor.KeyMap map = new TemplateProcessor.KeyMap();
-	    File fparent = f.getCanonicalFile().getParentFile();
 	    // we use relative URLs if the image file is in a
 	    // subdirectory of the directory containing the saved
 	    // state.
@@ -95,29 +101,69 @@ public class EPTSWindow {
 	    map.put("arg", arg);
 	    tlist.add(map);
 	}
-	/*
-	for (String arg: targetList) {
-	    TemplateProcessor.KeyMap map = new TemplateProcessor.KeyMap();
-	    File af = new File(arg);
-	    File fparent = f.getCanonicalFile().getParentFile();
-	    File afparent = af.getCanonicalFile().getParentFile();
-	    while (afparent != null) {
-		if (afparent.equals(fparent)) break;
-		afparent = afparent.getParentFile();
+	System.out.println("scriptMode = "  + scriptMode);
+	if (scriptMode) {
+	    TemplateProcessor.KeyMapList hasScriptList =
+		new TemplateProcessor.KeyMapList();
+	    TemplateProcessor.KeyMap smap = new TemplateProcessor.KeyMap();
+	    smap.put("language", languageName);
+	    smap.put("animation", animationName);
+	    // hasScriptList.add(smap);
+	    // keymap.put("hasScript", hasScriptList);
+	    keymap.put("hasScript", smap);
+	    if (bindings != null) {
+		TemplateProcessor.KeyMapList blist =
+		    new TemplateProcessor.KeyMapList();
+		for (EPTS.NameValuePair binding: bindings) {
+		    String name = binding.getName();
+		    Object value = binding.getValue();
+		    String svalue;
+		    String type;
+		    if (value.getClass().equals(Integer.class)) {
+			type = "int";
+			svalue = value.toString();
+		    } else if (value.getClass().equals(Double.class)) {
+			type = "double";
+			svalue = value.toString();
+		    } else if (value.getClass().equals(String.class)) {
+			type = "String";
+			svalue = WebEncoder.htmlEncode((String)value);
+		    } else {
+			throw new UnexpectedExceptionError();
+		    }
+		    TemplateProcessor.KeyMap map =
+			new TemplateProcessor.KeyMap();
+		    map.put("bindingName", name);
+		    map.put("bindingType", type);
+		    map.put("bindingValue", svalue);
+		    blist.add(map);
+		}
+		smap.put("hasBindings", blist);
 	    }
-	    if (afparent == null) {
-		arg = af.getCanonicalFile().toURI().toString();
-	    } else {
-		// we use relative URLs if the image file is in a
-		// subdirectory of the directory containing the saved
-		// state.
-		arg = fparent.toURI()
-		    .relativize(af.getCanonicalFile().toURI()).toString();
-	    }
-	    map.put("arg", arg);
-	    tlist.add(map);
 	}
-	*/
+	if (targetList != null) {
+	    for (String arg: targetList) {
+		TemplateProcessor.KeyMap map = new TemplateProcessor.KeyMap();
+		File af = new File(arg);
+		// File parent = f.getCanonicalFile().getParentFile();
+		File afparent = af.getCanonicalFile().getParentFile();
+		while (afparent != null) {
+		    if (afparent.equals(fparent)) break;
+		    afparent = afparent.getParentFile();
+		}
+		if (afparent == null) {
+		    arg = af.getCanonicalFile().toURI().toString();
+		} else {
+		    // we use relative URLs if the image file is in a
+		    // subdirectory of the directory containing the saved
+		    // state.
+		    arg = fparent.toURI()
+			.relativize(af.getCanonicalFile().toURI()).toString();
+		}
+		map.put("arg", arg);
+		tlist.add(map);
+	    }
+	}
 	keymap.put("arglist", tlist);
 	keymap.put("unitIndex",
 		   String.format("%d", configGCSPane.savedUnitIndex));
@@ -125,8 +171,8 @@ public class EPTSWindow {
 		   String.format("%d", configGCSPane.savedRefPointIndex));
 	keymap.put("userSpaceDistance", configGCSPane.savedUsDistString);
 	keymap.put("gcsDistance", configGCSPane.savedGcsDistString);
-	keymap.put("xorigin", configGCSPane.savedXString);
-	keymap.put("yorigin", configGCSPane.savedYString);
+	keymap.put("xrefpoint", configGCSPane.savedXString);
+	keymap.put("yrefpoint", configGCSPane.savedYString);
 
 	keymap.put("width", String.format("%d", width));
 	keymap.put("height", String.format("%d", height));
@@ -137,7 +183,7 @@ public class EPTSWindow {
 	TemplateProcessor tp = new TemplateProcessor(keymap);
 	OutputStream os = new FileOutputStream(f);
 	Writer writer = new OutputStreamWriter(os, "UTF-8");
-	tp.processSystemResource("save.tpl", "UTF-8", writer);
+	tp.processSystemResource("save", "UTF-8", writer);
 	needSave = false;
     }
 
@@ -294,8 +340,8 @@ public class EPTSWindow {
 	}
     }
 
-    double xorigin = 0.0;
-    double yorigin = 0.0;
+    double xrefpoint = 0.0;
+    double yrefpoint = 0.0;
     double scaleFactor = 1.0;
 
     double zoom = 1.0;
@@ -488,8 +534,47 @@ public class EPTSWindow {
 	    }
 	};
 
-    JMenuItem quitMenuItem;
+    private void acceptConfigParms() {
+	// must be called after width and height are set.
+	scaleFactor = configGCSPane.getScaleFactor();
+	xrefpoint = configGCSPane.getXRefpoint();
+	yrefpoint = configGCSPane.getYRefpoint();
+	switch(configGCSPane.getRefPointName()) {
+	case CENTER:
+	    xrefpoint -= width*scaleFactor / 2;
+	    yrefpoint -= height*scaleFactor / 2;
+	    break;
+	case CENTER_LEFT:
+	    yrefpoint -= height*scaleFactor / 2;
+	    break;
+	case CENTER_RIGHT:
+	    xrefpoint -= width*scaleFactor;
+	    yrefpoint -= height*scaleFactor / 2;
+	    break;
+	case LOWER_CENTER:
+	    xrefpoint -= width*scaleFactor / 2;
+	    break;
+	case LOWER_LEFT:
+	    break;
+	case LOWER_RIGHT:
+	    xrefpoint -= width*scaleFactor;
+	    break;
+	case UPPER_CENTER:
+	    xrefpoint -= width*scaleFactor / 2;
+	    yrefpoint -= height*scaleFactor;
+	    break;
+	case UPPER_LEFT:
+	    yrefpoint -= height*scaleFactor;
+	    break;
+	case UPPER_RIGHT:
+	    xrefpoint -= width*scaleFactor;
+	    yrefpoint -= height*scaleFactor;
+	    break;
+	}
+    }
 
+    JMenuItem quitMenuItem;
+    JMenuItem configMenuItem;
     private void setMenus(JFrame frame, double w, double h) {
 	JMenuBar menubar = new JMenuBar();
 	JMenuItem menuItem;
@@ -529,41 +614,44 @@ public class EPTSWindow {
 			 localeString("ConfigureGCSDialog"),
 			 JOptionPane.OK_CANCEL_OPTION);
 		     if (status == JOptionPane.OK_OPTION) {
+			 acceptConfigParms();
+			 /*
 			 scaleFactor = configGCSPane.getScaleFactor();
-			 xorigin = configGCSPane.getXOrigin();
-			 yorigin = configGCSPane.getYOrigin();
+			 xrefpoint = configGCSPane.getXRefpoint();
+			 yrefpoint = configGCSPane.getYRefpoint();
 			 switch(configGCSPane.getRefPointName()) {
 			 case CENTER:
-			     xorigin += width*scaleFactor / 2;
-			     yorigin += height*scaleFactor / 2;
+			     xrefpoint -= width*scaleFactor / 2;
+			     yrefpoint -= height*scaleFactor / 2;
 			     break;
 			 case CENTER_LEFT:
-			     yorigin += height*scaleFactor / 2;
+			     yrefpoint -= height*scaleFactor / 2;
 			     break;
 			 case CENTER_RIGHT:
-			     xorigin += width*scaleFactor;
-			     yorigin += height*scaleFactor / 2;
+			     xrefpoint -= width*scaleFactor;
+			     yrefpoint -= height*scaleFactor / 2;
 			     break;
 			 case LOWER_CENTER:
-			     xorigin += width*scaleFactor / 2;
+			     xrefpoint -= width*scaleFactor / 2;
 			     break;
 			 case LOWER_LEFT:
 			     break;
 			 case LOWER_RIGHT:
-			     xorigin += width*scaleFactor;
+			     xrefpoint -= width*scaleFactor;
 			     break;
 			 case UPPER_CENTER:
-			     xorigin += width*scaleFactor / 2;
-			     yorigin += height*scaleFactor;
+			     xrefpoint -= width*scaleFactor / 2;
+			     yrefpoint -= height*scaleFactor;
 			     break;
 			 case UPPER_LEFT:
-			     yorigin += height*scaleFactor;
+			     yrefpoint -= height*scaleFactor;
 			     break;
 			 case UPPER_RIGHT:
-			     xorigin += width*scaleFactor;
-			     yorigin += height*scaleFactor;
+			     xrefpoint -= width*scaleFactor;
+			     yrefpoint -= height*scaleFactor;
 			     break;
 			 }
+			 */
 			 if (ptmodel.getRowCount() > 0) {
 			     for (PointTMR row: ptmodel.getRows()) {
 				 Enum rmode = row.getMode();
@@ -577,8 +665,8 @@ public class EPTSWindow {
 				    
 				     double x = xp * scaleFactor;
 				     double y = yp * scaleFactor;
-				     x -= xorigin;
-				     y -= yorigin;
+				     x += xrefpoint;
+				     y += yrefpoint;
 				     row.setX(x, xp);
 				     row.setY(y, yp);
 				 }
@@ -593,6 +681,7 @@ public class EPTSWindow {
 		     }
 		}
 	    });
+	configMenuItem = menuItem;
 	fileMenu.add(menuItem);
 
 	menuItem = new JMenuItem(localeString("PrintTable"), KeyEvent.VK_P);
@@ -729,7 +818,7 @@ public class EPTSWindow {
 			TemplateProcessor tp =
 			    new TemplateProcessor(ptmodel.getKeyMap((double)
 								    height));
-			tp.processSystemResource("ECMAScript.tpl",
+			tp.processSystemResource("ECMAScript",
 						 "UTF-8", writer);
 			Clipboard cb = panel.getToolkit().getSystemClipboard();
 			StringSelection selection =
@@ -1852,8 +1941,8 @@ public class EPTSWindow {
 			double y = height - (p.y / zoom);
 			x *= scaleFactor;
 			y *= scaleFactor;
-			x -= xorigin;
-			y = y - yorigin;
+			x += xrefpoint;
+			y += yrefpoint;
 			String location;
 			switch(locationFormat) {
 			case COORD:
@@ -1947,8 +2036,8 @@ public class EPTSWindow {
 			    double y = height - yp;
 			    x *= scaleFactor;
 			    y *= scaleFactor;
-			    x -= xorigin;
-			    y -= yorigin;
+			    x += xrefpoint;
+			    y += yrefpoint;
 			    ptmodel.addRow("",ns, x, y, xp, yp);
 			    // This can call a radio-button menu item's
 			    // doClick method, and that sets the
@@ -2081,8 +2170,9 @@ public class EPTSWindow {
 			    return;
 			}
 			Enum rmode = row.getMode();
-			if (rmode instanceof SplinePathBuilder.CPointType
-			    && rmode != SplinePathBuilder.CPointType.CLOSE) {
+			if ((rmode instanceof SplinePathBuilder.CPointType
+			     && rmode != SplinePathBuilder.CPointType.CLOSE)
+			    || rmode == EPTS.Mode.LOCATION) {
 			    double xp = row.getXP();
 			    double yp = row.getYP();
 			    switch (e.getKeyCode()) {
@@ -2104,8 +2194,8 @@ public class EPTSWindow {
 			    double y = height - yp;
 			    x *= scaleFactor;
 			    y *= scaleFactor;
-			    x -= xorigin;
-			    y -= yorigin;
+			    x += xrefpoint;
+			    y += yrefpoint;
 			    ptmodel.changeCoords(selectedRow, x, y,
 						 xp, yp, true);
 			    panel.repaint();
@@ -2279,8 +2369,8 @@ public class EPTSWindow {
 			double y = height - yp;
 			x *= scaleFactor;
 			y *= scaleFactor;
-			x -= xorigin;
-			y -= yorigin;
+			x += xrefpoint;
+			y += yrefpoint;
 			if (replacementMode != null) {
 			    ptmodel.changeMode(insertionSelectedRow,
 					       replacementMode);
@@ -2296,8 +2386,8 @@ public class EPTSWindow {
 			double y = height - p.y / zoom;
 			x *= scaleFactor;
 			y *= scaleFactor;
-			x -= xorigin;
-			y -= yorigin;
+			x += xrefpoint;
+			y += yrefpoint;
 			String location;
 			switch(locationFormat) {
 			case COORD:
@@ -2381,8 +2471,8 @@ public class EPTSWindow {
 			double y = height - yp;
 			x *= scaleFactor;
 			y *= scaleFactor;
-			x -= xorigin;
-			y -= yorigin;
+			x += xrefpoint;
+			y += yrefpoint;
 			ptmodel.addRow("",ns, x, y, xp, yp);
 			// This can call a radio-button menu item's
 			// doClick method, and that sets the
@@ -2473,22 +2563,21 @@ public class EPTSWindow {
 			Point p = vp.getViewPosition();
 			e.translatePoint(-p.x, -p.y);
 			vp.dispatchEvent(e);
-		    } else {
-			if (pointDragged && selectedRow != -1) {
-			    ptmodel.fireRowChanged(selectedRow);
-			}
-			selectedRow = -1;
-			// selectedRowClick = false;
-			if (nextState == null) {
-			    setModeline("");
-			} else if (nextState instanceof
-				   SplinePathBuilder.CPointType) {
-			    SplinePathBuilder.CPointType pstate =
-				(SplinePathBuilder.CPointType) nextState;
-			    setModeline(pstate);
-			}
-			panel.repaint();
 		    }
+		    if (pointDragged && selectedRow != -1) {
+			ptmodel.fireRowChanged(selectedRow);
+		    }
+		    selectedRow = -1;
+		    // selectedRowClick = false;
+		    if (nextState == null) {
+			setModeline("");
+		    } else if (nextState instanceof
+			       SplinePathBuilder.CPointType) {
+			SplinePathBuilder.CPointType pstate =
+			    (SplinePathBuilder.CPointType) nextState;
+			setModeline(pstate);
+		    }
+		    panel.repaint();
 		}
 		mouseButton = -1;
 		pointDragged = false;
@@ -2520,8 +2609,8 @@ public class EPTSWindow {
 			double y = height - yp;
 			x *= scaleFactor;
 			y *= scaleFactor;
-			x -= xorigin;
-			y -= yorigin;
+			x += xrefpoint;
+			y += yrefpoint;
 			pointDragged = true;
 			ptmodel.changeCoords(selectedRow, x, y, xp, yp, false);
 			panel.repaint();
@@ -3039,11 +3128,11 @@ public class EPTSWindow {
 	}
     }
 
-    void init(Image image)
+    void init(Image image, boolean ifns)
 	throws IOException, InterruptedException
     {
 	// this.targetList = targetList;
-	imageFileNameSeen = true;
+	imageFileNameSeen = ifns;
 	width = image.getWidth(null);
 	height = image.getHeight(null);
 	this.port = port;
@@ -3224,7 +3313,7 @@ public class EPTSWindow {
 		g2d.dispose();
 		image = bi;
 	    }
-	    init(image);
+	    init(image, (uri != null));
 	    // now restore state.
 	    SwingUtilities.invokeLater(new Runnable() {
 		    public void run() {
@@ -3236,9 +3325,10 @@ public class EPTSWindow {
 			    parser.getUserSpaceDistance();
 			configGCSPane.savedGcsDistString =
 			    parser.getGcsDistance();
-			configGCSPane.savedXString = parser.getXOrigin();
-			configGCSPane.savedYString = parser.getYOrigin();
+			configGCSPane.savedXString = parser.getXRefpoint();
+			configGCSPane.savedYString = parser.getYRefpoint();
 			configGCSPane.restoreState();
+			acceptConfigParms();
 			for (PointTMR row: parser.getRows()) {
 			    ptmodel.addRow(row);
 			}
@@ -3251,6 +3341,44 @@ public class EPTSWindow {
 	throws IOException, InterruptedException
     {
 	this.imageURI = imageURI;
-	init(image);
+	init(image, true);
+    }
+
+    public EPTSWindow(final Graph graph,
+		      List<EPTS.NameValuePair> bindings,
+		      List<String> targetList,
+		      final boolean meters,
+		      String languageName, String a2dName,
+		      final PointTMR[] rows)
+    {
+	try {
+	    init(graph.getImage(), false);
+	} catch (Exception e) {
+	    throw new UnexpectedExceptionError(e);
+	}
+	
+	this.bindings = bindings;
+	this.targetList = targetList;
+	this.languageName = languageName;
+	this.animationName = a2dName;
+	scriptMode = true;
+	SwingUtilities.invokeLater(new Runnable() {
+		public void run() {
+		    configGCSPane.savedUnitIndex = meters? 5: 0;
+		    configGCSPane.savedRefPointIndex = 6;
+		    configGCSPane.savedUsDistString = "" + graph.getXScale();
+		    configGCSPane.savedGcsDistString = "1.0";
+		    configGCSPane.savedXString = "" + graph.getXLower();
+		    configGCSPane.savedYString = "" + graph.getYLower() ;
+		    configGCSPane.restoreState();
+		    acceptConfigParms();
+		    configGCSPane.setEditable(false);
+		    if (rows != null) {
+			for (PointTMR row: rows) {
+			    ptmodel.addRow(row);
+			}
+		    }
+		}
+	    });
     }
 }

@@ -91,7 +91,17 @@ The <code>File</code> menu contains the following items:
     units (defined by the user) or meters. If another unit is
     specified, it's value will be converted to meters. Canceling the
     dialog box will restore the values to those that existed just
-    before the dialog box was opened.
+    before the dialog box was opened. Users may specify a reference
+    point (<CODE>LOWER_LEFT</CODE>. <CODE>LOWER_CENTER</CODE>,
+    <CODE>LOWER_RIGHT</CODE>, <CODE>CENTER_LEFT</CODE>, <CODE>CENTER</CODE>,
+    <CODE>CENTER_RIGHT</CODE>, <CODE>UPPER_LEFT</CODE>,
+    <CODE>UPPER_CENTER</CODE>, or <CODE>UPPER_RIGHT</CODE>) and the
+    graph-coordinate-space coordinates for the reference point in
+    either custom units or meters.  When explicitly configured, the
+    coordinates for the reference point will typically be (0.0, 0.0).
+    When scripting is used, The reference point is always set to
+    <CODE>LOWER_LEFT</CODE> and the reference point coordinates will
+    be set to match what the coordinates used by the script.
   <LI><code>Print Table</code>. Choosing this menu item will open
     a 'print' dialog box to print the table.
 </UL>
@@ -1011,7 +1021,9 @@ provided by the scrunner command. These are
     a leading "..." followed by the name separator ("/" for Unix) is
     replaced by the directory in which the EPTS program's JAR
     file is located. This will typically be the same directory as
-    the BZDev class library's JAR file.
+    the BZDev class library's JAR file. If an EPTS session is saved,
+    the saved file will not contain the files and directories provided
+    by the <CODE>--codebase</CODE> options for security reasons.
   <LI><CODE>-D</CODE><EM>NAME</EM><CODE>=</CODE><EM>VALUE</EM>.
     This option defines a system property whose name is <EM>Name</EM>
     and whose value is <EM>VALUE</EM>.

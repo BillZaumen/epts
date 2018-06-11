@@ -94,9 +94,9 @@ public class ConfigGCSPane extends JPanel {
 	}
     }
 
-    public double getXOrigin() {return x;}
+    public double getXRefpoint() {return x;}
     
-    public double getYOrigin() {return y;}
+    public double getYRefpoint() {return y;}
 
     public RefPointName getRefPointName() {
 	return refpoints[rpComboBox.getSelectedIndex()];
@@ -240,8 +240,8 @@ public class ConfigGCSPane extends JPanel {
 	    };
 	((AbstractDocument)ytf.getDocument()).setDocumentFilter(cdf);
 	ytf.setInputVerifier(xytfiv);
-	JLabel xl = new JLabel("X Origin ");
-	JLabel yl = new JLabel("Y Origin");
+	JLabel xl = new JLabel("Reference Point X (GCS)");
+	JLabel yl = new JLabel("Reference Point Y (GCS)");
 	JLabel xyul = new JLabel("Reference Point");
 	JLabel note =
 	    new JLabel("Coordinates are in GCS units (custom units or meters)");
@@ -293,4 +293,14 @@ public class ConfigGCSPane extends JPanel {
 	add(rpComboBox);
 	rpComboBox.setSelectedIndex(RefPointName.LOWER_LEFT.ordinal());
     }
+
+    public void setEditable(boolean editable) {
+	unitComboBox.setEnabled(editable);
+	rpComboBox.setEnabled(editable);
+	xtf.setEditable(editable);
+	ytf.setEditable(editable);
+	utf.setEditable(editable);
+	gcstf.setEditable(editable);
+    }
+
 }

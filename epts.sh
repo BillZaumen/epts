@@ -1,2 +1,2 @@
 #!/bin/sh
-java -jar JARDIRECTORY/epts-VERSION.jar "$@"
+java -jar BZDEVDIR/epts.jar "$@"

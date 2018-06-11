@@ -5,6 +5,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import javax.xml.parsers.*;
 
 import org.bzdev.geom.SplinePathBuilder;
@@ -41,6 +43,7 @@ public class EPTSParser {
     int width;
     int height;
     boolean imageURIExists = false;
+    boolean scriptSeen = false;
     URI imageURI = null;
     int unitIndex = 0;
     int refPointIndex = 0;
@@ -49,10 +52,11 @@ public class EPTSParser {
     // is saved.
     String userSpaceDistance = "1.0";
     String gcsDistance = "1.0";
-    String xorigin = "0.0";
-    String yorigin = "0.0";
+    String xrefpoint = "0.0";
+    String yrefpoint = "0.0";
     PointTMR[] rows = null;
     
+    public boolean hasScripts() {return scriptSeen;}
     public int getWidth() {return width;}
     public int getHeight() {return height;}
     public boolean imageURIExists() {return imageURIExists;}
@@ -61,9 +65,31 @@ public class EPTSParser {
     public int getRefPointIndex() {return refPointIndex;}
     public String getUserSpaceDistance() {return userSpaceDistance;}
     public String getGcsDistance() {return gcsDistance;}
-    public String getXOrigin() {return xorigin;}
-    public String getYOrigin() {return yorigin;}
+    public String getXRefpoint() {return xrefpoint;}
+    public String getYRefpoint() {return yrefpoint;}
        
+    public boolean usesMeters() {
+	return (unitIndex == 5);
+    }
+
+    String animation = null;
+    String language = null;
+
+    public String getAnimationName() {
+	return animation;
+    }
+
+    public String getLanguageName() {
+	return language;
+    }
+
+	ArrayList<EPTS.NameValuePair> bindings = null;
+
+	public List<EPTS.NameValuePair> getBindings() {
+	    return Collections.unmodifiableList(bindings);
+	}
+
+
     public PointTMR[] getRows() {return rows;}
 
 
@@ -105,6 +131,12 @@ public class EPTSParser {
 
     StringBuilder text = new StringBuilder();
 
+    static enum BType {
+	INTEGER,
+	DOUBLE,
+	STRING
+    }
+
     class OurDefaultHandler extends DefaultHandler {
 
 	boolean processingXML = false;
@@ -120,6 +152,11 @@ public class EPTSParser {
 
 
 	ArrayList<PointTMR> rowList = new ArrayList<>();
+
+	String name = null;
+
+	BType btype = null;
+
 
 	public void startDocument() {
 	    locator = null;
@@ -171,6 +208,22 @@ public class EPTSParser {
 		String s = attr.getValue("imageURIExists");
 		if (s == null) s = "false";
 		imageURIExists = s.equals("true");
+	    } else if (qName.equals("scripting")) {
+		 language = attr.getValue("language");
+		 animation = attr.getValue("animation");
+		 bindings = new ArrayList<EPTS.NameValuePair>();
+		 scriptSeen = true;
+	    } else if (qName.equals("binding")) {
+		name = attr.getValue("name");
+		String tname = attr.getValue("type");
+		if (tname.equals("int")) {
+		    btype = BType.INTEGER;
+		} else if (tname.equals("double")) {
+		    btype = BType.DOUBLE;
+		} else if (tname.equals("String")) {
+		    btype = BType.STRING;
+		}
+		text.setLength(0);
 	    } else if (qName.equals("targetList")) {
 		argList.clear();
 	    } else if (qName.equals("argument")) {
@@ -210,19 +263,19 @@ public class EPTSParser {
 		    throw new SAXException
 			(errorMsg("gcsDistError", e.getMessage()));
 		}
-		xorigin = attr.getValue("xorigin");
+		xrefpoint = attr.getValue("xrefpointGCS");
 		try {
-		    Double.parseDouble(xorigin);
+		    Double.parseDouble(xrefpoint);
 		} catch (NumberFormatException e) {
 		    throw new SAXException
-			(errorMsg("xoriginError", e.getMessage()));
+			(errorMsg("xrefpointError", e.getMessage()));
 		}
-		yorigin = attr.getValue("yorigin");
+		yrefpoint = attr.getValue("yrefpointGCS");
 		try {
-		    Double.parseDouble(yorigin);
+		    Double.parseDouble(yrefpoint);
 		} catch (NumberFormatException e) {
 		    throw new SAXException
-			(errorMsg("yoriginError", e.getMessage()));
+			(errorMsg("yrefpointError", e.getMessage()));
 		}
 	    } else if (qName.equals("table")) {
 		processingTable = true;
@@ -294,6 +347,33 @@ public class EPTSParser {
         {
 	    if (qName.equals("epts")) {
 		processingXML = false;
+	    } else if (qName.equals("binding")) {
+		String value = text.toString();
+		switch(btype) {
+		case INTEGER:
+		    try {
+			Integer ival = Integer.parseInt(value);
+			bindings.add(new EPTS.NameValuePair(name, ival));
+		    } catch (NumberFormatException e) {
+			String msg = e.getMessage();
+			throw new SAXException
+			    (errorMsg("typeError", "int", msg));
+		    }
+		    break;
+		case DOUBLE:
+		    try {
+			Double dval = Double.parseDouble(value);
+			bindings.add(new EPTS.NameValuePair(name, dval));
+		    } catch (NumberFormatException e) {
+			String msg = e.getMessage();
+			throw new SAXException
+			    (errorMsg("typeError", "double", msg));
+		    }
+		    break;
+		case STRING:
+		    bindings.add(new EPTS.NameValuePair(name, value));
+		    break;
+		}
 	    } else if (qName.equals("targetList")) {
 		argArray = new String[argList.size()];
 	    } else if (qName.equals("argument")) {

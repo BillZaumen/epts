@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!ELEMENT epts (image, targetList?, gcsconfig, table)>
+<!ELEMENT epts (image, scripting?, targetList?, gcsconfig, table)>
 <!ATTLIST epts
 	  xmlns CDATA #FIXED "http://bzdev.org/DTD/epts-1.0">
 
@@ -8,6 +8,16 @@
 	  width CDATA #REQUIRED
 	  height CDATA #REQUIRED
 	  imageURIExists (true|false) #IMPLIED>
+
+<!ELEMENT scripting (binding*)>
+<!ATTLIST scripting
+	  language CDATA #IMPLIED
+	  animation CDATA #REQUIRED>
+
+<!ELEMENT binding (#PCDATA)>
+<!ATTLIST binding
+	  name CDATA #REQUIRED
+	  type (int|double|String) #REQUIRED>
 
 <!ELEMENT targetList (argument*)>
 
@@ -19,8 +29,8 @@
 	  refPointIndex CDATA #REQUIRED
 	  userSpaceDistance CDATA #REQUIRED
 	  gcsDistance CDATA #REQUIRED
-          xorigin CDATA #REQUIRED
-	  yorigin CDATA #REQUIRED>
+          xrefpointGCS CDATA #REQUIRED
+	  yrefpointGCS CDATA #REQUIRED>
 
 <!ELEMENT table (row*)>
 

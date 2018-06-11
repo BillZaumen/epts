@@ -4,6 +4,7 @@ import java.awt.image.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.InputStream;
@@ -11,12 +12,15 @@ import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.OutputStream;
+import java.io.PrintStream;
+import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,9 +29,11 @@ import java.util.ResourceBundle;
 import java.util.Properties;
 import java.util.regex.Pattern;
 import javax.imageio.*;
+import javax.script.ScriptException;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import org.bzdev.graphs.Graph;
 import org.bzdev.net.URLClassLoaderOps;
 import org.bzdev.net.URLPathParser;
 import org.bzdev.scripting.Scripting;
@@ -427,6 +433,11 @@ public class EPTS {
 
     static int width = 1024;
     static int height = 1024;
+    static double xgcs = 0.0;
+    static double ygcs = 0.0;
+    static double xf = 0.0;
+    static double yf = 0.0;
+    static double scaleFactor = 1.0;
 
     private static class SVGInfo {
 	String pname;
@@ -444,6 +455,143 @@ public class EPTS {
 	String windingRule = null;
     }
 
+    static boolean stackTrace = false;
+    static void printStackTrace(Throwable e, PrintStream out) {
+	StackTraceElement[] elements = e.getStackTrace();
+	for (StackTraceElement element: elements) {
+	    out.println("    " + element);
+	}
+    }
+
+    static class NameValuePair {
+	String name;
+	Object value;
+	public NameValuePair(String n, Object v) {
+	    name = n;
+	    value = v;
+	}
+	public String getName() {return name;}
+	public Object getValue() {return value;}
+    }
+
+    static Graph doScripts(String languageName, String a2dName,
+			   List<NameValuePair> bindings,
+			   List<String> targetList)
+    {
+	System.out.println("doScript: "
+			   + System.getProperty("java.security.policy"));
+	ScriptingEnv se = new ScriptingEnv(languageName, a2dName);
+	for (NameValuePair binding: bindings) {
+	    se.putScriptObject(binding.getName(), binding.getValue());
+	}
+	try {
+	    for (String filename: targetList) {
+		Reader r = new
+		    InputStreamReader(new FileInputStream(filename),
+				      "UTF-8");
+		r = new BufferedReader(r);
+		se.evalScript(filename, r);
+	    }
+	} catch (FileNotFoundException ef) {
+	    System.err.println(errorMsg("exception", ef.getMessage()));
+	    System.exit(1);
+	} catch (IOException eio) {
+	    System.err.println(errorMsg("exception", eio.getMessage()));
+	    System.exit(1);
+	} catch (Exception e) {
+	    if (stackTrace) {
+		System.err.println(e.getClass().getName() + ": "
+				   + e.getMessage());
+		printStackTrace(e, System.err);
+		Throwable cause = e.getCause();
+		while (cause != null) {
+		    System.err.println("---------");
+		    System.err.println(cause.getClass().getName() + ": "
+				       + cause.getMessage());
+		    printStackTrace(cause, System.err);
+		    cause = cause.getCause();
+		}
+	    } else {
+		Throwable cause = e.getCause();
+		Class<?> ec = e.getClass();
+		String msg;
+		if (e instanceof ScriptException) {
+		    ScriptException sex = (ScriptException)e;
+		    String fn = sex.getFileName();
+		    int ln = sex.getLineNumber();
+		    if (cause != null) {
+			String m = cause.getMessage();
+			if (ln != -1) {
+			    // Some scripting-related exceptions tag
+			    // a string containing of the form
+			    //  (FILENAME#LINENO)
+			    // to the end of a message.  This is redundant
+			    // so we will eliminate it when it matches the
+			    // file name and line number we are printing.
+			    // The following lines contain all the 'cause'
+			    // messages anyway, so all the information is
+			    // available.  The lack of redundancy makes the
+			    // first message easier to read.
+			    String tail = String.format("(%s#%d)", fn, ln);
+			    if (m.endsWith(tail)) {
+				m = m.substring(0, m.lastIndexOf(tail));
+				m = m.trim();
+			    }
+			}
+			if (e.getMessage().contains(m)) {
+			    if (ln == -1) {
+				msg = errorMsg("unnumberedException", fn,m);
+			    } else {
+				msg = errorMsg("numberedException",fn,ln,m);
+			    }
+			} else {
+			    msg =
+				errorMsg("scriptException", e.getMessage());
+			}
+		    } else {
+			msg = errorMsg("scriptException", e.getMessage());
+		    }
+		} else {
+		    String cn = e.getClass().getName();
+		    msg = errorMsg("exception2", cn, e.getMessage());
+		}
+		System.err.println(msg);
+		// System.err.println("scrunner: " + e.getMessage());
+		while (cause != null) {
+		    Class<?> clasz = cause.getClass();
+		    Class<?> target =
+			org.bzdev.obnaming.NamedObjectFactory
+			.ConfigException.class;
+		    String tn = errorMsg("ldotsConfigException");
+		    String cn =(clasz.equals(target))? tn: clasz.getName();
+		    msg = errorMsg("continued", cn, cause.getMessage());
+		    System.err.println("  " + msg);
+		    cause = cause.getCause();
+		}
+	    }
+	    System.exit(1);
+	}
+	try {
+	    se.drawGraph();
+	    Graph graph = se.getGraph();
+	    double scale = graph.getXScale();
+	    double yscale = graph.getYScale();
+	    if (scale != yscale) {
+		System.err.println(errorMsg("xyScale", scale, yscale));
+		System.exit(1);
+	    }
+	    return graph;
+	} catch (Exception e) {
+	    if (stackTrace) {
+		e.printStackTrace(System.err);
+	    } else {
+		System.err.println(errorMsg("exception", e.getMessage()));
+	    }
+	    System.exit(1);
+	    return null;
+	}
+    }
+
 
     static void init(String argv[]) throws Exception {
 	int index = -1;
@@ -456,6 +604,7 @@ public class EPTS {
 	boolean dryrun = false;
 	boolean jcontinue = true;
 	boolean scriptMode = false;
+	String a2dName = null;
 	boolean imageMode = false;
 	boolean hasCodebase = false;
 	boolean webserverOnly = false;
@@ -476,6 +625,9 @@ public class EPTS {
 	ArrayList<SVGInfo> svgInfoList = new ArrayList<>();
 	ArrayList<FilterInfo> filterInfoList = new ArrayList<>();
 	String windingRule = null;
+	boolean meters = true;
+
+	ArrayList<NameValuePair> bindings = new ArrayList<>();
 
 	String alreadyForkedString = System.getProperty("epts.alreadyforked");
 	boolean alreadyForked = (alreadyForkedString != null)
@@ -529,6 +681,11 @@ public class EPTS {
 		    argsList.add(argv[index]);
 		} else if (argv[index].equals("-L")) {
 		    index++;
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
 		    languageName = argv[index];
 		    argsList.add(argv[index-1]);
 		    argsList.add(argv[index]);
@@ -544,7 +701,15 @@ public class EPTS {
 		    }
 		    codebase.add(argv[index]);
 		} else if (argv[index].equals("--script")) {
+		    index++;
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    a2dName = argv[index];
 		    scriptMode = true;
+		    argsList.add(argv[index-1]);
 		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--image")) {
 		    imageMode = true;
@@ -565,6 +730,9 @@ public class EPTS {
 					   
 		    }
 		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
+		} else if (argv[index].equals("--stackTrace")) {
+		    stackTrace = true;
 		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--svg")) {
 		    if (svg == false) {
@@ -823,6 +991,79 @@ public class EPTS {
 		    windingRule = argv[index];
 		    argsList.add(argv[index-1]);
 		    argsList.add(argv[index]);
+		} else if (argv[index].equals("--int")) {
+		    index++;
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    String[] tokens = argv[index].split("=", 2);
+		    if (tokens.length == 2) {
+			try {
+			    Integer value = Integer.parseInt(tokens[1]);
+			    bindings.add(new NameValuePair(tokens[0], value));
+			} catch (Exception e) {
+			    String msg = errorMsg("illegalToken",
+						  tokens[1],
+						  argv[index-1],
+						  e.getMessage());
+			    System.err.println(msg);
+			    System.exit(1);
+			}
+		    } else {
+			System.err.println(errorMsg("noEqual", argv[index-1]));
+			System.exit(1);
+		    }
+		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
+		} else if (argv[index].equals("--double")) {
+		    index++;
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    String[] tokens = argv[index].split("=", 2);
+		    if (tokens.length == 2) {
+			try {
+			    Double value = Double.parseDouble(tokens[1]);
+			    bindings.add(new NameValuePair(tokens[0], value));
+			} catch (Exception e) {
+			    String msg = errorMsg("illegalToken",
+						  tokens[1],
+						  argv[index-1],
+						  e.getMessage());
+			    System.err.println(msg);
+			    System.exit(1);
+			}
+		    } else {
+			System.err.println(errorMsg("noEqual", argv[index-1]));
+			System.exit(1);
+		    }
+		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
+		} else if (argv[index].equals("--string")) {
+		    index++;
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    String[] tokens = argv[index].split("=", 2);
+		    if (tokens.length == 2) {
+			String value = tokens[1];
+			bindings.add(new NameValuePair(tokens[0], value));
+		    } else {
+			System.err.println(errorMsg("noEqual", argv[index-1]));
+			System.exit(1);
+		    }
+		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
+		} else if (argv[index].equals("--customUnits")) {
+		    meters = false;
+		} else if (argv[index].equals("--mksUnits")) {
+		    meters = true;
 		} else if (argv[index].equals("--")) {
 		    argsList.add(argv[index]);
 		    jcontinue = false;
@@ -906,11 +1147,19 @@ public class EPTS {
 	    }
 	}
 
-
+	// fork if a different JVM executable was requested, if we
+	// have some arguments that must be passed to the JVM.
 	boolean mustFork = (jargsList.size() > 0 || javacmd != JAVACMD);
 	String policyFile = defs.getProperty("java.security.policy");
+	// If we don't have a policy file, fork if scriptMode is true or
+	// if both scriptMode and imageMode are false. The later can
+	// occur when restoring a saved state, but we won't know the
+	// saved state runs a script until the parser is run, so it is
+	// easier to just fork to be safe.
 	if (policyFile == null && scriptMode) mustFork = true;
+	if (policyFile == null && !scriptMode && !imageMode) mustFork = true;
 	if (!alreadyForked &&  mustFork) {
+	    System.out.println("forking");
 	    jargsList.add("EPTS");
 	    jargsList.add(0, sbcp.toString());
 	    jargsList.add(0, "-classpath");
@@ -920,7 +1169,7 @@ public class EPTS {
 				       .getCodeSource().getLocation().toURI());
 		    pf = pf.getParentFile();
 		    jargsList.add(0, "-Djava.security.policy="
-				  + (new File(pf, "libbzdev.policy")
+				  + (new File(pf, "epts.policy")
 				     .getCanonicalPath()));
 		} catch (Exception eio) {
 		    System.err.println(errorMsg("policyFile"));
@@ -955,6 +1204,9 @@ public class EPTS {
 	} else if (dryrun) {
 	    System.out.println("image mode  = " + imageMode);
 	    System.out.println("scriptMode = " + scriptMode);
+	    if (scriptMode) {
+		System.out.println("a2dName = " + a2dName);
+	    }
 	    if (languageName != null) {
 		System.out.println("scripting language = " + languageName);
 	    }
@@ -1086,6 +1338,12 @@ public class EPTS {
 	    }
 	    EPTSWindow.setPort(port);
 	    new EPTSWindow(image, imageURI);
+	} else if (scriptMode) {
+	    Graph graph =
+		doScripts(languageName, a2dName, bindings, targetList);
+	    EPTSWindow.setPort(port);
+	    new EPTSWindow(graph, bindings, targetList, meters,
+			   languageName, a2dName, null);
 	} else if (targetList.size() == 1) {
 	    EPTSParser parser = new EPTSParser();
 	    String filename = targetList.get(0);
@@ -1099,7 +1357,22 @@ public class EPTS {
 		    parser.parse(new FileInputStream(filename));
 		    if (outName == null) {
 			EPTSWindow.setPort(port);
-			new EPTSWindow(parser, new File(filename));
+			if (parser.hasScripts()) {
+			    List<NameValuePair> pbindings
+				= parser.getBindings();
+			    List<String> ptargetList
+				= parser.getTargetList();
+			    String languageName = parser.getLanguageName();
+			    String animationName = parser.getAnimationName();
+			    Graph graph = doScripts(languageName, animationName,
+						    pbindings, ptargetList);
+			    new EPTSWindow(graph, pbindings, ptargetList,
+					   parser.usesMeters(),
+					   languageName, animationName,
+					   parser.getRows());
+			} else {
+			    new EPTSWindow(parser, new File(filename));
+			}
 		    } else {
 			OutputStream os;
 			if (outName.equals("-")) {
@@ -1177,9 +1450,10 @@ public class EPTS {
 	    init(argv);
 	} catch (Exception e) {
 	    ErrorMessage.display(e);
-	    e.printStackTrace();
+	    if (stackTrace) {
+		e.printStackTrace();
+	    }
 	    System.exit(1);
 	}
-
     }
 }
