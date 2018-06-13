@@ -1160,7 +1160,6 @@ public class EPTS {
 	if (policyFile == null && scriptMode) mustFork = true;
 	if (policyFile == null && !scriptMode && !imageMode) mustFork = true;
 	if (!alreadyForked &&  mustFork) {
-	    System.out.println("forking");
 	    jargsList.add("EPTS");
 	    jargsList.add(0, sbcp.toString());
 	    jargsList.add(0, "-classpath");
