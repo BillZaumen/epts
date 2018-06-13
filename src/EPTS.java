@@ -433,12 +433,13 @@ public class EPTS {
 
     static int width = 1024;
     static int height = 1024;
+    /*
     static double xgcs = 0.0;
     static double ygcs = 0.0;
     static double xf = 0.0;
     static double yf = 0.0;
     static double scaleFactor = 1.0;
-
+    */
     private static class SVGInfo {
 	String pname;
 	String[] pnameArray;

@@ -3,13 +3,17 @@
 epts \- create points and Bezier curves/splines
 .SH SYNOPTSIS
 .B epts
-[\fI\,SCROPTION\/\fR]...
-[\fI\,EFILE\/\fR]
 .br
 .B epts
 [\fI\,SCROPTION\/\fR]...
 .B \-\-image
 .I IFILE
+.br
+.B epts
+[\fI\,SCROPTION\/\fR]... \fB\-\-script \fI VNAME \fR[\fI\,SOPTION\/\fR]... [\fI\,SFILE\/\fR]...
+.br
+.B epts
+[\fI\,SCROPTION\/\fR]... [\fI\,TOPTION\/\fR]... [\fI\,EFILE\/\fR]
 .br
 .SH DESCRIPTION
 EPTS (Edit PoinTS) is a special-purpose graphics editor. Its purpose
@@ -32,17 +36,113 @@ directory containing the file
 .IR EFILE .
 .SH OPTIONS
 .PP
-There are two types of options. An option referred to as
+There are three types of options.
+An option referred to as
+.I SOPTION
+in the synopsis is an option that is used to configure EPTS to
+run one or more scripts that will the background image.  An option
+referred to as
+.I TOPTION
+in the synopsis is an option that is used to configure ETPS for
+template processing.
+An option referred to as
 .I SCROPTION
 in the synopsis is an option that is also used by the
 .B scrunner
 command. Such options can be used to configure the java virtual machine,
 to add additional java archives to the class path, to define or change
-various system properties, etc.  The remaining options are the
+various system properties, etc.
+.PP
+The options that do not fit into well-defined categories are:
 following:
 .TP
 .B \-\-
 End of options.
+.TP
+.B \-\-image
+The first and only argument that is not an option is the name of an
+image file.
+.TP
+.BI \-\-port\  PORT
+When
+.I PORT
+is zero (the default) and the user requests to view the manual using
+a browser, an embedded web server will be started and a browser window
+will be brought up.  The web server will use a system-allocated port
+number.  If
+.I PORT
+is not zero, an embedded web server will be started and configured so
+that the file manual.html is available. The URL for this file will be
+<http://\fIHOST\fR:\fIPORT\fR/manual.html>, where
+.I HOST
+is the host name (or IP address) of the system on which EPTS is running.
+Valid port numbers range from 1 to 65535 inclusive, although many are
+reserved for other purposes or require system privileges.
+.TP
+.BI \-\-script\  VNAME
+The argument
+.I VNAME
+is the name of a scripting-language variable whose value is an
+instance of
+.B org.bzdev.anim2d.Animation2D
+and that object will be used to create an image. The scripts are used
+to configure the object referenced by
+.IR VNAME .
+.PP
+If neither of the options
+.B \-\-image
+or
+.B \-\-script
+are present, there should be one file argument that provides the name
+of a file containing a saved state.  By convention, this file should
+end with the file-name extension
+.B epts
+(for example,
+.BR saved.epts ).
+.SH Scripting Options
+
+The options specific to the EPTS command  when scripting is  used directly
+are the following:
+.TP
+.BI \-\-double\  NAME\fB=\fIDVALUE
+The argument consists of two parts.
+.B NAME
+is the name of a scripting-language variable and
+.B DVALUE
+is a real number that provides the corresponding value for that
+variable. The variable will be set before any script is run.
+.BI \-\-height\  HEIGHT
+The value
+.I HEIGHT
+is the height in points for an image with one pixel per point that
+represents a drawing surface. If not provided, a default of 1024 will
+be used.
+.TP
+.BI \-\-int\  NAME\fB=\fIIVALUE
+The argument consists of two parts.
+.B NAME
+is the name of a scripting-language variable and
+.B iVALUE
+is an integer that provides the corresponding value for that
+variable. The variable will be set before any script is run.
+.TP
+.BI \-\-string\  NAME\fB=\fISVALUE
+The argument consists of two parts.
+.B NAME
+is the name of a scripting-language variable and
+.B SVALUE
+is a string that provides the corresponding value for that
+variable. The variable will be set before any script is run.
+.TP
+.BI \-\-width\  WIDTH
+The value
+.I WIDTH
+is the width in points for an image with one pixel per point that
+represents a drawing surface. If not provided, a default of 1024 will
+be used.
+.SH Template Options
+The options that may be specified when templates are used are the
+following:
 .TP
 .B \-\-elevate
 This flag applies when the
@@ -94,7 +194,7 @@ or
 .BI \-\-flatness\  FLATNESS
 This option applies when the
 .B \-\-pname
-option is used and is ignored otherwise, but must jnot be used with
+option is used and is ignored otherwise, but must not be used with
 the
 .B \-\-svg
 option. When
@@ -117,14 +217,10 @@ expressed in GCS (Graph Coordinate Space) units.  Otherwise the
 control points are given in Java user-space units, where distances are
 in points and where the origin is at the upper-left corner of the
 image or frame, with the positive X axis pointing right and the
-positive Y axis pointing down. In GCS units, by constrast, the X axis
+positive Y axis pointing down. In GCS units, by contrast, the X axis
 points right, the Y axis points down, and the scale is user-defined,
 with the origin placed anywhere on or off the image or frame as
 desired.
-.TP
-.B \-\-image
-The first and only argument that is not an option is the name of an
-image file.
 .TP
 .BI \-\-limit\  LIMIT
 This flag applies when the
@@ -213,22 +309,6 @@ by following
 .B \-\-pname
 options.
 .TP
-.BI \-\-port\  PORT
-When
-.I PORT
-is zero (the default) and the user requests to view the manual using
-a browser, an embedded web server will be started and a browser window
-will be brought up.  The web server will use a system-allocated port
-number.  If
-.I PORT
-is not zero, an embedded web server will be started and configured so
-that the file manual.html is available. The URL for this file will be
-<http://\fIHOST\fR:\fIPORT\fR/manual.html>, where
-.I HOST
-is the host name (or IP address) of the system on which EPTS is running.
-Valid port numbers range from 1 to 65535 inclusive, although many are
-reserved for other purposes or require system privileges.
-.TP
 .B \-\-straight
 This flag applies when the
 .B \-\-pname
@@ -249,7 +329,11 @@ defined by the CSS2 specification). A value of
 .B none
 indicates that no color is specified and the path will not be drawn.
 Named colors are listed at
-<https://upload.wikimedia.org/wikipedia/commons/2/2b/SVG_Recognized_color_keyword_names.svg>.
+.br
+<https://upload.wikimedia.org/wikipedia/commons/2/2b/
+.br
+SVG_Recognized_color_keyword_names.svg>.
+.br
 A '#' followed immediately by 6 hexadecimal digits gives the RGB values
 (two hexadecimal digits in  that order). One can also use the
 expression
@@ -280,7 +364,7 @@ options.  It indicates that the output will be an SVG (Scaleable
 Vector Graphics) file.  The
 .BR \-\-template ,
 .BR \-\-flatness ,
-.BR \-\-straigth ,
+.BR \-\-straight ,
 and/or
 .B \-\-elevate
 options must not be used with this option.
@@ -440,7 +524,7 @@ option is used and the
 .B \-\-pname
 option is not used.  If the
 .B \-\-template
-optionis used and the
+option is used and the
 .B \-\-pname
 is used, the template should be a path-iterator template.
 .PP
@@ -513,7 +597,7 @@ and
 The units for
 .B x and
 .B y
-aregraph-coordinate-space units. For the types
+are graph-coordinate-space units. For the types
 .BR "PATH_START" ,
 .BR "SEG_CLOSE" ,
 and
@@ -643,6 +727,13 @@ file override those in the system configuration file.
 
 \"  LocalWords:  EPTS epts Bezier SYNOPTSIS fI SCROPTION fR EFILE br
 \"  LocalWords:  IFILE PoinTS scrunner TP html MAPFILE SEG whitespace
-\"  LocalWords:  atype TFILE formated OUTFILE codebase URLPATH fB
+\"  LocalWords:  atype TFILE formated OUTFILE codebase URLPATH fB SVG
 \"  LocalWords:  fIVALUE sysconf usrconf dryrun JOPTION fRor Solaris
-\"  LocalWords:  config conf
+\"  LocalWords:  config conf VNAME SOPTION SFILE TOPTION ETPS DVALUE
+\"  LocalWords:  fIDVALUE fIIVALUE iVALUE fISVALUE SVALUE pname CSS
+\"  LocalWords:  RGB rgb fIR fIG fIB rull evenodd svg gcs keymap NaN
+\"  LocalWords:  EPTS's fillRule Scaleable sresource ECMAScriptLayers
+\"  LocalWords:  ECMAScriptLayerPaths EMCAScriptLocations pathlength
+\"  LocalWords:  EMCAScriptPaths SegmentsCSV tname TNAME windingRule
+\"  LocalWords:  BZDev ECMAScriptLocations ECMAScriptPaths CSV LINETO
+\"  LocalWords:  CUBICTO MOVETO QUADTO

@@ -47,6 +47,16 @@
 	    href="manual.html#pitemplates"/>
     </node>
     <node title="The CLI" uri="sresource:/manual/manual.html#cli"
-	href="manual.html#cli"/>
+	  href="manual.html#cli">
+      <node title="Scripting Options"
+	    uri="sresource:/manual/manual.html#scriptOptions"
+	    href="manual.html#scriptOptions"/>
+      <node title="Template Options"
+	    uri="sresource:/manual/manual.html#templateOptions"
+	    href="manual.html#templateOptions"/>
+      <node title="Scrunner Options"
+	    uri="sresource:/manual/manual.html#scrunner"
+	    href="manual.html#scrunner"/>
+    </node>
   </node>
 </toc>

@@ -16,7 +16,7 @@ translate the positions of the points and curves so that the locations
 of the points or control points are expressed in a specific coordinate
 system.  Because EPTS is designed to support a specific set of tasks,
 there are a large number of keyboard shortcuts.  It also uses a
-template processor that makes it relatively easy to diplay paths
+template processor that makes it relatively easy to display paths
 textually in a variety of formats, including user-defined formats.
 Command-line options used with templates make it easy to use EPTS as
 part of a 'build' environment (Java programs such as ANT or the
@@ -584,7 +584,7 @@ the following keys describing a point:
     space.
   <LI><CODE>xp</CODE>. The X coordinate of the point in image space.
   <LI><CODE>yp</CODE>. The Y coordinate of the point in image space,
-    measured from top to bottom(the stadard Java convention).
+    measured from top to bottom(the standard Java convention).
   <LI><CODE>ypr</CODE>. The Y coordinate of the point in image space
     measured from bottom to  (the reverse of the standard Java convention,
     following the convention used in mathematics instead).
@@ -601,7 +601,7 @@ containing the following directives:
   <LI><CODE>pathItem</CODE>. This is an iterative directive that
     will list a series of objects representing a path.
 </UL>
-In turen, the <CODE>pathItem</CODE> directive contains the following
+In turn, the <CODE>pathItem</CODE> directive contains the following
 directives:
 <UL>
   <LI><CODE>pindex</CODE>. The value is "1" for the initial
@@ -692,7 +692,7 @@ to use. The key map contains the following directives:
     <CODE>epts</CODE> command contains the <CODE>--gcs</CODE> option,
     GCS units are used; otherwise user-space units are used.
   <LI><CODE>varname</CODE>. This directive provides the name of the
-    varible whose value is the path that the following directives
+    variable whose value is the path that the following directives
     describe.
   <LI><CODE>windingRule</CODE>.
     This directive determines the winding rule. Its values are
@@ -800,7 +800,7 @@ EPTS can be as a window-system-based program or as a command-line
 program.  The command-line capabilities allow EPTS to be used (for
 example) in a Makefile, where it will generate files in user-specified
 formats. Meanwhile, EPTS's GUI can be used to edit a saved state.
-Options that generate files use the <CODE>--o</CODE> flag to set
+Options that generate files use the <CODE>-o</CODE> flag to set
 the name of the output file, with <CODE>-</CODE> indicating
 standard output.
 <P>
@@ -813,16 +813,80 @@ to the state that existed when this EPTS file was created (typically
 by saving a previous session).  Usually a computer's window system
 will be configured so that one can simply double-click the EPTS file
 rather than having to run a specific command.
+<P>
+There are three options that do not fit into well-defined categories:
+<UL>
+  <LI><CODE>--</CODE>. This option simply indicates the end of
+    options, and is provided in case a file name starts with a
+    "<CODE>-</CODE>".
+  <LI><CODE>--image</CODE>. This option implies that there will be one
+    file argument specifying the name of an image file.
+  <LI><CODE>--port</CODE> <EM>PORT</EM>.  When this flag is used, it
+    sets the TCP port number for an embedded web server that will
+    provide the on-line manual. The port number <EM>PORT</EM> must be
+    a valid TCP port number (1 to 65535 inclusive, but some ports are
+    reserved or require system privileges).
+  <LI><CODE>--script</CODE> <EM>A2D</EM>. This option indicates that
+    the file arguments are files containing scripts that will be
+    run using a scripting language.  The argument <EM>A2D</EM>
+    is the name of a scripting-language variable whose value is an
+    instance of the class <CODE>org.bzdev.anim2d.Animation2D</CODE>.
+    It will be used to produce an image by creating a snapshot of
+    the objects that are currently defined in the animation and that
+    are visible. The scripts will configure this object.
+</UL>
+If neither of the options <CODE>--image</CODE>
+or <CODE>--script</CODE> are present, there should be one file
+argument that provides the name of a file containing a saved state. By
+convention, this file should end with the file-name extension
+<CODE>epts</CODE> (for example, "<CODE>saved.epts</CODE>").
 
-<H2><A name="eptsOnlyOptions">Options specific to EPTS</A></H2>
+<H2><A name="scriptOptions">Scripting Options</A></H2>
 
-The options specific to the EPTS command are:
+The options specific to the EPTS command when scripting is used
+directly are the following:
+<UL>
+  <LI><CODE>--double</CODE> <EM>NAME</EM><CODE>=</CODE><EM>DVALUE</EM>.The
+    argument consists of two parts. <EM>NAME</EM> is the name of a
+    scripting-language variable and <EM>DVALUE</EM> is a real number
+    that provides the corresponding value for that variable. The
+    variable will be set before any script is run.
+  <LI><CODE>--height</CODE> <EM>HEIGHT</EM>. The height in points for
+    an image with one pixel per point that represents a drawing surface.
+    If not provided, a default of 1024 will be used.
+  <LI><CODE>--int</CODE> <EM>NAME</EM><CODE>=</CODE><EM>IVALUE</EM>. The
+    argument consists of two parts. <EM>NAME</EM> is the name of a
+    scripting-language variable and <EM>IVALUE</EM> is an integer that
+    provides the corresponding value for that variable. The variable
+    will be set before any script is run.
+  <LI><CODE>--string</CODE> <EM>NAME</EM><CODE>=</CODE><EM>SVALUE</EM>. The
+    argument consists of two parts. <EM>NAME</EM> is the name of a
+    scripting-language variable and <EM>SVALUE</EM> is a string that
+    provides the corresponding value for that variable. The variable
+    will be set before any script is run.
+  <LI><CODE>--width></CODE> <EM>WIDTH</EM>. The width in points for
+    an image with one pixel per point that represents a drawing surface.
+    If not provided, a default of 1024 will be used.
+</UL>
+The options above should not be used when a saved state is restore.
+Some <code>scrunner</code> options may also be appropriate for
+scripting: the <CODE>-L</CODE> option allows the scripting language to
+be explicitly configured (otherwise the language will be guessed from
+file-name extensions), and the <CODE>--codebase</CODE> option will
+allow other class libraries to be used in addition to the BZDev class
+library that is loaded by default.  For security reasons, a saved
+state does not include the codebase: instead, the codebase must be
+explicitly specified on the command line.
+
+<H2><A name="templateOptions">Template Options</A></H2>
+
+The options specific to the EPTS command when templates are used are:
 <UL>
   <LI><CODE>--elevate</CODE>. This option applies when the
     <CODE>--pname</CODE> option is set and is ignored otherwise. When
-    set, the dgree of linear and quadratic B&eacute;zier curve
-    segements will be elevated so that all segments are cubic
-    B&eacute;zier curve segements.
+    set, the degree of linear and quadratic B&eacute;zier curve
+    segments will be elevated so that all segments are cubic
+    B&eacute;zier curve segments.
   <LI><CODE>--fill</CODE> <EM>COLOR</EM>. This option sets
     the <CODE>fill</CODE> attribute to <EM>COLOR</EM> in an SVG
     path. It applies to a path specified by the
@@ -846,7 +910,7 @@ The options specific to the EPTS command are:
   <LI><CODE>--flatness</CODE> <EM>FLATNESS</EM>. This option applies when
     the <CODE>--pname</CODE> option is set and is ignored otherwise.
     When <EM>FLATNESS</EM> is zero, the <CODE>--limit</CODE> option
-    determiens the number of times a segment will be partitioned.
+    determines the number of times a segment will be partitioned.
     Otherwise control points must deviate from a straight line along
     each segment by at most the value of <EM>FLATNESS</EM>.
   <LI><CODE>--gcs</CODE>. This option applies when the
@@ -854,9 +918,6 @@ The options specific to the EPTS command are:
     not be used with the <CODE>--svg</CODE> option. When
     present, it indicates that coordinates will be in GCS units. Otherwise
     user-space or image space units are used.
-  <LI><CODE>--image</CODE>.
-    This option implies that there will be one file argument specifying
-    the name of an image file.
   <LI><CODE>--limit</CODE> <EM>LIMIT</EM>.
   <LI><CODE>--map</CODE> <EM>MAPFILE</EM>.
     The file <EM>MAPFILE</EM> is a text file (UTF-8 encoded) whose
@@ -901,11 +962,6 @@ The options specific to the EPTS command are:
     is no preceding <CODE>--pname</CODE> option.  After
     a <CODE>--pname</CODE> these fill and stroke options are reset to
     their defaults for use by following <CODE>--pname</CODE> options.
-  <LI><CODE>--port</CODE> <EM>PORT</EM>.  When this flag is used, it
-    sets the TCP port number for an embedded web server that will
-    provide the on-line manual. The port number <EM>PORT</EM> must be
-    a valid TCP port number (1 to 65535 inclusive, but some ports are
-    reserved or require system privileges).
   <LI><CODE>--straight</CODE>.  This option applies when the
     <CODE>--pname</CODE> option is set and is ignored otherwise.
     When set, the selected path will be flattened and converted to
@@ -928,7 +984,7 @@ The options specific to the EPTS command are:
     the <CODE>stroke-width</CODE> attribute to <EM>WIDTH</EM> in an
     SVG path. It applies to a path specified by the next
     <CODE>--pname</CODE> option.  The value of <EM>WIDTH</EM> is any
-    width acceptable to SVG: a number pos‐ sibly followed by a unit
+    width acceptable to SVG: a number possibly followed by a unit
     or a '%' symbol.
   <LI><CODE>--svg</CODE> This option, if present, must precede all
     <CODE>--pname</CODE> options.  It indicates that the output
@@ -939,7 +995,8 @@ The options specific to the EPTS command are:
   <LI><CODE>--template:</CODE><EM>RESOURCE</EM>.
     This option is a shortcut that behaves like the option
     <CODE>--template sresource:</CODE><EM>RESOURCE</EM>.
-  <LI><CODE>--template</CODE> <EM>TFILE</EM>.  When <EM>TFILE</EM>
+  <LI><CODE>--template</CODE> <EM>TFILE</EM>. This option may not be
+    used with the <CODE>--svg</CODE> option.  When <EM>TFILE</EM>
     starts with the string "sresource:", "file:", "http:", "https:",
     or "ftp", <EM>TFILE</EM> is assumed to be a URL. Otherwise is is
     assumed to be the name of a file.  The syntax of a template is
@@ -1049,4 +1106,10 @@ provided by the scrunner command. These are
 <!--  LocalWords:  pathSegment EPTS's epts MAPFILE UTF sresource http
  -->
 <!--  LocalWords:  https TFILE OUTFILE Scrunner scrunner JVM LNAME
+ -->
+<!--  LocalWords:  Makefiles URI NaN CSV TCP DVALUE IVALUE SVALUE SVG
+ -->
+<!--  LocalWords:  codebase CSS RGB PNAME Scaleable AnimationPath
+ -->
+<!--  LocalWords:  DFactory TNAME keymap
  -->
