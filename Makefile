@@ -113,6 +113,15 @@ RESOURCES = manual/manual.xml \
 	manual/index.html \
 	manual/manual.html \
 	manual/manual.css \
+	manual/dialog.png \
+	manual/drawing1.png \
+	manual/drawing2.png \
+	manual/drawing3.png \
+	manual/drawing4.png \
+	manual/filewindow.png \
+	manual/menubar.png \
+	manual/table2.png \
+	manual/terminal.png \
 	epts-1.0.dtd
 
 FILES = $(JFILES) $(PROPERTIES)
