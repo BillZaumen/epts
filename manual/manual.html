@@ -92,20 +92,33 @@ The <code>File</code> menu contains the following items:
     space. This dialog box allows one to set a distance in user-spaced
     units and the corresponding distance in graph coordinate space
     units. The units for graph coordinate space are either custom
-    units (defined by the user) or meters. If another unit is
-    specified, it's value will be converted to meters. Canceling the
-    dialog box will restore the values to those that existed just
-    before the dialog box was opened. Users may specify a reference
-    point (<CODE>LOWER_LEFT</CODE>. <CODE>LOWER_CENTER</CODE>,
-    <CODE>LOWER_RIGHT</CODE>, <CODE>CENTER_LEFT</CODE>, <CODE>CENTER</CODE>,
-    <CODE>CENTER_RIGHT</CODE>, <CODE>UPPER_LEFT</CODE>,
-    <CODE>UPPER_CENTER</CODE>, or <CODE>UPPER_RIGHT</CODE>) and the
-    graph-coordinate-space coordinates for the reference point in
-    either custom units or meters.  When explicitly configured, the
-    coordinates for the reference point will typically be (0.0, 0.0).
-    When scripting is used, The reference point is always set to
-    <CODE>LOWER_LEFT</CODE> and the reference point coordinates will
-    be set to match what the coordinates used by the script.
+    units (arbitrary units defined by the user) or meters. If another
+    unit is specified, it's value will be converted to
+    meters. Canceling the dialog box will restore the values to those
+    that existed just before the dialog box was opened. Users may
+    specify a reference point (<CODE>LOWER_LEFT</CODE>,
+    <CODE>LOWER_CENTER</CODE>, <CODE>LOWER_RIGHT</CODE>,
+    <CODE>CENTER_LEFT</CODE>, <CODE>CENTER</CODE>, <CODE>CENTER_RIGHT</CODE>,
+    <CODE>UPPER_LEFT</CODE>, <CODE>UPPER_CENTER</CODE>, or
+    <CODE>UPPER_RIGHT</CODE>) and the graph-coordinate-space
+    coordinates for the reference point in either custom units or
+    meters.  When explicitly configured, the coordinates for the
+    reference point will typically be (0.0, 0.0).  When scripting is
+    used, The reference point is always set to <CODE>LOWER_LEFT</CODE>
+    and the reference point coordinates will be set to match the
+    coordinates used by the script. For example, when configuring EPTS
+    for an image, the dialog box shown below sets the scale factors so
+    that a distance of 40.0 in image space corresponds to a distance
+    of 12 feet (converted to meters) in graph coordinate space:
+    <BR>
+    <BR>
+    <CENTER><IMG src="drawing5.png"></CENTER>
+    <BR>
+    The coordinates - (0.0, 0.0) in the figure above - are in graph
+    coordinate space and correspond to the lower-left corner of an
+    image, with the positive X axis pointing towards the lower-right
+    corner of the image and the positive Y axis pointing towards the
+    upper-left corner of the image.
   <LI><code>Print Table</code>. Choosing this menu item will open
     a 'print' dialog box to print the table.
 </UL>
@@ -893,7 +906,9 @@ There are three options that do not fit into well-defined categories:
     instance of the class <CODE>org.bzdev.anim2d.Animation2D</CODE>.
     It will be used to produce an image by creating a snapshot of
     the objects that are currently defined in the animation and that
-    are visible. The scripts will configure this object.
+    are visible. The scripts will configure this object. The
+    constructor for <CODE>Animation2D</CODE> will determine the size of
+    the image.
 </UL>
 If neither of the options <CODE>--image</CODE>
 or <CODE>--script</CODE> are present, there should be one file
@@ -1008,20 +1023,25 @@ The options specific to the EPTS command when templates are used are:
   <LI><CODE>--pname</CODE> <EM>PNAME</EM>. This option selects a
     variable name, <EM>PNAME</EM>, that must match the name of a path.
     It is used with templates that use the
-    <A href="#pitemplates">path-iterator format</A>. When
-    the <CODE>--svg</CODE> option is used, <EM>PNAME</EM> may consist
-    of an identifier, immediately followed by a ":", in turn followed
-    by a series of comma-separated path names.  This in effect creates
-    a path with a new name that is a concatenation of paths specified
-    in EPTS's table. The main use of this variant is to create shapes
-    that may have holes in them. The attributes <CODE>--fill</CODE>,
-    <CODE>--fillRule</CODE>, <CODE>--stroke</CODE>,
-    and <CODE>--stroke-width</CODE> that are used are the ones between
-    the current <CODE>--pname</CODE> option and any preceding
-    <CODE>--pname</CODE> option, or the start of the command if there
-    is no preceding <CODE>--pname</CODE> option.  After
-    a <CODE>--pname</CODE> these fill and stroke options are reset to
-    their defaults for use by following <CODE>--pname</CODE> options.
+    <A href="#pitemplates">path-iterator format</A>. When the
+    <CODE>--svg</CODE> option is not used, there may be at most one
+    <CODE>--pname</CODE> option. When the <CODE>--svg</CODE> option is
+    used, there may be multiple <CODE>--pname</CODE> options. In
+    either case, case<EM>PNAME</EM> may consist of an identifier,
+    immediately followed by a ":", in turn followed by a series of
+    comma-separated path names.  This in effect creates a path with a
+    new name that is a concatenation of paths specified in EPTS's
+    table. The main use of this variant is to create shapes that may
+    have holes in them.  When the <CODE>--svg</CODE> option is present
+    (this option must precede all <CODE>--pname</CODE> options),the
+    attributes <CODE>--fill</CODE>, <CODE>--fillRule</CODE>,
+    <CODE>--stroke</CODE>, and <CODE>--stroke-width</CODE> that are
+    used are the ones between the current <CODE>--pname</CODE> option
+    and any preceding <CODE>--pname</CODE> option, or the start of the
+    command if there is no preceding <CODE>--pname</CODE> option.
+    After a <CODE>--pname</CODE> these fill and stroke options are
+    reset to their defaults for use by following <CODE>--pname</CODE>
+    options.
   <LI><CODE>--straight</CODE>.  This option applies when the
     <CODE>--pname</CODE> option is set and is ignored otherwise.
     When set, the selected path will be flattened and converted to
@@ -1047,11 +1067,15 @@ The options specific to the EPTS command when templates are used are:
     width acceptable to SVG: a number possibly followed by a unit
     or a '%' symbol.
   <LI><CODE>--svg</CODE> This option, if present, must precede all
-    <CODE>--pname</CODE> options.  It indicates that the output
-    will be an SVG (Scaleable Vector Graphics) file.  The
-    <CODE>--template</CODE>, <CODE>--flatness</CODE>,
+    <CODE>--pname</CODE> options.  It indicates that the output will
+    be an SVG (Scaleable Vector Graphics) file.
+    The <CODE>--template</CODE>, <CODE>--flatness</CODE>,
     <CODE>--straigth</CODE>, and/or <CODE>--elevate</CODE> options
-    must not be used with this option.
+    must not be used with this option.  The option <CODE>-o</CODE> is
+    required and at least one <CODE>--pname</CODE> option should be
+    present. The options <CODE>--fill</CODE>, <CODE>--fillRule</CODE>,
+    <CODE>--stroke</CODE>, and <CODE>--stroke-width</CODE> may be
+    used (at least one  will typically be provided).
   <LI><CODE>--template:</CODE><EM>RESOURCE</EM>.
     This option is a shortcut that behaves like the option
     <CODE>--template sresource:</CODE><EM>RESOURCE</EM>.
@@ -1146,6 +1170,51 @@ provided by the scrunner command. These are
     scripting language. <CODE>ECMAScript</CODE> is always supported.
 </UL>
 
+<H2><A name="examples">CLI Examples</A></H2>
+<UL>
+  <LI><CODE>epts saved.epts</CODE>
+    <BR>
+    Start EPTS, restoring its state to one saved in a previous session.
+  <LI><CODE>epts --codebase foo.jar saved.epts</CODE>
+    <BR>
+    Start EPTS, restoring its state to one saved in a previous session,
+    adding a jar file <CODE>foo.jar</CODE> to EPTS's code base.
+  <LI><CODE>epts --image image.png</CODE>
+    <BR>
+    Start EPTS with an image preloaded as its
+    background.
+  <LI><CODE>epts --script a2d commands.js</CODE>
+    <BR>
+    Start EPTS and run the script provided in commands.js to generate
+    an image from an animation <CODE>a2d</CODE> (an instance of
+    <CODE>org.bzdev.anim2d.Animation2D</CODE>).
+  <LI><CODE>epts --codebase foo.jar --script a2d commands.js</CODE>
+    <BR>
+    Start EPTS and run the script provided in commands.js to generate
+    an image from an animation <CODE>a2d</CODE> (an instance of
+    <CODE>org.bzdev.anim2d.Animation2D</CODE>). The file foo.jar contains
+    additional classes needed by the script. The <CODE>--codebase</CODE>
+    option will be needed when restarting EPTS using a saved state
+    created when this command is being run.
+  <LI><CODE>epts -o out.js --template:ECMAScript saved.epts</CODE>
+    <BR>
+    Run EPTS without a GUI to generate a file <CODE>out.js</CODE>
+    containing a series of ECMAScript statements containing the contents
+    of the EPTS table.
+  <LI><CODE>epts -o out.svg --svg --fill red --pname s:c1,c2 saved.epts</CODE>
+    <BR>
+    Run EPTS without a GUI to generate an SVG file <CODE>out.svg</CODE>
+    containing a shape <CODE>s</CODE>consisting of two curves
+    (<CODE>c1</CODE> and <CODE>c2</CODE>) defined in the EPTS table.
+    The table is the one defined by the file <CODE>saved.epts</CODE>
+  <LI><CODE>epts -o - --gcs --template:area -pname s:c1,c2</CODE>
+    <BR>
+    Run EPTS without a GUI to compute the area of a shape bounded
+    by the curves <CODE>c1</CODE> and <CODE>c2</CODE>. The area is
+    in GCS units.
+</UL>
+
+
 </BODY>
 </HTML>
 <!--  LocalWords:  EPTS PoinTS BZDev anim zier ECMA GCS JRE Runtime
@@ -1154,11 +1223,11 @@ provided by the scrunner command. These are
  -->
 <!--  LocalWords:  pathSegment EPTS's epts MAPFILE UTF sresource http
  -->
-<!--  LocalWords:  https TFILE OUTFILE Scrunner scrunner JVM LNAME
+<!--  LocalWords:  https TFILE OUTFILE Scrunner scrunner JVM LNAME js
  -->
 <!--  LocalWords:  Makefiles URI NaN CSV TCP DVALUE IVALUE SVALUE SVG
  -->
-<!--  LocalWords:  codebase CSS RGB PNAME Scaleable AnimationPath
+<!--  LocalWords:  codebase CSS RGB PNAME Scaleable AnimationPath CLI
  -->
-<!--  LocalWords:  DFactory TNAME keymap
+<!--  LocalWords:  DFactory TNAME keymap preloaded
  -->

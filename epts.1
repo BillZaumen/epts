@@ -88,6 +88,9 @@ instance of
 and that object will be used to create an image. The scripts are used
 to configure the object referenced by
 .IR VNAME .
+The constructor for
+.B Animation2D
+determines the size of the image.
 .PP
 If neither of the options
 .B \-\-image
@@ -111,12 +114,6 @@ is the name of a scripting-language variable and
 .B DVALUE
 is a real number that provides the corresponding value for that
 variable. The variable will be set before any script is run.
-.BI \-\-height\  HEIGHT
-The value
-.I HEIGHT
-is the height in points for an image with one pixel per point that
-represents a drawing surface. If not provided, a default of 1024 will
-be used.
 .TP
 .BI \-\-int\  NAME\fB=\fIIVALUE
 The argument consists of two parts.
@@ -133,13 +130,6 @@ is the name of a scripting-language variable and
 .B SVALUE
 is a string that provides the corresponding value for that
 variable. The variable will be set before any script is run.
-.TP
-.BI \-\-width\  WIDTH
-The value
-.I WIDTH
-is the width in points for an image with one pixel per point that
-represents a drawing surface. If not provided, a default of 1024 will
-be used.
 .SH Template Options
 The options that may be specified when templates are used are the
 following:
@@ -307,7 +297,14 @@ option. After a
 these fill and stroke options are reset to their defaults for use
 by following
 .B \-\-pname
-options.
+options. With the
+.B \-\-svg
+option is used, multiple
+.B \-\-pname
+options may appear on a single command line, each corresponding to
+a different path. Otherwise only one
+.B \-\-pname
+option may appear.
 .TP
 .B \-\-straight
 This flag applies when the
@@ -367,7 +364,17 @@ Vector Graphics) file.  The
 .BR \-\-straight ,
 and/or
 .B \-\-elevate
-options must not be used with this option.
+options must not be used with this option. The option
+.B \-o
+is required, and at least one
+.B \-\-pname
+option should be present.  The options
+.BR \-\-fill ,
+.BR \-\-fillRule ,
+.BR \-\-stroke ,
+and
+.B \-\-stroke-width
+may be used (at least one will typically be provided).
 .TP
 .BI \-\-template: RESOURCE
 This option is a shortcut for the option
@@ -410,7 +417,10 @@ in EPTS's table. Before each
 .B \-\-tname
 option, there may be a
 .B \-\-windingRule
-option.
+option. Multiple
+.B \-\-tname
+options may be used. If any are present, only the specified portions of
+the EPTS table will appear in the output.
 .TP
 .B \-\-web
 This option indicates that a web server will be started and the GUI will
@@ -534,7 +544,8 @@ The table templates are the following:
 This option will print the information included in the EPTS table. Each
 path or location is represented by an ECMAScript variable. For locations,
 the value assigned to the variable is an object whose properties
-.B x and
+.B x
+and
 .B y
 provide the coordinates of the point. For paths, the value assigned
 to a variable is an array of objects, each providing the properties
@@ -582,7 +593,8 @@ and
 The value for
 .B type
 is a string and the values for
-.B x and
+.B x
+and
 .B y
 are numbers giving coordinates. The values for
 .B type are
@@ -595,14 +607,19 @@ are numbers giving coordinates. The values for
 and
 .BR "PATH_END" .
 The units for
-.B x and
+.B x
+and
 .B y
 are graph-coordinate-space units. For the types
 .BR "PATH_START" ,
 .BR "SEG_CLOSE" ,
 and
 .BR "PATH_END",
-the "x" and "y" properties are omitted.
+the
+.B x
+and
+.B y
+properties are omitted.
 One may use the
 .B \-\-tname
 option to include only specific paths and optionally to use a new
@@ -707,6 +724,68 @@ The remaining values are
 and
 .BR y2 .
 The values for these are numbers or empty strings.
+.SH EXAMPLES
+.TP
+.B epts saved.epts
+Start EPTS, restoring its state to one saved in a previous session.
+.TP
+.B epts --codebase foo.jar saved.epts
+Start EPTS, restoring its state to one saved in a previous session,
+adding a jar file
+.B foo.jar
+to EPTS's code base.
+.TP
+.B epts --image image.png
+Start EPTS with an image preloaded as its
+background.
+.TP
+.B epts --script a2d commands.js
+Start EPTS and run the script provided in commands.js to generate
+an image from an animation
+.B a2d
+(an instance of
+.BR org.bzdev.anim2d.Animation2D ).
+.TP
+.B
+epts --codebase foo.jar --script a2d commands.js
+Start EPTS and run the script provided in commands.js to generate
+an image from an animation
+.B a2d
+(an instance of
+.BR org.bzdev.anim2d.Animation2D ).
+The file foo.jar contains
+additional classes needed by the script. The
+.B --codebase
+option
+will be needed when restarting EPTS using a saved state
+created when this command is being run.
+.TP
+.B epts -o out.js --template:ECMAScript saved.epts
+Run EPTS without a GUI to generate a file
+.B out.js
+containing
+a series of ECMAScript statements containing the contents
+of the EPTS table.
+.TP
+.B epts -o out.svg --svg --fill red --pname s:c1,c2 saved.epts
+Run EPTS without a GUI to generate an SVG file
+.B out.svg
+containing a shape
+.B s
+consisting of two curves
+.B \fIR(\fBc1
+and
+.BR c2 )
+defined in the EPTS table.  The table is the one defined by the file
+.B saved.epts
+.TP
+.B epts -o - --gcs --template:area -pname s:c1,c2
+Run EPTS without a GUI to compute the area of a shape bounded by the
+curves
+.B c1
+and
+.B c2.
+The area is in GCS units.
 .SH FILES
 .TP
 .I /etc/bzdev/scrunner.conf\ \fRor\fI\ /etc/opt/bzdev/scrunner.conf
@@ -724,7 +803,6 @@ file override those in the system configuration file.
 .BR scrunner.conf (5)
 .br
 .BR epts (5)
-
 \"  LocalWords:  EPTS epts Bezier SYNOPTSIS fI SCROPTION fR EFILE br
 \"  LocalWords:  IFILE PoinTS scrunner TP html MAPFILE SEG whitespace
 \"  LocalWords:  atype TFILE formated OUTFILE codebase URLPATH fB SVG
@@ -736,4 +814,4 @@ file override those in the system configuration file.
 \"  LocalWords:  ECMAScriptLayerPaths EMCAScriptLocations pathlength
 \"  LocalWords:  EMCAScriptPaths SegmentsCSV tname TNAME windingRule
 \"  LocalWords:  BZDev ECMAScriptLocations ECMAScriptPaths CSV LINETO
-\"  LocalWords:  CUBICTO MOVETO QUADTO
+\"  LocalWords:  CUBICTO MOVETO QUADTO png preloaded js fBc

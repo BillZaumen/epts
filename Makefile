@@ -118,6 +118,7 @@ RESOURCES = manual/manual.xml \
 	manual/drawing2.png \
 	manual/drawing3.png \
 	manual/drawing4.png \
+	manual/drawing5.png \
 	manual/filewindow.png \
 	manual/menubar.png \
 	manual/table2.png \
@@ -125,8 +126,6 @@ RESOURCES = manual/manual.xml \
 	epts-1.0.dtd
 
 FILES = $(JFILES) $(PROPERTIES)
-
-
 
 PROGRAM = $(JROOT_BIN)/epts $(JROOT_JARDIR)/epts-$(VERSION).jar 
 ALL = $(PROGRAM) epts.desktop $(MANS) $(JROOT_BIN)/epts

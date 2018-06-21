@@ -57,6 +57,9 @@
       <node title="Scrunner Options"
 	    uri="sresource:/manual/manual.html#scrunner"
 	    href="manual.html#scrunner"/>
+      <node title="CLI Examples"
+	    uri="sresource:/manual/manual.html#examples"
+	    href="manual.html#examples"/>
     </node>
   </node>
 </toc>
