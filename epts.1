@@ -16,6 +16,7 @@ epts \- create points and Bezier curves/splines
 [\fI\,SCROPTION\/\fR]... [\fI\,TOPTION\/\fR]... [\fI\,EFILE\/\fR]
 .br
 .SH DESCRIPTION
+.PP
 EPTS (Edit PoinTS) is a special-purpose graphics editor. Its purpose
 is to make it easy to take a background, typically an image, overlay a
 series of points or curves on top of it, and then scale and/or
@@ -103,7 +104,7 @@ end with the file-name extension
 (for example,
 .BR saved.epts ).
 .SH Scripting Options
-
+.PP
 The options specific to the EPTS command  when scripting is  used directly
 are the following:
 .TP
@@ -131,6 +132,7 @@ is the name of a scripting-language variable and
 is a string that provides the corresponding value for that
 variable. The variable will be set before any script is run.
 .SH Template Options
+.PP
 The options that may be specified when templates are used are the
 following:
 .TP
@@ -526,6 +528,7 @@ Specifies the scripting language
 .I LANGUAGE
  in use.
 .SH BUILT-IN TEMPLATES
+.PP
 EPTS includes several templates, which can be grouped into two categories:
 table templates and path-iterator templates.  A template must be a table
 template when the
@@ -694,7 +697,6 @@ path length, summed over all segments making up the path. If the command was run
 .B \-\-gcs
 option, the units are graph-coordinate-space units; otherwise they are
 user-space units.
-
 .TP
 .B sresource:SegmentsCSV
 This template requires the use of a
@@ -725,6 +727,9 @@ and
 .BR y2 .
 The values for these are numbers or empty strings.
 .SH EXAMPLES
+.PP
+The following are examples of how to run EPTS using the command-line
+interface:
 .TP
 .B epts saved.epts
 Start EPTS, restoring its state to one saved in a previous session.
