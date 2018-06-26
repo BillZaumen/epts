@@ -227,14 +227,51 @@ will then end the iterative block.
 Directives can be globally defined or can be scoped to apply only
 within an iterative block.  When blocks are nested and a directive is
 defined at multiple levels, the most recent definition is used.
+In the following description, we will frequently refer to a directive
+by the name of its key.
+
 .SH TABLE TEMPLATE FORMAT
 EPTS can generate text files, describing all paths and locations
 stored in EPTS's table, based on a template.
 .PP
-For a table template, EPTS defines one global directive:
-.BR items ,
-which is an iterative directive.  This directive iterates over a list,
-each element of which contains the following directives:
+For a table template, EPTS defines several global directive.
+The global directives
+.B hasPackage
+and
+.B hasClass are iterative directives that are either missing or that
+iterate over an empty key map. These are used to determine if the
+directives
+.B package
+and
+.B class
+are present respectively. Both provide a single iteration with an
+empty key map.  As a result, the only directives that are available are
+the global directives
+.B class
+and
+.BR package :
+.TP
+.B class
+is the simple name of a Java class, and can be used by templates
+that create Java class definitions.
+.TP
+.B package
+is the fully qualified name of a Java package and can be used by
+templates that create Java class definitions.
+.TP
+.B public
+will either be undefined (in which case it will be expanded to an empty
+string) or it will expand to the value
+.BR public .
+.TP
+.B optSpace
+will either be undefined (in which case it will be expanded to an empty
+string) or it will expand to a single space.
+.PP
+The global directive
+.B items
+is an iterative directive that iterates over a list, each element of
+which contains the following directives:
 .TP
 .BR varname .
 This is a simple directive defining a variable name associated with a
@@ -271,7 +308,7 @@ two will be present.
 While
 .B location
 is an iterative directive, it acts as if there was a single
-iteration. During this iteration, the following keys are defined:
+iteration. During this iteration, the following directives are defined:
 .TP
 .BR x .
 This directive provides the X coordinate of the point in graph
@@ -406,12 +443,12 @@ command contains the
 option, GCS units are used; otherwise user-space units are used.
 .TP
 .BR varname .
-This directive provides the name of the varible whose value is
+This directive provides the name of the variable whose value is
 the path that the following directives describe.
 .TP
 .BR windingRule .
 This directive describes a winding rule, and is useful when a path
-is closed, possibly containing muliple disjoint sections. The value
+is closed, possibly containing multiple disjoint sections. The value
 for this director is either
 .B WIND_EVEN_ODD
 or
@@ -605,4 +642,9 @@ trailing whitespace is removed.
 \"  LocalWords:  fIGCSDIST fIXORIGIN yorigin fIYORIGIN UDIST GCSDIST
 \"  LocalWords:  varname fINAME fITYPE xp XP yp YP SEG fR KeyMap TP
 \"  LocalWords:  KeyMapList vindex pathStatement pathSegment ypj xy
-\"  LocalWords:  pindex fBMOVE ltype atype whitespace
+\"  LocalWords:  pindex fBMOVE ltype atype whitespace EPTS's hasClass
+\"  LocalWords:  hasPackage optSpace ypr hasWindingRule windingRule
+\"  LocalWords:  NaN GCS gcs pathLength keymaps MOVETO LINETO QUADTO
+\"  LocalWords:  CUBICTO closePath moveTo lineTo quadTo curveTo
+\"  LocalWords:  PathIterator hasClose hasMoveTo hasLineTo hasQuadTo
+\"  LocalWords:  hasCubicTo

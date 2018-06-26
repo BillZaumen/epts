@@ -459,6 +459,16 @@ command-line option.  The value is either a URI or a file name.
 There are a number of built-in templates that are accessible by
 using a URI whose scheme is <CODE>sresource</CODE>. These  fit
 into two categories: table templates and path-iterator templates.
+Table templates represent paths as a series of points whose types
+are <CODE>MOVE_TO</CODE>, <CODE>CONTROL</CODE>, <CODE>SEG_END</CODE>,
+<CODE>SPLINE</CODE>, and <CODE>CLOSE</CODE>. Path-iterator templates
+by contrast construct each spline along a path and then represent
+the path as a sequence of <CODE>SEG_CLOSE</CODE>,
+<CODE>SEG_CUBICTO</CODE>, <CODE>SEG_LINETO</CODE>,
+<CODE>SEG_MOVETO</CODE>, or <CODE>SEG_QUADTO</CODE> segments, each
+with 0 to 3 control points. The names for each type are the same as
+the names of the corresponding <CODE>java.awt.geom.PathIterator</CODE>
+constants.
 
 <H2><A name="builtins">Built-in Templates</A></H2>
 
@@ -519,6 +529,34 @@ The built-in table templates are the following:
     This template provides the same ECMAScript statements that the
     <CODE>sresource:ECMAScript</CODE> template produces, but only
     paths are included, not locations.
+  <LI><B><CODE>sresource:Java</CODE></B>.
+    This template provides a Java class containing fields that are
+    instances of the Java class
+    <CODE>org.bzdev.geom.SplinePathBuilder</CODE> or
+    <CODE>java.awt.geom.Path2D</CODE> with each field named either by
+    a location name provided in a <CODE>--tname</CODE> option or by
+    the primary name (the name before a colon in the argument for
+    this <CODE>--tname</CODE> option) provided in a
+    <CODE>--tname</CODE> option for a path . If there are
+    no <CODE>--tname</CODE> options, the field names are the names
+    of all the paths and locations defined in the EPTS
+    table. Multiple <CODE>--tname</CODE> options are allowed.
+  <LI><B><CODE>sresource:JavaLocations</CODE></B>.  This template
+    provides a Java class containing fields that are instances of
+    the Java class <CODE>java.awt.geom.Path2D</CODE> with each field
+    named by the name provided in a <CODE>--tname</CODE> option. If
+    there are no <CODE>--tname</CODE> options, the field names are
+    the names of all the locations defined in the EPTS table.  Multiple
+    <CODE>--tname</CODE> options are allowed.
+  <LI><B><CODE>sresource:JavaPaths</CODE></B>.
+    This template provides a Java class containing fields that are
+    instances of the Java class
+    <CODE>org.bzdev.geom.SplinePathBuilder</CODE> with each field
+    named by the primary name (the name before a colon in the argument
+    for this <CODE>--tname</CODE> option) in a <CODE>--tname</CODE>
+    option for a path. If there are no <CODE>--tname</CODE> options,
+    the field names are the names of all the paths defined in the EPTS
+    table.
 </UL>
 
 The built-in path-iterator templates are
@@ -595,32 +633,68 @@ the iterative block.
 Directives can be globally defined or can be scoped to apply only
 within an iterative block.  When blocks are nested and a directive is
 defined at multiple levels, the most recent definition is used.
+In the following description, we will frequently refer to a directive
+by the name of its key.
 
 <H2><A name="tbltemplate">Table Templates</A></H2>
 <P>
 EPTS provides key maps appropriate for representing its table entries.
-for these tables, EPTS defines one global directive: <CODE>items</CODE>,
-which is an iterative directive.  This directive iterates through a
-list, setting values for the following directives:
+for these tables, EPTS defines several global directives:
 <UL>
-  <LI><B><CODE>varname</CODE></B>. This is a simple directive defining a
-    variable name associated with a location or path.
-  <LI><B><CODE>index</CODE></B>. An overall index. This value is incremented
-    for each line in the table.
-  <LI><B><CODE>vindex</CODE></B>. An variable-name index. This value is
-    incremented whenever a variable name changes.
-  <LI><B><CODE>location</CODE></B>. This is an iterative directive that
-    defines a specific, isolated point. While iterative, each
+  <LI><B><CODE>class</CODE></B>. This is a global directive that provides
+    the simple name of a Java class. Unless documentation for a template
+    states otherwise, this is the class name for a single class being
+    defined.
+  <LI><B><CODE>hasClass</CODE></B>. This is an empty iterative directive.
+    When present, it will provide a single iteration and indicates that
+    the directive <CODE>class</CODE> has a non-null value.
+  <LI><B><CODE>hasPackage</CODE></B>. This is an empty iterative directive.
+    When present, it will provide a single iteration and indicates that
+    the key <CODE>package</CODE> has a non-null value.
+  <LI><B><CODE>items</CODE></B>. This is an iterative directive providing
+    a sequence of items described below
+  <LI><B><CODE>optSpace</CODE></B>. This is a global directive that
+    expands to either an empty string or a single space As typically
+    used, it will appear after the directive <CODE>public</CODE>
+    appears. This is primarily used in templates as part of the sequence
+    "<CODE>$(public)$(optSpace)</CODE>", so that when <CODE>public</CODE>
+    is not defined, no text will be added, and when
+    <CODE>public</CODE> is defined, there will be space following the
+    <CODE>public</CODE> directive.
+  <LI><B><CODE>package</CODE></B>. This is a global directive that provides
+    the fully qualified class name of a Java package. Unless
+    documentation for a template states otherwise, this is the name of
+    a package in which the template will define a single class whose
+    name is specified by a <CODE>class</CODE> directive.
+  <LI><B><CODE>public</CODE></B>. This is a global directive that
+    expands to either an empty string or to the string
+    "<CODE>public</CODE>".  As typically used, it will appear before
+    the Java keyword <CODE>class</CODE> in code generated by a template.
+</UL>
+<P>
+The directive <CODE>items</CODE>, as mentioned above, is an iterative
+directive.  This directive iterates through a list, setting values for
+the following directives:
+<UL>
+  <LI><B><CODE>varname</CODE></B>. This is a simple directive defining
+    a variable name associated with a location or path.
+  <LI><B><CODE>index</CODE></B>. An overall index. This value is
+    incremented for each line in the table.
+  <LI><B><CODE>vindex</CODE></B>. An variable-name index. This value
+    is incremented whenever a variable name changes.
+  <LI><B><CODE>location</CODE></B>. This is an iterative directive
+    that defines a specific, isolated point. While iterative, each
     definition contains only a single point. Both
     <CODE>location</CODE> and <CODE>pathStatement</CODE> will not
     both be present at a specific iteration, although one of the
     two will be present.
-  <LI><B><CODE>pathStatement</CODE></B>. This is an iterative directive
-    that defines the control points for a path. While iterative, each
-    pathSegment definition contains a single key map as its value. Both
-    <CODE>location</CODE> and <CODE>pathStatement</CODE> will not
-    both be present at a specific iteration, although one of the
-    two will be present.
+  <LI><B><CODE>pathStatement</CODE></B>. This is an iterative
+    directive that defines the control points for a path. While
+    iterative, each pathSegment definition contains a single key map
+    as its value. Both
+    <CODE>location</CODE> and <CODE>pathStatement</CODE> will not both
+    be present at a specific iteration, although one of the two will
+    be present.
 </UL>
 For example,
 <BLOCKQUOTE><PRE><CODE>
@@ -887,28 +961,29 @@ to be configured (e.g., to provide more memory or to include
 additional class libraries), the CLI must be used to start the
 program.
 <P>
-There are three options that do not fit into well-defined categories:
+There are four options that do not fit into well-defined categories:
 <UL>
-  <LI><CODE>--</CODE>. This option simply indicates the end of
+  <LI><B><CODE>--</CODE></B>. This option simply indicates the end of
     options, and is provided in case a file name starts with a
     "<CODE>-</CODE>".
-  <LI><CODE>--image</CODE>. This option implies that there will be one
+  <LI><B><CODE>--image</CODE></B>. This option implies that there will be one
     file argument specifying the name of an image file.
-  <LI><CODE>--port</CODE> <EM>PORT</EM>.  When this flag is used, it
-    sets the TCP port number for an embedded web server that will
-    provide the on-line manual. The port number <EM>PORT</EM> must be
-    a valid TCP port number (1 to 65535 inclusive, but some ports are
-    reserved or require system privileges).
-  <LI><CODE>--script</CODE> <EM>A2D</EM>. This option indicates that
-    the file arguments are files containing scripts that will be
-    run using a scripting language.  The argument <EM>A2D</EM>
-    is the name of a scripting-language variable whose value is an
-    instance of the class <CODE>org.bzdev.anim2d.Animation2D</CODE>.
-    It will be used to produce an image by creating a snapshot of
-    the objects that are currently defined in the animation and that
-    are visible. The scripts will configure this object. The
-    constructor for <CODE>Animation2D</CODE> will determine the size of
-    the image.
+  <LI><B><CODE>--port</CODE></B> <B><EM>PORT</EM></B>.  When this flag
+    is used, it sets the TCP port number for an embedded web server
+    that will provide the on-line manual. The port
+    number <EM>PORT</EM> must be a valid TCP port number (1 to 65535
+    inclusive, but some ports are reserved or require system
+    privileges).
+  <LI><B><CODE>--script</CODE></B> <B><EM>A2D</EM></B>. This option
+    indicates that the file arguments are files containing scripts
+    that will be run using a scripting language.  The
+    argument <EM>A2D</EM> is the name of a scripting-language variable
+    whose value is an instance of the
+    class <CODE>org.bzdev.anim2d.Animation2D</CODE>.  It will be used
+    to produce an image by creating a snapshot of the objects that are
+    currently defined in the animation and that are visible. The
+    scripts will configure this object. The constructor
+    for <CODE>Animation2D</CODE> will determine the size of the image.
 </UL>
 If neither of the options <CODE>--image</CODE>
 or <CODE>--script</CODE> are present, there should be one file
@@ -939,7 +1014,7 @@ directly are the following:
     scripting-language variable and <EM>SVALUE</EM> is a string that
     provides the corresponding value for that variable. The variable
     will be set before any script is run.
-  <LI><CODE>--width></CODE> <EM>WIDTH</EM>. The width in points for
+  <LI><CODE>--width</CODE> <EM>WIDTH</EM>. The width in points for
     an image with one pixel per point that represents a drawing surface.
     If not provided, a default of 1024 will be used.
 </UL>
@@ -957,12 +1032,17 @@ explicitly specified on the command line.
 
 The options specific to the EPTS command when templates are used are:
 <UL>
-  <LI><CODE>--elevate</CODE>. This option applies when the
+  <LI><B><CODE>--class</CODE></B> <B><EM>CLASSNAME</EM></B>.
+    This option applies when the <CODE>--tname</CODE> option is used,
+    and provides a class name for table templates that generate Java
+    code (e.g., a single Java class definition). The argument
+    <EM>CLASSNAME</EM> is the simple name for a class.
+  <LI><B><CODE>--elevate</CODE></B>. This option applies when the
     <CODE>--pname</CODE> option is set and is ignored otherwise. When
     set, the degree of linear and quadratic B&eacute;zier curve
     segments will be elevated so that all segments are cubic
     B&eacute;zier curve segments.
-  <LI><CODE>--fill</CODE> <EM>COLOR</EM>. This option sets
+  <LI><B><CODE>--fill</CODE></B> <B><EM>COLOR</EM></B>. This option sets
     the <CODE>fill</CODE> attribute to <EM>COLOR</EM> in an SVG
     path. It applies to a path specified by the
     next <CODE>--pname</CODE> option.  The value of
@@ -977,24 +1057,31 @@ The options specific to the EPTS command when templates are used are:
     expression <CODE>rgb(</CODE><EM>R</EM><CODE>,</CODE><EM>G</EM><CODE>,</CODE><EM>B</EM><CODE>)</CODE>
     where <EM>R</EM> , <EM>B</EM> , and <EM>G</EM> vary from 0 to 255
     or 0% to 100%.
-  <LI><CODE>--fill-rule</CODE> <EM>RULE</EM>. This option sets the
-    <CODE>fill-rull</CODE> attribute to <EM>RULE</EM> in an SVG path.
-    It applies to a path specified by the next <CODE>--pname</CODE>
-    option.  <EM>RULE</EM> may be the constants <CODE>nonzero</CODE>
-    or <CODE>evenodd</CODE>.
-  <LI><CODE>--flatness</CODE> <EM>FLATNESS</EM>. This option applies when
-    the <CODE>--pname</CODE> option is set and is ignored otherwise.
-    When <EM>FLATNESS</EM> is zero, the <CODE>--limit</CODE> option
-    determines the number of times a segment will be partitioned.
-    Otherwise control points must deviate from a straight line along
-    each segment by at most the value of <EM>FLATNESS</EM>.
-  <LI><CODE>--gcs</CODE>. This option applies when the
+  <LI><B><CODE>--fill-rule</CODE></B> <B><EM>RULE</EM></B>. This
+    option sets the <CODE>fill-rull</CODE> attribute to <EM>RULE</EM>
+    in an SVG path.  It applies to a path specified by the
+    next <CODE>--pname</CODE> option.  <EM>RULE</EM> may be the
+    constants <CODE>nonzero</CODE> or <CODE>evenodd</CODE>.
+    l <LI><B><CODE>--flatness</CODE></B> <EM>FLATNESS</EM>. This
+    option applies when the <CODE>--pname</CODE> option is set and is
+    ignored otherwise.  When <EM>FLATNESS</EM> is zero,
+    the <CODE>--limit</CODE> option determines the number of times a
+    segment will be partitioned.  Otherwise control points must
+    deviate from a straight line along each segment by at most the
+    value of <EM>FLATNESS</EM>.
+  <LI><B><CODE>--gcs</CODE></B>. This option applies when the
     <CODE>--pname</CODE> option is set and is ignored otherwise, but may
     not be used with the <CODE>--svg</CODE> option. When
     present, it indicates that coordinates will be in GCS units. Otherwise
     user-space or image space units are used.
-  <LI><CODE>--limit</CODE> <EM>LIMIT</EM>.
-  <LI><CODE>--map</CODE> <EM>MAPFILE</EM>.
+  <LI><B><CODE>--limit</CODE></B> <B><EM>LIMIT</EM></B>.
+    This flag applies when the <CODE>--pname</CODE>
+    option is used and is ignored otherwise. This parameter limits the
+    amount of recursion used when paths are split to meet a flatness
+    criteria. When <EM>LIMIT</EM>is zero, paths will not be partitioned.
+    Otherwise the path will be split recursively until the flatness limit
+    is reached, with <EM>LIMIT</EM> restricting the recursion depth.
+  <LI><B><CODE>--map</CODE></B> <B><EM>MAPFILE</EM></B>.
     The file <EM>MAPFILE</EM> is a text file (UTF-8 encoded) whose
     entries are a series of lines. Each line contains a token
     that is the name of an enumeration constant whose type is
@@ -1015,15 +1102,21 @@ The options specific to the EPTS command when templates are used are:
     <EM>MAPFILE</EM> starts with the string "sresource:",
     "file:", "http:", "https:", or "ftp", then <EM>MAPFILE</EM> is
     assumed to be a URL pointing to the object to read.
-  <LI><CODE>-o</CODE> <EM>OUTFILE</EM>.  This option specifies the
-    name of the output file for template processing.  If it is a
-    relative file, it will be resolved against the current working
-    directory that existed when EPTS was started.  If the file name is
-    "-", the output will be sent to standard output.
-  <LI><CODE>--pname</CODE> <EM>PNAME</EM>. This option selects a
-    variable name, <EM>PNAME</EM>, that must match the name of a path.
-    It is used with templates that use the
-    <A href="#pitemplates">path-iterator format</A>. When the
+  <LI><B><CODE>-o</CODE></B> <B><EM>OUTFILE</EM></B>.  This option
+    specifies the name of the output file for template processing.  If
+    it is a relative file, it will be resolved against the current
+    working directory that existed when EPTS was started.  If the file
+    name is "-", the output will be sent to standard output.
+  <LI><B><CODE>--package</CODE></B> <B><EM>PACKAGENAME</EM></B>.
+    This option applies when the <CODE>--tname</CODE> option is used,
+    and provides a class name for table templates that generate Java
+    code (e.g., a single Java class definition). The argument
+    <EM>PACKAGENAME</EM> is the fully-qualified class name for a Java
+    package.
+  <LI><B><CODE>--pname</CODE></B> <B><EM>PNAME</EM></B>. This option
+    selects a variable name, <EM>PNAME</EM>, that must match the name
+    of a path.  It is used with templates that use the
+    <A href="#pitemplates">path-iterator format</A>.When the
     <CODE>--svg</CODE> option is not used, there may be at most one
     <CODE>--pname</CODE> option. When the <CODE>--svg</CODE> option is
     used, there may be multiple <CODE>--pname</CODE> options. In
@@ -1041,32 +1134,40 @@ The options specific to the EPTS command when templates are used are:
     command if there is no preceding <CODE>--pname</CODE> option.
     After a <CODE>--pname</CODE> these fill and stroke options are
     reset to their defaults for use by following <CODE>--pname</CODE>
-    options.
-  <LI><CODE>--straight</CODE>.  This option applies when the
+    options. When the <CODE>--svg</CODE> option is used, the
+    options <CODE>--elevate</CODE>, <CODE>flatness</CODE>,
+    <CODE>--gcs</CODE>,  <CODE>limit</CODE>, and/or
+    <CODE>--straight</CODE> may not be used.
+  <LI><B><CODE>--public</CODE></B>. This option applies when the
+    <CODE>--tname</CODE> option is used and indicates that any Java
+    class being defined by a template should be a public class.
+  <LI><B><CODE>--straight</CODE></B>.  This option applies when the
     <CODE>--pname</CODE> option is set and is ignored otherwise.
     When set, the selected path will be flattened and converted to
     straight-line segments.
-  <LI><CODE>--stroke</CODE> <EM>COLOR</EM>.  This option sets the
-    stroke attribute to <EM>COLOR</EM> in an SVG path.  It applies
-    to a path specified by the next <CODE>--pname</CODE> option. The
-    value of <EM>COLOR</EM> can be any color specification accepted
-    by SVG (the same as those defined by the CSS2 specification). A
-    value of none indicates that no color is specified and the path
-    will not be drawn. Named colors are listed at
+  <LI><B><CODE>--stroke</CODE></B> <B><EM>COLOR</EM></B>.  This option
+    sets the stroke attribute to <EM>COLOR</EM> in an SVG path.  It
+    applies to a path specified by the next <CODE>--pname</CODE>
+    option. The value of <EM>COLOR</EM> can be any color specification
+    accepted by SVG (the same as those defined by the CSS2
+    specification). A value of none indicates that no color is
+    specified and the path will not be drawn. Named colors are listed
+    at
     &lt;https://upload.wikimedia.org/wikipedia/commons/2/2b/SVG_Recognized_color_keyword_names.svg&gt;.
     A <CODE>#</CODE> followed immediately by 6 hexadecimal digits
     gives the RGB values (two hexadecimal digits in that order). One
     can also use the
     expression <CODE>rgb(</CODE><EM>R</EM><CODE>,</CODE><EM>G</EM><CODE>,</CODE><EM>B</EM><CODE>)</CODE>
-    where <EM>R</EM> , <EM>B</EM> , and <EM>G</EM> vary from 0 to
-    255 or 0% to 100%.
-  <LI><CODE>--stroke-width</CODE> <EM>WIDTH</EM>.  This option sets
-    the <CODE>stroke-width</CODE> attribute to <EM>WIDTH</EM> in an
-    SVG path. It applies to a path specified by the next
+    where <EM>R</EM> , <EM>B</EM> , and <EM>G</EM> vary from 0 to 255
+    or 0% to 100%.
+  <LI><B><CODE>--stroke-width</CODE></B> <B><EM>WIDTH</EM></B>.  This
+    option sets the <CODE>stroke-width</CODE> attribute
+    to <EM>WIDTH</EM> in an SVG path. It applies to a path specified
+    by the next
     <CODE>--pname</CODE> option.  The value of <EM>WIDTH</EM> is any
     width acceptable to SVG: a number possibly followed by a unit
     or a '%' symbol.
-  <LI><CODE>--svg</CODE> This option, if present, must precede all
+  <LI><B><CODE>--svg</CODE></B>. This option, if present, must precede all
     <CODE>--pname</CODE> options.  It indicates that the output will
     be an SVG (Scaleable Vector Graphics) file.
     The <CODE>--template</CODE>, <CODE>--flatness</CODE>,
@@ -1076,15 +1177,15 @@ The options specific to the EPTS command when templates are used are:
     present. The options <CODE>--fill</CODE>, <CODE>--fillRule</CODE>,
     <CODE>--stroke</CODE>, and <CODE>--stroke-width</CODE> may be
     used (at least one  will typically be provided).
-  <LI><CODE>--template:</CODE><EM>RESOURCE</EM>.
+  <LI><B><CODE>--template:</CODE></B><EM>RESOURCE</EM>.
     This option is a shortcut that behaves like the option
     <CODE>--template sresource:</CODE><EM>RESOURCE</EM>.
-  <LI><CODE>--template</CODE> <EM>TFILE</EM>. This option may not be
-    used with the <CODE>--svg</CODE> option.  When <EM>TFILE</EM>
-    starts with the string "sresource:", "file:", "http:", "https:",
-    or "ftp", <EM>TFILE</EM> is assumed to be a URL. Otherwise is is
-    assumed to be the name of a file.  The syntax of a template is
-    describe in the section of this manual entitled
+  <LI><B><CODE>--template</CODE></B> <B><EM>TFILE</EM></B>. This
+    option may not be used with the <CODE>--svg</CODE> option.
+    When <EM>TFILE</EM> starts with the string "sresource:", "file:",
+    "http:", "https:", or "ftp", <EM>TFILE</EM> is assumed to be a
+    URL. Otherwise is is assumed to be the name of a file.  The syntax
+    of a template is describe in the section of this manual entitled
     "<A href="#templates">Templates</A>". For the
     <CODE>sresource</CODE> protocol, the template is embedded in the
     EPTS application.  and these are described above in the section
@@ -1097,7 +1198,7 @@ The options specific to the EPTS command when templates are used are:
     are <CODE>sresource:area</CODE>, <CODE>sresource:circumference</CODE>,
     <CODE>sresource:pathlength</CODE>, and <CODE>sresource:SegmentsCSV</CODE>.
     These must be used with the <CODE>--pname</CODE> option.
-  <LI><CODE>--tname</CODE> <EM>TNAME</EM> This option's
+  <LI><B><CODE>--tname</CODE></B> <B><EM>TNAME</EM></B>. This option's
     argument <EM>TNAME</EM> provides the name of a variable that names
     a path.  When this option is provided, a table template must be
     used and the keymap is the table keymap as described by the manual
@@ -1109,14 +1210,14 @@ The options specific to the EPTS command when templates are used are:
     path with a new name that is a concatenation of paths specified
     in EPTS's table. Before each <CODE>--tname</CODE> option, there
     may be a <CODE>--windingRule</CODE> option.
-  <LI><CODE>--web</CODE>. The <CODE>--port</CODE> option should also be
+  <LI><B><CODE>--web</CODE></B>. The <CODE>--port</CODE> option should also be
     used to provide a non-zero port number. This option will start
     an embedded web server allowing the manual to be shown.
-  <LI><CODE>--windingRule</CODE> <EM>RULE</EM>.  This option, when
-    present, adds a winding rule for use with table templates when
-    the <CODE>--tname</CODE>option is used, and must precede that
-    option. After a <CODE>--tname</CODE>option is seen, the winding
-    rule removed.  The values of <EM>RULE</EM> may be
+  <LI><B><CODE>--windingRule</CODE></B> <B><EM>RULE</EM></B>.  This
+    option, when present, adds a winding rule for use with table
+    templates when the <CODE>--tname</CODE>option is used, and must
+    precede that option. After a <CODE>--tname</CODE>option is seen,
+    the winding rule removed.  The values of <EM>RULE</EM> may be
     <CODE>evenodd</CODE> or <EM>nonzero</EM>, the same names as used
     by the <CODE>--fillRule</CODE> option that is used with the
     <CODE>--svg</CODE> option. The <CODE>--windingRule</CODE> option
@@ -1125,7 +1226,7 @@ The options specific to the EPTS command when templates are used are:
     manual. It is an error to use this option when a
     <CODE>--tname</CODE> option is not present or when this option
     does not precede a <CODE>--tname</CODE> option.
-  <LI><CODE>--</CODE>. End of options. This can be used
+  <LI><B><CODE>--</CODE></B>. End of options. This can be used
     if file names start with the character '-'. Otherwise
     it is not necessary.
 </UL>
@@ -1135,7 +1236,7 @@ The options specific to the EPTS command when templates are used are:
 There are a set of command-line options that are the same as those
 provided by the scrunner command. These are
 <UL>
-  <LI><CODE>--cosebase</CODE> <EM>SPEC</EM>.
+  <LI><B><CODE>--cosebase</CODE></B> <B><EM>SPEC</EM></B>.
     This option allows additional code bases to be available to the
     JVM. Any number of <CODE>--codebase</CODE> options may be
     provided, and each option can contain multiple code bases
@@ -1154,41 +1255,41 @@ provided by the scrunner command. These are
     the BZDev class library's JAR file. If an EPTS session is saved,
     the saved file will not contain the files and directories provided
     by the <CODE>--codebase</CODE> options for security reasons.
-  <LI><CODE>-D</CODE><EM>NAME</EM><CODE>=</CODE><EM>VALUE</EM>.
+  <LI><B><CODE>-D</CODE></B><EM>NAME</EM><CODE>=</CODE><EM>VALUE</EM>.
     This option defines a system property whose name is <EM>Name</EM>
     and whose value is <EM>VALUE</EM>.
-  <LI><CODE>--dryrun</CODE>. This options simply prints the java
+  <LI><B><CODE>--dryrun</CODE></B>. This options simply prints the java
     command that will be used to start the JVM and run the program.
     It is useful primarily for debugging.
-  <LI><CODE>-J</CODE><EM>OPTION</EM>. The string <EM>OPTION</EM>
+  <LI><B><CODE>-J</CODE></B><EM>OPTION</EM>. The string <EM>OPTION</EM>
     is turned into an option passed to the 'java' command used
     to start the JVM. It can be used, for example, to increase the
     memory available to the JVM. If the option starts with a leading
     '-', that must be provided explicitly.
-  <LI><CODE>-L</CODE> <EM>LNAME</EM>.
+  <LI><B><CODE>-L</CODE></B> <B><EM>LNAME</EM></B>.
     When scripting is used, this option explicitly indicates a
     scripting language. <CODE>ECMAScript</CODE> is always supported.
 </UL>
 
 <H2><A name="examples">CLI Examples</A></H2>
 <UL>
-  <LI><CODE>epts saved.epts</CODE>
+  <LI><B><CODE>epts saved.epts</CODE></B>
     <BR>
     Start EPTS, restoring its state to one saved in a previous session.
-  <LI><CODE>epts --codebase foo.jar saved.epts</CODE>
+  <LI><B><CODE>epts --codebase foo.jar saved.epts</CODE></B>
     <BR>
     Start EPTS, restoring its state to one saved in a previous session,
     adding a jar file <CODE>foo.jar</CODE> to EPTS's code base.
-  <LI><CODE>epts --image image.png</CODE>
+  <LI><B><CODE>epts --image image.png</CODE></B>
     <BR>
     Start EPTS with an image preloaded as its
     background.
-  <LI><CODE>epts --script a2d commands.js</CODE>
+  <LI><B><CODE>epts --script a2d commands.js</CODE></B>
     <BR>
     Start EPTS and run the script provided in commands.js to generate
     an image from an animation <CODE>a2d</CODE> (an instance of
     <CODE>org.bzdev.anim2d.Animation2D</CODE>).
-  <LI><CODE>epts --codebase foo.jar --script a2d commands.js</CODE>
+  <LI><B><CODE>epts --codebase foo.jar --script a2d commands.js</CODE></B>
     <BR>
     Start EPTS and run the script provided in commands.js to generate
     an image from an animation <CODE>a2d</CODE> (an instance of
@@ -1196,18 +1297,18 @@ provided by the scrunner command. These are
     additional classes needed by the script. The <CODE>--codebase</CODE>
     option will be needed when restarting EPTS using a saved state
     created when this command is being run.
-  <LI><CODE>epts -o out.js --template:ECMAScript saved.epts</CODE>
+  <LI><B><CODE>epts -o out.js --template:ECMAScript saved.epts</CODE></B>
     <BR>
     Run EPTS without a GUI to generate a file <CODE>out.js</CODE>
     containing a series of ECMAScript statements containing the contents
     of the EPTS table.
-  <LI><CODE>epts -o out.svg --svg --fill red --pname s:c1,c2 saved.epts</CODE>
+  <LI><B><CODE>epts -o out.svg --svg --fill red --pname s:c1,c2 saved.epts</CODE></B>
     <BR>
     Run EPTS without a GUI to generate an SVG file <CODE>out.svg</CODE>
     containing a shape <CODE>s</CODE>consisting of two curves
     (<CODE>c1</CODE> and <CODE>c2</CODE>) defined in the EPTS table.
     The table is the one defined by the file <CODE>saved.epts</CODE>
-  <LI><CODE>epts -o - --gcs --template:area -pname s:c1,c2</CODE>
+  <LI><B><CODE>epts -o - --gcs --template:area -pname s:c1,c2</CODE></B>
     <BR>
     Run EPTS without a GUI to compute the area of a shape bounded
     by the curves <CODE>c1</CODE> and <CODE>c2</CODE>. The area is
@@ -1229,5 +1330,7 @@ provided by the scrunner command. These are
  -->
 <!--  LocalWords:  codebase CSS RGB PNAME Scaleable AnimationPath CLI
  -->
-<!--  LocalWords:  DFactory TNAME keymap preloaded
+<!--  LocalWords:  DFactory TNAME keymap preloaded CLASSNAME
+ -->
+<!--  LocalWords:  PACKAGENAME
  -->

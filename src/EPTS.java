@@ -628,6 +628,10 @@ public class EPTS {
 	String windingRule = null;
 	boolean meters = true;
 
+	String pkg = null;
+	String clazz = null;
+	boolean isPublic = false;
+
 	ArrayList<NameValuePair> bindings = new ArrayList<>();
 
 	String alreadyForkedString = System.getProperty("epts.alreadyforked");
@@ -691,6 +695,19 @@ public class EPTS {
 		    argsList.add(argv[index-1]);
 		    argsList.add(argv[index]);
 		    continue;
+		} else if (argv[index].equals("--class")) {
+		    index++;
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    clazz = argv[index];
+		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
+		} else if (argv[index].equals("--public")) {
+		    isPublic = true;
+		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--codebase")) {
 		    hasCodebase = true;
 		    if (!alreadyForked) {
@@ -803,6 +820,16 @@ public class EPTS {
 			    (errorMsg("ioError", argv[index], e.getMessage()));
 			System.exit(1);
 		    }
+		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
+		} else if (argv[index].equals("--package")) {
+		    index++;
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    pkg = argv[index];
 		    argsList.add(argv[index-1]);
 		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--pname")) {
@@ -1423,13 +1450,43 @@ public class EPTS {
 			    FilterInfo[] filters =
 				new FilterInfo[filterInfoList.size()];
 			    filters = filterInfoList.toArray(filters);
-			    tp = new TemplateProcessor
-				(ptmodel.getKeyMap(filters, map,
-						   (double)parser.getHeight()));
+			    TemplateProcessor.KeyMap kmap =
+				ptmodel.getKeyMap(filters, map,
+						  (double)parser.getHeight());
+			    if (pkg != null) {
+				kmap.put("package", pkg);
+				kmap.put("hasPackage",
+					 new TemplateProcessor.KeyMap());
+			    }
+			    if (clazz != null) {
+				kmap.put("class", clazz);
+				kmap.put("hasClass",
+					 new TemplateProcessor.KeyMap());
+			    }
+			    if (isPublic) {
+				kmap.put("public", "public");
+				kmap.put("optSpace", " ");
+			    }
+			    tp = new TemplateProcessor(kmap);
 			} else {
-			    tp = new TemplateProcessor
-				(ptmodel.getKeyMap(map,
-						   (double)parser.getHeight()));
+			    TemplateProcessor.KeyMap kmap =
+				ptmodel.getKeyMap(map,
+						  (double)parser.getHeight());
+			    if (pkg != null) {
+				kmap.put("package", pkg);
+				kmap.put("hasPackage",
+					 new TemplateProcessor.KeyMap());
+			    }
+			    if (clazz != null) {
+				kmap.put("class", clazz);
+				kmap.put("hasClass",
+					 new TemplateProcessor.KeyMap());
+			    }
+			    if (isPublic) {
+				kmap.put("public", "public");
+				kmap.put("optSpace", " ");
+			    }
+			    tp = new TemplateProcessor(kmap);
 			}
 			tp.processURL(templateURL, "UTF-8", os);
 			os.flush();

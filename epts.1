@@ -136,6 +136,15 @@ variable. The variable will be set before any script is run.
 The options that may be specified when templates are used are the
 following:
 .TP
+.BI \-\-class\  CLASSNAME
+This option applies when the
+.B \-\-tname
+option is used, and provides a class name for table templates that
+generate Java code (e.g., a single Java class definition). The
+argument
+.I CLASSNAME
+is the simple name for a class.
+.TP
 .B \-\-elevate
 This flag applies when the
 .B \-\-pname
@@ -261,6 +270,15 @@ option is used, EPTS operates in batch mode, and its input file should
 be an EPTS file (one with the file extension "epts"). EPTS files are
 created by EPTS when its "Save" menu item is used.
 .TP
+.BI \-\-package\  PACKAGENAME
+This option applies when the
+.B \-\-tname
+option is used, and provides a class name for table templates that
+generate Java code (e.g., a single Java class definition). The
+argument
+.I PACKAGENAME
+is the fully-qualified class name for a Java package.
+.TP
 .BI \-\-pname\  PNAME
 This option's argument
 .I PNAME
@@ -307,6 +325,12 @@ options may appear on a single command line, each corresponding to
 a different path. Otherwise only one
 .B \-\-pname
 option may appear.
+.TP
+.B \-\-public
+This option applies when the
+.B \-\-tname
+option is used and indicates that any Java class being defined by a
+template should be a public class.
 .TP
 .B \-\-straight
 This flag applies when the
@@ -391,14 +415,15 @@ The format of the template file depends on whether or not the
 .B \-\-pname
 flag has been set: when set, a path-iterator template must be used;
 otherwise a table template must be used. There are a number of
-built-in templates whose URLs start with the protocol "sresource"
-For table templates, these are <sresource:ECMAScriptLayers>,
-<sresource:ECMAScriptLayerPaths>,
-<sresource:EMCAScriptLocations>, <sresource:EMCAScriptPaths>,
-and <sresource:ECMAScript.>, where "<" and ">" as usual are not
-part of the URLs. For path-iterator templates, the URLs are
-<sresource:area>, <sresource:circumference>, <sresource:pathlength>, and
-<sresource:SegmentsCSV>. These templates are described below.
+built-in templates whose URLs start with the protocol "sresource" For
+table templates, these are <sresource:ECMAScriptLayers>,
+<sresource:ECMAScriptLayerPaths>, <sresource:EMCAScriptLocations>,
+<sresource:EMCAScriptPaths>, <sresource:ECMAScript>, <sresource:Java>,
+,<sresource:JavaLocations> and <sresource:JavaPaths>, where "<" and
+">" as usual are not part of the URLs. For path-iterator templates,
+the URLs are <sresource:area>, <sresource:circumference>,
+<sresource:pathlength>, and <sresource:SegmentsCSV>. These templates
+are described below.
 .TP
 .BI \-\-tname\  TNAME
 This option's argument
@@ -663,7 +688,53 @@ template produces, but only locations are included, not paths.
 This template provides the same ECMAScript statements that the
 .B sresource:ECMAScript
 template produces, but only paths are included, not locations.
-.PP
+.TP
+.B sresource:Java
+This template provides a Java class containing fields that are
+instances of the Java class
+.B org.bzdev.geom.SplinePathBuilder
+or
+.B java.awt.geom.Path2D
+with each field named either by a location name provided in a
+.B \-\-tname option
+or by the primary name (the name before a colon) provided in a
+.B \-\-tname
+option for a path. If there are no
+.B \-\-tname
+options, the field names are the names of all the paths and locations
+defined in the EPTS table. Multiple
+.B \-\-tname
+options are allowed.
+.TP
+.B sresource:JavaLocations
+This template provides a Java class containing fields that are
+instances of the Java class
+.B java.awt.geom.Path2D
+with each field named by the name provided in a
+.B \-\-tname
+options If there are no
+.B \-\-tname
+options, the field names are the names of all the locations defined in
+the EPTS table.  Multiple
+.B \-\-tname
+options are allowed.
+.TP
+.B sresource:JavaPaths
+This template provides a Java class containing fields that are
+instances of the Java class
+.B org.bzdev.geom.SplinePathBuilder
+with each field named by the primary name (the name before a colon in the
+argument for a
+.B \-\-tname
+option) provided in a
+.B \-\-tname
+option for a path. If there are no
+.B \-\-tname
+options, the field names are the names of all the paths defined in
+the EPTS table. Multiple
+.B \-\-tname
+options are allowed.
+ll.PP
 The path-iterator templates are the following:
 .TP
 .B sresource:area
@@ -819,4 +890,5 @@ file override those in the system configuration file.
 \"  LocalWords:  ECMAScriptLayerPaths EMCAScriptLocations pathlength
 \"  LocalWords:  EMCAScriptPaths SegmentsCSV tname TNAME windingRule
 \"  LocalWords:  BZDev ECMAScriptLocations ECMAScriptPaths CSV LINETO
-\"  LocalWords:  CUBICTO MOVETO QUADTO png preloaded js fBc
+\"  LocalWords:  CUBICTO MOVETO QUADTO png preloaded js fBc CLASSNAME
+\"  LocalWords:  PACKAGENAME JavaLocations JavaPaths
