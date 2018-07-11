@@ -102,10 +102,10 @@ PROPERTIES = src/EPTS.properties
 
 TEMPLATES = templates/ECMAScript.tpl templates/save.tpl \
 	templates/ECMAScriptPaths.tpl templates/ECMAScriptLocations.tpl \
-	templates/ECMAScriptLayers.tpl templates/ECMAScriptLayerPaths.tpl \
-	templates/Java.tpl \
-	templates/JavaPaths.tpl templates/JavaLocations.tpl \
-	templates/SVG.tpl templates/area.tpl templates/circumference.tpl \
+	templates/ECMAScriptLayers.tpl 	templates/JavaLayers.tpl \
+	templates/JavaPathFactories.tpl templates/JavaLocations.tpl \
+	templates/JavaPathBuilders.tpl templates/SVG.tpl \
+	templates/area.tpl templates/circumference.tpl \
 	templates/pathlength.tpl
 
 CRLF_TEMPLATES = templates/SegmentsCSV.tpl

@@ -631,6 +631,10 @@ public class PointTableModel implements TableModel {
 	return false;
     }
 
+    private static final TemplateProcessor.KeyMap emptyMap =
+	new TemplateProcessor.KeyMap();
+
+
     public TemplateProcessor.KeyMap getKeyMap(EPTS.FilterInfo[] filters,
 					      Map<String,String> tmap,
 					      double height)
@@ -645,12 +649,16 @@ public class PointTableModel implements TableModel {
 	int index = 0;
 	int vindex = 0;
 	int pindex = 0;
+
 	for (EPTS.FilterInfo filter: filters) {
 	    boolean ignore =  true;
 	    boolean addname = true;
 	    String name = filter.name;
 	    String[] names  = filter.nameArray;
 	    String windingRule = filter.windingRule;
+	    String draw = filter.draw;
+	    String fill = filter.fill;
+	    String gcsMode = filter.gcsMode;
 	    for (PointTMR row: rows) {
 		index++;
 		Enum mode = row.getMode();
@@ -696,9 +704,60 @@ public class PointTableModel implements TableModel {
 			    pindex = 0;
 			    if (windingRule != null) {
 				kmap2.put("windingRule", windingRule);
-				kmap2.put("hasWindingRule",
-					  new TemplateProcessor.KeyMap());
+				kmap2.put("hasWindingRule", emptyMap);
 			    }
+			    kmap2.put("draw", draw);
+			    kmap2.put("fill", fill);
+			    if (filter.draw.equals("true")
+				|| filter.fill.equals("true")) {
+				kmap2.put("hasAttributes", emptyMap);
+			    }
+			    if (filter.gcsMode != null) {
+				kmap2.put("gcsMode", gcsMode);
+				kmap2.put("hasGcsMode", emptyMap);
+			    }
+			    if (filter.drawColor != null) {
+				kmap2.put("drawColor", filter.drawColor);
+				kmap2.put("hasDrawColor", emptyMap);
+			    }
+			    if (filter.fillColor != null) {
+				kmap2.put("fillColor", filter.fillColor);
+				kmap2.put("hasFillColor", emptyMap);
+			    }
+			    if (filter.strokeCap != null) {
+				kmap2.put("strokeCap", filter.strokeCap);
+				kmap2.put("hasStrokeCap", emptyMap);
+			    }
+			    if (filter.dashIncrement != null) {
+				kmap2.put("dashIncrement",
+					  filter.dashIncrement);
+				kmap2.put("hasDashIncrement", emptyMap);
+			    }
+			    if (filter.dashPhase != null) {
+				kmap2.put("dashPhase", filter.dashPhase);
+				kmap2.put("hasDashPhase", emptyMap);
+			    }
+			    if (filter.dashPattern != null) {
+				kmap2.put("dashPattern", filter.dashPattern);
+				kmap2.put("hasDashPattern", emptyMap);
+			    }
+			    if (filter.strokeJoin != null) {
+				kmap2.put("strokeJoin", filter.strokeJoin);
+				kmap2.put("hasStrokeJoin", emptyMap);
+			    }
+			    if (filter.miterLimit != null) {
+				kmap2.put("miterLimit", filter.miterLimit);
+				kmap2.put("hasMiterLimit", emptyMap);
+			    }
+			    if (filter.strokeWidth != null) {
+				kmap2.put("strokeWidth", filter.strokeWidth);
+				kmap2.put("hasStrokeWidth", emptyMap);
+			    }
+			    if (filter.zorder != null) {
+				kmap2.put("zorder", filter.zorder);
+				kmap2.put("hasZorder", emptyMap);
+			    }
+
 			    kmap2.put("pathItem", plist);
 			    kmap3 = null;
 			    addname = false;
@@ -736,13 +795,17 @@ public class PointTableModel implements TableModel {
 			TemplateProcessor.KeyMap
 			    kmap4 = new TemplateProcessor.KeyMap();
 			kmap4.put("x",
-				  String.format((Locale)null, "%s", row.getX()));
+				  String.format((Locale)null, "%s",
+						row.getX()));
 			kmap4.put("y",
-				  String.format((Locale)null, "%s", row.getY()));
+				  String.format((Locale)null, "%s",
+						row.getY()));
 			kmap4.put("xp",
-				  String.format((Locale)null, "%s", row.getXP()));
+				  String.format((Locale)null, "%s",
+						row.getXP()));
 			kmap4.put("yp",
-				  String.format((Locale)null, "%s", row.getYP()));
+				  String.format((Locale)null, "%s",
+						row.getYP()));
 			kmap4.put("ypr", String.format((Locale)null, "%s",
 						       height - row.getYP()));
 			kmap3.put("xy", kmap4);

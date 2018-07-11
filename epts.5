@@ -273,19 +273,19 @@ The global directive
 is an iterative directive that iterates over a list, each element of
 which contains the following directives:
 .TP
-.BR varname .
+.B varname
 This is a simple directive defining a variable name associated with a
 location or path.
 .TP
-.BR index .
+.B index
 This directive provides an overall index. Its value is incremented for
 each line in the table.
 .TP
-.BR vindex .
+.B vindex
 This directive provides a variable-name index. This value is
 incremented whenever a variable name changes.
 .TP
-.BR location .
+.B location
 This is an iterative directive that defines a specific, isolated
 point. While iterative, each definition contains only a single
 point. Both
@@ -295,7 +295,7 @@ and
 will not both be present at a specific iteration, although one of the
 two will be present.
 .TP
-.BR pathStatement .
+.B pathStatement
 This is an iterative directive that defines the control points for a
 path. While iterative, each pathSegment definition contains a single
 key map as its value. Both
@@ -310,23 +310,23 @@ While
 is an iterative directive, it acts as if there was a single
 iteration. During this iteration, the following directives are defined:
 .TP
-.BR x .
+.B x
 This directive provides the X coordinate of the point in graph
 coordinate space.
 .TP
-.BR y .
+.BR y
 This directive provides the Y coordinate of the point in graph
 coordinate space.
 .TP
-.BR xp .
+.BR xp
 This directive provides the X coordinate of the point in image space
 measured from left to right (the standard Java convention).
 .TP
-.BR yp .
+.BR yp
 This directive provides the Y coordinate of the point in image space,
 measured from top to bottom (the standard Java convention).
 .TP
-.BR ypr .
+.BR ypr
 This directive provides the Y coordinate of the point in image space
 measured from bottom to top (the reverse of the standard Java convention,
 instead matching the convention used in mathematics).
@@ -335,7 +335,156 @@ Similarly, the value for
 .B pathStatement
 is a key map containing the following directives:
 .TP
-.BR hasWindingRule .
+.B draw
+This directive has the value
+.B true or
+.BR false .
+When true, a path\'s outline will be drawn. Otherwise, the
+path\'s outline will not be drawn.
+.TP
+.B fill
+This directive has the value
+.B true or
+.BR false .
+When true, a path\'s outline will be filled. Otherwise, the
+path\'s outline will not be filled.
+.TP
+.B hasAttributes
+This is an iterative directive
+which will provide at most a single iteration. When present (i.e.,
+when the iteration count is 1), the directives
+.B draw
+and/or
+.B fill
+will have the value
+.BR true ,
+and attributes defining colors or strokes will exist.
+.TP
+.B hasDashIncrement
+This is an iterative directive containing a single iteration. When
+present, one may use the
+.B dashIncrement
+directive, whose value is the length of a "\-" or "\ " in a dash
+pattern.  The units are GCS units when
+.B gcsMode is
+.B true
+and user-space units when
+.B gcsMode is
+.B  false
+or not defined.
+.TP
+.B hasDashPattern
+This is an iterative directive containing a single iteration. When
+present, one may use the
+.B dashPattern
+directive, whose value is a string consisting of "\-" and "&\ " characters,
+starting with a "\-". A sequence of
+.I N
+"\-" or <EM>N</EM> "\ " denotes a dash or gap whose length is
+.I N
+multiplied by the dash increment. The pattern created will be periodic.
+.TP
+.B hasDashPhase
+This is an iterative directive containing a single iteration. When
+present, one may use the
+.B dashPhase
+directive, whose values is the offset at which the dash/gap pattern
+starts.  The units are GCS units when
+.B gcsMode is
+.B true
+and user-space units when
+.B gcsMode is
+.B  false
+or not defined.
+.TP
+.B hasDrawColor
+This is an iterative directive containing a single iteration. When
+present, one may use the
+.B drawColor
+directive, whose value is a CSS color specification that
+indicates the color used when drawing paths.
+.TP
+.B hasFillColor
+This is an iterative directive containing a single iteration. When
+present, one may use the
+.B fillColor
+directive, whose value is a CSS color specification that
+indicates the color used when filling paths.
+.TP
+.B hasGcsMode
+This is an iterative directive containing a single iteration. When
+present, one may use the
+.B gcsMode
+directive, whose value is
+.B true
+if    strokes are defined using GCS units, or
+.B false
+if strokes are defined using user space or image space units.
+.TP
+.B hasMiterLimit
+This is an iterative directive containing a single iteration. When
+present, one may use the
+.B miterLimit
+directive, whose value is the "limit to trim a line join that has a
+JOIN_MITER decoration. A line join is trimmed when the ratio of miter
+length to stroke width is greater than the miter-limit value. The miter
+length is the diagonal length of the miter, which is the distance
+between the inside corner and the outside corner of the
+intersection. The smaller the angle formed by two line segments, the
+longer the miter length and the sharper the angle of intersection. The
+default miter-limit value of 10.0f causes all angles less than 11
+degrees to be trimmed. Trimming miters converts the decoration of the
+line join to bevel." (The quote is from the Java API documentation
+for the class
+.BR java.awt.BasicStroke .)
+The units are GCS units when
+.B gcsMode is
+.B true
+and user-space units when
+.B gcsMode is
+.B  false
+or not defined.
+When present, the minimum allowed value for the miter limit is 1.0.
+.TP
+.B hasStrokeCap
+This is an iterative directive containing a single iteration. When
+present, one may use the
+.B strokeCap
+directive, whose value is either
+.BR BUTT ,
+.BR ROUND ,
+or
+.BR SQUARE .
+The values defines the type of decoration at the end of a line as
+described in the documentation for the Java enumeration type
+.BR org.bzdev.obnaming.misc.BasicStrokeParm.Cap .
+.TP
+.B hasStrokeJoin
+This is an iterative directive containing a single iteration. When
+present, one may use the
+.B strokeJoin
+directive, whose value is either
+.BR BEVEL ,
+.BR MITER , or
+.BR ROUND.
+These values define how line segments are joined as described in the
+documentation for the Java enumeration type
+.BR org.bzdev.obnaming.misc.BasicStrokeParm.Join .
+.TP
+.B hasStrokeWidth
+This is an iterative directive containing a single iteration. When
+present, one may use the
+.B strokeWidth
+directive, whose value is the width of a stroke used to draw a
+path. The units are GCS units when
+.B gcsMode is
+.B true
+and user-space units when
+.B gcsMode is
+.B  false
+or not defined.
+.TP
+.BR hasWindingRule
 This is an iterative directive containing a single iteration. When
 present, one may use the
 .B windingRule
@@ -344,14 +493,20 @@ directive, whose values are
 and
 .BR WIND_EVEN_ODD .
 .TP
-.BR pindex .
+.B hasZorder
+This is an iterative directive containing a single iteration. When
+present, one may use the
+.B zorder
+directive, whose value is a long integer.
+.TP
+.BR pindex
 The value is "1" for the initial
 .B MOVE_TO
 operation for a path and is incremented for each control point, spline
 point, or end-of-segment point, along the path, and for a
 final 'close' if there is one.
 .TP
-.BR type .
+.BR type
 This is the type of a control point or operation
 along the path (\fBMOVE_TO\fR,
 .BR SPLINE ,
@@ -360,7 +515,7 @@ along the path (\fBMOVE_TO\fR,
 or
 .BR CLOSE ).
 .TP
-.BR ltype .
+.BR ltype
 This is similar to the
 .B type
 directive, but substitutes
@@ -375,7 +530,7 @@ The directive
 for templates used to configure an instance of the class
 .BR org.bzdev.anim2d.AnimationLayer2DFactory .
 .TP
-.BR atype .
+.BR atype
 This is is similar to
 .B type
 but with an alternative value defined by the user via a command-line
@@ -406,7 +561,7 @@ directive.
 These templates describe individual paths.
 The global directives are
 .TP
-.BR area .
+.BR area
 This directive contains the area of the shape. If constructed
 from multiple paths, all of these paths must be closed paths: otherwise
 the value will be "NaN". The units are either user-space units or GCS
@@ -418,7 +573,7 @@ command contains the
 .B \-\-gcs
 option, GCS units are used; otherwise user-space units are used.
 .TP
-.BR circumference .
+.BR circumference
 This directive contains the circumference of the shape. If constructed
 from multiple paths, all of these paths must be closed paths: otherwise
 the value will be "NaN". The units are either user-space units or GCS
@@ -431,7 +586,7 @@ command contains the
 option, GCS units are used; otherwise user-space units are used.
 
 .TP
-.BR pathLength .
+.B pathLength
 This directive contains the path length for the boundary of a shape
 regardless of whether it encloses an area. The units are either
 user-space units or GCS units, depending on flags passed to
@@ -442,11 +597,11 @@ command contains the
 .B \-\-gcs
 option, GCS units are used; otherwise user-space units are used.
 .TP
-.BR varname .
+.B varname
 This directive provides the name of the variable whose value is
 the path that the following directives describe.
 .TP
-.BR windingRule .
+.BR windingRule
 This directive describes a winding rule, and is useful when a path
 is closed, possibly containing multiple disjoint sections. The value
 for this director is either
@@ -645,6 +800,11 @@ trailing whitespace is removed.
 \"  LocalWords:  pindex fBMOVE ltype atype whitespace EPTS's hasClass
 \"  LocalWords:  hasPackage optSpace ypr hasWindingRule windingRule
 \"  LocalWords:  NaN GCS gcs pathLength keymaps MOVETO LINETO QUADTO
-\"  LocalWords:  CUBICTO closePath moveTo lineTo quadTo curveTo
+\"  LocalWords:  CUBICTO closePath moveTo lineTo quadTo curveTo CSS
 \"  LocalWords:  PathIterator hasClose hasMoveTo hasLineTo hasQuadTo
-\"  LocalWords:  hasCubicTo
+\"  LocalWords:  hasCubicTo hasDashIncrement dashIncrement gcsMode
+\"  LocalWords:  hasDashPattern dashPattern hasDashPhase dashPhase
+\"  LocalWords:  hasDrawColor drawColor hasFillColor fillColor
+\"  LocalWords:  hasGcsMode hasMiterLimit miterLimit miterlimit
+\"  LocalWords:  hasStrokeCap strokeCap hasStrokeJoin strokeJoin
+\"  LocalWords:  hasStrokeWidth strokeWidth

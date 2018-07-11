@@ -152,13 +152,20 @@ option is used and is ignored otherwise. It will increase the
 degree of linear and quadratic Bezier-path segments so that
 all segments are cubic segments.
 .TP
-.BI \-\-fill\  COLOR
+.BI \-\-fill\-color\  COLOR
 This option sets the
 .B fill
 attribute to
 .I COLOR
-in an SVG path. It applies to a path specified by the next
+in an SVG path, and sets the
+.B fillColor.css
+subparameter to
+.I COLOR
+for table templates.
+It applies to a path specified by the next
 .B \-\-pname
+option or
+.B \-\-tname
 option. The value of
 .I COLOR
 can be any color specification accepted by SVG (the same as those
@@ -168,37 +175,37 @@ indicates that no color is specified and the path will not be filled.
 Named colors are listed at
 <https://upload.wikimedia.org/wikipedia/commons/2/2b/SVG_Recognized_color_keyword_names.svg>.
 A '#' followed immediately by 6 hexadecimal digits gives the RGB values
-(two hexadecimal digits in  that order). One can also use the
+(two hexadecimal digits in  that order). One can also express RGB values,
+possibly  with an optional alpha component, by the
 expression
 .B rgb(\fIR\fB,\fIG\fB,\fIB\fB)
+or
+.B rgb(\fIR\fB,\fIG\fB,\fIB\fB,\fIA\fB)
 where
 .IR R ,
 .IR B ,
+.IR G ,
 and
-.I G
-vary from 0 to 255, or 0% to 100%.
-.TP
-.BI \-\-fill-rule\  RULE
-This option sets the
-.B fill-rull
-attribute to
-.I RULE
-in an SVG path. It applies to a path specified by the next
-.B \-\-pname
-option.
-.I RULE
-may be the constants
-.B nonzero
+.I A
+vary from 0 to 255, or 0% to 100%. An HSL (Hue, Saturation, Lightness)
+specification can also be used, optionally with an alpha component:
+.B hsl(\fIH\fB,\fIS\fB,\fIL\fB)
 or
-.BR evenodd .
+.B hsla(\fIH\fB,\fIS\fB,\fIL\fB,\fIA\fB)
+where
+.I H
+is a real number in the range [0, 360),
+.I S
+and
+.I L
+are real numbers (given as a percentage) in the range [0%, 360%],
+.I A
+is a real number in the range [0,1].
 .TP
 .BI \-\-flatness\  FLATNESS
 This option applies when the
 .B \-\-pname
-option is used and is ignored otherwise, but must not be used with
-the
-.B \-\-svg
-option. When
+option is used and is ignored otherwise. When
 .I FLATNESS
 is zero, the
 .B \-\-limit
@@ -211,17 +218,15 @@ which must not be a negative number.
 .B \-\-gcs
 This flag applies when the
 .B \-\-pname
-option is used and is ignored otherwise, but may not be used with the
-.B \-\-svg
-option. When set, the coordinates of the path's control points will be
-expressed in GCS (Graph Coordinate Space) units.  Otherwise the
-control points are given in Java user-space units, where distances are
-in points and where the origin is at the upper-left corner of the
-image or frame, with the positive X axis pointing right and the
-positive Y axis pointing down. In GCS units, by contrast, the X axis
-points right, the Y axis points down, and the scale is user-defined,
-with the origin placed anywhere on or off the image or frame as
-desired.
+option is used and is ignored otherwise. When set, the coordinates of
+the path's control points will be expressed in GCS (Graph Coordinate
+Space) units.  Otherwise the control points are given in Java
+user-space units, where distances are in points and where the origin
+is at the upper-left corner of the image or frame, with the positive X
+axis pointing right and the positive Y axis pointing down. In GCS
+units, by contrast, the X axis points right, the Y axis points down,
+and the scale is user-defined, with the origin placed anywhere on or
+off the image or frame as desired.
 .TP
 .BI \-\-limit\  LIMIT
 This flag applies when the
@@ -249,7 +254,9 @@ of points along a path using a custom string instead of the defaults,
 which are based on enumeration constants. The map will set the value
 of a key whose name is
 .B atype
-for use by template processors.
+(alternate type) as am alternate for the
+.B type
+key for use by template processors.
 .TP
 .BI \-o\  OUTFILE
 This option specifies the output file for template processing, and
@@ -292,39 +299,22 @@ and by the on-line manual for
 This keymap describes a path as a series of straight-line segments,
 quadratic Bezier curves, or cubic Bezier curves. Segments starting or
 terminating with a spline point are converted to cubic Bezier curves.
-When the
-.B \-\-svg
-option is used,
 .I PNAME
 may consist of an identifier, immediately followed by a ":", in turn
 followed by a series of comma-separated path names.  This in effect
 creates a path with a new name that is a concatenation of paths specified
 in EPTS's table. The main use of this variant is to create shapes that
-may have holes in them. The attributes
-.BR \-\-fill ,
-.BR \-\-fillRule ,
-.BR \-\-stroke ,
+may have holes in them.  Only one
+.B \-\-pname
+option may appear. Template options used with the
+.B \-\-pname
+option are
+.BR \-\-elevate ,
+.BR \-\-flatness ,
+.BR \-\-gcs ,
+.BR \-\-limit ,
 and
-.B \-\-stroke-width
-that are used are the ones between the current
-.B \-\-pname
-option and any preceding
-.B \-\-pname
-option, or the start of the command if there is no preceding
-.B \-\-pname
-option. After a
-.B \-\-pname
-these fill and stroke options are reset to their defaults for use
-by following
-.B \-\-pname
-options. With the
-.B \-\-svg
-option is used, multiple
-.B \-\-pname
-options may appear on a single command line, each corresponding to
-a different path. Otherwise only one
-.B \-\-pname
-option may appear.
+.BR \-\-straight .
 .TP
 .B \-\-public
 This option applies when the
@@ -338,14 +328,18 @@ This flag applies when the
 option is used and is ignored otherwise. When set, the path will be
 flattened and converted to straight-line segments.
 .TP
-.BI \-\-stroke\  COLOR
+.BI \-\-stroke\-color\  COLOR
 This option sets the
 .B stroke
+for an SVG
 attribute to
 .I COLOR
-in an SVG path. It applies to a path specified by the next
-.B \-\-pname
-option. The value of
+in an SVG path, and the
+.B drawColor.css
+subparameter for table templates.
+It applies to a path specified by the next
+.B \-\-tname
+option after this options appears. The value of
 .I COLOR
 can be any color specification accepted by SVG (the same as those
 defined by the CSS2 specification). A value of
@@ -353,32 +347,169 @@ defined by the CSS2 specification). A value of
 indicates that no color is specified and the path will not be drawn.
 Named colors are listed at
 .br
-<https://upload.wikimedia.org/wikipedia/commons/2/2b/
-.br
-SVG_Recognized_color_keyword_names.svg>.
+<https://www.w3.org/TR/css-color-3/#svg-color>
 .br
 A '#' followed immediately by 6 hexadecimal digits gives the RGB values
 (two hexadecimal digits in  that order). One can also use the
 expression
 .B rgb(\fIR\fB,\fIG\fB,\fIB\fB)
+or
+.B rgba(\fIR\fB,\fIG\fB,\fIB\fB,\fIA\fB)
 where
 .IR R ,
 .IR B ,
+.IR G ,
 and
-.I G
-vary from 0 to 255, or 0% to 100%.
+.I A
+vary from 0 to 255, or 0% to 100%. An HSL (Hue, Saturation, Lightness)
+specification can also be used, optionally with an alpha component:
+.B hsl(\fIH\fB,\fIS\fB,\fIL\fB)
+or
+.B hsla(\fIH\fB,\fIS\fB,\fIL\fB,\fIA\fB)
+where
+.I H
+is a real number in the range [0, 360),
+.I S
+and
+.I L
+are real numbers (given as a percentage) in the range [0%, 360%],
+.I A
+is a real number in the range [0,1].
+.TP
+.BI \-\-stroke-cap\  VALUE
+This option is
+used for table templates and applies to the path specified by the
+following <CODE>
+.B \-\-tname
+option. Its values can be one of the following:
+.BR butt ,
+which ends unclosed subpaths and dash segments with no added decoration;
+.BR round ,
+which ends unclosed subpaths and dash segments with a round decoration
+that has a radius equalo half the width of the stroke; and
+.BR square ,
+which ends unclosed subpaths and dash segments with a square
+projection that extends beyond the end of the segment by a distance
+equal to half of the stroke width.
+.TP
+.BI \-\-stroke\-dash\-incr\  VALUE
+This
+option is used for table templates and applies to the path
+specified by the following
+.B \-\-tname
+option. The argument
+.I VALUE
+is the length assigned to a "\-</CODE" or "\ " in a dash pattern.
+.I VALUE
+is specified in graph coordinate space when the option
+.B \-\-stroke-gcs-mode is
+.BR true ;
+otherwise it is specified in user-space or image space units.
+.TP
+.BI \-\-stroke\-dash\-pattern\  VALUE
+A dash pattern specifies how dashes are drawn.
+.I VALUE
+will be a sequence of minus signs ("\-") and spaces ("\ "),
+starting with a "\-". The length of
+.I N
+"\-" characters in a row or
+.I N
+spaces in a row is
+.I  N
+multiplied by the dash increment, and corresponds to
+the length of a stroke or gap respectively. The dash pattern will
+repeat.
+.I VALUE
+is specified in graph coordinate space when the option
+.B \-\-stroke\-gcs\-mode
+is
+.BR true ;
+otherwise it is specified in user-space or image space units.
+.TP
+.BI \-\-stroke\-dash\-phase\  VALUE
+This option is used for table templates and applies to the path
+specified by the following
+.B \-\-tname
+option.
+.I VALUE
+is offset to the start of the dash pattern, and is specified in graph
+coordinate space when the option
+.B \-\-stroke\-gcs\-mode
+is
+.BR true ;
+otherwise it is specified in user-space or image space units.
+.TP
+.BI \-\-stroke\-gcs\-mode\  BOOLEAN
+This option is used for table templates and applies to the path
+specified by the following
+.B \-\-tname
+option. The value
+.I BOOLEAN can be
+.B true
+or
+.BR false .
+This option sets the
+.B stroke.gcsMode
+subparameter for table templates, and indicates if stroke dimensions
+are in GCS units or user-space units (the default). For GCS units,
+the value must be
+.BR true .
+.TP
+.BI \-\-stroke\-join\  VALUE
+This option is used for table templates and applies to the path specified
+by the following
+.B \-\-tname
+option. Its values can be one of the following:
+.BR bevel</CODE> ,
+which joins path segments by connecting the outer corners of their
+wide outlines with a straight segment;
+.BR miter</CODE> ,
+which joins path segments by extending their outside edges until they
+meet;
+.BR round</CODE> ,
+which joins path segments by rounding off the corner at a radius of
+half the line width.
+.TP
+.BI \-\-stroke\-miter\-limit\  VALUE
+This
+option is used for table templates and applies to the path
+specified by the following
+.B \-\-tname
+option. The miter limit is the limit such that a line join is trimmed
+when the ratio of miter length to stroke width is greater than this
+value. The miter length is the diagonal length of the miter, which is
+the distance between the inside corner and the outside corner of the
+intersection. The smaller the angle formed by two line segments, the
+longer the miter length and the sharper the angle of intersection. The
+default miterlimit value of 10.0 causes all angles less than 11
+degrees to be trimmed. Trimming miters converts the decoration of the
+line join to a bevel. This value applies only to a line join that has
+a
+.B miter
+join decoration and must be larger than or equal to 1.0.
+.I VALUE
+is specified in graph coordinate space when the option
+.B \-\-stroke-gcs-mode
+is
+.BR true ;
+otherwise it is specified in user-space or image space units.
 .TP
 .BI \-\-stroke-width\  WIDTH
 This option sets the
 .B stroke-width
 attribute to
 .I WIDTH
-in an SVG path. It applies to a path specified by the next
-.B \-\-pname
-option. The value of
+in an SVG path and the
+.B stroke.width
+subparameter for table templates.
+The value of
 .I WIDTH
-is any width acceptable to SVG: a number possibly followed by a unit
-or a '%' symbol.
+is a non-negative positive real number that is specified in graph
+coordinate space when the option
+.B \-\-stroke-gcs-mode
+is
+.BR true ;
+otherwise it is specified in user-space or image-space units.
 .TP
 .B \-\-svg
 This option, if present, must precede all
@@ -395,8 +526,8 @@ options must not be used with this option. The option
 is required, and at least one
 .B \-\-pname
 option should be present.  The options
-.BR \-\-fill ,
-.BR \-\-fillRule ,
+.BR \-\-fill\-color ,
+.BR \-\-winding\-rule ,
 .BR \-\-stroke ,
 and
 .B \-\-stroke-width
@@ -443,7 +574,7 @@ creates a path with a new name that is a concatenation of paths specified
 in EPTS's table. Before each
 .B \-\-tname
 option, there may be a
-.B \-\-windingRule
+.B \-\-winding\-rule
 option. Multiple
 .B \-\-tname
 options may be used. If any are present, only the specified portions of
@@ -457,7 +588,7 @@ The
 option should be used as well and should set the port number to a non-zero
 value.
 .TP
-.BI \-\-windingRule\  RULE
+.BI \-\-winding\-rule\  RULE
 This option, when present, adds a winding rule for use with table
 templates when the
 .B \-\-tname
@@ -468,21 +599,23 @@ option is seen, the winding rule removed.  The values of
 may be
 .B evenodd
 or
-.BR nonzero ,
-the same names as used by the
-.B \-\-fillRule
-option that is used with the
-.B \-\-svg
-option. The
-.B \-\-windingRule
+.BR nonzero .
+The
+.B \-\-fill\-rule
+option is a synonym. The
+.B \-\-winding\-rule
 option sets a template-table keymap directive as described in the
 documentation for
 .BR epts (5)
-and in the on-line manual. It is an error to use this option when a
+and in the on-line manual.
+.TP
+.BI \-\-zorder\  VALUE
+This option, when present, adds a Z-order  for use with table
+templates when the
 .B \-\-tname
-option is not present or when this option does not precede a
+option is used, and must precede that option. After a
 .B \-\-tname
-option.
+option is seen, the value is removed. The value is a long integer.
 .SH SCRUNNER OPTIONS
 .PP
 Most of the options EPTS supports are ones that are shared with the
@@ -569,115 +702,57 @@ is used, the template should be a path-iterator template.
 The table templates are the following:
 .TP
 .B sresource:ECMAScript
-This option will print the information included in the EPTS table. Each
-path or location is represented by an ECMAScript variable. For locations,
-the value assigned to the variable is an object whose properties
+This option will print the
+information included in the EPTS table. Each path or location is
+represented by an ECMAScript variable. For locations, the value
+assigned to the variable is an object whose properties
 .B x
-and
-.B y
-provide the coordinates of the point. For paths, the value assigned
-to a variable is an array of objects, each providing the properties
-.BR type ,
-.BR x ,
-and
-.BR y .  The value for
-.B type
-is a string and the values
-for
-.B x
-and
-.B y
-are numbers giving coordinates. The values for
-.B type
-are
-.BR "CLOSE" ,
-.BR "MOVE_TO" ,
-.BR "SEG_END" ,
-.BR "CONTROL" ,
-or
-.BR "SPLINE" .
-The units for
-.B x
-and
-.B y
-are graph-coordinate-space units. One may use the
+and .B y
+provide the coordinates of the
+point. For paths, if stroke or color options are not used, the
+object will be an array of objects, each describing a control
+point. In this case, the value assigned to the variable will be
+an object that can be used to configure an instance of
+.B org.bzdev.geom.SplinePathBuilder</CODE>. When the corresponding
 .B \-\-tname
-option to include only specific paths and optionally to use a new variable name
-that represents a single path or the concatenation of multiple paths.
-The list of objects provided can be used to configure instance of the
-Java class
-.BR org.bzdev.AnimationPath2DFactory .
+option\'s arguement names a single EPTS path,
+the array can also be used to configure an instance of
+.B org.bzdev.anim2d.AnimationPath2DFactory
+or
+.B org.bzdev.geom.BasicSplinePathBuilder</CODE>. If a stroke or
+color option is provided,
+the object will be an array of two objects, where the first object
+describes a stroke, color, and Z-order, and where the second
+object contains an array of control points describing the path
+itself.  Because of the constraints imposed by the class
+.B AnimationPath2DFactory
+the corresponding
+.B \-\-tname
+option must name a single EPTS path when a
+stroke or color option is provided.
 .TP
 .B sresource:ECMAScriptLayers
 This option will print the information included in the EPTS
 table. Each path is represented by an ECMAScript variable. Location
-entries are ignored.  For paths, the value assigned to a variable is
-an array of objects, all providing the property
-.BR type ,
-and most providing the properties
-.B x
-and
-.BR y .
-The value for
-.B type
-is a string and the values for
-.B x
-and
-.B y
-are numbers giving coordinates. The values for
-.B type are
-.BR "PATH_START" ,
-.BR "SEG_CLOSE" ,
-.BR "MOVE_TO" ,
-.BR "SEG_END",
-.BR "CONTROL_POINT",
-.BR "SPLINE_POINT" ,
-and
-.BR "PATH_END" .
-The units for
-.B x
-and
-.B y
-are graph-coordinate-space units. For the types
-.BR "PATH_START" ,
-.BR "SEG_CLOSE" ,
-and
-.BR "PATH_END",
-the
-.B x
-and
-.B y
-properties are omitted.
+entries are ignored.  For each
+.B --tname
+option, or
+all paths if there are no
+.B --tname
+options, the
+value assigned to each variable will be an array of objects.
+The array can be used to configure an instance of
+.B org.bzdev.anim2d.AnimationLayer2DFactory</CODE>.
 One may use the
-.B \-\-tname
-option to include only specific paths and optionally to use a new
-variable name that represents a single path or the concatenation of
-multiple paths. When the
-.B \-\-tname
+.B --tname
+option to include only
+specific paths and optionally to use a new variable name that
+represents a single path or the concatenation of multiple paths.
+When a
+.B --tname
 option is used, a
-.B windingRule
-property may be present in objects whose
-.B type
-property is
-.B "PATH_START".
-This template differs from the
-.B sresource:ECMAScript
-template in that the list of objects generated are ones that can be
-used to create animation layers using a factory, as described in the
-documentation for
-.BR org.bzdev.anim2d.AnimationLayer2DFactory .
-.TP
-.B sresource:ECMAScriptLayerPaths
-This option provides the same objects as produced
-by the
-.B sresource:ECMAScriptLayers
-except that the objects whose
-.B type
-properties have the values
-.B "PATH_START"
-and
-.B "PATH_END"
-are omitted.
+.B --winding-rule</CODE>
+option may be used, as can color or stroke options.
 .TP
 .B sresource:ECMAScriptLocations
 This template provides the same ECMAScript statements that the
@@ -688,23 +763,6 @@ template produces, but only locations are included, not paths.
 This template provides the same ECMAScript statements that the
 .B sresource:ECMAScript
 template produces, but only paths are included, not locations.
-.TP
-.B sresource:Java
-This template provides a Java class containing fields that are
-instances of the Java class
-.B org.bzdev.geom.SplinePathBuilder
-or
-.B java.awt.geom.Path2D
-with each field named either by a location name provided in a
-.B \-\-tname option
-or by the primary name (the name before a colon) provided in a
-.B \-\-tname
-option for a path. If there are no
-.B \-\-tname
-options, the field names are the names of all the paths and locations
-defined in the EPTS table. Multiple
-.B \-\-tname
-options are allowed.
 .TP
 .B sresource:JavaLocations
 This template provides a Java class containing fields that are
@@ -719,7 +777,7 @@ the EPTS table.  Multiple
 .B \-\-tname
 options are allowed.
 .TP
-.B sresource:JavaPaths
+.B sresource:JavaPathBuilders
 This template provides a Java class containing fields that are
 instances of the Java class
 .B org.bzdev.geom.SplinePathBuilder
@@ -734,7 +792,26 @@ options, the field names are the names of all the paths defined in
 the EPTS table. Multiple
 .B \-\-tname
 options are allowed.
-ll.PP
+.TB
+.B sresource:JavaPathFactories
+This template provides a Java class containing fields that are
+instances of the Java interface
+.B org.bzdev.obnaming.NamedObjectFactory.IndexedSetter
+with each field named by the name provided by a
+.B --tname
+option for a path. If there are no
+.B --tname
+options, the field names are the names of all the paths defined in the
+EPTS table.  The arguments to the
+.B --tname
+options must be simple names that match the names of paths defined in
+the EPTS table. For a specific
+.B --tname
+option, color or stroke options can be specified (these must precede
+the
+.B --tname
+option to which they apply).
+.PP
 The path-iterator templates are the following:
 .TP
 .B sresource:area
@@ -771,7 +848,7 @@ user-space units.
 .TP
 .B sresource:SegmentsCSV
 This template requires the use of a
-.B pname
+.B \-\-pname
 option to specify a path name, or to create a new path that is the
 concatenation of several existing paths.  The template will create its
 out in CSV (Comma Separated Values) format, describing the specified
@@ -802,20 +879,20 @@ The values for these are numbers or empty strings.
 The following are examples of how to run EPTS using the command-line
 interface:
 .TP
-.B epts saved.epts
+.B epts\ saved.epts
 Start EPTS, restoring its state to one saved in a previous session.
 .TP
-.B epts --codebase foo.jar saved.epts
+.B epts\ \-\-codebase\ foo.jar\ saved.epts
 Start EPTS, restoring its state to one saved in a previous session,
 adding a jar file
 .B foo.jar
 to EPTS's code base.
 .TP
-.B epts --image image.png
+.B epts\ \-\-image\ image.png
 Start EPTS with an image preloaded as its
 background.
 .TP
-.B epts --script a2d commands.js
+.B epts\ \-\-script\ a2d\ commands.js
 Start EPTS and run the script provided in commands.js to generate
 an image from an animation
 .B a2d
@@ -823,7 +900,7 @@ an image from an animation
 .BR org.bzdev.anim2d.Animation2D ).
 .TP
 .B
-epts --codebase foo.jar --script a2d commands.js
+epts\ \-\-codebase\ foo.jar\ \-\-script\ a2d\ commands.js
 Start EPTS and run the script provided in commands.js to generate
 an image from an animation
 .B a2d
@@ -831,19 +908,19 @@ an image from an animation
 .BR org.bzdev.anim2d.Animation2D ).
 The file foo.jar contains
 additional classes needed by the script. The
-.B --codebase
+.B \-\-codebase
 option
 will be needed when restarting EPTS using a saved state
 created when this command is being run.
 .TP
-.B epts -o out.js --template:ECMAScript saved.epts
+.B epts\ \-o\ out.js\ \-\-template:ECMAScript\ saved.epts
 Run EPTS without a GUI to generate a file
 .B out.js
 containing
 a series of ECMAScript statements containing the contents
 of the EPTS table.
 .TP
-.B epts -o out.svg --svg --fill red --pname s:c1,c2 saved.epts
+.B epts\ \-o\ out.svg\ \-\-svg\ \-\-fill red\ \-\-pname s:c1,c2\ saved.epts
 Run EPTS without a GUI to generate an SVG file
 .B out.svg
 containing a shape
@@ -855,7 +932,7 @@ and
 defined in the EPTS table.  The table is the one defined by the file
 .B saved.epts
 .TP
-.B epts -o - --gcs --template:area -pname s:c1,c2
+.B epts\ \-o\ \-\ \-\-gcs\ \-\-template:area\ \-\-pname s:c1,c2
 Run EPTS without a GUI to compute the area of a shape bounded by the
 curves
 .B c1
@@ -864,12 +941,12 @@ and
 The area is in GCS units.
 .SH FILES
 .TP
-.I /etc/bzdev/scrunner.conf\ \fRor\fI\ /etc/opt/bzdev/scrunner.conf
+.B /etc/bzdev/scrunner.conf\ \fRor\fB\ /etc/opt/bzdev/scrunner.conf
 System configuration file that allows a specific Java launcher, class-path
 entries, and property definitions to be used. The form starting with
 /etc/opt may be used on some systems (e.g. Solaris).
 .TP
-.I ~/.config/bzdev/scrunner.conf
+.B ~/.config/bzdev/scrunner.conf
 User configuration file that allows a specific Java launcher, class-path
 entries, and property definitions to be used.  property definitions in this
 file override those in the system configuration file.

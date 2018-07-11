@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,9 +34,14 @@ import javax.script.ScriptException;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import org.bzdev.graphs.Colors;
 import org.bzdev.graphs.Graph;
+import org.bzdev.lang.UnexpectedExceptionError;
 import org.bzdev.net.URLClassLoaderOps;
 import org.bzdev.net.URLPathParser;
+import org.bzdev.obnaming.misc.BasicStrokeParm;
+import org.bzdev.obnaming.misc.BasicStrokeParm.Cap;
+import org.bzdev.obnaming.misc.BasicStrokeParm.Join;
 import org.bzdev.scripting.Scripting;
 import org.bzdev.swing.ErrorMessage;
 import org.bzdev.swing.WholeNumbTextField;
@@ -433,28 +439,45 @@ public class EPTS {
 
     static int width = 1024;
     static int height = 1024;
-    /*
-    static double xgcs = 0.0;
-    static double ygcs = 0.0;
-    static double xf = 0.0;
-    static double yf = 0.0;
-    static double scaleFactor = 1.0;
-    */
-    private static class SVGInfo {
-	String pname;
-	String[] pnameArray;
-	String stroke = "#000000";
-	String strokeWidth = "1.0";
-	String fill = "none";
-	String fillRule = "evenodd";
-	public SVGInfo() {}
-    }
 
     public static class FilterInfo {
 	String name;
 	String[] nameArray;
+	// SVG only
+	String stroke = "none";
+	String fillSVG = "none";
+	String fillRule = "evenodd";
+	// other templates
 	String windingRule = null;
+	String draw = "false";
+	String fill = "false";
+	String gcsMode;
+	String drawColor;
+	String fillColor;
+	String strokeCap;
+	String dashIncrement;
+	String dashPhase;
+	String dashPattern;
+	String strokeJoin;
+	String miterLimit;
+	String strokeWidth;
+	String zorder;
+	public FilterInfo() {}
     }
+
+    static String getDashArray(String dashPattern, String dashIncrement)
+	throws IllegalArgumentException
+    {
+	double dashIncr = Double.parseDouble(dashIncrement);
+	float[] array = BasicStrokeParm.getDashArray(dashPattern, dashIncr);
+	StringBuilder sb = new StringBuilder();
+	for (int i = 0; i < array.length; i++) {
+	    if (i > 0) sb.append(",");
+	    sb.append("" + (double)array[i]);
+	}
+	return sb.toString();
+    }
+
 
     static boolean stackTrace = false;
     static void printStackTrace(Throwable e, PrintStream out) {
@@ -557,7 +580,6 @@ public class EPTS {
 		    msg = errorMsg("exception2", cn, e.getMessage());
 		}
 		System.err.println(msg);
-		// System.err.println("scrunner: " + e.getMessage());
 		while (cause != null) {
 		    Class<?> clasz = cause.getClass();
 		    Class<?> target =
@@ -593,10 +615,170 @@ public class EPTS {
 	}
     }
 
+    static String parseArgument(String option, String arg, Class<?> clazz) {
+	return parseArgument(option, arg, clazz, null, false, null, false);
+    }
+
+    static String parseArgument(String option, String arg, Class<?> clazz,
+				String lower, boolean lowerClosed,
+				String upper, boolean upperClosed)
+	throws IllegalArgumentException, NumberFormatException
+    {
+	try {
+	    if (clazz.equals(Boolean.class)) {
+		arg = arg.trim().toLowerCase();
+		if (arg.equals("true")) {
+		    return "true";
+		} else if (arg.equals("false")) {
+		    return "false";
+		} else {
+		    throw new IllegalArgumentException
+			(errorMsg("notBoolean", option, arg));
+		}
+	    } else if (clazz.equals(Integer.class))
+		{
+		int val = Integer.parseInt(arg);
+		if (lower != null) {
+		    int bound = Integer.parseInt(lower);
+		    if (lowerClosed) {
+			if (val < bound) {
+			    throw new IllegalArgumentException
+				(errorMsg("outofRange", option, arg));
+			}
+		    } else {
+			if (val <= bound) {
+			    throw new IllegalArgumentException
+				(errorMsg("outofRange", option, arg));
+			}
+		    }
+		}
+		if (upper != null) {
+		    int bound = Integer.parseInt(upper);
+		    if (upperClosed) {
+			if (val > bound) {
+			    throw new IllegalArgumentException
+				(errorMsg("outofRange", option, arg));
+			}
+		    } else {
+			if (val >= bound) {
+			    throw new IllegalArgumentException
+				(errorMsg("outofRange", option, arg));
+			}
+		    }
+		}
+		return arg;
+	    } else if (clazz.equals(Long.class))
+		{
+		long val = Long.parseLong(arg);
+		if (lower != null) {
+		    long bound = Long.parseLong(lower);
+		    if (lowerClosed) {
+			if (val < bound) {
+			    throw new IllegalArgumentException
+				(errorMsg("outofRange", option, arg));
+			}
+		    } else {
+			if (val <= bound) {
+			    throw new IllegalArgumentException
+				(errorMsg("outofRange", option, arg));
+			}
+		    }
+		}
+		if (upper != null) {
+		    long bound = Long.parseLong(upper);
+		    if (upperClosed) {
+			if (val > bound) {
+			    throw new IllegalArgumentException
+				(errorMsg("outofRange", option, arg));
+			}
+		    } else {
+			if (val >= bound) {
+			    throw new IllegalArgumentException
+				(errorMsg("outofRange", option, arg));
+			}
+		    }
+		}
+		return arg;
+	    } else if (clazz.equals(Double.class)) {
+		double val = Double.parseDouble(arg);
+		if (lower != null) {
+		    double bound = Double.parseDouble(lower);
+		    if (lowerClosed) {
+			if (val < bound) {
+			    throw new IllegalArgumentException
+				(errorMsg("outofRange", option, arg));
+			}
+		    } else {
+			if (val <= bound) {
+			    throw new IllegalArgumentException
+				(errorMsg("outofRange", option, arg));
+			}
+		    }
+		}
+		if (upper != null) {
+		    double bound = Double.parseDouble(upper);
+		    if (upperClosed) {
+			if (val > bound) {
+			    throw new IllegalArgumentException
+				(errorMsg("outofRange", arg));
+			}
+		    } else {
+			if (val >= bound) {
+			    throw new IllegalArgumentException
+				(errorMsg("outofRange", arg));
+			}
+		    }
+		}
+		return arg;
+	    } else if (clazz.equals(Color.class)) {
+		try {
+		    return parseColor(arg);
+		} catch (IllegalArgumentException ec) {
+		    throw new IllegalArgumentException
+			(errorMsg("colorFormat", option, arg), ec);
+		}
+	    } else if (clazz.equals(BasicStrokeParm.Cap.class)) {
+		arg = arg.trim().toUpperCase();
+		BasicStrokeParm.Cap.valueOf(arg);
+		return arg;
+	    } else if (clazz.equals(BasicStrokeParm.Join.class)) {
+		arg = arg.trim().toUpperCase();
+		BasicStrokeParm.Join.valueOf(arg);
+		return arg;
+	    } else {
+		throw new UnexpectedExceptionError();
+	    }
+	} catch (NumberFormatException e) {
+	    throw new IllegalArgumentException
+		(errorMsg("numberFormat", option, arg), e);
+	}
+    }
+
+    // Convert to rgb or rgba syntax to make minimal assumptions about
+    // how such colors might be used.
+    static String parseColor(String cssSpec) throws IllegalArgumentException {
+	if (cssSpec.equals("none")) {
+	    return null;
+	}
+	int[] components = Colors.getComponentsByCSS(cssSpec);
+	if (components.length == 3) {
+	    return String.format((Locale)null, "rgb(%d,%d,%d)",
+				 components[0],
+				 components[1],
+				 components[2]);
+	} else if (components.length == 4) {
+	    return String.format((Locale)null, "rgba(%d,%d,%d,%d)",
+				 components[0],
+				 components[1],
+				 components[2],
+				 components[3]);
+	} else {
+	    return null;
+	}
+    }
 
     static void init(String argv[]) throws Exception {
 	int index = -1;
-	
 	int port = 0;
 
 	ArrayList<String> jargsList = new ArrayList<>();
@@ -622,10 +804,8 @@ public class EPTS {
 	boolean elevate = false;
 	boolean gcs = false;
 	boolean svg = false;
-	SVGInfo svgInfo = new SVGInfo();
-	ArrayList<SVGInfo> svgInfoList = new ArrayList<>();
+	FilterInfo filterInfo = new FilterInfo();
 	ArrayList<FilterInfo> filterInfoList = new ArrayList<>();
-	String windingRule = null;
 	boolean meters = true;
 
 	String pkg = null;
@@ -656,8 +836,7 @@ public class EPTS {
 		    if (arg.startsWith("-J")) arg = arg.substring(2);
 		    int ind = arg.indexOf('=');
 		    if (ind < 0) {
-			System.err.println("scrunner: bad argument \""
-					   + arg + "\"");
+			System.err.println(errorMsg("badArgument", arg));
 			System.exit(1);
 		    }
 		    String[] pair = new String[2];
@@ -666,9 +845,7 @@ public class EPTS {
 		    String name = pair[0];
 		    String value = pair[1];
 		    if (propertyNotAllowed(name)) {
-			System.err.println("epts: bad argument "
-					   +"(cannot set property \"" 
-					   + name + "\")");
+			System.err.println(errorMsg("badArgProp", name));
 			System.exit(1);
 		    }
 		    if (name.equals("scrunner.sysconf")) {
@@ -714,6 +891,11 @@ public class EPTS {
 			argsList.add(argv[index]);
 		    }
 		    index++;
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
 		    if (!alreadyForked) {
 			argsList.add(argv[index]);
 		    }
@@ -738,7 +920,7 @@ public class EPTS {
 			System.err.println
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
-		    }
+	    }
 		    try {
 			port = Integer.parseInt(argv[index]);
 		    } catch (Exception e) {
@@ -764,26 +946,147 @@ public class EPTS {
 		    svg = true;
 		    limit = 0;
 		    flatness = 0.0;
-		    templateURL = new URL("sresource:SVG.tpl");
+		    templateURL = new URL("sresource:SVG");
 		    argsList.add(argv[index]);
-		} else if (argv[index].equals("--fill-rule")) {
+		} else if (argv[index].equals("--stroke-color")) {
 		    index++;
-		    svgInfo.fillRule = argv[index];
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    String css = parseArgument(argv[index-1], argv[index],
+					       Color.class);
+		    filterInfo.stroke = (css == null)? "none": css;
+		    if (css != null) {
+			filterInfo.draw = "true";
+			filterInfo.drawColor = css;
+		    }
 		    argsList.add(argv[index-1]);
 		    argsList.add(argv[index]);
-		} else if (argv[index].equals("--stroke")) {
+		} else if (argv[index].equals("--stroke-gcs-mode")) {
 		    index++;
-		    svgInfo.stroke = argv[index];
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    filterInfo.gcsMode =
+			parseArgument(argv[index-1], argv[index],
+				      Boolean.class);
+		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
+		} else if (argv[index].equals("--stroke-cap")) {
+		    index++;
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    filterInfo.strokeCap =
+			parseArgument(argv[index-1], argv[index],
+				      BasicStrokeParm.Cap.class);
+		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
+		} else if (argv[index].equals("--stroke-dash-incr")) {
+		    index++;
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    filterInfo.dashIncrement =
+			parseArgument(argv[index-1], argv[index],
+				      Double.class,
+				      "0.0", true, null, false);
+		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
+		} else if (argv[index].equals("--stroke-dash-pattern")) {
+		    index++;
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    filterInfo.dashPattern = argv[index];
+		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
+		} else if (argv[index].equals("--stroke-dash-phase")) {
+		    index++;
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    filterInfo.dashPhase =
+			parseArgument(argv[index-1],argv[index],
+				      Double.class,
+				      null, true, null, false);
+		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
+		} else if (argv[index].equals("--stroke-join")) {
+		    index++;
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    filterInfo.strokeJoin =
+			parseArgument(argv[index-1], argv[index],
+				      BasicStrokeParm.Join.class);
+		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
+		} else if (argv[index].equals("--stroke-miter-limit")) {
+		    index++;
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    filterInfo.miterLimit =
+			parseArgument(argv[index-1],argv[index],
+				      Double.class,
+				      "1.0", true, null, false);
 		    argsList.add(argv[index-1]);
 		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--stroke-width")) {
 		    index++;
-		    svgInfo.strokeWidth=argv[index];
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    filterInfo.strokeWidth = argv[index];
 		    argsList.add(argv[index-1]);
 		    argsList.add(argv[index]);
-		} else if (argv[index].equals("--fill")) {
+		} else if (argv[index].equals("--fill-color")) {
 		    index++;
-		    svgInfo.fill = argv[index];
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    String css = parseArgument(argv[index-1], argv[index],
+					       Color.class);
+		    filterInfo.fillSVG = (css == null)? "none": css;
+		    if (css != null) {
+			filterInfo.fill = "true";
+			filterInfo.fillColor = css;
+		    }
+		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
+		} else if (argv[index].equals("--zorder")) {
+		    index++;
+		    if (index == argv.length) {
+			System.err.println
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    filterInfo.zorder =
+			parseArgument(argv[index-1],argv[index],
+				      Long.class,
+				      null, false , null, false);
+
 		    argsList.add(argv[index-1]);
 		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--web")) {
@@ -850,14 +1153,6 @@ public class EPTS {
 		    } else {
 			pnameArray = new String[1];
 			pnameArray[0] = pname;
-		    }
-		    if (svg) {
-			svgInfo.pname = pname;
-			svgInfo.pnameArray = pnameArray;
-			svgInfoList.add(svgInfo);
-			svgInfo = new SVGInfo();
-			pname = null;
-			pnameArray = null;
 		    }
 		    argsList.add(argv[index-1]);
 		    argsList.add(argv[index]);
@@ -972,24 +1267,10 @@ public class EPTS {
 			tnameArray = new String[1];
 			tnameArray[0] = tname;
 		    }
-		    FilterInfo fi = new FilterInfo();
-		    fi.name = tname;
-		    fi.nameArray = tnameArray;
-		    if (windingRule != null) {
-			if (windingRule.equals("evenodd")) {
-			    fi.windingRule = "WIND_EVEN_ODD";
-			} else if (windingRule.equals("nonzero")) {
-			    fi.windingRule = "WIND_NON_ZERO";
-			} else {
-			    System.err.println
-				("unrecognized winding rule: " + windingRule);
-			    System.exit(1);
-			}
-		    } else {
-			fi.windingRule = null;
-		    }
-		    windingRule  = null;
-		    filterInfoList.add(fi);
+		    filterInfo.name = tname;
+		    filterInfo.nameArray = tnameArray;
+		    filterInfoList.add(filterInfo);
+		    filterInfo = new FilterInfo();
 		    argsList.add(argv[index-1]);
 		    argsList.add(argv[index]);
 		} else if (argv[index].equals("-o")) {
@@ -1001,22 +1282,40 @@ public class EPTS {
 		    }
 		    outName = argv[index];
 		    if (!outName.equals("-")) {
-			if ((new File(outName).canWrite()) == false) {
-			    System.err.println
-				(errorMsg("cannotWrite", outName));
-			    System.exit(1);
+			File f = new File(outName);
+			f = f.getCanonicalFile();
+			if (f.exists()) {
+			    if (f.canWrite() == false) {
+				System.err.println
+				    (errorMsg("cannotWrite", outName));
+				System.exit(1);
+			    }
+			} else {
+			    if (f.getParentFile().canWrite() == false) {
+				System.err.println
+				    (errorMsg("cannotWrite", outName));
+				System.exit(1);
+			    }
 			}
 		    }
 		    argsList.add(argv[index-1]);
 		    argsList.add(argv[index]);
-		} else if (argv[index].equals("--windingRule")) {
+		} else if (argv[index].equals("--winding-rule")) {
 		    index++;
 		    if (index == argv.length) {
 			System.err.println
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
-		    windingRule = argv[index];
+		    String windingRule = argv[index];
+		    if (windingRule.equals("evenodd")) {
+			filterInfo.windingRule = "WIND_EVEN_ODD";
+		    } else if (windingRule.equals("nonzero")) {
+			filterInfo.windingRule = "WIND_NON_ZERO";
+		    } else {
+			String msg = errorMsg("badWindingRule", windingRule);
+			System.exit(1);
+		    }
 		    argsList.add(argv[index-1]);
 		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--int")) {
@@ -1401,6 +1700,8 @@ public class EPTS {
 			    new EPTSWindow(parser, new File(filename));
 			}
 		    } else {
+			TemplateProcessor.KeyMap emptyMap
+			    = new TemplateProcessor.KeyMap();
 			OutputStream os;
 			if (outName.equals("-")) {
 			    os = System.out;
@@ -1429,19 +1730,48 @@ public class EPTS {
 			    svgmap.put("height", "" + parser.getHeight());
 			    TemplateProcessor.KeyMapList kmaplist =
 				new TemplateProcessor.KeyMapList();
-			    for (SVGInfo info: svgInfoList) {
+			    for (FilterInfo info: filterInfoList) {
 				TemplateProcessor.KeyMap kmap
 				    = EPTSWindow.getPathKeyMap(ptmodel,
-							       info.pname,
-							       info.pnameArray,
+							       info.name,
+							       info.nameArray,
 							       flatness, limit,
 							       straight,
 							       elevate,
 							       gcs);
 				kmap.put("fillRule", info.fillRule);
 				kmap.put("stroke", info.stroke);
-				kmap.put("strokeWidth", info.strokeWidth);
-				kmap.put("fill", info.fill);
+				kmap.put("fill", info.fillSVG);
+				if (info.strokeCap != null) {
+				    kmap.put("strokeCap",
+					     info.strokeCap.toLowerCase());
+				    kmap.put("hasStrokeCap", emptyMap);
+				}
+				if (info.dashPhase != null) {
+				    kmap.put("dashPhase", info.dashPhase);
+				    kmap.put("hasDashPhase", emptyMap);
+				}
+				if (info.dashPattern != null &&
+				    info.dashIncrement != null) {
+				    String dashArray =
+					getDashArray(info.dashPattern,
+						     info.dashIncrement);
+				    kmap.put("dashArray", dashArray);
+				    kmap.put("hasDashArray", emptyMap);
+				}
+				if (info.strokeJoin != null) {
+				    kmap.put("strokeJoin",
+					     info.strokeJoin.toLowerCase());
+				    kmap.put("hasStrokeJoin", emptyMap);
+				}
+				if (info.miterLimit != null) {
+				    kmap.put("miterLimit", info.miterLimit);
+				    kmap.put("hasMiterLimit", emptyMap);
+				}
+				if (info.strokeWidth != null) {
+				    kmap.put("strokeWidth", info.strokeWidth);
+				    kmap.put("hasStrokeWidth", emptyMap);
+				}
 				kmaplist.add(kmap);
 			    }
 			    svgmap.put("paths", kmaplist);
@@ -1455,13 +1785,12 @@ public class EPTS {
 						  (double)parser.getHeight());
 			    if (pkg != null) {
 				kmap.put("package", pkg);
-				kmap.put("hasPackage",
-					 new TemplateProcessor.KeyMap());
+				kmap.put("hasPackage", emptyMap);
 			    }
 			    if (clazz != null) {
 				kmap.put("class", clazz);
-				kmap.put("hasClass",
-					 new TemplateProcessor.KeyMap());
+			    } else {
+				kmap.put("class", "GeneratedByEPTS");
 			    }
 			    if (isPublic) {
 				kmap.put("public", "public");
@@ -1472,15 +1801,70 @@ public class EPTS {
 			    TemplateProcessor.KeyMap kmap =
 				ptmodel.getKeyMap(map,
 						  (double)parser.getHeight());
+			    if (filterInfo.windingRule != null) {
+				kmap.put("windingRule", filterInfo.windingRule);
+				kmap.put("hasWindingRule", emptyMap);
+			    }
+			    kmap.put("draw", filterInfo.draw);
+			    kmap.put("fill", filterInfo.fill);
+
+			    if (filterInfo.draw.equals("true")
+				|| filterInfo.fill.equals("true")) {
+				kmap.put("hasAttributes", emptyMap);
+			    }
+
+			    if (filterInfo.gcsMode != null) {
+				kmap.put("gcsMode", filterInfo.gcsMode);
+				kmap.put("hasGcsMode", emptyMap);
+			    }
+			    if (filterInfo.drawColor != null) {
+				kmap.put("drawColor", filterInfo.drawColor);
+				kmap.put("hasDrawColor", emptyMap);
+			    }
+			    if (filterInfo.fillColor != null) {
+				kmap.put("fillColor", filterInfo.fillColor);
+				kmap.put("hasFillColor", emptyMap);
+			    }
+			    if (filterInfo.strokeCap != null) {
+				kmap.put("strokeCap", filterInfo.strokeCap);
+				kmap.put("hasStrokeCap", emptyMap);
+			    }
+			    if (filterInfo.dashIncrement != null) {
+				kmap.put("dashIncrement",
+					 filterInfo.dashIncrement);
+				kmap.put("hasDashIncrement", emptyMap);
+			    }
+			    if (filterInfo.dashPhase != null) {
+				kmap.put("dashPhase", filterInfo.dashPhase);
+				kmap.put("hasDashPhase", emptyMap);
+			    }
+			    if (filterInfo.dashPattern != null) {
+				kmap.put("dashPattern", filterInfo.dashPattern);
+				kmap.put("hasDashPattern", emptyMap);
+			    }
+			    if (filterInfo.strokeJoin != null) {
+				kmap.put("strokeJoin", filterInfo.strokeJoin);
+				kmap.put("hasStrokeJoin", emptyMap);
+			    }
+			    if (filterInfo.miterLimit != null) {
+				kmap.put("miterLimit", filterInfo.miterLimit);
+				kmap.put("hasMiterLimit", emptyMap);
+			    }
+			    if (filterInfo.strokeWidth != null) {
+				kmap.put("strokeWidth", filterInfo.strokeWidth);
+				kmap.put("hasStrokeWidth", emptyMap);
+			    }
+			    if (filterInfo.zorder != null) {
+				kmap.put("zorder", filterInfo.zorder);
+				kmap.put("hasZorder", emptyMap);
+			    }
 			    if (pkg != null) {
 				kmap.put("package", pkg);
-				kmap.put("hasPackage",
-					 new TemplateProcessor.KeyMap());
+				kmap.put("hasPackage", emptyMap);
 			    }
 			    if (clazz != null) {
 				kmap.put("class", clazz);
-				kmap.put("hasClass",
-					 new TemplateProcessor.KeyMap());
+				kmap.put("hasClass", emptyMap);
 			    }
 			    if (isPublic) {
 				kmap.put("public", "public");
