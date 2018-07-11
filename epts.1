@@ -173,7 +173,9 @@ defined by the CSS2 specification). A value of
 .B none
 indicates that no color is specified and the path will not be filled.
 Named colors are listed at
-<https://upload.wikimedia.org/wikipedia/commons/2/2b/SVG_Recognized_color_keyword_names.svg>.
+<https://upload.wikimedia.org/wikipedia/commons/2/2b/
+.br
+SVG_Recognized_color_keyword_names.svg>.
 A '#' followed immediately by 6 hexadecimal digits gives the RGB values
 (two hexadecimal digits in  that order). One can also express RGB values,
 possibly  with an optional alpha component, by the
@@ -386,7 +388,7 @@ option. Its values can be one of the following:
 which ends unclosed subpaths and dash segments with no added decoration;
 .BR round ,
 which ends unclosed subpaths and dash segments with a round decoration
-that has a radius equalo half the width of the stroke; and
+that has a radius equal to half the width of the stroke; and
 .BR square ,
 which ends unclosed subpaths and dash segments with a square
 projection that extends beyond the end of the segment by a distance
@@ -546,15 +548,26 @@ The format of the template file depends on whether or not the
 .B \-\-pname
 flag has been set: when set, a path-iterator template must be used;
 otherwise a table template must be used. There are a number of
-built-in templates whose URLs start with the protocol "sresource" For
-table templates, these are <sresource:ECMAScriptLayers>,
-<sresource:ECMAScriptLayerPaths>, <sresource:EMCAScriptLocations>,
-<sresource:EMCAScriptPaths>, <sresource:ECMAScript>, <sresource:Java>,
-,<sresource:JavaLocations> and <sresource:JavaPaths>, where "<" and
-">" as usual are not part of the URLs. For path-iterator templates,
-the URLs are <sresource:area>, <sresource:circumference>,
-<sresource:pathlength>, and <sresource:SegmentsCSV>. These templates
-are described below.
+built-in templates whose URLs start with the protocol
+.BR sresource .
+For table templates, the pathname component of the URLs (separated
+from the protocol by a ":") are
+.BR ECMAScriptLayers ,
+.BR ECMAScriptLayerPaths ,
+.BR EMCAScriptLocations ,
+.BR sresource:EMCAScriptPaths ,
+.BR ECMAScript ,
+.BR JavaLocations,
+.BR JavaPathBuilders ,
+and
+.BR JavaPaths .
+For path-iterator templates, the pathname component of the URLs are
+.BR area ,
+.BR circumference ,
+.BR pathlength ,
+and
+.BR SegmentsCSV .
+These templates are described below.
 .TP
 .BI \-\-tname\  TNAME
 This option's argument
@@ -715,7 +728,7 @@ point. In this case, the value assigned to the variable will be
 an object that can be used to configure an instance of
 .B org.bzdev.geom.SplinePathBuilder</CODE>. When the corresponding
 .B \-\-tname
-option\'s arguement names a single EPTS path,
+option\'s argument names a single EPTS path,
 the array can also be used to configure an instance of
 .B org.bzdev.anim2d.AnimationPath2DFactory
 or
@@ -968,4 +981,8 @@ file override those in the system configuration file.
 \"  LocalWords:  EMCAScriptPaths SegmentsCSV tname TNAME windingRule
 \"  LocalWords:  BZDev ECMAScriptLocations ECMAScriptPaths CSV LINETO
 \"  LocalWords:  CUBICTO MOVETO QUADTO png preloaded js fBc CLASSNAME
-\"  LocalWords:  PACKAGENAME JavaLocations JavaPaths
+\"  LocalWords:  PACKAGENAME JavaLocations JavaPaths fillColor css
+\"  LocalWords:  subparameter fIA HSL hsl fIH fIS fIL hsla drawColor
+\"  LocalWords:  rgba unclosed subpaths incr gcsMode miterlimit
+\"  LocalWords:  pathname JavaPathBuilders zorder AnimationPath
+\"  LocalWords:  DFactory JavaPathFactories
