@@ -65,7 +65,7 @@ The EPTS window provides a menu bar containing 6 menus:
   <LI> the <A HREF="#fileMenu"><CODE>File</CODE></A> menu.
   <LI> the <A HREF="#editMenu"><CODE>Edit</CODE></A> menu.
   <LI> the <A HREF="#zoomMenu"><CODE>Zoom</CODE></A> menu.
-  <LI> the <A HREF="#measureMenu"<CODE>Measure Distance</CODE>></A> menu.
+  <LI> the <A HREF="#measureMenu"><CODE>Measure Distance</CODE></A> menu.
   <LI> the <A HREF="#toolsMenu"><CODE>Tools</CODE></A> menu.
   <LI> the <A HREF="#helpMenu"><CODE>Help</CODE></A> menu.
 </UL>
@@ -481,12 +481,10 @@ The built-in templates can be accessed via URLs whose protocol field
 is <CODE>sresource</CODE>. For convenience there is a shortcut: if
 the templates option includes a colon followed by a template name,
 a built-in template with that name will be used. For  example,
-<BLOCKQUOTE><PRE><CODE>
-      epts -o paths.js --template:ECMAScriptPaths
+<BLOCKQUOTE><PRE><CODE> epts -o paths.js --template:ECMAScriptPaths
 </CODE></PRE></BLOCKQUOTE>
 and
-<BLOCKQUOTE><PRE><CODE>
-      epts -o paths.js --template sresource:ECMAScriptPaths
+<BLOCKQUOTE><PRE><CODE> epts -o paths.js --template sresource:ECMAScriptPaths
 </CODE></PRE></BLOCKQUOTE>
 are equivalent. The built-in table templates are the following:
 <UL>
@@ -759,7 +757,7 @@ containing the following directives:
   <LI><B><CODE>hasDashPhase</CODE></B>. This is an iterative directive
     which will provide at most a single iteration. When present (i.e.,
     when the iteration count is 1), there is a single directive:
-    <CODE></CODE>, whose value is the offset at which the dash/gap
+    <CODE>dashPhase</CODE>, whose value is the offset at which the dash/gap
     pattern starts.  The units are GCS units when
     <CODE>gcsMode</CODE> is <CODE>true</CODE> and user-space units
     when <CODE>gcsMode</CODE> is <CODE>false</CODE> or not defined.
@@ -836,7 +834,7 @@ In turn, the <CODE>pathItem</CODE> directive contains the following
 directives:
 <UL>
   <LI><B><CODE>pindex</CODE></B>. The value is "1" for the initial
-    MOVE_TO operation for a path and is incremented for each
+    <CODE>MOVE_TO</CODE> operation for a path and is incremented for each
     control point, spline point, or end-of-segment point, along
     the path, and for a final 'close' directive if there is one.
   <LI><B><CODE>type</CODE></B>. This is the type of a point or operation
@@ -1277,13 +1275,13 @@ The options specific to the EPTS command when templates are used are:
     following <CODE>--tname</CODE> option. Its values can be one of
     the following: <B><CODE>butt</CODE></B>, which ends enclosed
     subpaths and dash segments with no added decoration;
-    <B><CODE>round<CODE></B>, which ends unclosed subpaths
+    <B><CODE>round</CODE></B>, which ends unclosed subpaths
     and dash segments with a round decoration that has a radius equal
     to half the width of the stroke; and
     <B><CODE>square</CODE></B>, which ends enclosed subpaths and dash
     segments with a square projection that extends beyond the end of the
     segment by a distance equal to half of the stroke width.
-  <LI><B><CODE>--stroke-dash-incr</CODE> <EM>VALUE</EM></B>. This
+  <LI><B><CODE>--stroke-dash-incr</CODE></B> <B><EM>VALUE</EM></B>. This
     option is used for table templates and applies to the path
     specified by the following <CODE>--tname</CODE> option. The
     argument <EM>VALUE</EM> is the length assigned to a "<CODE>-</CODE>"
@@ -1291,7 +1289,7 @@ The options specific to the EPTS command when templates are used are:
     in graph coordinate space when the option <CODE>--stroke-gcs-mode</CODE>
     is <CODE>true</CODE>; otherwise it is specified in user-space or
     image space units.
-  <LI><B><CODE>--stroke-dash-pattern</CODE> <EM>VALUE</EM></B>. A dash
+  <LI><B><CODE>--stroke-dash-pattern</CODE></B> <B><EM>VALUE</EM></B>. A dash
     pattern specifies how dashes are drawn.  <EM>VALUE</EM> will be a
     sequence of minus signs ("<CODE>-</CODE>") and spaces ("&nbsp;"),
     starting with a "<CODE>-</CODE>". The length of <EM>N</EM>
@@ -1302,7 +1300,7 @@ The options specific to the EPTS command when templates are used are:
     when the option <CODE>--stroke-gcs-mode</CODE> is
     <CODE>true</CODE>; otherwise it is specified in user-space or
     image space units.
-  <LI><B><CODE>--stroke-dash-phase</CODE> <EM>VALUE</EM></B>. This
+  <LI><B><CODE>--stroke-dash-phase</CODE></B> <B><EM>VALUE</EM></B>. This
     option is used for table templates and applies to the path
     specified by the following <CODE>--tname</CODE>
     option. <EM>VALUE</EM> is offset to the start of the dash
@@ -1310,7 +1308,7 @@ The options specific to the EPTS command when templates are used are:
     when the option <CODE>--stroke-gcs-mode</CODE> is
     <CODE>true</CODE>; otherwise it is specified in user-space or
     image space units.
-  <LI><B><CODE>--stroke-gcs-mode</CODE> <EM>BOOLEAN</EM></B>. This
+  <LI><B><CODE>--stroke-gcs-mode</CODE></B> <B><EM>BOOLEAN</EM></B>. This
     option is used for table templates and applies to the path
     specified by the following <CODE>--tname</CODE> option. The
     value <EM>BOOLEAN</EM> can be <CODE>true</CODE> or
@@ -1318,7 +1316,7 @@ The options specific to the EPTS command when templates are used are:
     <CODE>stroke.gcsMode</CODE> subparameter for table templates, and
     indicates if stroke dimensions are in GCS units or user-space
     units (the default). For GCS units, the value must be <CODE>true</CODE>.
-  <LI><B><CODE>--stroke-join</CODE> <EM>VALUE</EM></B>.  This option
+  <LI><B><CODE>--stroke-join</CODE></B> <B><EM>VALUE</EM></B>.  This option
     is used for table templates and applies to the path specified
     by the following <CODE>--tname</CODE> option. Its values can be one of
     the following:
@@ -1328,7 +1326,7 @@ The options specific to the EPTS command when templates are used are:
     their outside edges until they meet;
     <B><CODE>round</CODE></B>, which joins path segments by rounding
     off the corner at a radius of half the line width.
-  <LI><B><CODE>--stroke-miter-limit</CODE> <EM>VALUE</EM></B>. This
+  <LI><B><CODE>--stroke-miter-limit</CODE></B> <B><EM>VALUE</EM></B>. This
     option is used for table templates and applies to the path
     specified by the following <CODE>--tname</CODE> option. The miter
     limit is the limit such that a line join is trimmed when the ratio
@@ -1410,7 +1408,7 @@ The options specific to the EPTS command when templates are used are:
     <CODE>--winding-rule</CODE> option sets a template-table keymap
     directive as described in the documentation for
     <CODE>epts</CODE>(5) and in the on-line manual.
-  <LI><B>--zorder</CODE></B> <B><EM>VALUE</EM></B>. This option is
+  <LI><B><CODE>--zorder</CODE></B> <B><EM>VALUE</EM></B>. This option is
     used for table templates and applies to the path specified by the
     following  <CODE>--tname</CODE> option. This option's argument
     <EM>VALUE</EM> provides the Z-order for a path.
@@ -1443,13 +1441,13 @@ provided by the scrunner command. These are
     the BZDev class library's JAR file. If an EPTS session is saved,
     the saved file will not contain the files and directories provided
     by the <CODE>--codebase</CODE> options for security reasons.
-  <LI><B><CODE>-D</CODE></B><EM>NAME</EM><CODE>=</CODE><EM>VALUE</EM>.
+  <LI><B><CODE>-D</CODE></B><B><EM>NAME</EM></B><B><CODE>=</CODE></B><B><EM>VALUE</EM></B>.
     This option defines a system property whose name is <EM>Name</EM>
     and whose value is <EM>VALUE</EM>.
   <LI><B><CODE>--dryrun</CODE></B>. This options simply prints the java
     command that will be used to start the JVM and run the program.
     It is useful primarily for debugging.
-  <LI><B><CODE>-J</CODE></B><EM>OPTION</EM>. The string <EM>OPTION</EM>
+  <LI><B><CODE>-J</CODE></B><B><EM>OPTION</EM></B>. The string <EM>OPTION</EM>
     is turned into an option passed to the 'java' command used
     to start the JVM. It can be used, for example, to increase the
     memory available to the JVM. If the option starts with a leading
@@ -1502,8 +1500,6 @@ provided by the scrunner command. These are
     by the curves <CODE>c1</CODE> and <CODE>c2</CODE>. The area is
     in GCS units.
 </UL>
-
-
 </BODY>
 </HTML>
 <!--  LocalWords:  EPTS PoinTS BZDev anim zier ECMA GCS JRE Runtime

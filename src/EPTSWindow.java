@@ -315,13 +315,14 @@ public class EPTSWindow {
 	throws Exception
     {
 	if (ews == null) {
-	    ews = new EmbeddedWebServer(port, 5, 2, false);
+	    ews = new EmbeddedWebServer(port, 48, 2, false);
 	    if (port == 0) port = ews.getPort();
 	    ews.add("/", ResourceWebMap.class, "manual/",
 		    null, true, false, true);
 	    WebMap wmap = ews.getWebMap("/");
 	    if (wmap != null) {
 		wmap.addWelcome("index.html");
+		wmap.addMapping("html", "text/html; charset=utf-8");
 	    }
 	    manualURI = new URL("http://localhost:"
 				+ port +"/manual.html").toURI();
