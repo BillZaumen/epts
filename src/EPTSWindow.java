@@ -47,6 +47,7 @@ import org.bzdev.util.TemplateProcessor.KeyMap;
 import org.bzdev.util.TemplateProcessor.KeyMapList;
 import org.bzdev.swing.ErrorMessage;
 import org.bzdev.swing.HtmlWithTocPane;
+import org.bzdev.swing.PortTextField;
 
 public class EPTSWindow {
     static String errorMsg(String key, Object... args) {
@@ -333,6 +334,10 @@ public class EPTSWindow {
     private void showManualInBrowser() {
 	try {
 	    startManualWebServerIfNeeded();
+	    if (portTextField != null) {
+		portTextField.setValue(port);
+		portTextField.setEditable(false);
+	    }
 	    Desktop.getDesktop().browse(manualURI);
 	    
 	} catch (Exception e) {
@@ -576,6 +581,9 @@ public class EPTSWindow {
 
     JMenuItem quitMenuItem;
     JMenuItem configMenuItem;
+    JMenuItem portMenuItem = null;
+    PortTextField portTextField = null;
+    JMenuItem webMenuItem = null;
     private void setMenus(JFrame frame, double w, double h) {
 	JMenuBar menubar = new JMenuBar();
 	JMenuItem menuItem;
@@ -1144,6 +1152,57 @@ public class EPTSWindow {
 		}
 	    });
 	helpMenu.add(menuItem);
+	if (port == 0) {
+	    helpMenu.addSeparator();
+	    portMenuItem =
+		new JMenuItem(localeString("TCPPort"), KeyEvent.VK_T);
+	    portTextField = new PortTextField(5);
+	    portTextField.setTCP(true);
+	    portTextField.setPortName(localeString("mwebserver"));
+	    portTextField.setDefaultValue(0);
+	    portMenuItem.addActionListener(new ActionListener() {
+		    public void actionPerformed(ActionEvent e) {
+			if (JOptionPane.OK_OPTION ==
+			    JOptionPane.showConfirmDialog(frame,
+							  portTextField,
+							  localeString
+							  ("TCPTitle"),
+							  JOptionPane
+							  .OK_CANCEL_OPTION,
+							  JOptionPane
+							  .PLAIN_MESSAGE)) {
+			    port = portTextField.getValue();
+			} else {
+			    if (port != 0) {
+				portTextField.setValue(port);
+			    } else {
+				portTextField.setText("");
+			    }
+			}
+		    }
+		});
+	    portMenuItem.setEnabled(true);
+	    helpMenu.add(portMenuItem);
+	    webMenuItem =
+		new JMenuItem(localeString("StartWebserver"), KeyEvent.VK_W);
+	    webMenuItem.setEnabled(true);
+	    webMenuItem.addActionListener(new ActionListener() {
+		    public void actionPerformed(ActionEvent e) {
+			try {
+			    startManualWebServerIfNeeded();
+			    portTextField.setValue(port);
+			    portTextField.setEditable(false);
+			    webMenuItem.setEnabled(false);
+			} catch (Exception ee) {
+			    JOptionPane.showMessageDialog
+				(frame,errorMsg("startingWS", ee.getMessage()),
+				 localeString("errorTitle"),
+				 JOptionPane.ERROR_MESSAGE);
+			}
+		    }
+		});
+	    helpMenu.add(webMenuItem);
+	}
 
 	frame.setJMenuBar(menubar);
 	setPopupMenus();

@@ -292,6 +292,21 @@ manual. This menu contains the following items:
     browser and displays the manual in it. As a side effect, an embedded
     web server will also be started, and that web server can be accessed
     by other users.
+  <LI><B><CODE>Port for Manual`s Webserver</CODE></B>. When a TCP port
+    was not specified on the command line, this option gives the user
+    a chance to change the port number until the web server is started.
+  <LI><B><CODE>Start Manual's Webserver</CODE></B>. This option starts
+    the web server used to show the on-line manual. While EPTS can display
+    the manual directly, a web server is useful when a nearby computer
+    can be used to display the manual and EPTS is not installed on that
+    computer.  If the port number is set to 8080 the corresponding URL
+    will be &lt;<CODE>http://HOSTNAME.local:8080/</CODE>&gt;, where
+    HOSTNAME is the name of the computer on which EPTS is installed.
+    As a use case, suppose two people are in a coffee shop and are
+    using EPTS, which is installed on one computer. Starting the EPTS web
+    server will allow the manual to be displayed on the other computer
+    while the one on which EPTS is installed will be used to run the
+    EPTS application.
 </UL>
 
 <H1><A name="mouse">Using the mouse</A></H1>
@@ -498,7 +513,7 @@ are equivalent. The built-in table templates are the following:
     point. In this case, the value assigned to the variable will be
     an object that can be used to configure an instance of
     <CODE>org.bzdev.geom.SplinePathBuilder</CODE>. When the corresponding
-    <CODE>--tname</CODE> option's arguement names a single EPTS path,
+    <CODE>--tname</CODE> option's argument names a single EPTS path,
     the array can also be used to configure an instance of
     <CODE>org.bzdev.anim2d.AnimationPath2DFactory</CODE> or
     <CODE>org.bzdev.geom.BasicSplinePathBuilder</CODE>. If a stroke or
@@ -1275,7 +1290,7 @@ The options specific to the EPTS command when templates are used are:
     following <CODE>--tname</CODE> option. Its values can be one of
     the following: <B><CODE>butt</CODE></B>, which ends enclosed
     subpaths and dash segments with no added decoration;
-    <B><CODE>round</CODE></B>, which ends unclosed subpaths
+    <B><CODE>round</CODE></B>, which ends enclosed subpaths
     and dash segments with a round decoration that has a radius equal
     to half the width of the stroke; and
     <B><CODE>square</CODE></B>, which ends enclosed subpaths and dash
@@ -1516,5 +1531,5 @@ provided by the scrunner command. These are
  -->
 <!--  LocalWords:  DFactory TNAME keymap preloaded CLASSNAME svg HSL
  -->
-<!--  LocalWords:  PACKAGENAME subparameter
+<!--  LocalWords:  PACKAGENAME subparameter HOSTNAME subpaths
  -->
