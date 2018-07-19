@@ -20,6 +20,7 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -74,13 +75,26 @@ public class EPTS {
     private static final String tildeSep = "~" + File.separator;
     private static String ourCodebase;
     private static String ourCodebaseDir;
+    // private static String ourCodebase2;
+    // private static String ourCodebaseDir2;
     static {
 	try {
 	    File f = (new File(EPTS.class.getProtectionDomain()
 			       .getCodeSource().getLocation().toURI()))
 		.getCanonicalFile();
 	    ourCodebase = f.getCanonicalPath();
+	    f = (new File(Scripting.class.getProtectionDomain()
+			       .getCodeSource().getLocation().toURI()))
+		.getCanonicalFile();
 	    ourCodebaseDir = f.getParentFile().getCanonicalPath();
+	    /*
+	    f = (new File(EPTS.class.getProtectionDomain()
+			       .getCodeSource().getLocation().toURI()))
+		.getCanonicalFile();
+	    ourCodebase2 = f.getCanonicalPath();
+	    ourCodebaseDir2 = f.getParentFile().getCanonicalPath();
+	    */
+
 	} catch (Exception e) {
 	    System.err.println(errorMsg("missingOwnCodebase"));
 	    System.exit(1);
@@ -119,6 +133,11 @@ public class EPTS {
 
 
     private static LinkedList<String> codebase = new LinkedList<>();
+    private static HashSet<String>codebaseSet = new HashSet<>();
+
+    public static List<String> getCodebase() {
+	return Collections.unmodifiableList(codebase);
+    }
 
     private static StringBuilder sbcp = new StringBuilder();
     static {
@@ -899,7 +918,10 @@ public class EPTS {
 		    if (!alreadyForked) {
 			argsList.add(argv[index]);
 		    }
-		    codebase.add(argv[index]);
+		    if (!codebaseSet.contains(argv[index])) {
+			codebase.add(argv[index]);
+			codebaseSet.add(argv[index]);
+		    }
 		} else if (argv[index].equals("--script")) {
 		    index++;
 		    if (index == argv.length) {
@@ -1683,6 +1705,33 @@ public class EPTS {
 		    parser.parse(new FileInputStream(filename));
 		    if (outName == null) {
 			EPTSWindow.setPort(port);
+			for (String name: parser.getCodebase()) {
+			    URL[] urls =
+				URLPathParser.getURLs(null, name,
+						      ourCodebaseDir,
+						      System.err);
+			    if (urls.length != 1) {
+				String title = errorMsg("errorTitle");
+				String msg = errorMsg("multipleURLs");
+				ErrorMessage.display(null, title, msg);
+				System.exit(1);
+			    }
+			    if (name.startsWith(".../")) {
+				URLClassLoaderOps.addURLs(urls);
+			    } else {
+				String title = errorMsg("acceptTitle");
+				String msg = errorMsg("acceptURL", name);
+				if (JOptionPane.OK_OPTION ==
+				    JOptionPane
+				    .showConfirmDialog(null, msg, title,
+						       JOptionPane
+						       .YES_NO_OPTION,
+						       JOptionPane
+						       .QUESTION_MESSAGE)) {
+				    URLClassLoaderOps.addURLs(urls);
+				}
+			    }
+			}
 			if (parser.hasScripts()) {
 			    List<NameValuePair> pbindings
 				= parser.getBindings();

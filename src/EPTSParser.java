@@ -6,6 +6,7 @@ import java.net.URISyntaxException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import javax.xml.parsers.*;
 
@@ -56,6 +57,8 @@ public class EPTSParser {
     String yrefpoint = "0.0";
     PointTMR[] rows = null;
     
+    LinkedList<String>codebase = new LinkedList<>();
+
     public boolean hasScripts() {return scriptSeen;}
     public int getWidth() {return width;}
     public int getHeight() {return height;}
@@ -89,6 +92,9 @@ public class EPTSParser {
 	    return Collections.unmodifiableList(bindings);
 	}
 
+    public List<String> getCodebase() {
+	return Collections.unmodifiableList(codebase);
+    }
 
     public PointTMR[] getRows() {return rows;}
 
@@ -228,6 +234,8 @@ public class EPTSParser {
 		argList.clear();
 	    } else if (qName.equals("argument")) {
 		text.setLength(0);
+	    } else if (qName.equals("codebase")) {
+		codebase.clear();
 	    } else if (qName.equals("gcsconfig")) {
 		try {
 		    unitIndex = Integer.parseInt(attr.getValue("unitIndex"));
@@ -388,6 +396,9 @@ public class EPTSParser {
 		} else {
 		    argList.add(text.toString());
 		}
+		text.setLength(0);
+	    } else if (qName.equals("path")) {
+		codebase.add(text.toString());
 		text.setLength(0);
 	    } else if (qName.equals("table")) {
 		processingTable = false;

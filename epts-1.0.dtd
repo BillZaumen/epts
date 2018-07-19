@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!ELEMENT epts (image, scripting?, targetList?, gcsconfig, table)>
+<!ELEMENT epts (image, codebase?, scripting?, targetList?, gcsconfig, table)>
 <!ATTLIST epts
 	  xmlns CDATA #FIXED "http://bzdev.org/DTD/epts-1.0">
 
@@ -8,6 +8,10 @@
 	  width CDATA #REQUIRED
 	  height CDATA #REQUIRED
 	  imageURIExists (true|false) #IMPLIED>
+
+<!ELEMENT codebase (path*)>
+
+<!ELEMENT path (#PCDATA)>
 
 <!ELEMENT scripting (binding*)>
 <!ATTLIST scripting
@@ -23,6 +27,7 @@
 
 <!ELEMENT argument (#PCDATA)>
 
+
 <!ELEMENT gcsconfig EMPTY>
 <!ATTLIST gcsconfig
 	  unitIndex CDATA #REQUIRED
@@ -37,7 +42,7 @@
 <!ELEMENT row EMPTY>
 <!ATTLIST row
 	  varname CDATA #IMPLIED
-	  type (LOCATION|PATH_START|PATH_END|MOVE_TO|SPLINE|CONTROL|SEG_END|CLOSE) #IMPLIED
+	  type (LOCATION|PATH_START|PATH_END|MOVE_TO|SPLINE|CONTROL|SEG_END|CLOSE) #REQUIRED
 	  x CDATA #IMPLIED
 	  y CDATA #IMPLIED
 	  xp CDATA #IMPLIED

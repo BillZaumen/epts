@@ -1515,6 +1515,221 @@ provided by the scrunner command. These are
     by the curves <CODE>c1</CODE> and <CODE>c2</CODE>. The area is
     in GCS units.
 </UL>
+
+<H1><A name="savedFormat">Saved-file format</A></H1>
+
+EPTS will generate an XML file to save the state of a session (the XML
+specification can be found at
+&lt;https://www.w3.org/TR/2006/REC-xml11-20060816/&gt;). This file
+starts with the following lines:
+<BLOCKQUOTE><PRE><CODE>
+    &lt;?xml version="1.1" encoding="UTF-8"?&gt;
+    &lt;!DOCTYPE images PUBLIC "-//BZDev//EPTS-1.0//EN"
+              "sresource:epts-1.0.dtd"&gt;
+    &lt;epts xmlns="http://bzdev.org/DTD/epts-1.0"&gt;
+</CODE></PRE></BLOCKQUOTE>
+and ends with the line
+<BLOCKQUOTE><PRE><CODE>
+    &lt;/epts&gt;
+</CODE></PRE></BLOCKQUOTE>
+The <CODE>sresource</CODE> protocol is one that is recognized by the
+EPTS program and allows it to read the file <CODE>epts-1.0.dtd</CODE>
+from the program's JAR file.  The <CODE>epts</CODE> element contains a
+sequence of elements:
+<OL>
+  <LI> An <B><CODE>image</CODE></B> element.
+  <LI> An optional <B><CODE>codebase</CODE></B> element.
+  <LI> An optional <B><CODE>scripting</CODE></B> element.
+  <LI> A <B><CODE>targetList</CODE></B> element.
+  <LI> A <B><CODE>gcsconfig</CODE></B> element.
+  <LI> A <B><CODE>table</CODE></B> element.
+</OL>
+
+<H2><A name="imageElement">The image element</A></H2>
+
+The <CODE>image</CODE> element does not contain any other
+elements. Its attributes are
+<UL>
+  <LI><B><CODE>width</CODE></B>. The value of this attribute is an
+    integer giving the width in pixels of an image that will be used
+    as a background.
+  <LI><B><CODE>height</CODE></B>. The value of this attribute is an
+    integer giving the height in pixels of an image that will be used
+    as a background.
+  <LI><B><CODE>imageURIExists</CODE></B>. The value of this attribute
+    is <B><CODE>true</CODE></B> or <B><CODE>false</CODE></B>. When
+    <B><CODE>true</CODE></B>, the following <CODE>targetList</CODE>
+    element will contain a single argument giving the URI for an image
+    to display. Otherwise the following <CODE>targetList</CODE>
+    arguments will contain the URIs for scripts that will be loaded.
+    If this attribute is missing, the default value is
+    <B><CODE>false</CODE></B>.
+</UL>
+
+<H2><A name="codebaseElement">The codebase element/A></H2>
+
+The <CODE>codebase</CODE> element does not have any attributes.
+Instead, it contains a sequence of <CODE>path</CODE> elements, which
+also do not have any attributes.  The contents of a path element
+is text (XML PCDATA) providing a URI indicating where an image or
+script can be found. Relative URIs will be resolved against the
+URI for the current working directory.
+
+<H2><A name="scriptingElement">The scripting element</A></H2>
+
+The <CODE>scripting</CODE> element has two attributes:
+<UL>
+  <LI><B><CODE>animation</CODE></B>. The value of this attribute is the
+    name of a scripting-language variable that will be bound to an
+    instance of the class <CODE>org.bzdev.anim2d.Animation2D</CODE>
+    that will be used to create an image.
+  <LI><B><CODE>language</CODE></B>. The value of this attribute is the
+    name of the scripting language (e.g., ECMAScript).
+</UL>
+In addition, the <CODE>scripting</CODE> element contains a series of <EM>binding</EM>
+elements. These bind scripting-language variables to values.
+
+<H3>The binding element</H3>
+
+The <CODE>binding</CODE> element has two attributes:
+<UL>
+  <LI><B><CODE>name</CODE></B>. The value of this attributes is the name
+    of a scripting-language variable to which a value will be bound.
+  <LI><B><CODE>type</CODE></B>. The value of this attribute provides the
+    Java type of a scripting-language variable, and can be
+    <B><CODE>int</CODE></B> for integer values, <B><CODE>double</CODE></B>
+    for real numbers, or <B><CODE>String</CODE></B> for strings.
+</UL>
+The contents of this element contain the string representation of its
+value. For an integer, the string must be usable as the argument of
+the method<CODE>java.lang.Integer.parseInt</CODE> and for a real number,
+the string must be usable as the argument of the method
+<CODE>java.lang.Double.parseDouble</CODE>.
+
+<H2><A name="targetListElement">The targetList element</A></H2>
+
+The <CODE>targetList</CODE> element does not have any attributes. Its
+contents consist of a sequence of <CODE>argument</CODE> elements.
+The <CODE>argument</CODE> elements also do not have any attributes.
+The content for each <CODE>argument</CODE> element is a URI for
+a file. If a relative URI, it is resolved relative to the current
+working directory (set when EPTS executes). If no protocol is provided,
+the URI is assumed to be a <CODE>file</CODE> URI.
+
+<UL>
+  <LI><B><CODE></CODE></B>.
+  <LI><B><CODE></CODE></B>.
+  <LI><B><CODE></CODE></B>.
+  <LI><B><CODE></CODE></B>.
+</UL>
+
+<H2><A name="gcsconfigELement">The gcsconfig element</A></H2>
+
+The <CODE>gcsconfig</CODE> element has the following attributes, all of
+which are required:
+<UL>
+  <LI><B><CODE>unitIndex</CODE></B>. The value is an integer indicating
+    the type of units:
+    <UL>
+      <LI> <B><CODE>0</CODE></B>. Distances are in custom units.
+      <LI> <B><CODE>1</CODE></B>. Distances are in nanometers (nm).
+      <LI> <B><CODE>2</CODE></B>. Distances are in micrometers (um).
+      <LI> <B><CODE>3</CODE></B> Distances are in millimeters (mm).
+      <LI> <B><CODE>4</CODE></B>. Distances are in centimeters (cm).
+      <LI> <B><CODE>5</CODE></B>. Distances are in meters (m).
+      <LI> <B><CODE>6</CODE></B>. Distances are in kilometers (km).
+      <LI> <B><CODE>7</CODE></B>. Distances are in inches.
+      <LI> <B><CODE>8</CODE></B>. Distances are in feet.
+      <LI> <B><CODE>9</CODE></B>. Distances are in yards
+      <LI> <B><CODE>10</CODE></B>. Distances are in miles.
+    </UL>
+  <LI><B><CODE>refPointIndex</CODE></B>. The value is an integer indicating
+    the reference point:
+    <UL>
+      <LI><B><CODE>0</CODE></B>. The reference point is at the
+	upper left corner of the image.
+      <LI><B><CODE>1</CODE></B>. The reference point is at the
+	center of the upper edge of the image.
+      <LI><B><CODE>2</CODE></B>. The reference point is at the
+	upper right corner of the image.
+      <LI><B><CODE>3</CODE></B>. The reference point is at the
+	center of the left edge of the image.
+      <LI><B><CODE>4</CODE></B>. The reference point is at the
+	center of the image.
+      <LI><B><CODE>5</CODE></B>. The reference point is at the
+	center of the right edge of the image.
+      <LI><B><CODE>6</CODE></B>. The reference point is at the
+	lower left corner of the image.
+      <LI><B><CODE>7</CODE></B>. The reference point is at the
+	center of the lower edge of the image.
+      <LI><B><CODE>8</CODE></B>. The reference point is at the
+	lower right corner of the image.
+    </UL>
+  <LI><B><CODE>userSpaceDistance</CODE></B>. A distance in user
+    space.
+  <LI><B><CODE>gcsDistance</CODE></B>. A distance in graph coordinate
+    space corresponding to the user-space distance, measured in the
+    units specified by the <CODE>unitIndex</CODE> attribute.
+  <LI><B><CODE>xrefpointGCS</CODE></B>. The X coordinate of the
+    reference point in graph coordinate space, given in either custom
+    units or meters.
+  <LI><B><CODE>yrefpointGCS</CODE></B>. The Y coordinate of the
+    reference point in graph coordinate space, given in either custom
+    units or meters.
+</UL>
+
+<H2><A name="tableElement">The table element</A></H2>
+
+The <CODE>table</CODE> element has no attributes and contains a sequence
+of <CODE>row</CODE> elements. Each <CODE>row</CODE> element is empty, but
+with the following attributes
+<UL>
+  <LI><B><CODE>varname</CODE></B>. This attribute is present when the
+    <CODE>type</CODE> attribute has the value <CODE>PATH_START</CODE>.
+    Its value is the name of a variable. It should be one acceptable
+    to Java and to any scripting language that will be used.
+  <LI><B><CODE>type</CODE></B>. This attribute is always present. Its
+    value can be one of the following:
+    <UL>
+      <LI><B><CODE>LOCATION</CODE></B>. The row represents a location.
+	The attributes <CODE>x</CODE>, <CODE>y</CODE>, <CODE>xp</CODE>, and
+	<CODE>yp</CODE> must be provided.
+      <LI><B><CODE>PATH_START</CODE></B>. The row represents the start of
+	a path.
+      <LI><B><CODE>PATH_END</CODE></B>. The row represents the end of a path.
+      <LI><B><CODE>MOVE_TO</CODE></B>. The row represents a MOVE_TO operation.
+	The attributes <CODE>x</CODE>, <CODE>y</CODE>, <CODE>xp</CODE>, and
+	<CODE>yp</CODE> must be provided.
+      <LI><B><CODE>SPLINE</CODE></B>. The row represents a knot on a spline,
+	excluding its end points.
+	The attributes <CODE>x</CODE>, <CODE>y</CODE>, <CODE>xp</CODE>, and
+	<CODE>yp</CODE> must be provided.
+      <LI><B><CODE>CONTROL</CODE></B>. The row represents a control point.
+	The attributes <CODE>x</CODE>, <CODE>y</CODE>, <CODE>xp</CODE>, and
+	<CODE>yp</CODE> must be provided.
+      <LI><B><CODE>SEG_END</CODE></B>. The row represents the end of a
+	segment
+	The attributes <CODE>x</CODE>, <CODE>y</CODE>, <CODE>xp</CODE>, and
+	<CODE>yp</CODE> must be provided.
+      <LI><B><CODE>CLOSE</CODE></B>. The row indicates that the path
+	will be closed. A path is closed by drawing a straight line
+	segment from the last <CODE>SEG_END</CODE> point to the
+	first <CODE>MOVE_TO</CODE> point with one exception: if a path
+	starts with a <CODE>MOVE_TO</CODE> operation and otherwise contains
+	only <CODE>SPLINE</CODE> points, a closed spline will be created.
+    </UL>
+  <LI><B><CODE>x</CODE></B>. The value of this attribute is an
+    X coordinate in graph-coordinate-space units (meters or custom units).
+  <LI><B><CODE>y</CODE></B>. The value of this attribute is an
+    Y coordinate in graph-coordinate-space units (meters or custom units).
+  <LI><B><CODE>xp</CODE></B>. The value of this attribute is the X
+    coordinate in user-space units, measured from the lower-left corner
+    of the image, with positive values pointing right.
+  <LI><B><CODE>yp</CODE></B>. The value of this attribute is the Y
+    coordinate in user-space units, measured from the lower-left corner
+    of the image, with positive values pointing up.
+</UL>
+
 </BODY>
 </HTML>
 <!--  LocalWords:  EPTS PoinTS BZDev anim zier ECMA GCS JRE Runtime
@@ -1531,5 +1746,7 @@ provided by the scrunner command. These are
  -->
 <!--  LocalWords:  DFactory TNAME keymap preloaded CLASSNAME svg HSL
  -->
-<!--  LocalWords:  PACKAGENAME subparameter HOSTNAME subpaths
+<!--  LocalWords:  PACKAGENAME subparameter HOSTNAME subpaths URIs nm
+ -->
+<!--  LocalWords:  PCDATA targetList gcsconfig nanometers
  -->

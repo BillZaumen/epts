@@ -52,9 +52,48 @@ match those of the image (this allows a crosscheck to verify that the
 image dimensions have not changed due to an update as the image itself is not
 part of this file).
 .PP
+After the
+.B image
+element there is an optional
+.B codebase
+element with no attributes. Instead, it contains a sequence of 0 or more
+.B path
+elements, each on of which contains a URL or file name as specified in the
+.B --codebase
+option described in
+.B epts\  (1).
 The
+.B path
+elements do not have any attributes and their contents are text (XML
+PCDATA). Characters such as
+.B <
+and
+.B >
+must be replaced with entities (\fB&lt;\fR and \fB&gt;\fR respectively).
+.PP
+After the
+.B image
+element and any optional
+.B codebase
+element, there is an an optional
+.B scripting
+element, whose attributes are
+.B language
+and
+.BR animation .
+The
+.B language
+element provides the standard name for a scripting language (e.g.,
+.BR ECMAScript ),
+and the
+.B animation
+element provides the name of a scripting-language variable that will
+be bound to an instance of
+.BR org.bzdev.anim2d.Animation2D .
+.PP
+The next element, which is mandatory, is the
 .B targetList
-element does not have any attributes, using a sequence of
+element and it does not have any attributes, using a sequence of
 .B argument
 elements instead:
 .IP
@@ -92,7 +131,7 @@ element:
 .br
 \ \ \ \ \ \ \ gcsDistance="\fIGCSDIST\fB"
 .br
-\ \ \ \ \ \ \ xorigin="\fIXORIGIN\fB" yorigin="\fIYORIGIN\fB"/>
+\ \ \ \ \ \ \ xrefpointGCS="\fIXORIGIN\fB" yrefpointGCS="\fIYORIGIN\fB"/>
 .PP
 where
 .I IND1
@@ -802,9 +841,10 @@ trailing whitespace is removed.
 \"  LocalWords:  NaN GCS gcs pathLength keymaps MOVETO LINETO QUADTO
 \"  LocalWords:  CUBICTO closePath moveTo lineTo quadTo curveTo CSS
 \"  LocalWords:  PathIterator hasClose hasMoveTo hasLineTo hasQuadTo
-\"  LocalWords:  hasCubicTo hasDashIncrement dashIncrement gcsMode
+\"  LocalWords:  hasCubicTo hasDashIncrement dashIncrement gcsMode lt
 \"  LocalWords:  hasDashPattern dashPattern hasDashPhase dashPhase
 \"  LocalWords:  hasDrawColor drawColor hasFillColor fillColor zorder
 \"  LocalWords:  hasGcsMode hasMiterLimit miterLimit miterlimit
 \"  LocalWords:  hasStrokeCap strokeCap hasStrokeJoin strokeJoin
 \"  LocalWords:  hasStrokeWidth strokeWidth hasAttributes hasZorder
+\"  LocalWords:  codebase PCDATA xrefpointGCS yrefpointGCS

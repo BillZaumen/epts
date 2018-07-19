@@ -3,9 +3,12 @@
 	  "sresource:epts-1.0.dtd">
 <epts xmlns="http://bzdev.org/DTD/epts-1.0">
   <image width="$(width)" height="$(height)" imageURIExists="$(hasImageFile)"/>
-  $(hasScript:endScript)  <scripting language="$(language)" animation="$(animation)">$(hasBindings:endBindings)
+$(hasCodebase:endCodebase)  <codebase>$(pathlist:endPathlist)
+     <path>$(path)</path>
+$(endPathlist)  </codebase>
+$(endCodebase)$(hasScript:endScript)  <scripting language="$(language)" animation="$(animation)">$(hasBindings:endBindings)
       <binding name="$(bindingName)" type="$(bindingType)">$(bindingValue)</binding>$(endBindings)
-    </scripting>
+  </scripting>
 $(endScript)  <targetList>$(arglist:arglistEnd)
      <argument>$(arg)</argument>$(arglistEnd)
   </targetList>

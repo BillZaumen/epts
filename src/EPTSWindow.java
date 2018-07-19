@@ -142,6 +142,21 @@ public class EPTSWindow {
 		smap.put("hasBindings", blist);
 	    }
 	}
+
+	List<String> codebase = EPTS.getCodebase();
+	if (codebase.size() > 0) {
+	    TemplateProcessor.KeyMap cbmap = new TemplateProcessor.KeyMap();
+	    TemplateProcessor.KeyMapList pmaplist =
+		new TemplateProcessor.KeyMapList();
+	    keymap.put("hasCodebase", cbmap);
+	    cbmap.put("pathlist", pmaplist);
+	    for (String path: codebase) {
+		TemplateProcessor.KeyMap pmap =  new TemplateProcessor.KeyMap();
+		pmap.put("path", path);
+		pmaplist.add(pmap);
+	    }
+	}
+
 	if (targetList != null) {
 	    for (String arg: targetList) {
 		TemplateProcessor.KeyMap map = new TemplateProcessor.KeyMap();
