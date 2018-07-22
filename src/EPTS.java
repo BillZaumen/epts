@@ -521,25 +521,34 @@ public class EPTS {
 			   List<NameValuePair> bindings,
 			   List<String> targetList)
     {
+	final File cdir = new File(System.getProperty("user.dir"));
 	System.out.println("doScript: "
 			   + System.getProperty("java.security.policy"));
 	ScriptingEnv se = new ScriptingEnv(languageName, a2dName);
 	for (NameValuePair binding: bindings) {
 	    se.putScriptObject(binding.getName(), binding.getValue());
 	}
+	String current = null;
 	try {
 	    for (String filename: targetList) {
-		Reader r = new
-		    InputStreamReader(new FileInputStream(filename),
-				      "UTF-8");
+		InputStream is;
+		current = filename;
+		if (mayBeURL(filename)) {
+		    URL url = new URL(cdir.toURI().toURL(), filename);
+		    is = url.openStream();
+		} else {
+		    is = new FileInputStream(filename);
+		}
+		Reader r = new InputStreamReader(is, "UTF-8");
 		r = new BufferedReader(r);
 		se.evalScript(filename, r);
 	    }
 	} catch (FileNotFoundException ef) {
-	    System.err.println(errorMsg("exception", ef.getMessage()));
+	    System.err.println(errorMsg("readError", current, ef.getMessage()));
 	    System.exit(1);
 	} catch (IOException eio) {
-	    System.err.println(errorMsg("exception", eio.getMessage()));
+	    String msg = errorMsg("readError", current, eio.getMessage());
+	    System.err.println(msg);
 	    System.exit(1);
 	} catch (Exception e) {
 	    if (stackTrace) {
@@ -796,7 +805,39 @@ public class EPTS {
 	}
     }
 
+    private static Pattern urlPattern =
+	Pattern.compile("\\p{Alpha}[\\p{Alnum}.+-]*:.*");
+
+    public static boolean mayBeURL(String s) {
+	boolean result =  urlPattern.matcher(s).matches();
+	if (result) {
+	    // Windows can use a drive letter followed by a colon
+	    // as part of a file name, so do a check to avoid confusion
+	    for (File root: File.listRoots()) {
+		String name = root.toString();
+		if (s.startsWith(name)) {
+		    result = false;
+		    break;
+		}
+	    }
+	}
+	if (!result) {
+	    if (!s.contains(File.separator) && s.contains("/")) {
+		// relative URI use URI-path syntax and the "/"
+		// is not a file-separator character, so we'll treat it
+		// as a relative URI if a "/" appears but there is no
+		// file-separator character in the string.
+		return true;
+	    }
+	}
+	return result;
+    }
+
+
     static void init(String argv[]) throws Exception {
+
+	final File cdir = new File(System.getProperty("user.dir"));
+
 	int index = -1;
 	int port = 0;
 
@@ -918,9 +959,11 @@ public class EPTS {
 		    if (!alreadyForked) {
 			argsList.add(argv[index]);
 		    }
-		    if (!codebaseSet.contains(argv[index])) {
-			codebase.add(argv[index]);
-			codebaseSet.add(argv[index]);
+		    for (String cb: URLPathParser.split(argv[index])) {
+			if (!codebaseSet.contains(cb)) {
+			    codebase.add(argv[index]);
+			    codebaseSet.add(argv[index]);
+			}
 		    }
 		} else if (argv[index].equals("--script")) {
 		    index++;
@@ -942,7 +985,7 @@ public class EPTS {
 			System.err.println
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
-	    }
+		    }
 		    try {
 			port = Integer.parseInt(argv[index]);
 		    } catch (Exception e) {
@@ -1595,7 +1638,6 @@ public class EPTS {
 	    imageMode = true;
 	    SwingUtilities.invokeAndWait(new Runnable() {
 		    public void run() {
-			File cdir = new File(System.getProperty("user.dir"));
 			JFileChooser fc = new JFileChooser(cdir);
 			String[] extensions = ImageIO.getReaderFileSuffixes();
 			FileNameExtensionFilter filter =
@@ -1680,9 +1722,24 @@ public class EPTS {
 		g2d.clearRect(0, 0, width, height);
 		image = bi;
 	    } else {
-		File ifile = new File(targetList.get(0));
-		imageURI = ifile.getCanonicalFile().toURI();
-		image = ImageIO.read(new File(targetList.get(0)));
+		String urlstring = targetList.get(0);
+		try {
+		    if (mayBeURL(urlstring)) {
+			URL imageURL = new URL(cdir.toURI().toURL(), urlstring);
+			imageURI = imageURL.toURI();
+			image = ImageIO.read(imageURL);
+		    } else {
+			File ifile = new File(urlstring);
+			imageURI = ifile.getCanonicalFile().toURI();
+			image = ImageIO.read(ifile);
+		    }
+		} catch (Exception ex) {
+		    image = null; imageURI = null;
+		    String msg =
+			errorMsg("readError", urlstring, ex.getMessage());
+		    System.err.println(msg);
+		    System.exit(1);
+		}
 	    }
 	    EPTSWindow.setPort(port);
 	    new EPTSWindow(image, imageURI);

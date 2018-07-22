@@ -62,7 +62,9 @@ End of options.
 .TP
 .B \-\-image
 The first and only argument that is not an option is the name of an
-image file.
+image file or a URL for an image file. The image formats supported are
+those that Java supports. In practice, the image file will be a JPEG
+or PNG file.
 .TP
 .BI \-\-port\  PORT
 When
@@ -91,7 +93,12 @@ to configure the object referenced by
 .IR VNAME .
 The constructor for
 .B Animation2D
-determines the size of the image.
+determines the size of the image. This option requires file-name
+arguments following the options. Each of these arguments must be either
+a file locally avaiable or a URL for a remote file. In either case,
+the file will contain scripts that use the same scripting language,
+and all will be executed by the same script-engine instance, sharing
+the same bindings.
 .PP
 If neither of the options
 .B \-\-image
@@ -665,7 +672,10 @@ directory, a file name consisting of only "~" is replaced with the
 user\'s home directory, a leading "~~" is replaced with "~", and a
 leading "..." followed by the name separator ("/" for Unix) is
 replaced by the directory in which the BZDev class library's JAR file
-is located.
+is located. Finally, the substitutions for \'|\', \'~\', and \'...\'
+(followed by the file-name separator) apply only to the
+.B \-\-codebase
+option, not to file-name arguments that appear after the last option.
 .TP
 .BI \-D NAME\fB=\fIVALUE
 Define the name of a Java property and give it a value.  See the java

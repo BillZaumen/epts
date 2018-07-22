@@ -160,14 +160,30 @@ public class EPTSWindow {
 	if (targetList != null) {
 	    for (String arg: targetList) {
 		TemplateProcessor.KeyMap map = new TemplateProcessor.KeyMap();
+		URI uri;
+		if (EPTS.mayBeURL(arg)) {
+		    URL url = new URL(fparent.toURI().toURL(), arg);
+		    try {
+			uri = url.toURI();
+		    } catch(Exception e) {
+			String msg = errorMsg("badURLtoURI", url.toString());
+			System.err.println(msg);
+			continue;
+		    }
+		} else {
+		    File af = new File(arg);
+		    uri = af.getCanonicalFile().toURI();
+		}
+		arg = fparent.toURI().relativize(uri).toString();
+		/*
 		File af = new File(arg);
 		// File parent = f.getCanonicalFile().getParentFile();
 		File afparent = af.getCanonicalFile().getParentFile();
 		while (afparent != null) {
 		    if (afparent.equals(fparent)) break;
-		    afparent = afparent.getParentFile();
+		    afparent = afparent.if();
 		}
-		if (afparent == null) {
+		getParentFile (afparent == null) {
 		    arg = af.getCanonicalFile().toURI().toString();
 		} else {
 		    // we use relative URLs if the image file is in a
@@ -176,6 +192,7 @@ public class EPTSWindow {
 		    arg = fparent.toURI()
 			.relativize(af.getCanonicalFile().toURI()).toString();
 		}
+		*/
 		map.put("arg", arg);
 		tlist.add(map);
 	    }
@@ -265,6 +282,21 @@ public class EPTSWindow {
 			manualFrame.setVisible(false);
 		    }
 		});
+	    JMenuBar menubar = new JMenuBar();
+	    JMenu fileMenu = new JMenu(localeString("File"));
+	    fileMenu.setMnemonic(KeyEvent.VK_F);
+	    menubar.add(fileMenu);
+	    JMenuItem menuItem = new JMenuItem(localeString("Close"),
+					       KeyEvent.VK_C);
+	    menuItem.setAccelerator(KeyStroke.getKeyStroke
+				    (KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK));
+	    menuItem.addActionListener(new ActionListener() {
+		    public void  actionPerformed(ActionEvent e) {
+			manualFrame.setVisible(false);
+		    }
+		});
+	    fileMenu.add(menuItem);
+	    manualFrame.setJMenuBar(menubar);
 	    URL url = ClassLoader.getSystemClassLoader()
 		.getResource("manual/manual.xml");
 	    if (url != null) {

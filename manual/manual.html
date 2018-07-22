@@ -1042,8 +1042,8 @@ EPTS can be as a window-system-based program or as a command-line
 program.  The command-line capabilities allow EPTS to be used (for
 example) in a Makefile, where it will generate files in user-specified
 formats. Meanwhile, EPTS's GUI can be used to edit a saved state.
-Options that generate files use the <CODE>-o</CODE> flag to set
-the name of the output file, with <CODE>-</CODE> indicating
+Options that generate files use the <CODE>-o</CODE> flag to set the
+name of the output file, with a file name of <CODE>-</CODE> indicating
 standard output.
 <P>
 If the <CODE>epts</CODE> command is run with no arguments, the program
@@ -1074,7 +1074,22 @@ When run from the command line, a number of additional options are
 available beyond the trivial case supported by the GUI. If the JVM has
 to be configured (e.g., to provide more memory or to include
 additional class libraries), the CLI must be used to start the
-program.
+program. Some options use filename arguments that appear after the
+options.  Except when there is a single file-name argument that is the
+name of an EPTS saved-state file (e.g., <CODE>saved.epts</CODE>), the
+file-name arguments can be either file names or URLs:
+<UL>
+  <LI> When the <CODE>--image</CODE> option is one of the options, there
+    is a single file-name argument. This argument can be a file name
+    or a URL and provides an image in a format the Java accepts.
+    In practice, this file will be a JPEG or PNG file.
+  <LI> When the <CODE>--script</CODE> option is one of the options, there
+    will be at least one file-name argument, which can be either the
+    name of a file or a URL. Each argument must provide a script to
+    be executed. All scripts use the same scripting language and are
+    executed in the same script-engine instance, sharing the same
+    bindings.
+</UL>
 <P>
 There are four options that do not fit into well-defined categories:
 <UL>
@@ -1229,7 +1244,11 @@ The options specific to the EPTS command when templates are used are:
     specifies the name of the output file for template processing.  If
     it is a relative file, it will be resolved against the current
     working directory that existed when EPTS was started.  If the file
-    name is "-", the output will be sent to standard output.
+    name is "-", the output will be sent to standard output. When a
+    <CODE>-o</CODE> is present (it is required by the <CODE>--svg</CODE>
+    and <CODE>--template</CODE> options), there must be a single
+    filename argument: the name of an EPTS file
+    (e.g., <CODE>saved.epts</CODE>).
   <LI><B><CODE>--package</CODE></B> <B><EM>PACKAGENAME</EM></B>.
     This option applies when the <CODE>--tname</CODE> option is used,
     and provides a class name for table templates that generate Java
@@ -1377,12 +1396,15 @@ The options specific to the EPTS command when templates are used are:
     <CODE>--stroke-gcs-mode</CODE>, <CODE>--stroke-miter-limit</CODE>,
     <CODE>stroke-join</CODE>, <CODE>--stroke-width</CODE>, and
     <CODE>--winding-rule</CODE>, may be used (at least one will
-    typically be provided).
+    typically be provided). A <CODE>--template</CODE> option must not
+    be provided.
   <LI><B><CODE>--template:</CODE></B><EM>RESOURCE</EM>.
     This option is a shortcut that behaves like the option
     <CODE>--template sresource:</CODE><EM>RESOURCE</EM>.
   <LI><B><CODE>--template</CODE></B> <B><EM>TFILE</EM></B>. This
-    option may not be used with the <CODE>--svg</CODE> option.
+    option may not be used with the <CODE>--svg</CODE> option,
+    but as with the <CODE>--svg</CODE> option, the <CODE>-o</CODE>
+    option is required.
     When <EM>TFILE</EM> starts with the string "sresource:", "file:",
     "http:", "https:", or "ftp", <EM>TFILE</EM> is assumed to be a
     URL. Otherwise is is assumed to be the name of a file.  The syntax
@@ -1437,25 +1459,33 @@ The options specific to the EPTS command when templates are used are:
 There are a set of command-line options that are the same as those
 provided by the scrunner command. These are
 <UL>
-  <LI><B><CODE>--cosebase</CODE></B> <B><EM>SPEC</EM></B>.
-    This option allows additional code bases to be available to the
+  <LI><B><CODE>--codebase</CODE></B> <B><EM>SPEC</EM></B>.  This
+    option allows additional code bases to be available to the
     JVM. Any number of <CODE>--codebase</CODE> options may be
-    provided, and each option can contain multiple code bases
-    with the character '|' used as a separator. A code base is specified
-    by either a URL or a path name of a file in (local) file system.
-    If there is a ':' in the file name and the preceding characters are
-    consistent with a protocol name in a URL, the file name will be treated
-    as a URL. In this case, use a "file:" URL to specify the code base.
-    Several characters are treated specially. A leading "~" followed by
-    the name separator ("/" for Unix) is expanded to the user's home
-    directory. A file name consisting only of "~" is replaced with the
-    user's home directory. A leading "~~" is replaced with "~", and
-    a leading "..." followed by the name separator ("/" for Unix) is
-    replaced by the directory in which the EPTS program's JAR
-    file is located. This will typically be the same directory as
-    the BZDev class library's JAR file. If an EPTS session is saved,
-    the saved file will not contain the files and directories provided
-    by the <CODE>--codebase</CODE> options for security reasons.
+    provided, and each option can contain multiple code bases with the
+    character '|' used as a separator. As a special case, if there are
+    n '|' characters in a row, they will be placed by floor(n/2) '|'
+    characters and when n is odd, the final '|' is used as a
+    separator.  As a result, except for the first component of a
+    code-base path, components may not start with a '|'.  A code base
+    is specified by either a URL or a path name of a file in (local)
+    file system.  If there is a ':' in the file name and the preceding
+    characters are consistent with a protocol name in a URL, the file
+    name will be treated as a URL. In this case, use a "file:" URL to
+    specify the code base.  Several characters are treated
+    specially. A leading "~" followed by the name separator ("/" for
+    Unix) is expanded to the user's home directory. A file name
+    consisting only of "~" is replaced with the user's home
+    directory. A leading "~~" is replaced with "~", and a leading
+    "..." followed by the name separator ("/" for Unix) is replaced by
+    the directory in which the EPTS program's JAR file is
+    located. This will typically be the same directory as the BZDev
+    class library's JAR file. If an EPTS session is saved, the saved
+    file will not contain the files and directories provided by
+    the <CODE>--codebase</CODE> options for security reasons.
+    Finally, the substitutions for '|', '~', and '...' (followed by the
+    file-name separator) apply only to the <CODE>--codebase</CODE>
+    option, not to file-name arguments that appear after the last option.
   <LI><B><CODE>-D</CODE></B><B><EM>NAME</EM></B><B><CODE>=</CODE></B><B><EM>VALUE</EM></B>.
     This option defines a system property whose name is <EM>Name</EM>
     and whose value is <EM>VALUE</EM>.
@@ -1566,7 +1596,7 @@ elements. Its attributes are
     <B><CODE>false</CODE></B>.
 </UL>
 
-<H2><A name="codebaseElement">The codebase element/A></H2>
+<H2><A name="codebaseElement">The codebase element</A></H2>
 
 The <CODE>codebase</CODE> element does not have any attributes.
 Instead, it contains a sequence of <CODE>path</CODE> elements, which

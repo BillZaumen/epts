@@ -61,26 +61,24 @@
 	    uri="sresource:/manual/manual.html#examples"
 	    href="manual.html#examples"/>
     </node>
-  </node>
-  <node title="Saved-file format" uri="sresource:manual.html#savedFormat"
-	href="manual.html#savedFormat">
-    <node title="The image element" uri="sresource:manual.html#imageElement"
-	  href="manual.html#imageElement"/>
-    <node title="The codebase element"
-	  uri="sresource:manual.html#codebaseElement"
-	  href="manual.html#codebaseElement"/>
-    <node title="The scripting element"
-	  uri="sresource:manual.html#scriptingElement"
-	  href="manual.html#scriptingElement"/>
-    <node title="The targetList element"
-	  uri="sresource:manual.html#targetListElement"
-	  href="manual.html#targetListElement"/>
-    <node title="The gcsconfig element"
-	  uri="sresource:manual.html#gcsconfigElement"
-	  href="manual.html#gcsconfigElement"/>
-    <node title="The table element" uri="sresource:manual.html#tableElement"
-	  href="manual.html#tableElement"/>
-    <node title="" uri="sresource:manual.html#"
-	  href="manual.html#"/>
+    <node title="Saved-file format" uri="sresource:manual.html#savedFormat"
+	  href="manual.html#savedFormat">
+      <node title="The image element" uri="sresource:manual.html#imageElement"
+	    href="manual.html#imageElement"/>
+      <node title="The codebase element"
+	    uri="sresource:manual.html#codebaseElement"
+	    href="manual.html#codebaseElement"/>
+      <node title="The scripting element"
+	    uri="sresource:manual.html#scriptingElement"
+	    href="manual.html#scriptingElement"/>
+      <node title="The targetList element"
+	    uri="sresource:manual.html#targetListElement"
+	    href="manual.html#targetListElement"/>
+      <node title="The gcsconfig element"
+	    uri="sresource:manual.html#gcsconfigElement"
+	    href="manual.html#gcsconfigElement"/>
+      <node title="The table element" uri="sresource:manual.html#tableElement"
+	    href="manual.html#tableElement"/>
+    </node>
   </node>
 </toc>
