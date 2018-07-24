@@ -460,6 +460,28 @@ public class EPTSWindow {
 	}
     }
 
+    private void terminatePartialPath() {
+	PointTMR lastrow = ptmodel.getLastRow();
+	if (lastrow != null) {
+	    Enum  lrmode = lastrow.getMode();
+	    if (lrmode  instanceof SplinePathBuilder.CPointType) {
+	    // End the current partial path but do not remove it.
+		if (lrmode == SplinePathBuilder.CPointType.CONTROL
+		    || lrmode == SplinePathBuilder.CPointType.SPLINE) {
+		    ptmodel.setLastRowMode
+			(SplinePathBuilder.CPointType.SEG_END);
+		    ttable.nextState(EPTS.Mode.PATH_END);
+		    ptmodel.addRow("", EPTS.Mode.PATH_END,
+				   0.0, 0.0, 0.0, 0.0);
+		}
+		setModeline("Path Complete");
+		resetState();
+		panel.repaint();
+	    }
+	}
+	addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
+    }
+
     private boolean cleanupPartialPath(boolean force) {
 	PointTMR lastrow = ptmodel.getLastRow();
 	if (lastrow != null
@@ -830,16 +852,25 @@ public class EPTSWindow {
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    // select a path.
-		    Set<String> vnameSet = ptmodel.getPathVariableNames();
-		    if (vnameSet.isEmpty()) return;
-		    String[] vnames =
-			vnameSet.toArray(new String[vnameSet.size()]);
-		    String vname = (String)JOptionPane.showInputDialog
-			(frame, localeString("SelectPathExtend"),
-			 localeString("SelectPath"),
-			 JOptionPane.PLAIN_MESSAGE, null,
-			 vnames, vnames[0]);
-		    if (vname == null || vname.length() == 0) return;
+		    int index = -1;
+		    if (selectedRow == -1) {
+			Set<String> vnameSet = ptmodel.getPathVariableNames();
+			if (vnameSet.isEmpty()) return;
+			String[] vnames =
+			    vnameSet.toArray(new String[vnameSet.size()]);
+			String vname;
+			if (vnames.length == 1) {
+			    vname = vnames[0];
+			} else {
+			    vname = (String)JOptionPane.showInputDialog
+				(frame, localeString("SelectPathExtend"),
+				 localeString("SelectPath"),
+				 JOptionPane.PLAIN_MESSAGE, null,
+				 vnames, vnames[0]);
+			}
+			if (vname == null || vname.length() == 0) return;
+			index = ptmodel.findStart(vname);
+		    }
 		    // complete the current path.
 		    if (nextState != null) {
 			PointTMR lastrow = ptmodel.getLastRow();
@@ -859,9 +890,10 @@ public class EPTSWindow {
 				       0.0, 0.0, 0.0, 0.0);
 		    }
 		    resetState();
-		    int index = ptmodel.findStart(vname);
-		    if (index != -1) index++;
-		    selectedRow = index;
+		    if (selectedRow == -1) {
+			if (index != -1) index++;
+			selectedRow = index;
+		    }
 		    onExtendPath();
 		}
 	    });
@@ -1071,7 +1103,8 @@ public class EPTSWindow {
 	menuItem.addActionListener(new ActionListener() {
 		long pointIndex = 1;
 		public void actionPerformed(ActionEvent e) {
-		    if (!cleanupPartialPath(false)) return;
+		    terminatePartialPath();
+		    // if (!cleanupPartialPath(false)) return;
 		    if (locationFormat == LocationFormat.STATEMENT) {
 			varname = JOptionPane.showInputDialog
 			    (frame, localeString("PleaseEnterVariableName"),
@@ -1106,7 +1139,8 @@ public class EPTSWindow {
 				(KeyEvent.VK_B, InputEvent.ALT_DOWN_MASK));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
-		    if (!cleanupPartialPath(false)) return;
+		    terminatePartialPath();
+		    // if (!cleanupPartialPath(false)) return;
 		    createPath();
 		}
 	    });
