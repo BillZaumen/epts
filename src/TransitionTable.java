@@ -1,5 +1,7 @@
 import org.bzdev.geom.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import javax.swing.*;
 import java.util.*;
 class Transition {
@@ -241,7 +243,17 @@ public class TransitionTable {
 		JMenuItem item = menuItemMap.get(state);
 		if (item.isEnabled()) {
 		    if (item instanceof JRadioButtonMenuItem) {
-			item.doClick();
+			// item.doClick();
+			// Note: calling doClick() is very slow, so
+			// we just just use the action listeners directly.
+			ActionEvent event =
+			    (new ActionEvent(item,
+					     ActionEvent.ACTION_PERFORMED,
+					     item.getActionCommand()));
+			for (ActionListener listener:
+				 item.getActionListeners()) {
+			    listener.actionPerformed(event);
+			}
 		    }
 		    break;
 		}

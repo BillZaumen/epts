@@ -805,7 +805,8 @@ public class EPTSWindow {
 
 				}
 				// This calls ttable.nextState,
-				// which calls a menu item's doClick
+				// which calls a menu item's action
+				// listener's actionPeformed
 				// method to set the nextState variable
 				// for the radio-button menu item cases.
 				ttable.setState(ptmodel, n);
@@ -816,6 +817,7 @@ public class EPTSWindow {
 			saveMenuItem.setEnabled(false);
 			saveAsMenuItem.setEnabled(false);
 		    }
+		    panel.repaint();
 		}
 	    });
 	editMenu.add(menuItem);
@@ -849,7 +851,8 @@ public class EPTSWindow {
 				(SplinePathBuilder.CPointType.SEG_END);
 			}
 			// This can call a radio-button menu item's
-			// doClick method, and that sets the
+			// action listener's actionPeformed
+			// method, and that sets the
 			// nextState variable.
 			ttable.nextState(EPTS.Mode.PATH_END);
 			ptmodel.addRow("", EPTS.Mode.PATH_END,
@@ -1159,7 +1162,8 @@ public class EPTSWindow {
 					(SplinePathBuilder.CPointType.SEG_END);
 				}
 				// This can call a radio-button menu item's
-				// doClick method, and that sets the
+				// action listener's actionPeformed
+				// actionPerformed method, and that sets the
 				// nextState variable.
 				ttable.nextState(EPTS.Mode.PATH_END);
 				ptmodel.addRow("", EPTS.Mode.PATH_END,
@@ -1704,7 +1708,8 @@ public class EPTSWindow {
 	    ptmodel.deleteRow(endIndex--);
 	    selectedRow = -1;
 	    // This calls ttable.nextState,
-	    // which calls a menu item's doClick
+	    // which calls a menu item's
+	    // action listener's actionPeformed
 	    // method to set the nextState variable
 	    // for the radio-button menu item cases.
 	    if (ttable == null) {
@@ -1823,7 +1828,8 @@ public class EPTSWindow {
 		    nextState = SplinePathBuilder.CPointType.SEG_END;
 		    setModeline(nextState);
 		    // This calls ttable.nextState,
-		    // which calls a menu item's doClick
+		    // which calls a menu item's
+		    // action listener's actionPeformed
 		    // method to set the nextState variable
 		    // for the radio-button menu item cases.
 		    ttable.setState(ptmodel, lastPointIndex);
@@ -1838,7 +1844,8 @@ public class EPTSWindow {
 		    nextState = SplinePathBuilder.CPointType.SPLINE;
 		    setModeline(nextState);
 		    // This calls ttable.nextState,
-		    // which calls a menu item's doClick
+		    // which calls a menu item's
+		    // action listener's actionPeformed
 		    // method to set the nextState variable
 		    // for the radio-button menu item cases.
 		    ttable.setState(ptmodel, lastPointIndex);
@@ -1860,7 +1867,8 @@ public class EPTSWindow {
 			setModeline(nextState);
 		    }
 		    // This calls ttable.nextState,
-		    // which calls a menu item's doClick
+		    // which calls a menu item's
+		    // action listener's actionPeformed
 		    // method to set the nextState variable
 		    // for the radio-button menu item cases.
 		    ttable.setState(ptmodel, lastPointIndex);
@@ -2147,7 +2155,8 @@ public class EPTSWindow {
 			    y += yrefpoint;
 			    ptmodel.addRow("",ns, x, y, xp, yp);
 			    // This can call a radio-button menu item's
-			    // doClick method, and that sets the
+			    // action listener's actionPeformed
+			    // method, and that sets the
 			    // nextState variable.
 			    ttable.nextState(ns);
 			}
@@ -2582,7 +2591,8 @@ public class EPTSWindow {
 			y += yrefpoint;
 			ptmodel.addRow("",ns, x, y, xp, yp);
 			// This can call a radio-button menu item's
-			// doClick method, and that sets the
+			// action listener's actionPeformed
+			// method, and that sets the
 			// nextState variable.
 			ttable.nextState(ns);
 		    } else {
@@ -3439,6 +3449,8 @@ public class EPTSWindow {
 			for (PointTMR row: parser.getRows()) {
 			    ptmodel.addRow(row);
 			}
+			addToPathMenuItem.setEnabled
+			    (ptmodel.pathVariableNameCount() > 0);
 		    }
 		});
 	}
@@ -3484,6 +3496,8 @@ public class EPTSWindow {
 			for (PointTMR row: rows) {
 			    ptmodel.addRow(row);
 			}
+			addToPathMenuItem.setEnabled
+			    (ptmodel.pathVariableNameCount() > 0);
 		    }
 		}
 	    });
