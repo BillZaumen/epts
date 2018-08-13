@@ -23,7 +23,7 @@ public class ConfigGCSPane extends JPanel {
 
     public void saveState() {
 	savedUnitIndex = unitComboBox.getSelectedIndex();
-	savedRefPointIndex = rpComboBox.getSelectedIndex() ;
+	savedRefPointIndex = rpComboBox.getSelectedIndex();
 	savedXString = xtf.getText().trim();
 	savedYString = ytf.getText().trim();
 	savedUsDistString = utf.getText().trim();
@@ -102,11 +102,25 @@ public class ConfigGCSPane extends JPanel {
 	return refpoints[rpComboBox.getSelectedIndex()];
     }
 
+    public static RefPointName getRefPointName(int index) {
+	return refpoints[index];
+    }
+
+    public static double getGCSDist(String value, int unitIndex)
+	throws NumberFormatException
+    {
+	return convert[unitIndex].valueAt(Double.valueOf(value));
+    }
+
+    public static double getGCSDist(double value, int unitIndex) {
+	return convert[unitIndex].valueAt(value);
+    }
+
     public double getScaleFactor() {
 	return convert[unitComboBox.getSelectedIndex()].valueAt(gcsDist)
 	    / usDist;
     }
-    
+
     public void setDist(double distance) {
 	usDist = distance;
 	utf.setText(String.format("%10.3g", distance).trim());

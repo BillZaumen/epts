@@ -26,6 +26,9 @@ class Transition {
 
 public class TransitionTable {
 
+    static String errorMsg(String key, Object... args) {
+	return EPTS.errorMsg(key, args);
+    }
     static String localeString(String key) {
 	return EPTS.localeString(key);
     }
@@ -158,7 +161,7 @@ public class TransitionTable {
 	if (mode != EPTS.Mode.PATH_START &&
 	    mode != EPTS.Mode.PATH_END &&
 	    !(mode instanceof SplinePathBuilder.CPointType)) {
-	    throw new IllegalArgumentException("illegal state");
+	    throw new IllegalArgumentException(errorMsg("illegalState", mode));
 	}
 	while (start > 0 && mode != EPTS.Mode.PATH_START) {
 	    start--;
@@ -183,7 +186,7 @@ public class TransitionTable {
 	if (newState == EPTS.Mode.PATH_END) {
 	    if (currentState == EPTS.Mode.PATH_END ||
 		currentState == EPTS.Mode.PATH_START) {
-		throw new IllegalArgumentException();
+		throw new IllegalArgumentException(errorMsg("successivePath"));
 	    }
 	    currentState = EPTS.Mode.PATH_END;
 	    for (Enum state: menuItemMap.keySet()) {
@@ -195,17 +198,19 @@ public class TransitionTable {
 	}
 	Transition t = transitions.get(currentState);
 	if (!t.next.contains(newState)) {
-	    throw new IllegalArgumentException();
+	    String msg = errorMsg("stateSuccession", newState, currentState);
+	    throw new IllegalArgumentException(msg);
 	} else {
 	    if (t.mode == Transition.NO_CLOSE_AFTER_SEG_END && passedSE
 		&& newState == SplinePathBuilder.CPointType.CLOSE) {
-		throw new IllegalArgumentException();
+		throw new IllegalArgumentException(errorMsg("closeNotAllowed"));
 	    } else if (t.mode == Transition.AT_MOST_TWO) {
 		if (newState == currentState) {
 		    successiveCount++;
 		    if (successiveCount > 2) {
 			successiveCount--;
-			throw new IllegalArgumentException();
+			throw new IllegalArgumentException
+			    (errorMsg("successiveControlPoints"));
 		    }
 		} else  {
 		    successiveCount = 0;

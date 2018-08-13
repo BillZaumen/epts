@@ -21,6 +21,10 @@ import javax.swing.table.*;
 
 public class PointTableModel implements TableModel {
 
+    static String errorMsg(String key, Object... args) {
+	return EPTS.errorMsg(key, args);
+    }
+
     static String localeString(String key) {
 	return EPTS.localeString(key);
     }
@@ -196,7 +200,7 @@ public class PointTableModel implements TableModel {
 	if  (mode == null
 	     || !((mode instanceof EPTS.Mode)
 		  || (mode instanceof SplinePathBuilder.CPointType))) {
-	    throw new IllegalArgumentException("illegal mode");
+	    throw new IllegalArgumentException(errorMsg("illegalMode", mode));
 	}
 	int rowIndex = rows.size();
 	if ((mode == EPTS.Mode.PATH_START || mode == EPTS.Mode.LOCATION)
@@ -390,7 +394,8 @@ public class PointTableModel implements TableModel {
 	case 3:
 	    return localeString("YGCS");
 	default:
-	    throw new IndexOutOfBoundsException(BAD_COL + columnIndex);
+	    throw new
+		IndexOutOfBoundsException(errorMsg("badColumn", columnIndex));
 	}
     }
 
@@ -423,13 +428,14 @@ public class PointTableModel implements TableModel {
 	    }
 	    return String.format("%s", row.getY());
 	default:
-	    throw new IndexOutOfBoundsException(BAD_COL + columnIndex);
+	    throw new
+		IndexOutOfBoundsException(errorMsg("badColumn", columnIndex));
 	}
     }
 
     @Override
     public void setValueAt(Object value, int rowIndex, int columnIndex) {
-	throw new IllegalStateException("not editable");
+	throw new IllegalStateException(errorMsg("notEditable"));
     }
 
     public int findRowXPYP(double xp, double yp, double zoom) {

@@ -1,7 +1,8 @@
 [Desktop Entry]
 Encoding=UTF-8
 Name=EPTS
-Comment=Create scaled images or web pages with thumbnail images
+GenericName=Point and Bezier-Path Editor
+Comment=Create and edit EPTS files describing points and Bezier paths
 Exec=epts %u
 TryExec=epts
 MimeType=application/x.epts+xml;

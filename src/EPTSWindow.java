@@ -21,6 +21,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import javax.imageio.ImageIO;
+import javax.script.ScriptException;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.filechooser.FileFilter;
@@ -37,6 +38,7 @@ import org.bzdev.geom.Path2DInfo;
 import org.bzdev.geom.SplinePathBuilder;
 import org.bzdev.geom.SplinePathBuilder.CPointType;
 import org.bzdev.graphs.Graph;
+import org.bzdev.graphs.RefPointName;
 import org.bzdev.lang.UnexpectedExceptionError;
 import org.bzdev.imageio.BlockingImageObserver;
 import org.bzdev.math.Functions;
@@ -50,9 +52,11 @@ import org.bzdev.swing.HtmlWithTocPane;
 import org.bzdev.swing.PortTextField;
 
 public class EPTSWindow {
+
     static String errorMsg(String key, Object... args) {
 	return EPTS.errorMsg(key, args);
     }
+
     static String localeString(String key) {
 	return EPTS.localeString(key);
     }
@@ -86,24 +90,33 @@ public class EPTSWindow {
 
     static int port;
 
+    boolean shouldSaveScripts = false;
+
     public void save(File f) throws IOException {
 	TemplateProcessor.KeyMap keymap = new TemplateProcessor.KeyMap();
 	configGCSPane.saveState();
-	keymap.put("hasImageFile", imageFileNameSeen? "true": "false");
+	// keymap.put("hasImageFile", imageFileNameSeen? "true": "false");
 	TemplateProcessor.KeyMapList tlist =
 	    new TemplateProcessor.KeyMapList();
 	File fparent = f.getCanonicalFile().getParentFile();
-	if (imageFileNameSeen && imageURI != null) {
-	    TemplateProcessor.KeyMap map = new TemplateProcessor.KeyMap();
-	    // we use relative URLs if the image file is in a
-	    // subdirectory of the directory containing the saved
-	    // state.
-	    String arg = fparent.toURI().relativize(imageURI).toString();
-	    map.put("arg", arg);
-	    tlist.add(map);
+	if (imageFileNameSeen) {
+	    // TemplateProcessor.KeyMap map = new TemplateProcessor.KeyMap();
+	    keymap.put("hasImageURI", new TemplateProcessor.KeyMap());
+	    System.out.println("hasImageURI set");
+	    if (imageURI != null) {
+		// we use relative URLs if the image file is in a
+		// subdirectory of the directory containing the saved
+		// state.
+		String arg = fparent.toURI().relativize(imageURI).toString();
+		keymap.put("imageURI", arg);
+	    } else {
+		keymap.put("imageURI", "-");
+	    }
+	    // map.put("arg", arg);
+	    // tlist.add(map);
 	}
-	System.out.println("scriptMode = "  + scriptMode);
-	if (scriptMode) {
+	// System.out.println("scriptMode = "  + scriptMode);
+	if (/*scriptMode && */ shouldSaveScripts) {
 	    TemplateProcessor.KeyMapList hasScriptList =
 		new TemplateProcessor.KeyMapList();
 	    TemplateProcessor.KeyMap smap = new TemplateProcessor.KeyMap();
@@ -157,11 +170,11 @@ public class EPTSWindow {
 	    }
 	}
 
-	if (targetList != null) {
+	if (shouldSaveScripts && targetList != null) {
 	    for (String arg: targetList) {
 		TemplateProcessor.KeyMap map = new TemplateProcessor.KeyMap();
 		URI uri;
-		if (EPTS.mayBeURL(arg)) {
+		if (EPTS.maybeURL(arg)) {
 		    URL url = new URL(fparent.toURI().toURL(), arg);
 		    try {
 			uri = url.toURI();
@@ -646,7 +659,10 @@ public class EPTSWindow {
 	    yrefpoint -= height*scaleFactor;
 	    break;
 	}
+
     }
+
+    boolean restartOptionShown = false;
 
     JMenuItem quitMenuItem;
     JMenuItem configMenuItem;
@@ -692,44 +708,10 @@ public class EPTSWindow {
 			 localeString("ConfigureGCSDialog"),
 			 JOptionPane.OK_CANCEL_OPTION);
 		     if (status == JOptionPane.OK_OPTION) {
+			 double oldScaleFactor = scaleFactor;
+			 double oldXrefpoint = xrefpoint;
+			 double oldYrefpoint = yrefpoint;
 			 acceptConfigParms();
-			 /*
-			 scaleFactor = configGCSPane.getScaleFactor();
-			 xrefpoint = configGCSPane.getXRefpoint();
-			 yrefpoint = configGCSPane.getYRefpoint();
-			 switch(configGCSPane.getRefPointName()) {
-			 case CENTER:
-			     xrefpoint -= width*scaleFactor / 2;
-			     yrefpoint -= height*scaleFactor / 2;
-			     break;
-			 case CENTER_LEFT:
-			     yrefpoint -= height*scaleFactor / 2;
-			     break;
-			 case CENTER_RIGHT:
-			     xrefpoint -= width*scaleFactor;
-			     yrefpoint -= height*scaleFactor / 2;
-			     break;
-			 case LOWER_CENTER:
-			     xrefpoint -= width*scaleFactor / 2;
-			     break;
-			 case LOWER_LEFT:
-			     break;
-			 case LOWER_RIGHT:
-			     xrefpoint -= width*scaleFactor;
-			     break;
-			 case UPPER_CENTER:
-			     xrefpoint -= width*scaleFactor / 2;
-			     yrefpoint -= height*scaleFactor;
-			     break;
-			 case UPPER_LEFT:
-			     yrefpoint -= height*scaleFactor;
-			     break;
-			 case UPPER_RIGHT:
-			     xrefpoint -= width*scaleFactor;
-			     yrefpoint -= height*scaleFactor;
-			     break;
-			 }
-			 */
 			 if (ptmodel.getRowCount() > 0) {
 			     for (PointTMR row: ptmodel.getRows()) {
 				 Enum rmode = row.getMode();
@@ -750,6 +732,75 @@ public class EPTSWindow {
 				 }
 			     }
 			     ptmodel.fireXYChanged();
+			 }
+			 if (se != null) {
+			     if (oldScaleFactor != scaleFactor
+				 || oldXrefpoint != xrefpoint
+				 || oldYrefpoint != yrefpoint) {
+				 // issue warning that parameters changed
+				 // and the program may have to be restarted.
+				 String options[] = {
+				     localeString("saveAndQuit"),
+				     localeString("cancelChanges"),
+				     localeString("continueRunning"),
+				 };
+				 int option = restartOptionShown? 2:
+				     JOptionPane.showOptionDialog
+				     (frame, localeString("restart"),
+				      localeString("restartTitle"),
+				      JOptionPane.DEFAULT_OPTION,
+				      JOptionPane.WARNING_MESSAGE,
+				      null, options, options[0]);
+				 switch (option) {
+				 case 0:
+				     doSave(false);
+				     System.exit(1);
+				     break;
+				 case 1:
+				     configGCSPane.restoreState();
+				     scaleFactor = oldScaleFactor;
+				     xrefpoint = oldXrefpoint;
+				     yrefpoint = oldYrefpoint;
+				     if (ptmodel.getRowCount() > 0) {
+					 for (PointTMR row: ptmodel.getRows()) {
+					     Enum rmode = row.getMode();
+					     if (rmode == EPTS.Mode.LOCATION
+						 || (rmode instanceof
+						     SplinePathBuilder
+						     .CPointType
+						     && rmode !=
+						     SplinePathBuilder
+						     .CPointType.CLOSE)) {
+						 double xp = row.getXP();
+						 double yp = row.getYP();
+						 double x = xp * scaleFactor;
+						 double y = yp * scaleFactor;
+						 x += xrefpoint;
+						 y += yrefpoint;
+						 row.setX(x, xp);
+						 row.setY(y, yp);
+					     }
+					 }
+					 ptmodel.fireXYChanged();
+				     }
+				     break;
+				 case JOptionPane.CLOSED_OPTION:
+				 case 2:
+				     try {
+					 double xo =
+					     configGCSPane.getXRefpoint();
+					 double yo =
+					     configGCSPane.getYRefpoint();
+					 RefPointName rpn =
+					     configGCSPane.getRefPointName();
+					 se.rescale(scaleFactor, rpn, xo, yo);
+					 restartOptionShown = true;
+				     } catch (IllegalStateException ise) {
+				     }
+				     panel.repaint();
+				     break;
+				 }
+			     }
 			 }
 		     } else {
 			 // User canceled the changes, so we restore
@@ -3279,38 +3330,59 @@ public class EPTSWindow {
 	}
     }
 
-    void init(Image image, boolean ifns)
+    ScriptingEnv se = null;
+
+    void init(Image image, boolean ifns, ScriptingEnv se)
 	throws IOException, InterruptedException
     {
 	// this.targetList = targetList;
+	this.se = se;
 	imageFileNameSeen = ifns;
-	width = image.getWidth(null);
-	height = image.getHeight(null);
-	this.port = port;
-	Graph graph = new Graph(width, height,
-				Graph.ImageType.INT_ARGB_PRE);
-	graph.setRanges(0.0, 0.0, 0.0, 0.0, 1.0, 1.0);
-	bi = graph.getImage();
-	g2d = bi.createGraphics();
-	BlockingImageObserver bio =
-	    new BlockingImageObserver(true, true, true, true);
-	if (!g2d.drawImage(image, new AffineTransform(), bio)) {
-	    bio.waitUntilDone();
-	    g2d.drawImage(image, new AffineTransform(), bio);
+	if (image != null) {
+	    width = image.getWidth(null);
+	    height = image.getHeight(null);
+	    Graph graph = new Graph(width, height,
+				    Graph.ImageType.INT_ARGB_PRE);
+	    graph.setRanges(0.0, 0.0, 0.0, 0.0, 1.0, 1.0);
+	    bi = graph.getImage();
+	    g2d = bi.createGraphics();
+	    BlockingImageObserver bio =
+		new BlockingImageObserver(true, true, true, true);
+	    if (!g2d.drawImage(image, new AffineTransform(), bio)) {
+		bio.waitUntilDone();
+		g2d.drawImage(image, new AffineTransform(), bio);
+	    }
+	} else {
+	    try {
+		Graph g = se.getGraph();
+		width = g.getWidthAsInt();
+		height = g.getHeightAsInt();
+	    } catch (ScriptException e) {
+		throw new IOException(e.getMessage());
+	    }
 	}
-	
+	this.port = port;
+
 	SwingUtilities.invokeLater(new  Runnable () {
 		public void run() {
+		    AffineTransform identityAF = new AffineTransform();
 		    panel = new JPanel() {
 			    public void paintComponent(Graphics g) {
 				super.paintComponent(g);
 				AffineTransform af =
-				    AffineTransform.getScaleInstance
-				    (zoom, zoom);
+				    (zoom == 1.0 || bi == null)? identityAF:
+				    AffineTransform.getScaleInstance(zoom,
+								     zoom);
 				if (g instanceof Graphics2D) {
 				    Graphics2D g2d = (Graphics2D)g;
 				    g2d.setPaintMode();
-				    g2d.drawImage(bi, af, null);
+				    if (bi != null && se == null) {
+					g2d.drawImage(bi, af, null);
+				    }
+				    if (se != null) {
+					g2d.drawImage(se.zoomImage(zoom, bi),
+						      identityAF, null);
+				    }
 				    Graphics2D g2d2 = (Graphics2D)g2d.create();
 				    Stroke savedStroke = g2d.getStroke();
 				    Color savedColor = g2d.getColor();
@@ -3423,13 +3495,30 @@ public class EPTSWindow {
 	    });
     }
 
+    private void setupGCSConfigPane(EPTSParser parser) {
+	configGCSPane.savedUnitIndex
+	    = parser.getUnitIndex();
+	configGCSPane.savedRefPointIndex
+	    = parser.getRefPointIndex();
+	configGCSPane.savedUsDistString =
+	    parser.getUserSpaceDistance();
+	configGCSPane.savedGcsDistString =
+	    parser.getGcsDistance();
+	configGCSPane.savedXString = parser.getXRefpoint();
+	configGCSPane.savedYString = parser.getYRefpoint();
+	configGCSPane.restoreState();
+	acceptConfigParms();
+    }
+
+
     public EPTSWindow(final EPTSParser parser, File inputFile)
 	throws IllegalStateException, IOException, InterruptedException
     {
 	savedFile = inputFile;
 	if (parser.imageURIExists()) {
 	    URI uri = parser.getImageURI();
-	    Image image;
+	    Image image = parser.getImage();
+	    /*
 	    if (uri != null)  {
 		if (!uri.isAbsolute()) {
 		    File cdir =
@@ -3464,10 +3553,12 @@ public class EPTSWindow {
 		g2d.dispose();
 		image = bi;
 	    }
-	    init(image, (uri != null));
+	    */
+	    init(image, (uri != null), null);
 	    // now restore state.
 	    SwingUtilities.invokeLater(new Runnable() {
 		    public void run() {
+			/*
 			configGCSPane.savedUnitIndex
 			    = parser.getUnitIndex();
 			configGCSPane.savedRefPointIndex
@@ -3480,6 +3571,8 @@ public class EPTSWindow {
 			configGCSPane.savedYString = parser.getYRefpoint();
 			configGCSPane.restoreState();
 			acceptConfigParms();
+			*/
+			setupGCSConfigPane(parser);
 			for (PointTMR row: parser.getRows()) {
 			    ptmodel.addRow(row);
 			}
@@ -3494,38 +3587,53 @@ public class EPTSWindow {
 	throws IOException, InterruptedException
     {
 	this.imageURI = imageURI;
-	init(image, true);
+	init(image, true, null);
     }
 
     public EPTSWindow(final Graph graph,
 		      List<EPTS.NameValuePair> bindings,
 		      List<String> targetList,
-		      final boolean meters,
-		      String languageName, String a2dName,
-		      final PointTMR[] rows)
+		      final boolean custom,
+		      final ScriptingEnv se,
+		      // String languageName, String a2dName,
+		      final PointTMR[] rows,
+		      Image image, URI imageURI,
+		      final EPTSParser parser,
+		      File inputFile)
     {
+	this.imageURI = imageURI;
+	this.savedFile = inputFile;
 	try {
-	    init(graph.getImage(), false);
+	    init(image /*graph.getImage() */, (image != null), se);
 	} catch (Exception e) {
 	    throw new UnexpectedExceptionError(e);
 	}
-	
+
 	this.bindings = bindings;
 	this.targetList = targetList;
-	this.languageName = languageName;
-	this.animationName = a2dName;
-	scriptMode = true;
+	this.se = se;
+	if (se != null) {
+	    this.languageName = se.getLanguageName();
+	    this.animationName = se.getAnimationName();
+	    scriptMode = true;
+	    shouldSaveScripts = (parser == null) || (image == null);
+	}
 	SwingUtilities.invokeLater(new Runnable() {
 		public void run() {
-		    configGCSPane.savedUnitIndex = meters? 5: 0;
-		    configGCSPane.savedRefPointIndex = 6;
-		    configGCSPane.savedUsDistString = "" + graph.getXScale();
-		    configGCSPane.savedGcsDistString = "1.0";
-		    configGCSPane.savedXString = "" + graph.getXLower();
-		    configGCSPane.savedYString = "" + graph.getYLower() ;
-		    configGCSPane.restoreState();
-		    acceptConfigParms();
-		    configGCSPane.setEditable(false);
+		    if (parser != null && image != null) {
+			setupGCSConfigPane(parser);
+		    } else if (image == null) {
+			configGCSPane.savedUnitIndex = custom? 0: 5;
+			configGCSPane.savedRefPointIndex = 6;
+			configGCSPane.savedUsDistString = ""
+			    + graph.getXScale();
+			configGCSPane.savedGcsDistString = "1.0";
+			configGCSPane.savedXString = "" + graph.getXLower();
+			configGCSPane.savedYString = "" + graph.getYLower() ;
+			configGCSPane.restoreState();
+			acceptConfigParms();
+			configGCSPane.setEditable(false);
+		    }
 		    if (rows != null) {
 			for (PointTMR row: rows) {
 			    ptmodel.addRow(row);

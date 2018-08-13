@@ -1,6 +1,11 @@
+import java.awt.Color;
 import java.awt.Component;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.image.BufferedImage;
 import java.io.InputStream;
 import java.io.IOException;
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.MessageFormat;
@@ -8,10 +13,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import javax.imageio.ImageIO;
 import javax.xml.parsers.*;
 
 import org.bzdev.geom.SplinePathBuilder;
 import org.bzdev.geom.SplinePathBuilder.CPointType;
+import org.bzdev.graphs.RefPointName;
 import org.bzdev.swing.ErrorMessage;
 
 import org.xml.sax.helpers.*;
@@ -66,13 +73,39 @@ public class EPTSParser {
     public URI getImageURI() {return imageURI;}
     public int getUnitIndex() {return unitIndex;}
     public int getRefPointIndex() {return refPointIndex;}
+    public RefPointName getRefPoint() {
+	return RefPointName.values()[refPointIndex];
+    }
     public String getUserSpaceDistance() {return userSpaceDistance;}
     public String getGcsDistance() {return gcsDistance;}
+
+    public double getUserSpaceDistanceMeters() {
+	return Double.parseDouble(userSpaceDistance);
+    }
+
+    public double getGcsDistanceMeters() {
+	try {
+	    // both meters and custom units do not scale the value
+	    // of gcsDistance.
+	    return ConfigGCSPane.getGCSDist(gcsDistance, unitIndex);
+	} catch (NumberFormatException e) {
+	    // should never happen as we'd through a  parser error
+	    // before the parser was ready to use this method.
+	    return 0.0;
+	}
+    }
+
     public String getXRefpoint() {return xrefpoint;}
     public String getYRefpoint() {return yrefpoint;}
+
+    public double getXRefpointDouble() {
+	return (xrefpoint == null)? 0.0: Double.parseDouble(xrefpoint);}
+    public double getYRefpointDouble() {
+	return (yrefpoint == null)? 0.0: Double.parseDouble(yrefpoint);
+    }
        
-    public boolean usesMeters() {
-	return (unitIndex == 5);
+    public boolean usesCustom() {
+	return (unitIndex == 0);
     }
 
     String animation = null;
@@ -89,7 +122,11 @@ public class EPTSParser {
 	ArrayList<EPTS.NameValuePair> bindings = null;
 
 	public List<EPTS.NameValuePair> getBindings() {
-	    return Collections.unmodifiableList(bindings);
+	    if (bindings == null) {
+		return Collections.emptyList();
+	    } else {
+		return Collections.unmodifiableList(bindings);
+	    }
 	}
 
     public List<String> getCodebase() {
@@ -97,6 +134,49 @@ public class EPTSParser {
     }
 
     public PointTMR[] getRows() {return rows;}
+
+
+    public Image getImage() throws IOException {
+	if (imageURIExists) {
+	    URI uri = imageURI;
+	    Image image;
+	    if (uri != null)  {
+		if (!uri.isAbsolute()) {
+		    File cdir =
+			new File(System.getProperty("user.dir"));
+		    uri = cdir.toURI().resolve(uri);
+		}
+		try {
+		    image = ImageIO.read(uri.toURL());
+		    imageURI = uri;
+		} catch (IOException e) {
+		    throw new
+			IOException(errorMsg("loadImageError", uri.toString()));
+		}
+		if (width != image.getWidth(null)) {
+		    throw new IllegalStateException
+			("save-state width not equal to image width");
+		}
+		if (height != image.getHeight(null)) {
+		    throw new IllegalStateException
+			("save-state height not equal to image height");
+		}
+	    } else {
+		// No image URL, so width and height were from
+		// a buffered image and we just create it.
+		BufferedImage bi = new
+		    BufferedImage(width,height,BufferedImage.TYPE_INT_ARGB_PRE);
+		Graphics2D g2d = bi.createGraphics();
+		g2d.setBackground(Color.WHITE);
+		g2d.clearRect(0, 0, width, height);
+		g2d.dispose();
+		image = bi;
+	    }
+	    return image;
+	} else {
+	    return null;
+	}
+    }
 
 
     public EPTSParser() throws ParserConfigurationException, SAXException {
@@ -211,9 +291,10 @@ public class EPTSParser {
 		    throw new
 			SAXException(errorMsg("heightError", e.getMessage()));
 		}
-		String s = attr.getValue("imageURIExists");
-		if (s == null) s = "false";
-		imageURIExists = s.equals("true");
+		// String s = attr.getValue("imageURIExists");
+		// if (s == null) s = "false";
+		// imageURIExists = s.equals("true");
+		imageURIExists = false;
 	    } else if (qName.equals("scripting")) {
 		 language = attr.getValue("language");
 		 animation = attr.getValue("animation");
@@ -232,6 +313,9 @@ public class EPTSParser {
 		text.setLength(0);
 	    } else if (qName.equals("targetList")) {
 		argList.clear();
+	    } else if (qName.equals("imageURI")) {
+		imageURIExists = true;
+		text.setLength(0);
 	    } else if (qName.equals("argument")) {
 		text.setLength(0);
 	    } else if (qName.equals("codebase")) {
@@ -384,8 +468,10 @@ public class EPTSParser {
 		}
 	    } else if (qName.equals("targetList")) {
 		argArray = new String[argList.size()];
-	    } else if (qName.equals("argument")) {
-		if (imageURIExists && imageURI == null) {
+	    } else if (qName.equals("imageURI")) {
+		if (text.length() <= 1 && text.charAt(0) == '-') {
+		    imageURI = null;
+		} else {
 		    try {
 			imageURI = new URI(text.toString());
 		    } catch (URISyntaxException e) {
@@ -393,9 +479,9 @@ public class EPTSParser {
 			error(msg);
 			throw new SAXException(msg);
 		    }
-		} else {
-		    argList.add(text.toString());
 		}
+	    } else if (qName.equals("argument")) {
+	    argList.add(text.toString());
 		text.setLength(0);
 	    } else if (qName.equals("path")) {
 		codebase.add(text.toString());

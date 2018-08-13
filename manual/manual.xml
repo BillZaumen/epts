@@ -48,6 +48,8 @@
     </node>
     <node title="The CLI" uri="sresource:/manual/manual.html#cli"
 	  href="manual.html#cli">
+      <node title="Units" uri="sresource:/manual/manual.html#units"
+	    href="manual.html#units"/>
       <node title="Scripting Options"
 	    uri="sresource:/manual/manual.html#scriptOptions"
 	    href="manual.html#scriptOptions"/>
@@ -61,23 +63,36 @@
 	    uri="sresource:/manual/manual.html#examples"
 	    href="manual.html#examples"/>
     </node>
-    <node title="Saved-file format" uri="sresource:manual.html#savedFormat"
+    <node title="Built-in Scripts"
+	  uri="sresource:manual/manual.html#scripts"
+	  href="manual/manual.html#scripts">
+      <node title="Cartesian-Grid Script"
+	    uri="sresource:manual/manual.html#cartesian"
+	    href="manual/manual.html#cartesian"/>
+      <node title="Polar-Grid Script"
+	    uri="sresource:manual/manual.html#polar"
+	    href="manual.html#polar"/>
+    </node>
+    <node title="Saved-file format"
+	  uri="sresource:manual/manual.html#savedFormat"
 	  href="manual.html#savedFormat">
-      <node title="The image element" uri="sresource:manual.html#imageElement"
+      <node title="The image element"
+	    uri="sresource:manual/manual.html#imageElement"
 	    href="manual.html#imageElement"/>
       <node title="The codebase element"
-	    uri="sresource:manual.html#codebaseElement"
+	    uri="sresource:manual/manual.html#codebaseElement"
 	    href="manual.html#codebaseElement"/>
       <node title="The scripting element"
-	    uri="sresource:manual.html#scriptingElement"
+	    uri="sresource:manual/manual.html#scriptingElement"
 	    href="manual.html#scriptingElement"/>
       <node title="The targetList element"
-	    uri="sresource:manual.html#targetListElement"
+	    uri="sresource:manual/manual.html#targetListElement"
 	    href="manual.html#targetListElement"/>
       <node title="The gcsconfig element"
-	    uri="sresource:manual.html#gcsconfigElement"
+	    uri="sresource:manual/manual.html#gcsconfigElement"
 	    href="manual.html#gcsconfigElement"/>
-      <node title="The table element" uri="sresource:manual.html#tableElement"
+      <node title="The table element"
+	    uri="sresource:manual/manual.html#tableElement"
 	    href="manual.html#tableElement"/>
     </node>
   </node>

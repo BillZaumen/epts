@@ -2,7 +2,9 @@
 <!DOCTYPE epts PUBLIC "-//BZDev//EPTS-1.0//EN"
 	  "sresource:epts-1.0.dtd">
 <epts xmlns="http://bzdev.org/DTD/epts-1.0">
-  <image width="$(width)" height="$(height)" imageURIExists="$(hasImageFile)"/>
+  <image width="$(width)" height="$(height)">$(hasImageURI:endImageURI)
+    <imageURI>$(imageURI)</imageURI>
+$(endImageURI)  </image>
 $(hasCodebase:endCodebase)  <codebase>$(pathlist:endPathlist)
      <path>$(path)</path>
 $(endPathlist)  </codebase>

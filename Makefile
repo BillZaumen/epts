@@ -108,6 +108,8 @@ TEMPLATES = templates/ECMAScript.tpl templates/save.tpl \
 	templates/area.tpl templates/circumference.tpl \
 	templates/pathlength.tpl
 
+SCRIPTS = scripts/grid.js scripts/polar.js
+
 CRLF_TEMPLATES = templates/SegmentsCSV.tpl
 
 RESOURCES = manual/manual.xml \
@@ -161,7 +163,7 @@ $(CLASSES):
 # being installed.
 #
 $(JROOT_JARDIR)/epts-$(VERSION).jar: $(FILES) $(TEMPLATES) $(CRLF_TEMPLATES)\
-	$(RESOURCES) $(BLDPOLICY)
+	$(RESOURCES) $(BLDPOLICY) $(SCRIPTS)
 	mkdir -p $(CLASSES)
 	javac -Xlint:unchecked -Xlint:deprecation \
 		-d $(CLASSES) -classpath $(CLASSES):$(EXTLIBS) \
@@ -177,6 +179,8 @@ $(JROOT_JARDIR)/epts-$(VERSION).jar: $(FILES) $(TEMPLATES) $(CRLF_TEMPLATES)\
 		cp $$i $(CLASSES)/$$tname; done
 	for i in $(CRLF_TEMPLATES) ; do tname=`basename $$i .tpl`; \
 		cat $$i | sed -e 's/.*/\0\r/' > $(CLASSES)/$$tname; done
+	for i in $(SCRIPTS) ; do sname=`basename $$i .js` ; \
+		cp $$i $(CLASSES)/$$sname; done
 	mkdir -p $(CLASSES)/manual
 	for i in $(RESOURCES) ; do cp $$i $(CLASSES)/$$i ; done
 	jar cfm $(JROOT_JARDIR)/epts.jar epts.mf -C $(CLASSES) .

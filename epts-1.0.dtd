@@ -3,11 +3,12 @@
 <!ATTLIST epts
 	  xmlns CDATA #FIXED "http://bzdev.org/DTD/epts-1.0">
 
-<!ELEMENT image EMPTY>
+<!ELEMENT image (imageURI?)>
 <!ATTLIST image
 	  width CDATA #REQUIRED
-	  height CDATA #REQUIRED
-	  imageURIExists (true|false) #IMPLIED>
+	  height CDATA #REQUIRED>
+
+<!ELEMENT imageURI (#PCDATA)>
 
 <!ELEMENT codebase (path*)>
 
@@ -26,7 +27,6 @@
 <!ELEMENT targetList (argument*)>
 
 <!ELEMENT argument (#PCDATA)>
-
 
 <!ELEMENT gcsconfig EMPTY>
 <!ATTLIST gcsconfig

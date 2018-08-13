@@ -11,7 +11,7 @@ if (typeof frameHeight === 'undefined') {
 
 a2d = new Animation2D(scripting, frameWidth, frameHeight, 1000.0, 40);
 
-if (epts == undefined && typeof da === 'undefined') {
+if (epts === 'undefined' && typeof da === 'undefined') {
     var apg = AnimatedPanelGraphics.newFramedInstance(a2d,
 						      "Swerving",
 						      true, true, null);

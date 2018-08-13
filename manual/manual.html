@@ -83,7 +83,8 @@ The <code>File</code> menu contains the following items:
   <LI><code>Quit</code>. Choosing this menu item causes the program to
     exit.
   <LI><code>Save</code>. Choosing this menu item causes the program to
-    be saved.
+    be saved. This option will request a file name unless the first file-name
+    argument is an EPTS saved-state file.
   <LI><code>Save As</code>. Choosing this menu item causes the program to
     be saved with a new file name. This new file will become the default
     file name for the <code>Save</code> menu item.
@@ -350,7 +351,7 @@ In most configurations, the primary mouse button is the left mouse
 button. Windows systems, however, may give the user the option of
 changing this.
 
-<H2><A name="popup">Popup Menus</A></H2>
+<H2><A name="popup">Popup menus</A></H2>
 
 There are two popup menus that can be displayed. As stated above,
 these are context-sensitive.
@@ -490,7 +491,7 @@ with the <CODE>-o</CODE> command-line option.  EPTS will not provide a GUI
 when templates are used. If the argument to the <CODE>-o</CODE> option
 is "<CODE>-</CODE>", the output will be sent to standard output.
 
-<H2><A name="builtins">Built-in Templates</A></H2>
+<H2><A name="builtins">Built-in templates</A></H2>
 
 The built-in templates can be accessed via URLs whose protocol field
 is <CODE>sresource</CODE>. For convenience there is a shortcut: if
@@ -620,7 +621,7 @@ The built-in path-iterator templates are
     numbers or empty strings.
 </UL>
 
-<H2><A name="templateSyntax">Template Syntax</A></H2>
+<H2><A name="templateSyntax">Template syntax</A></H2>
 <P>
 Templates specify an output format for points and paths using the
 syntax specified by the Java
@@ -657,7 +658,7 @@ defined at multiple levels, the most recent definition is used.
 In the following description, we will frequently refer to a directive
 by the name of its key.
 
-<H2><A name="tbltemplate">Table Templates</A></H2>
+<H2><A name="tbltemplate">Table templates</A></H2>
 <P>
 EPTS provides key maps appropriate for representing its table entries.
 for these tables, EPTS defines several global directives:
@@ -909,7 +910,7 @@ will be indented properly for readability):
 $(endItems)
 </CODE></PRE></BLOCKQUOTE>
 
-<H2><A name="pitemplates">Path-Iterator Templates</A></H2>
+<H2><A name="pitemplates">Path-iterator templates</A></H2>
 
 Path-Iterator templates allow one to list the values provided by
 Java path iterators.  Command-line options determine the path iterator
@@ -1038,7 +1039,7 @@ the following directives:
 
 <H1><A name="cli">The command-line interface</A></H1>
 
-EPTS can be as a window-system-based program or as a command-line
+EPTS can be used as a window-system based program or as a command-line
 program.  The command-line capabilities allow EPTS to be used (for
 example) in a Makefile, where it will generate files in user-specified
 formats. Meanwhile, EPTS's GUI can be used to edit a saved state.
@@ -1074,21 +1075,56 @@ When run from the command line, a number of additional options are
 available beyond the trivial case supported by the GUI. If the JVM has
 to be configured (e.g., to provide more memory or to include
 additional class libraries), the CLI must be used to start the
-program. Some options use filename arguments that appear after the
-options.  Except when there is a single file-name argument that is the
-name of an EPTS saved-state file (e.g., <CODE>saved.epts</CODE>), the
-file-name arguments can be either file names or URLs:
+program. Some options require arguments that appear after the
+options.  These arguments can be either file names or URLs:
 <UL>
-  <LI> When the <CODE>--image</CODE> option is one of the options, there
-    is a single file-name argument. This argument can be a file name
-    or a URL and provides an image in a format the Java accepts.
-    In practice, this file will be a JPEG or PNG file.
-  <LI> When the <CODE>--script</CODE> option is one of the options, there
-    will be at least one file-name argument, which can be either the
-    name of a file or a URL. Each argument must provide a script to
-    be executed. All scripts use the same scripting language and are
-    executed in the same script-engine instance, sharing the same
-    bindings.
+  <LI> When neither the <CODE>--image</CODE> option, the <CODE>--script</CODE>,
+    nor both are present, the first file-name argument must be the
+    name of an EPTS saved-state file, which is required to have a file-name
+    ".epts".  If the first argument is a URI, the scheme must be "file".
+    Any additional file-name arguments must contain scripts. For example,
+    <BLOCKQUOTE><PRE><CODE>
+	  epts saved.epts
+    </CODE></PRE></BLOCKQUOTE>
+    Similarly,
+    <BLOCKQUOTE><PRE><CODE>
+	  epts saved.epts ourscript.js
+    </CODE></PRE></BLOCKQUOTE>
+    will restore the state of previous EPTS session and will additionally
+    embellish the background by running a script, with the scripting
+    language guessed from the file-name extension ".js". A
+    <CODE>--script</CODE> option is not needed if the saved state was
+    created by running scripts with explicitly specified image.
+    If there are no arguments, EPTS will open a dialog box asking for
+    a file name. This dialog box will accept image files.
+  <LI> When the <CODE>--script</CODE> option is one of the options,
+    there will be at least one file-name argument providing a script,
+    and that file name argument can be either the name of a file or a
+    URL. Except for the first argument, each argument must provide a
+    script to be executed.  When the <CODE>--script</CODE> option is
+    present, the first file-name argument may be the name of a file
+    containing an EPTS saved state (as in the other cases, the name
+    must end in the ".epts" extension). This EPTS saved state must
+    contain a reference to an image, with no scripts. When additional
+    arguments provide scripts, these scripts must use the same scripting
+    language and are executed in the same script-engine instance,
+    sharing the same bindings. As described below,
+    the <CODE>--script</CODE> requires an argument, the name of a
+    scripting language variable.  For example,
+    <BLOCKQUOTE><PRE><CODE>
+	  epts --script a2d  ourscript.js
+    </CODE></PRE></BLOCKQUOTE>
+    will run a script that creates an animation named a2d.
+    In this example, the scripting language, ECMAScript, is determined
+    by the file-name extension. For other scripting languages, a
+    <CODE>--codebase</CODE> option may also be needed or alternatively a
+    suitable entry in an <CODE>scrunner</CODE> configuration file.
+    Similar,
+    <BLOCKQUOTE><PRE><CODE>
+	  epts --script a2d  saved.epts ourscript.js
+    </CODE></PRE></BLOCKQUOTE>
+    will restore an EPTS saved state that provides an image, and
+    will use the script to embellish the image.
 </UL>
 <P>
 There are four options that do not fit into well-defined categories:
@@ -1096,8 +1132,20 @@ There are four options that do not fit into well-defined categories:
   <LI><B><CODE>--</CODE></B>. This option simply indicates the end of
     options, and is provided in case a file name starts with a
     "<CODE>-</CODE>".
-  <LI><B><CODE>--image</CODE></B>. This option implies that there will be one
-    file argument specifying the name of an image file.
+  <LI><B><CODE>--image</CODE></B> <B><EM>IFILE</EM></B>. This option
+    implies that a background image will be displayed.  The value
+    <EM>IFILE</EM> may be either an EPTS saved-state file name
+    specifying an image or a file name or URL providing an image file
+    supported by the Java runtime environment. The most common image
+    formats are PNG and JPEG. These can use the file-name extensions
+    "png" and "jpg" respectively.  If the file name is literally "-",
+    EPTS will prompt for an image size and will create an image
+    containing a white background. The <CODE>--script</CODE> option
+    may not be used with this option if <EM>IFILE</EM> is not an EPTS
+    saved state.  When <EM>IFILE</EM> is an EPTS saved state for a
+    saved state that is the argument for an <CODE>--image</CODE>
+    option, paths and locations recorded in the saved state will be
+    ignored.
   <LI><B><CODE>--port</CODE></B> <B><EM>PORT</EM></B>.  When this flag
     is used, it sets the TCP port number for an embedded web server
     that will provide the on-line manual. The port
@@ -1105,7 +1153,7 @@ There are four options that do not fit into well-defined categories:
     inclusive, but some ports are reserved or require system
     privileges).
   <LI><B><CODE>--script</CODE></B> <B><EM>A2D</EM></B>. This option
-    indicates that the file arguments are files containing scripts
+    indicates that file arguments are files containing scripts
     that will be run using a scripting language.  The
     argument <EM>A2D</EM> is the name of a scripting-language variable
     whose value is an instance of the
@@ -1113,20 +1161,105 @@ There are four options that do not fit into well-defined categories:
     to produce an image by creating a snapshot of the objects that are
     currently defined in the animation and that are visible. The
     scripts will configure this object. The constructor
-    for <CODE>Animation2D</CODE> will determine the size of the image.
+    for an <CODE>Animation2D</CODE> will determine the size of the image
+    unless the <CODE>--image</CODE> option is also present, but
+    the <CODE>--image</CODE> option can not be used with this option
+    unless the argument for <CODE>--image</CODE> is an EPTS saved state.
 </UL>
-If neither of the options <CODE>--image</CODE>
-or <CODE>--script</CODE> are present, there should be one file
-argument that provides the name of a file containing a saved state. By
-convention, this file should end with the file-name extension
-<CODE>epts</CODE> (for example, "<CODE>saved.epts</CODE>").
+When both the <CODE>--image</CODE> and <CODE>--script</CODE> options
+are present, the saved state that is provided as the argument for the
+<CODE>--image</CODE> option determines the frame size
+and the scale factor for converting distances in graph coordinate space
+to user space. The scripting-language variable
+<CODE>epts</CODE> will have a non-null value:
+<UL>
+  <LI><B><CODE>epts.getWidth()</CODE></B> to determine the frame width
+    in user-space units.
+  <LI><B><CODE>epts.getHeight()</CODE></B> to determine the frame height
+    in user-space units.
+  <LI><B><CODE>epts.gethasDistances()</CODE></B> to determine if user-space
+    and graph-coordinate-space distances are valid (true if valid, false if
+    not).
+  <LI><B><CODE>epts.getUserDist()</CODE></B> to determine a user-space
+    distance.
+  <LI><B><CODE>epts.getGCSDist()</CODE></B> to determine a corresponding
+    graph-coordinate-space distance.
+  <LI><B><CODE>epts.getRefPointName()</CODE></B> to determine location
+    of the reference point (the value is an enumeration constant defined
+    by <CODE>org.bzdev.graphs.RefPointName</CODE>.
+  <LI><B><CODE></CODE>epts.getXOrigin()</B> to determine the X value in
+    graph coordinate space for the reference point.
+    <LI><B><CODE></CODE>epts.getYOrigin()</B> to determine the Y value in
+    graph coordinate space for the reference point.
+    <LI><B><CODE></CODE>epts.getXFract()</B> to determine the fractional
+      distance from the left edge of a graph's range to its right edge.
+      The values returned can be either 0.0, 0.5, or 1.0 and match the
+      RefPointName enumeration.
+    <LI><B><CODE></CODE>epts.getYFract()</B> to determine  the fractional
+      distance from the lower edge of a graph's range to its upper edge.
+      The values returned can be either 0.0, 0.5, or 1.0 and match the
+      RefPointName enumeration.
+</UL>
+These methods should be used to configure the width and height of an
+animation's frame. For example,
+<BLOCKQUOTE><PRE><CODE>
+      if (epts != null) {
+          var frameWidth = epts.getWidth();
+          var frameHeight = epts.getHeight();
+      }
+      var a2d = new Animation2D(scripting, frameWidth, frameHeight);
+</CODE></PRE></BLOCKQUOTE>
+While one can subsequently modify the scale factor when the
+<CODE>--image</CODE> options' argument is a saved state, the objects
+added to the image by the script may not display correctly. Because
+of that, a warning will be generated.  The scripts
+<CODE>sresource:grid.js</CODE> and <CODE>sresource:polar.js</COdE>
+will work properly regardless, but other scripts may not.
 
-<H2><A name="scriptOptions">Scripting Options</A></H2>
+When there is no image, the variable <CODE>epts</CODE>will still be
+defined, but its value will be null.  While the
+<A href="#config">Configure CGS</A> menu item will not be disabled
+when there is no image, the fields shown in its dialog box will not
+be editable.
+
+<H2><A name="units">Units</A></H2>
+
+Options that have double-precision arguments can also specify units
+by appending their numerical value with a suffix that treats the argument
+as a distance that will be converted to meters.  The suffixes are
+<UL>
+  <LI><B><CODE>nm</CODE></B> for distances measured in nanometers.
+  <LI><B><CODE>um</CODE></B> for distances measured in microns.
+  <LI><B><CODE>mm</CODE></B> for distances measured in millimeters.
+  <LI><B><CODE>cm</CODE></B> for distances measured in centimeters.
+  <LI><B><CODE>m</CODE></B> for distances measured in meters (the conversion
+    factor is 1.0 in this case).
+  <LI><B><CODE>km</CODE></B> for distances measured in kilometers.
+  <LI><B><CODE>in</CODE></B> for distances measured in inches.
+  <LI><B><CODE>ft</CODE></B> for distances measured in feet.
+  <LI><B><CODE>yd</CODE></B> for distances measured in yards.
+  <LI><B><CODE>mi</CODE></B> for distances measured in miles.
+</UL>
+For example,
+<BLOCKQUOTE><PRE><CODE>
+      epts --double spacing=10ft  saved.epts sresource:grid.js
+</PRE></CODE></BLOCKQUOTE>
+will show a script-generated image specified by saved.epts with
+its points and paths, and with a grid whose lines are spaced at 10-foot
+intervals in graph coordinate space in between.
+
+<H2><A name="scriptOptions">Scripting options</A></H2>
 
 The options specific to the EPTS command when scripting is used
 directly are the following:
 <UL>
-  <LI><CODE>--double</CODE> <EM>NAME</EM><CODE>=</CODE><EM>DVALUE</EM>.The
+  <LI><CODE>--boolean</CODE><EM>NAME</EM><CODE>=</CODE><EM>BVALUE</EM>. The
+    argument consists of two parts. <EM>NAME</EM> is the name of a
+    scripting-language variable and <EM>BVALUE</EM> is a boolean
+    represented by the value <CODE>true</CODE> or <CODE>false</CODE>
+    for that variable. The variable will be set before any script is
+    run.
+  <LI><CODE>--double</CODE> <EM>NAME</EM><CODE>=</CODE><EM>DVALUE</EM>. The
     argument consists of two parts. <EM>NAME</EM> is the name of a
     scripting-language variable and <EM>DVALUE</EM> is a real number
     that provides the corresponding value for that variable. The
@@ -1158,7 +1291,7 @@ library that is loaded by default.  For security reasons, a saved
 state does not include the codebase: instead, the codebase must be
 explicitly specified on the command line.
 
-<H2><A name="templateOptions">Template Options</A></H2>
+<H2><A name="templateOptions">Template options</A></H2>
 
 The options specific to the EPTS command when templates are used are:
 <UL>
@@ -1502,11 +1635,24 @@ provided by the scrunner command. These are
     scripting language. <CODE>ECMAScript</CODE> is always supported.
 </UL>
 
-<H2><A name="examples">CLI Examples</A></H2>
+<H2><A name="examples">CLI examples</A></H2>
 <UL>
   <LI><B><CODE>epts saved.epts</CODE></B>
     <BR>
     Start EPTS, restoring its state to one saved in a previous session.
+  <LI><B><CODE>epts saved.epts sresource:grid.js</CODE></B>
+    <BR>
+    Start EPTS, restoring its state to one saved in a previous session
+    and use a script to overlay a grid on top of the image. Points and
+    paths will be placed over the grid. The image in this case must be
+    created by a script, and the built-in script grid.js assumes that
+    the animation used to create the grid is named a2d.
+  <LI><B><CODE>epts --script a2s saved.epts sresource:grid.js</CODE></B>
+    <BR>
+    Start EPTS, restoring its state to one saved in a previous session
+    and use a script to overlay a grid on top of the image. Points and
+    paths will be placed over the grid. The saved state in this case
+    does not include a script.
   <LI><B><CODE>epts --codebase foo.jar saved.epts</CODE></B>
     <BR>
     Start EPTS, restoring its state to one saved in a previous session,
@@ -1544,6 +1690,199 @@ provided by the scrunner command. These are
     Run EPTS without a GUI to compute the area of a shape bounded
     by the curves <CODE>c1</CODE> and <CODE>c2</CODE>. The area is
     in GCS units.
+</UL>
+
+<H1><A name="scripts">Built-in scripts</A></H1>
+
+There are two built-in scripts accessible using the <CODE>sresource</CODE>
+protocol:
+<UL>
+  <LI><B><CODE>sresource:grid.js</CODE></B> overlays a rectilinear grid
+    as a representation of a Cartesian coordinates.
+  <LI><B><CODE>sresource:polar.js</CODE></B> overlays a polar grid as a
+    representation of polar coordinates.
+</UL>
+While there is a default behavior in both cases, the grids can be tuned
+if necessary.  These scripts must be used with the option
+<CODE>--script a2d</CODE> as the variable representing an animation is
+<CODE>a2d</CODE> in both cases. If another script assigns a value to
+<CODE>a2d</CODE>, the scripts describe below will not override that
+value. They will, however, set the value of <CODE>a2d</CODE> if it is
+null or undefined.
+<P>
+The grids the scripts display can
+be controlled by setting various EMCAScript variables. This is done
+using the CLI options
+<UL>
+  <LI><B><CODE>--boolean</CODE></B>. This must be used for variables
+    whose values are either <CODE>true</CODE> or <CODE>false</CODE>.
+  <LI><B><CODE>--double</CODE></B>. This must be used for variables
+    whose values are double-precision numbers
+  <LI><B><CODE>--int</CODE></B>. This must be used for variables whose
+    values are integers (Java <CODE>int</CODE> or <CODE>long</CODE>
+    values).
+  <LI><B><CODE>--string</CODE></B>. This must be used for variables
+    whose values are strings.
+</UL>
+<P>
+As stated in the <A href="#scriptOptions">Scripting Options</A>
+section of this manual, each of these options takes an argument of
+the form <EM>VARIABLE</EM><CODE>=</CODE><EM>VALUE</EM>, where
+<EM>VARIABLE</EM> is one of the variables listed the sections
+describing <A href="#cartesian">Cartesian-grid</A> scripts and
+<A href="#polar">polar-grid</A> scripts, and <EM>VALUE</EM> is the
+corresponding value.  The variables <CODE>frameWidth</CODE>,
+<CODE>frameHeight</CODE>, <CODE>userDist</CODE>, <CODE>gcsDist</CODE>,
+<CODE>xorigin</CODE>, <CODE>yorigin</CODE>, <CODE>xfract</CODE>,
+and <CODE>yfract</CODE> are used by both scripts with the same
+meaning.  They are used by these scripts only if an animation has to
+be created by them.
+
+<H2><A name="cartesian">Cartesian-grid script</A></H2>
+
+The script <CODE>sresource:grid.js</CODE> will overlay an image with a
+Cartesian (rectilinear) grid consisting of parallel, evenly spaced
+lines in both the X and Y directions.  The variables that configure
+Cartesian grids are the following:
+<UL>
+  <LI><B><CODE>frameWidth</CODE></B> - an integer giving the width of
+    the background image that will be created. The default is
+    1920. The value is ignored if the animation was created by another
+    script.
+  <LI><B><CODE>frameHeight</CODE></B> - an integer giving the height
+    of the background image that will be created. The default is
+    1080. The value is ignored if the animation was created by another
+    script.
+  <LI><B><CODE>userdist</CODE></B> - a double giving a reference
+    distance in user space. The default is 1.0. The ratio
+    userdist/gcsdist is the scaling factor for converting distances in
+    graph coordinate space to user space. The value is ignored if the
+    animation was created by another script.
+  <LI><B><CODE>gcsdist</CODE></B> - a double giving a reference
+    distance in graph coordinate space. The default is 1.0. The ratio
+    userdist/gcsdist is the scaling factor for converting distances in
+    graph coordinate space to user space. The value is ignored if the
+    animation was created by another script.
+  <LI><B><CODE>xorigin</CODE></B> - a double giving the X coordinate
+    in graph coordinate space for the frame's reference point. The
+    default is 0.0.  The value is ignored if the animation was created
+    by another script.
+  <LI><B><CODE>yorigin</CODE></B> - a double giving the Y coordinate
+    in graph coordinate space for the frame's reference point. The
+    default is 0.0.  The value is ignored if the animation was created
+    by another script.
+  <LI><B><CODE>xfract</CODE></B> - a double giving the fraction of the
+    frame width at which the reference point appears (0.0 is the left
+    edge and 1.0 is the right edge). The default is 0.0. The value is
+    ignored if the animation was created by another script.
+  <LI><B><CODE>yfract</CODE></B> - a double giving the fraction of the
+    frame height at which the reference point appears (0.0 is the
+    lower edge and 1.0 is the upper edge). The default is 0.0. The
+    value is ignored if the animation was created by another script.
+  <LI><B><CODE>spacing</CODE></B> - a double giving the grid spacing
+    in graph-coordinate space units. If not provided explicitly or if
+    the value is null, 0.0, or negative, the default is computed by
+    taking the minimum of the frame width and frame height, converting
+    that minimum to graph coordinate space units, then dividing by 10,
+    and finally finding the largest power of 10 that is not larger
+    than this value. The grid lines will appear at X or Y coordinates
+    that are an integral multiple of the spacing.
+  <LI><B><CODE>subspacing</CODE></B> - the number of subspacings per
+    spacing for a finer grid.  if undefined or 1, the value is
+    ignored. In practice, values that create a subgrid are either 2,
+    4, 5, or 10.  The value must be an integer.
+  <LI><B><CODE>axisColor</CODE></B> - the axis color provided as a CSS
+    string, null or undefined for the default.
+  <LI><B><CODE>spacingColor</CODE></B> - the spacing color provided as
+    a CSS string, null or undefined for the default.
+  <LI><B><CODE>subspacingColor</CODE></B> - the subspacing color
+    provided as a CSS string, null or undefined for the default.
+  <LI><B><CODE>strokeWidth</CODE></B> - a double giving the width of
+    the stroke used to create grid lines; undefined or null for a
+    default.
+  <LI><B><CODE>gridZorder</CODE></B> - an integer giving the z-order
+    to use for the object that creates the grid. The default is the
+    javascript value java.lang.Long.MAX_VALUE (2<SUP>53</SUP> - 1).
+</UL>
+
+<H2><A name="polar">Polar-grid script</A></H2>
+
+The script <CODE>sresource:polar.js</CODE> will overlay an image with
+a polar grid. These grids consist of a set of evenly spaced circles
+centered at a common origin, and radial lines with the same angular
+spacing, excluding areas near the origin where some lines may be
+eliminated in order to prevent them from running together.  The
+variables that configure polar grids are the following:
+<UL>
+  <LI><B><CODE>frameWidth</CODE></B> - an integer giving the width of
+    the background image that will be created. The default is
+    1920. The value is ignored if the animation was created by another
+    script. If undefined or null, the default will be used.
+  <LI><B><CODE>frameHeight</CODE></B> - an integer giving the height
+    of the background image that will be created. The default is
+    1080. The value is ignored if the animation was created by another
+    script. If undefined or null, the default will be used.
+  <LI><B><CODE>userdist</CODE></B> - a double giving a reference
+    distance in user space. The default is 1.0. The ratio
+    userdist/gcsdist is the scaling factor for converting distances in
+    graph coordinate space to user space. if undefined or null, the
+    default will be used.
+  <LI><B><CODE>gcsdist</CODE></B> - a double giving a reference
+    distance in graph coordinate space. The default is 1.0. The ratio
+    userdist/gcsdist is the scaling factor for converting distances in
+    graph coordinate space to user space. If undefined or null, the
+    default will be used.
+  <LI><B><CODE>xorigin</CODE></B> - a double giving the X coordinate
+    in graph coordinate space for a reference point in the frame. The
+    default is 0.0.  The value is ignored if the animation was created
+    by another script. if undefined or null, the default will be used.
+  <LI><B><CODE>yorigin</CODE></B> - a double giving the Y coordinate
+    in graph coordinate space for a reference point in the frame. The
+    default is 0.0.  The value is ignored if the animation was created
+    by another script. If undefined or null, the default will be used.
+  <LI><B><CODE>xfract</CODE></B> - a double giving the fraction of the
+    frame width at which the reference point appears (0.0 is the left
+    edge and 1.0 is the right edge). The default is 0.0. The value is
+    ignored if the animation was created by another script.  If
+    undefined or null, the default will be used.
+  <LI><B><CODE>yfract</CODE></B> - a double giving the fraction of the
+    frame height at which the reference point appears (0.0 is the
+    lower edge and 1.0 is the upper edge). The default is 0.0. The
+    value is ignored if the animation was created by another script.
+    If undefined or null, the default will be used.
+  <LI><B><CODE>fractional</CODE></B> - true if the grid origin's
+    coordinates (gridXOrigin, gridYOrigin) are a fraction of the
+    position in the frame (excluding offsets); false if absolute
+    values in graph coordinate space are used. If undefined or null, a
+    default will be used.
+  <LI><B><CODE>gridXOrigin</CODE></B> - a double giving the X
+    component of the grid's origin.  When fractional is true, the
+    value is a fraction of the position in the frame, excluding
+    offsets, in the X direction. When false, it is the X coordinate of
+    the origin for a polar coordinate grid, given in
+    graph-coordinate-space units. If undefined or null, a default
+    value will be used.
+  <LI><B><CODE>gridXOrigin</CODE></B> - a double giving the Y
+    component of the grid's origin.  When fractional is true, the
+    value is a fraction of the position in the frame, excluding
+    offsets, in the Y direction. When false, it is the Y coordinate of
+    the origin for a polar coordinate grid, given in
+    graph-coordinate-space units. If undefined or null, a default
+    value will be used.
+  <LI><B><CODE>radialSpacing</CODE></B> - a double giving the radial
+    spacing for concentric circles; null, undefined, 0.0 or negative
+    for a default.
+  <LI><B><CODE>angularSpacing</CODE></B> - the angular spacing in
+    degrees for radial lines.  The value should be a divisor of 90
+    degrees or either null or undefined for a default.
+  <LI><B><CODE>gridColor</CODE></B> - the grid-line color provided as
+    a CSS string, undefined or null for the default.
+  <LI><B><CODE>strokeWidth</CODE></B> - a double giving the width of
+    the stroke used to create grid lines; undefined or null for a
+    default.
+  <LI><B><CODE>gridZorder</CODE></B> - an integer giving the z-order
+    to use for the object that creates the grid. The default is the
+    javascript value java.lang.Long.MAX_VALUE (2<SUP>53</SUP> - 1).
 </UL>
 
 <H1><A name="savedFormat">Saved-file format</A></H1>
@@ -1645,15 +1984,22 @@ The content for each <CODE>argument</CODE> element is a URI for
 a file. If a relative URI, it is resolved relative to the current
 working directory (set when EPTS executes). If no protocol is provided,
 the URI is assumed to be a <CODE>file</CODE> URI.
-
+<P>
+The protocol portion of the URL can contain the following:
 <UL>
-  <LI><B><CODE></CODE></B>.
-  <LI><B><CODE></CODE></B>.
-  <LI><B><CODE></CODE></B>.
-  <LI><B><CODE></CODE></B>.
+  <LI><B><CODE>file</CODE></B> (a file on the local file system)
+  <LI><B><CODE>http</CODE></B> (a resource obtained via an HTTP GET
+    request).
+  <LI><B><CODE>https</CODE></B> (a resource obtained via a secure HTTP
+    GET request).
+  <LI><B><CODE>ftp</CODE></B> (a resource obtained via FTP).
+  <LI><B><CODE>jar</CODE></B> (an resource in a JAR file).
+  <LI><B><CODE>sresource</CODE></B> (a resource in the application's
+  code base).
 </UL>
+The one used is followed by a colon.
 
-<H2><A name="gcsconfigELement">The gcsconfig element</A></H2>
+<H2><A name="gcsconfigElement">The gcsconfig element</A></H2>
 
 The <CODE>gcsconfig</CODE> element has the following attributes, all of
 which are required:
@@ -1778,5 +2124,25 @@ with the following attributes
  -->
 <!--  LocalWords:  PACKAGENAME subparameter HOSTNAME subpaths URIs nm
  -->
-<!--  LocalWords:  PCDATA targetList gcsconfig nanometers
+<!--  LocalWords:  PCDATA targetList gcsconfig nanometers fileMenu
+ -->
+<!--  LocalWords:  editMenu zoomMenu measureMenu toolsMenu helpMenu
+ -->
+<!--  LocalWords:  menubar png config dragImage builtins tbltemplate
+ -->
+<!--  LocalWords:  templateSyntax pitemplates cli filewindow IFILE
+ -->
+<!--  LocalWords:  scriptOptions templateOptions cartesian runtime
+ -->
+<!--  LocalWords:  savedFormat imageElement codebaseElement jpg CGS
+ -->
+<!--  LocalWords:  scriptingElement targetListElement tableElement
+ -->
+<!--  LocalWords:  gcsconfigELement getXOrigin getYOrigin getXFract
+ -->
+<!--  LocalWords:  RefPointName getYFract BVALUE boolean EMCAScript
+ -->
+<!--  LocalWords:  userdist gcsdist subspacings subgrid subspacing
+ -->
+<!--  LocalWords:  javascript gridXOrigin gridYOrigin
  -->
