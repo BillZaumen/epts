@@ -63,6 +63,8 @@
 	    uri="sresource:/manual/manual.html#examples"
 	    href="manual.html#examples"/>
     </node>
+    <node title="Scripting" uri="sresource:manual/manual.html#scripting"
+	  href="manual/manual.html#scripting"/>
     <node title="Built-in Scripts"
 	  uri="sresource:manual/manual.html#scripts"
 	  href="manual/manual.html#scripts">

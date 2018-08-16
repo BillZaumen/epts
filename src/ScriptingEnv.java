@@ -103,7 +103,7 @@ public class ScriptingEnv {
 
     EPTSInfo epts = null;
 
-    public String getAnimationName() {return a2dName;}
+    public String getAnimationName() {return (a2dName == null)? "a2d": a2dName;}
     public String getLanguageName() {return languageName;}
 
     static String errorMsg(String key, Object... args) {
@@ -260,6 +260,13 @@ public class ScriptingEnv {
 	// modified by another script.
 	scripting.putScriptObject("scripting", scripting);
 	scripting.putScriptObject("epts", epts);
+	if (fileName.startsWith("sresource:")
+	    && a2dName != null
+	    && !a2dName.equals("a2d")
+	    && scripting.containsScriptObject(a2dName)) {
+	    scripting.putScriptObject("a2d",
+				      scripting.getScriptObject(a2dName));
+	}
 	scripting.evalScript(fileName, reader);
     }
 
@@ -274,11 +281,13 @@ public class ScriptingEnv {
 
     private void fetchA2d() throws ScriptException {
 	if (a2d == null) {
-	    Object obj = scripting.getScriptObject(a2dName);
+	    Object obj =
+		scripting.getScriptObject((a2dName == null)? "a2d": a2dName);
 	    if (obj != null && obj.getClass().equals(Animation2D.class)) {
 		a2d = (Animation2D) obj;
 	    } else {
-		throw new ScriptException(errorMsg("noA2d", a2dName));
+		throw new ScriptException
+		    (errorMsg("noA2d", getAnimationName()));
 	    }
 	    // call initFrames, which is necessary to create a graph.
 	    // no frames will be scheduled because the maximum frame

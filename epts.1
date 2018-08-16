@@ -6,18 +6,23 @@ epts \- create points and Bezier curves/splines
 .br
 .B epts
 [\fI\,SCROPTION\/\fR]...
+.I IFILE
+.br
+.B epts
+[\fI\,SCROPTION\/\fR]...
 .B \-\-image
 .I IFILE
 .br
 .B epts
-[\fI\,SCROPTION\/\fR]... \fB\-\-script \fI VNAME \fR[\fI\,SOPTION\/\fR]... [\fI\,SFILE\/\fR]...
+[\fI\,SCROPTION\/\fR]...
+.B \-\-image
+.I EFILE
 .br
 .B epts
-[\fI\,SCROPTION\/\fR]...\ [\fI\,SOPTION\/\fR]...\ [\fI\,EFILE\/\fR]\ [\fI\,SFILE\/\fR]...
+[\fI\,SCROPTION\/\fR]... [\fB\-\-script \fI VNAME\fR] [\fI\,SOPTION\/\fR]... [\fI\,SFILE\/\fR]...
 .br
-\fBepts\fR\ [\fI\,SCROPTION\/\fR]...\ \fB\-\-image\fR\ \fIEFILE\fR\ \fB\-\-script\ \fIVNAME\fR\ \\
-.br
-\ \ \ \ \ [\fI\,SOPTION\/\fR]...\ [\fI\,SFILE\/\fR]...
+.B epts
+[\fI\,SCROPTION\/\fR]... [\fB\-\-script \fI VNAME\fR] [\fI\,SOPTION\/\fR]... \fIEFILE\fR [\fI\,SFILE\/\fR]...
 .br
 .B epts
 [\fI\,SCROPTION\/\fR]... [\fI\,TOPTION\/\fR]... [\fI\,EFILE\/\fR]
@@ -29,10 +34,33 @@ is to make it easy to take a background, typically an image, overlay a
 series of points or curves on top of it, and then scale and/or
 translate the positions of the points and curves so that the locations
 of the points or control points are expressed in a specific coordinate
-system.
+system. Arguments that are not options can be one of three types of files:
+.TP
+.IR IFILE .
+This file type represents an image file. Its file-name extension must be
+one that is recognized by Java for the image-file formats that Java
+supports.
+.TP
+.IR EFILE .
+This file represents an EPTS saved state and its file name ends in
+the extension "epts". It is an XML file with a specific document type
+and XML namespace. Its docuement is described in the EPTS manual
+(available via the "Help" menu) and in the man page
+.BR epts (5).
+.TP
+.IR SFILE .
+This file type is a script file.  If files used as non-option
+arguments are not EPTS saved-state files and are not images, they are
+assumed to be script files.  If the script file ends with an extension
+that Java recognizes for a scripting language, the scripting language
+will be inferred from the file name.  Otherwise the
+.B \-L
+option must be used to set the scripting language.
 .PP
 With no arguments, EPTS assumes the background is an image and will
-ask the user for an image file. For commands that specify an image
+ask the user for an image file. If the first (and only) non-option
+argument is a file containing an image
+For commands that specify an image
 file
 .I IFILE
 explicitly, that file will be used as the background.  For commands
@@ -46,7 +74,14 @@ After
 .IR EFILE,
 a series of file names
 .IR SFILE ,
-which represent scripts, can appear.
+which represent scripts, can appear. Finally, for commands that specify
+only script files, the scripts will be run in the order specified.
+The scripts must create an animation that is assigned to a scripting-language
+variable as described below.  If the name of this variable is not
+.BR a2d ,
+the
+.B \-\-script
+option must be used to indicate the appropriate variable name.
 .SH OPTIONS
 .PP
 Most options can grouped into three types.
@@ -82,15 +117,14 @@ file will be a JPEG or PNG file. If the file name is literally "\-",
 EPTS will prompt for an image size and will create an image containing
 a white background. The
 .B \-\-script
-option may not be used with this option if
-.I IFILE
-is not an EPTS saved state that provides scripts instead of an image.
-When
+option may not be used with this option. When
 .I IFILE
 is an EPTS saved-state file, any points or paths recorded in the
-file will be ignored.  To show these points and paths, the EPTS
+file will be ignored and only the image will be used.
+To show these points and paths, the EPTS
 saved-state file must be the first file-name argument (the first
-argument after the final option).
+argument after the final option) and the
+.B \-\- image options must not be used.
 .TP
 .BI \-\-port\  PORT
 When
@@ -215,7 +249,7 @@ This suffix is used for distances measured in miles.
 For example,
 .br
 .br
-\fB\ \ \ \ epts\ \-\-double\ spacing=10ft\ saved.epts\ sresource:grid.js
+\fB\ \ \ \ epts\ \-\-double\ spacing=10ft\ saved.epts\ sresource:grid.js\fR
 .br
 .br
 will show a script-generated image specified by saved.epts with its
@@ -261,7 +295,40 @@ is the name of a scripting-language variable and
 .B SVALUE
 is a string that provides the corresponding value for that
 variable. The variable will be set before any script is run.
+.PP
+The option
+.BR \-\-L ,
+which sets the scripting language explicitly, is described in
+the
+.B
+SCRUNNER OPTIONS
+.R
+section.
+
 .SH Template Options
+.PP
+Template options are used when the points and paths created by
+EPTS should be written to a text file in a format determined by
+a template. The option
+.B \- o
+must be present and will provide the name of the output file.
+An option indicating the template must also be present: either
+.B \-\-template
+or
+.BR \-\-svg .
+The later is a special case that allows SVG (Scalable Vector Graphics)
+files to be created.  There are two types of templates: table templates
+and path templates. Table templates are assumed by default. For a path
+template, a
+.B \-\-pname
+option must be present. For table templates, a
+.B \-\-tname
+option may be present (if missing, all points and paths will be
+processed). Templates are described in the manual page
+.BR epts (5)
+and in the on-line manual available via the
+.B epts
+Help menu.
 .PP
 The options that may be specified when templates are used are the
 following:
@@ -759,9 +826,9 @@ templates when the
 option is used, and must precede that option. After a
 .B \-\-tname
 option is seen, the value is removed. The value is a long integer.
-.SH SCRUNNER OPTIONS
+.SH Scrunner Options
 .PP
-Most of the options EPTS supports are ones that are shared with the
+Some of the options EPTS supports are ones that are shared with the
 program
 .BR scrunner .
 Unless an exceedingly large image file is used or a custom image
@@ -843,7 +910,12 @@ option is not used.  If the
 .B \-\-template
 option is used and the
 .B \-\-pname
-is used, the template should be a path-iterator template.
+is used, the template should be a path-iterator template. If neither
+the
+.B \-\-tname
+option nor the
+.B \-\-pname
+option are used, the template is assumed to be a table template.
 .PP
 The table templates are the following:
 .TP
@@ -1020,6 +1092,137 @@ The remaining values are
 and
 .BR y2 .
 The values for these are numbers or empty strings.
+.SH SCRIPTING
+Scripts created for EPTS are compatible with those used by the command
+.B scrunner
+when the Java package
+.B org.bzdev.anim2d
+is used. Some scripts require additional code bases to run, in
+which case the
+.B \-\-codebase
+option will be needed. A copy of URLs indicating the codebase
+locations are kept in saved-state file when scripts are used
+to create the background image and the session is subsequently
+saved. Basically a user will create an animation and a series of
+animation objects, but will not actually run the animation.
+Initially, two variables are defined. The first is named
+.B scripting
+and contains a scripting
+context (the use of this is described in the BZDev class library
+and
+.B scrunner
+documentation.) The second is the variable
+.BR epts ,
+which is defined when EPTS is running. The
+.B \-\-script
+option, when present, sets the name of the
+scripting-language variable referring to the animation, with a default
+variable name of "\fBa2d\fR". When a new script is run,
+EPTS checks if the animation was created and if it is, EPTS will
+set the variable
+.B a2d
+to refer to this animation (this
+is done so because built-in scripts described below assume the
+animation is named "\fBa2d\fR".
+.PP
+When image sizes are known and scripts are being run, the
+scripting-language variable
+.B epts
+will have a non-null value and will provide several methods:
+.TP
+.B epts.getWidth()
+to determine the frame width in user-space units.
+.TP
+.B epts.getHeight()
+to determine the frame height in user-space units.
+.TP
+.B epts.gethasDistances()
+to determine if user-space and graph-coordinate-space distances are
+valid (true if valid, false if not).
+.TP
+.B epts.getUserDist()
+to determine a user-space distance.
+.TP
+.B epts.getGCSDist()
+to determine a corresponding graph-coordinate-space distance.
+.TP
+.B epts.getRefPointName()
+to determine location of the reference point (the value is an
+enumeration constant defined by
+.BR org.bzdev.graphs.RefPointName .
+.TP
+.B epts.getXOrigin()
+to determine the X value in graph coordinate space for the reference
+point.
+.TP
+.B epts.getYOrigin()
+to determine the Y value in graph coordinate space for the reference
+point.
+.TP
+.B epts.getXFract()
+to determine the fractional distance from the left edge of a graph's
+range to its right edge. The values returned can be either 0.0, 0.5,
+or 1.0 and match the RefPointName enumeration.
+.TP
+.B epts.getYFract()
+to determine the fractional distance from the lower edge of a graph's
+range to its upper edge. The values returned can be either 0.0, 0.5,
+or 1.0 and match the RefPointName enumeration.
+.PP
+These methods should be used to configure the width and height of an
+animation's frame. For example,\fB
+.br
+.br
+\ \ \ \ \ \ if (typeof epts === 'undefined' || epts == null) {
+.br
+\ \ \ \ \ \ \ \ \ \ var frameWidth = 1024;
+.br
+\ \ \ \ \ \ \ \ \ \ var frameHeight = 1024;
+.br
+\ \ \ \ \ \ } else {
+.br
+\ \ \ \ \ \ \ \ \ \ var frameWidth = epts.getWidth();
+.br
+\ \ \ \ \ \ \ \ \ \ var frameHeight = epts.getHeight();
+.br
+\ \ \ \ \ \ }
+.br
+\ \ \ \ \ \ var a2d = new Animation2D(scripting, frameWidth, frameHeight);
+.br
+.br
+\fRWhen there is no image, the variable
+.B epts
+will still be
+defined, but its value will be null (when defined, that is an indication
+that the script is being run by EPTS).  While the
+<A href="#config">Configure CGS</A> menu item will not be disabled
+when there is no image, the fields shown in its dialog box will not
+be editable.
+<P>
+After an animation is created, one will typically create animation
+factories and use these factories to create animation objects that
+can be displayed.  In particular, animation layers can be used to
+draw simple geometrical figures, figures based on paths, and can
+scale and place images. The normal sequence of calling the animation's
+methods
+.BR initFrames ,
+.B scheduleFrames
+and
+.B run
+are skipped: EPTS will iterate through the animation's
+objects using their Z-order and write them to a graph, thereby creating
+a background.
+<P>
+To use EPTS in developing animations, one can use templates to
+create ECMAScript code that will provide paths or in some cases
+shapes. There will be a series of files that can then be
+used by
+.BR scrunner .
+Programs such as
+.B make
+that track file dependencies can be used to run EPTS with template
+options.
+
 .SH Built-in Scripts
 .PP
 There are two built-in scripts accessible using the
@@ -1277,6 +1480,27 @@ curves
 and
 .B c2.
 The area is in GCS units.
+.SH USER GUIDES AND API DOCUMENTATION
+.TP
+.B /usr/share/doc/libbzdev-doc/api/index.html
+The web page for the API documentation for the BZDev class library.
+.TP
+.B /usr/share/doc/libbzdev-doc/factories-api/index.html
+The web page for the BZDev class library's factories and their
+parameters. This is usually sufficient for determining how to to
+configure a factory.
+.TP
+.B /usr/share/doc/libbzdev-doc/ByExample.pdf
+This is a copy of \fIAn Introduction to the BZDev Java Class Library
+with Examples\fR.
+.TP
+.B /usr/share/doc/libbzdev-doc/SimScript.pdf
+This is a copy of \fISimulation Scripting Guide for the Bzdev class library\fR.
+It describes how to create factories.
+.TP
+.B /usr/share/doc/libbzdev-doc/Factories.pdf
+This is a copy of \fIProgramming Named-Objects and their Factories\fR. This
+guide concentrates on how to create new objects and their factories.
 .SH FILES
 .TP
 .B /etc/bzdev/scrunner.conf\ \fRor\fB\ /etc/opt/bzdev/scrunner.conf

@@ -38,6 +38,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.bzdev.graphs.Colors;
 import org.bzdev.graphs.Graph;
 import org.bzdev.graphs.RefPointName;
+import org.bzdev.imageio.ImageMimeInfo;
 import org.bzdev.lang.UnexpectedExceptionError;
 import org.bzdev.net.URLClassLoaderOps;
 import org.bzdev.net.URLPathParser;
@@ -882,9 +883,86 @@ public class EPTS {
 	return result;
     }
 
+    static String processLanguageName(String arg) {
+	String languageName = null;
+	int extInd = arg.lastIndexOf('.');
+	int lastSlash = arg.lastIndexOf('/');
+	int lastSep = arg
+	    .lastIndexOf(File.separatorChar);
+	if (extInd>0 && extInd>lastSlash && extInd>lastSep) {
+	    extInd++;
+	    if (extInd < arg.length()) {
+		languageName = arg.substring(extInd);
+		if (languageName.equals("epts")) {
+		    languageName = null;
+		} else if (ImageMimeInfo
+			   .getFormatNameForSuffix(languageName)
+			   != null) {
+		    languageName = null;
+		}
+	    }
+	}
+	return languageName;
+    }
+
+
+    static void processImageArg(String imageArg, ArrayList<String>targetList,
+				File cdir)
+    {
+	String extension = null;
+	int extInd = imageArg.lastIndexOf('.');
+	int lastSlash = imageArg.lastIndexOf('/');
+	int lastSep = imageArg
+	    .lastIndexOf(File.separatorChar);
+	if (extInd>0 && extInd>lastSlash && extInd>lastSep) {
+	    extInd++;
+	    if (extInd < imageArg.length()) {
+		extension = imageArg.substring(extInd);
+	    }
+	    if (extension != null
+		&& ImageMimeInfo
+		.getMIMETypeForSuffix(extension) != null) {
+		// implied image mode based on file-name
+		// extension
+		try {
+		    if (maybeURL(imageArg)
+			&& !(imageArg.startsWith("file:")
+			     && imageArg.endsWith(".epts"))) {
+			URL imageURL = new URL(cdir.toURI()
+					       .toURL(),
+					       imageArg);
+			imageURI = imageURL.toURI();
+			image = ImageIO.read(imageURL);
+		    } else {
+			File ifile = null;
+			if (imageArg.startsWith("file:")) {
+			    ifile = new File(new URI(imageArg));
+			} else {
+			    ifile = new File(imageArg);
+			}
+			imageURI = ifile.getCanonicalFile().toURI();
+			image = ImageIO.read(ifile);
+		    }
+		} catch (Exception e) {
+		    String emsg = e.getMessage();
+		    if (emsg == null) {
+			emsg = e.getClass().getName();
+		    }
+		    String msg = errorMsg("cannotReadImage", imageArg, emsg);
+		    System.err.println(msg);
+		    System.exit(1);
+		}
+	    } else {
+		targetList.add(imageArg);
+	    }
+	} else {
+	    targetList.add(imageArg);
+	}
+    }
 
     static URI imageURI = null;
     static Image image = null;
+    static boolean custom = false;
 
     static void init(String argv[]) throws Exception {
 	final File cdir = new File(System.getProperty("user.dir"));
@@ -920,14 +998,13 @@ public class EPTS {
 	boolean svg = false;
 	FilterInfo filterInfo = new FilterInfo();
 	ArrayList<FilterInfo> filterInfoList = new ArrayList<>();
-	boolean custom = false;
 
 	String pkg = null;
 	String clazz = null;
 	boolean isPublic = false;
 
-	EPTSParser iparser = null;
 	String imageArg = null;
+	EPTSParser iparser = null;
 
 	ArrayList<NameValuePair> bindings = new ArrayList<>();
 
@@ -1615,40 +1692,64 @@ public class EPTS {
 		    System.err.println(errorMsg("unknownOption", argv[index]));
 		    System.exit(1);
 		} else {
-		    if (scriptMode && languageName == null) {
-			int extInd = argv[index].lastIndexOf('.');
-			int lastSlash = argv[index].lastIndexOf('/');
-			int lastSep = argv[index]
-			    .lastIndexOf(File.separatorChar);
-			if (extInd>0 && extInd>lastSlash && extInd>lastSep) {
-			    extInd++;
-			    if (extInd < argv[index].length()) {
-				languageName = argv[index].substring(extInd);
-				if (languageName.equals("epts")) {
-				    languageName = null;
+		    if (languageName == null) {
+			languageName = processLanguageName(argv[index]);
+		    }
+		    argsList.add(argv[index]);
+		    if (!imageMode && targetList.isEmpty()) {
+			processImageArg(argv[index], targetList, cdir);
+			if (imageURI != null) {
+			    imageMode = true;
+			}
+			// Infer script mode from first file-name argument,
+			// which is not an image file. processLanguageName
+			// will return a non-null value only if the file
+			// has an extension suitable for a script.
+			System.out.println("got here 1");
+			System.out.println("targetList.isEmpty() = "
+					   +targetList.isEmpty());
+			System.out.println("!imageMode = " + (!imageMode));
+			System.out.println("argv[index] = " + argv[index]);
+			if (targetList.size() == 1) {
+			    if (processLanguageName(argv[index]) != null) {
+				System.out.println("got here 1a");
+				if (scriptMode == false) {
+				    scriptMode = true;
+				    a2dName = "a2d";
 				}
 			    }
 			}
+		    } else {
+			targetList.add(argv[index]);
 		    }
-		    argsList.add(argv[index]);
-		    targetList.add(argv[index]);
 		    jcontinue = false;
 		}
 	    } else {
-		if (scriptMode && languageName == null) {
-		    int extInd = argv[index].lastIndexOf('.');
-		    int lastSlash = argv[index].lastIndexOf('/');
-		    int lastSep = argv[index]
-			.lastIndexOf(File.separatorChar);
-		    if (extInd>0 && extInd>lastSlash && extInd>lastSep) {
-			extInd++;
-			if (extInd < argv[index].length()) {
-			    languageName = argv[index].substring(extInd);
-			}
-		    }
+		if (languageName == null) {
+		    languageName = processLanguageName(argv[index]);
 		}
 		argsList.add(argv[index]);
-		targetList.add(argv[index]);
+		if (!imageMode && targetList.isEmpty()) {
+		    processImageArg(argv[index], targetList, cdir);
+		    if (targetList.isEmpty()) {
+			imageMode = true;
+		    }
+		    // Infer script mode from first file-name argument,
+		    // which is not an image file. processLanguageName
+		    // will return a non-null value only if the file
+		    // has an extension suitable for a script.
+		    System.out.println("got here 2");
+		    if (targetList.size() == 1) {
+			if (processLanguageName(argv[index]) != null) {
+			    if (scriptMode == false) {
+				scriptMode = true;
+				a2dName = "a2d";
+			    }
+			}
+		    }
+		} else {
+		    targetList.add(argv[index]);
+		}
 	    }
 	}
 
@@ -2035,7 +2136,6 @@ public class EPTS {
 						      userdist, gcsdist,
 						      rpn, xo, yo);
 			    } else {
-				System.out.println("got here");
 				se = new ScriptingEnv(languageName,
 						      animationName,
 						      image.getWidth(null),
@@ -2064,10 +2164,34 @@ public class EPTS {
 					   new File(filename));
 			} else {
 			    if (targetList.size() > 1) {
-				System.err.println(errorMsg("tooManyArgs2"));
-				System.exit(1);
+				// image with scripts embellishing it.
+				imageURI = parser.getImageURI();
+				image = parser.getImage();
+				ScriptingEnv se;
+				RefPointName rpn = parser.getRefPoint();
+				double xo = parser.getXRefpointDouble();
+				double yo = parser.getYRefpointDouble();
+				double userdist =
+				    parser.getUserSpaceDistanceMeters();
+				double gcsdist = parser.getGcsDistanceMeters();
+				se = new ScriptingEnv(languageName,
+						      null,
+						      image.getWidth(null),
+						      image.getHeight(null),
+						      userdist, gcsdist,
+						      rpn, xo, yo);
+				targetList.remove(0);
+				Graph graph = doScripts(se, bindings,
+							targetList);
+				new EPTSWindow(graph, bindings, targetList,
+					       parser.usesCustom(),
+					       se,
+					       parser.getRows(),
+					       image, imageURI, parser,
+					       new File(filename));
+			    } else {
+				new EPTSWindow(parser, new File(filename));
 			    }
-			    new EPTSWindow(parser, new File(filename));
 			}
 		    } else if (targetList.size() == 1) {
 			TemplateProcessor.KeyMap emptyMap

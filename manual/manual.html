@@ -82,9 +82,10 @@ The <code>File</code> menu contains the following items:
 <UL>
   <LI><code>Quit</code>. Choosing this menu item causes the program to
     exit.
-  <LI><code>Save</code>. Choosing this menu item causes the program to
-    be saved. This option will request a file name unless the first file-name
-    argument is an EPTS saved-state file.
+  <LI><A name="save"><code>Save</code></A>. Choosing this menu item
+    causes the program to be saved. This option will request a file
+    name unless the first file-name argument is an EPTS saved-state
+    file.
   <LI><code>Save As</code>. Choosing this menu item causes the program to
     be saved with a new file name. This new file will become the default
     file name for the <code>Save</code> menu item.
@@ -497,10 +498,12 @@ The built-in templates can be accessed via URLs whose protocol field
 is <CODE>sresource</CODE>. For convenience there is a shortcut: if
 the templates option includes a colon followed by a template name,
 a built-in template with that name will be used. For  example,
-<BLOCKQUOTE><PRE><CODE> epts -o paths.js --template:ECMAScriptPaths
+<BLOCKQUOTE><PRE><CODE>
+      epts -o paths.js --template:ECMAScriptPaths saved.epts
 </CODE></PRE></BLOCKQUOTE>
 and
-<BLOCKQUOTE><PRE><CODE> epts -o paths.js --template sresource:ECMAScriptPaths
+<BLOCKQUOTE><PRE><CODE>
+      epts -o paths.js --template sresource:ECMAScriptPaths saved.epts
 </CODE></PRE></BLOCKQUOTE>
 are equivalent. The built-in table templates are the following:
 <UL>
@@ -1061,71 +1064,72 @@ This will bring up a dialog box asking for an image file:
 <BR>
 <CENTER><IMG src="dialog.png"></CENTER>
 <BR>
-If the epts command is run with a single argument, the name of an EPTS
-file, the program will restore its state to the state that existed
-when this EPTS file was created (typically by saving a previous
-session).  Usually a computer's window system will be configured so
-that one can simply double-click the EPTS file rather than having to
-run a specific command:
+If the epts command is run with multiple fine-name arguments, the program's
+behavior depends on the file format for the first argument:
+<UL>
+  <LI> if the argument is an EPTS saved-state file, whose file-name
+    extension must be "<CODE>epts</CODE>", the state of a previous
+    session will be restored.  Additional arguments are allowed, and
+    these must be script files. If the script files doe not have a
+    standard extension for a scripting language, the <CODE>-L</CODE>
+    option must be used to set the scripting language. The additional
+    scripts will not be kept if the state is saved. Instead, they
+    may be provided to enhance the current image. For example, the
+    script <CODE>sresource:grid.js</CODE> will overlay an image with
+    a rectangular grid of lines. If the animation the script provides
+    is not stored in a variable named <CODE>a2d</CODE>, the
+    <CODE>--script</CODE> option will also be needed.
+  <LI> if the argument is an image file, the image it contains will
+    be used as a background image. No additional arguments are allowed.
+    To enhance an image by using a script, one should create a new
+    saved state after
+    <A href="#config">configuring graph coordinate space</A>. For example,
+    <BLOCKQUOTE>
+      <CODE>epts image.png</CODE><BR>
+      <EM><A href="#config">Configure GCS</A></EM><BR>
+      <EM><A href="#save">Save the session</A> as </EM><CODE>saved.epts</CODE><BR>
+      <CODE>epts --double spacing=10m saved.epts sresource:grid.js</CODE><BR>
+    </BLOCKQUOTE>
+  <LI> if the argument is a file containing a script and the file's
+    extension matches one used for that scripting language, the script
+    will be run.  The script can be partitioned into multiple files
+    and these will be processed in the order lists.  These scripts
+    must provide an animation and assign it to the variable
+    "<CODE>a2d</CODE>" (the name can be different if
+    the <CODE>--script</CODE> option is present). The animation will
+    not be run by epts, and should not be run by scripts. The
+    objects the animation initially creates will be used to generate
+    the image. If the animation the script provides
+    is not stored in a variable named <CODE>a2d</CODE>, the
+    <CODE>--script</CODE> option will also be needed.
+</UL>
+In addition, the file names can be URIs; however, for a saved-state
+file the URI's scheme must be "<CODE>file</CODE>".  Unless the first
+file-name argument is a saved-state file, a new session will be
+started and EPTS will ask for the name of a file when saving the
+session's state. Usually a computer's window system will be configured
+so that one can simply double-click the EPTS file rather than having
+to run a specific command. For example the files
 <BR>
 <CENTER><IMG src="filewindow.png"></CENTER>
-An EPTS file's name must end with the extension <CODE>epts</CODE>.
+<P>
+are EPTS saved-state files and restoring a session using these can be
+done using a computer's window system.
 <P>
 When run from the command line, a number of additional options are
-available beyond the trivial case supported by the GUI. If the JVM has
-to be configured (e.g., to provide more memory or to include
-additional class libraries), the CLI must be used to start the
-program. Some options require arguments that appear after the
-options.  These arguments can be either file names or URLs:
+available. Specific categories of options are
 <UL>
-  <LI> When neither the <CODE>--image</CODE> option, the <CODE>--script</CODE>,
-    nor both are present, the first file-name argument must be the
-    name of an EPTS saved-state file, which is required to have a file-name
-    ".epts".  If the first argument is a URI, the scheme must be "file".
-    Any additional file-name arguments must contain scripts. For example,
-    <BLOCKQUOTE><PRE><CODE>
-	  epts saved.epts
-    </CODE></PRE></BLOCKQUOTE>
-    Similarly,
-    <BLOCKQUOTE><PRE><CODE>
-	  epts saved.epts ourscript.js
-    </CODE></PRE></BLOCKQUOTE>
-    will restore the state of previous EPTS session and will additionally
-    embellish the background by running a script, with the scripting
-    language guessed from the file-name extension ".js". A
-    <CODE>--script</CODE> option is not needed if the saved state was
-    created by running scripts with explicitly specified image.
-    If there are no arguments, EPTS will open a dialog box asking for
-    a file name. This dialog box will accept image files.
-  <LI> When the <CODE>--script</CODE> option is one of the options,
-    there will be at least one file-name argument providing a script,
-    and that file name argument can be either the name of a file or a
-    URL. Except for the first argument, each argument must provide a
-    script to be executed.  When the <CODE>--script</CODE> option is
-    present, the first file-name argument may be the name of a file
-    containing an EPTS saved state (as in the other cases, the name
-    must end in the ".epts" extension). This EPTS saved state must
-    contain a reference to an image, with no scripts. When additional
-    arguments provide scripts, these scripts must use the same scripting
-    language and are executed in the same script-engine instance,
-    sharing the same bindings. As described below,
-    the <CODE>--script</CODE> requires an argument, the name of a
-    scripting language variable.  For example,
-    <BLOCKQUOTE><PRE><CODE>
-	  epts --script a2d  ourscript.js
-    </CODE></PRE></BLOCKQUOTE>
-    will run a script that creates an animation named a2d.
-    In this example, the scripting language, ECMAScript, is determined
-    by the file-name extension. For other scripting languages, a
-    <CODE>--codebase</CODE> option may also be needed or alternatively a
-    suitable entry in an <CODE>scrunner</CODE> configuration file.
-    Similar,
-    <BLOCKQUOTE><PRE><CODE>
-	  epts --script a2d  saved.epts ourscript.js
-    </CODE></PRE></BLOCKQUOTE>
-    will restore an EPTS saved state that provides an image, and
-    will use the script to embellish the image.
+  <LI> <A href="#scriptOptions">Scripting Options</A>.  These contain
+    options specific to scripting.
+  <LI> <A href="#templateOptions">Template Options</A> These contain
+    options used with templates.
+  <LI> <A href="#scrunner">Scrunner Options</A>. These contain options
+    used with <CODE>scrunner</CODE> program, whose configuration file
+    is used by EPTS.
 </UL>
+When real numbers are needed as values in options, a suffix specifying
+a unit may be added to the number, as describe in the
+<A href="#units">Units</A> section.
 <P>
 There are four options that do not fit into well-defined categories:
 <UL>
@@ -1133,17 +1137,18 @@ There are four options that do not fit into well-defined categories:
     options, and is provided in case a file name starts with a
     "<CODE>-</CODE>".
   <LI><B><CODE>--image</CODE></B> <B><EM>IFILE</EM></B>. This option
-    implies that a background image will be displayed.  The value
-    <EM>IFILE</EM> may be either an EPTS saved-state file name
-    specifying an image or a file name or URL providing an image file
-    supported by the Java runtime environment. The most common image
-    formats are PNG and JPEG. These can use the file-name extensions
-    "png" and "jpg" respectively.  If the file name is literally "-",
-    EPTS will prompt for an image size and will create an image
-    containing a white background. The <CODE>--script</CODE> option
-    may not be used with this option if <EM>IFILE</EM> is not an EPTS
-    saved state.  When <EM>IFILE</EM> is an EPTS saved state for a
-    saved state that is the argument for an <CODE>--image</CODE>
+    implies that a background image will be displayed.  This option is
+    not needed unless <EM>IFILE</EM> is either <B><CODE>-</CODE></B>
+    or a saved-state file, but may be used to specify an image file if
+    desired (a URI referencing an image can be used as well). When
+    used, no arguments after the last option are allowed.  The most
+    common image formats are PNG and JPEG. These can use the file-name
+    extensions "png" and "jpg" respectively.  If the file name is
+    literally "-", EPTS will prompt for an image size and will create
+    an image containing a white background. The <CODE>--script</CODE>
+    option may not be used with this option if <EM>IFILE</EM> is not
+    an EPTS saved state.  When <EM>IFILE</EM> is an EPTS saved state
+    for a saved state that is the argument for an <CODE>--image</CODE>
     option, paths and locations recorded in the saved state will be
     ignored.
   <LI><B><CODE>--port</CODE></B> <B><EM>PORT</EM></B>.  When this flag
@@ -1153,10 +1158,10 @@ There are four options that do not fit into well-defined categories:
     inclusive, but some ports are reserved or require system
     privileges).
   <LI><B><CODE>--script</CODE></B> <B><EM>A2D</EM></B>. This option
-    indicates that file arguments are files containing scripts
-    that will be run using a scripting language.  The
+    indicates that scripts will use the variable <EM>A2D</EM> to
+    store the animation used to reference an image. The
     argument <EM>A2D</EM> is the name of a scripting-language variable
-    whose value is an instance of the
+    whose value will be an instance of the
     class <CODE>org.bzdev.anim2d.Animation2D</CODE>.  It will be used
     to produce an image by creating a snapshot of the objects that are
     currently defined in the animation and that are visible. The
@@ -1166,61 +1171,6 @@ There are four options that do not fit into well-defined categories:
     the <CODE>--image</CODE> option can not be used with this option
     unless the argument for <CODE>--image</CODE> is an EPTS saved state.
 </UL>
-When both the <CODE>--image</CODE> and <CODE>--script</CODE> options
-are present, the saved state that is provided as the argument for the
-<CODE>--image</CODE> option determines the frame size
-and the scale factor for converting distances in graph coordinate space
-to user space. The scripting-language variable
-<CODE>epts</CODE> will have a non-null value:
-<UL>
-  <LI><B><CODE>epts.getWidth()</CODE></B> to determine the frame width
-    in user-space units.
-  <LI><B><CODE>epts.getHeight()</CODE></B> to determine the frame height
-    in user-space units.
-  <LI><B><CODE>epts.gethasDistances()</CODE></B> to determine if user-space
-    and graph-coordinate-space distances are valid (true if valid, false if
-    not).
-  <LI><B><CODE>epts.getUserDist()</CODE></B> to determine a user-space
-    distance.
-  <LI><B><CODE>epts.getGCSDist()</CODE></B> to determine a corresponding
-    graph-coordinate-space distance.
-  <LI><B><CODE>epts.getRefPointName()</CODE></B> to determine location
-    of the reference point (the value is an enumeration constant defined
-    by <CODE>org.bzdev.graphs.RefPointName</CODE>.
-  <LI><B><CODE></CODE>epts.getXOrigin()</B> to determine the X value in
-    graph coordinate space for the reference point.
-    <LI><B><CODE></CODE>epts.getYOrigin()</B> to determine the Y value in
-    graph coordinate space for the reference point.
-    <LI><B><CODE></CODE>epts.getXFract()</B> to determine the fractional
-      distance from the left edge of a graph's range to its right edge.
-      The values returned can be either 0.0, 0.5, or 1.0 and match the
-      RefPointName enumeration.
-    <LI><B><CODE></CODE>epts.getYFract()</B> to determine  the fractional
-      distance from the lower edge of a graph's range to its upper edge.
-      The values returned can be either 0.0, 0.5, or 1.0 and match the
-      RefPointName enumeration.
-</UL>
-These methods should be used to configure the width and height of an
-animation's frame. For example,
-<BLOCKQUOTE><PRE><CODE>
-      if (epts != null) {
-          var frameWidth = epts.getWidth();
-          var frameHeight = epts.getHeight();
-      }
-      var a2d = new Animation2D(scripting, frameWidth, frameHeight);
-</CODE></PRE></BLOCKQUOTE>
-While one can subsequently modify the scale factor when the
-<CODE>--image</CODE> options' argument is a saved state, the objects
-added to the image by the script may not display correctly. Because
-of that, a warning will be generated.  The scripts
-<CODE>sresource:grid.js</CODE> and <CODE>sresource:polar.js</COdE>
-will work properly regardless, but other scripts may not.
-
-When there is no image, the variable <CODE>epts</CODE>will still be
-defined, but its value will be null.  While the
-<A href="#config">Configure CGS</A> menu item will not be disabled
-when there is no image, the fields shown in its dialog box will not
-be editable.
 
 <H2><A name="units">Units</A></H2>
 
@@ -1647,26 +1597,20 @@ provided by the scrunner command. These are
     paths will be placed over the grid. The image in this case must be
     created by a script, and the built-in script grid.js assumes that
     the animation used to create the grid is named a2d.
-  <LI><B><CODE>epts --script a2s saved.epts sresource:grid.js</CODE></B>
-    <BR>
-    Start EPTS, restoring its state to one saved in a previous session
-    and use a script to overlay a grid on top of the image. Points and
-    paths will be placed over the grid. The saved state in this case
-    does not include a script.
   <LI><B><CODE>epts --codebase foo.jar saved.epts</CODE></B>
     <BR>
     Start EPTS, restoring its state to one saved in a previous session,
     adding a jar file <CODE>foo.jar</CODE> to EPTS's code base.
-  <LI><B><CODE>epts --image image.png</CODE></B>
+  <LI><B><CODE>epts image.png</CODE></B>
     <BR>
     Start EPTS with an image preloaded as its
     background.
-  <LI><B><CODE>epts --script a2d commands.js</CODE></B>
+  <LI><B><CODE>epts --script anim commands.js</CODE></B>
     <BR>
     Start EPTS and run the script provided in commands.js to generate
-    an image from an animation <CODE>a2d</CODE> (an instance of
+    an image from an animation <CODE>anim</CODE> (an instance of
     <CODE>org.bzdev.anim2d.Animation2D</CODE>).
-  <LI><B><CODE>epts --codebase foo.jar --script a2d commands.js</CODE></B>
+  <LI><B><CODE>epts --codebase foo.jar --script anim commands.js</CODE></B>
     <BR>
     Start EPTS and run the script provided in commands.js to generate
     an image from an animation <CODE>a2d</CODE> (an instance of
@@ -1692,6 +1636,96 @@ provided by the scrunner command. These are
     in GCS units.
 </UL>
 
+<H1><A name="scripting">Scripting</A></H1>
+
+Scripts created for EPTS are compatible with those used by the command
+<CODE>scrunner</CODE> when the Java package
+<CODE>org.bzdev.anim2d</CODE> is used. Some scripts require additional
+code bases to run, in which case the <CODE>--codebase</CODE> option
+will be needed. A copy of URLs indicating the codebase locations are
+kept in saved-state file when scripts are used to create the
+background image and the session is subsequently saved.  Basically a
+user will create an animation and a series of animation objects, but
+will not actually run the animation.  Initially, two variables are
+defined. The first is named <CODE>scripting</CODE> and contains a
+scripting context (the use of this is described in the BZDev class
+library and <CODE>scrunner</CODE> documentation.) The second is the
+variable <CODE>epts</CODE>, which is defined when EPTS is running. The
+<CODE>--script</CODE> option, when present, sets the name of the
+scripting-language variable referring to the animation, with a default
+variable name of "<CODE>a2d</CODE>". When a new script is run, EPTS
+checks if the animation was created and if it is, EPTS will set the
+variable <CODE>a2d</CODE> to refer to this animation (this is done so
+because built-in scripts described below assume the animation is named
+"<CODE>a2d</CODE>".
+<P>
+When image sizes are known and scripts are being
+run, the scripting-language variable <CODE>epts</CODE> will have a
+non-null value and will provide several methods:
+<UL>
+  <LI><B><CODE>epts.getWidth()</CODE></B> to determine the frame width
+    in user-space units.
+  <LI><B><CODE>epts.getHeight()</CODE></B> to determine the frame height
+    in user-space units.
+  <LI><B><CODE>epts.gethasDistances()</CODE></B> to determine if user-space
+    and graph-coordinate-space distances are valid (true if valid, false if
+    not).
+  <LI><B><CODE>epts.getUserDist()</CODE></B> to determine a user-space
+    distance.
+  <LI><B><CODE>epts.getGCSDist()</CODE></B> to determine a corresponding
+    graph-coordinate-space distance.
+  <LI><B><CODE>epts.getRefPointName()</CODE></B> to determine location
+    of the reference point (the value is an enumeration constant defined
+    by <CODE>org.bzdev.graphs.RefPointName</CODE>.
+  <LI><B><CODE>epts.getXOrigin()</CODE></B> to determine the X value in
+    graph coordinate space for the reference point.
+  <LI><B><CODE>epts.getYOrigin()</CODE></B> to determine the Y value
+    in graph coordinate space for the reference point.
+  <LI><B><CODE>epts.getXFract()</CODE></B> to determine the fractional
+      distance from the left edge of a graph's range to its right
+      edge.  The values returned can be either 0.0, 0.5, or 1.0 and
+      match the RefPointName enumeration.
+  <LI><B><CODE>epts.getYFract()</CODE></B> to determine the fractional
+      distance from the lower edge of a graph's range to its upper
+      edge.  The values returned can be either 0.0, 0.5, or 1.0 and
+      match the RefPointName enumeration.
+</UL>
+These methods should be used to configure the width and height of an
+animation's frame. For example,
+<BLOCKQUOTE><PRE><CODE>
+      if (typeof epts === 'undefined' || epts == null) {
+          var frameWidth = 1024;
+          var frameHeight = 1024;
+      } else {
+          var frameWidth = epts.getWidth();
+          var frameHeight = epts.getHeight();
+      }
+      var a2d = new Animation2D(scripting, frameWidth, frameHeight);
+</CODE></PRE></BLOCKQUOTE>
+When there is no image, the variable <CODE>epts</CODE> will still be
+defined, but its value will be null (when defined, that is an indication
+that the script is being run by EPTS).  While the
+<A href="#config">Configure CGS</A> menu item will not be disabled
+when there is no image, the fields shown in its dialog box will not
+be editable.
+<P>
+After an animation is created, one will typically create animation
+factories and use these factories to create animation objects that
+can be displayed.  In particular, animation layers can be used to
+draw simple geometrical figures, figures based on paths, and can
+scale and place images. The normal sequence of calling the animation's
+methods <CODE>initFrames</CODE>, <CODE>scheduleFrames</CODE> and
+<CODE>run</CODE> are skipped: EPTS will iterate through the animation's
+objects using their Z-order and write them to a graph, thereby creating
+a background.
+<P>
+To use EPTS in developing animations, one can use templates to
+create ECMAScript code that will provide paths or in some cases
+shapes. There will be a series of files that can then be
+used by <CODE>scrunner</CODE>. Programs such as <CODE>make</CODE>
+that track file dependencies can be used to run EPTS with template
+options.
+
 <H1><A name="scripts">Built-in scripts</A></H1>
 
 There are two built-in scripts accessible using the <CODE>sresource</CODE>
@@ -1703,12 +1737,15 @@ protocol:
     representation of polar coordinates.
 </UL>
 While there is a default behavior in both cases, the grids can be tuned
-if necessary.  These scripts must be used with the option
-<CODE>--script a2d</CODE> as the variable representing an animation is
-<CODE>a2d</CODE> in both cases. If another script assigns a value to
-<CODE>a2d</CODE>, the scripts describe below will not override that
+if necessary.  These scripts uses the variable a2d to
+refer to an animation. If another script assigns a value to
+<CODE>a2d</CODE>, the scripts described below will not override that
 value. They will, however, set the value of <CODE>a2d</CODE> if it is
-null or undefined.
+null or undefined. EPTS itself will set <CODE>a2d</CODE> to the
+current animation, if one exists, so that the built-in scripts use the
+current animation (when available) instead of creating a new one.
+If <CODE>a2d</CODE> is undefined or null, these scripts will create an
+animation and assign it to <CODE>a2d</CODE>.
 <P>
 The grids the scripts display can
 be controlled by setting various EMCAScript variables. This is done
@@ -1884,6 +1921,33 @@ variables that configure polar grids are the following:
     to use for the object that creates the grid. The default is the
     javascript value java.lang.Long.MAX_VALUE (2<SUP>53</SUP> - 1).
 </UL>
+
+<H1><A name="guides">Additional Documentation</A></H1>
+API documentation and several user guides are useful when creating
+scripts or using the files generated by some of the templates.
+The locations of these documents on a typical Linux system are
+the following:
+<UL>
+  <LI><B><CODE>/usr/share/doc/libbzdev-doc/api/index.html</CODE></B>.
+    The web page for the API documentation for the BZDev class library.
+  <LI><B><CODE>/usr/share/doc/libbzdev-doc/factories-api/index.html</CODE></B>.
+    The web page for the BZDev class library's factories and their
+    parameters. This is usually sufficient for determining how to to
+    configure a factory.
+  <LI><B><CODE>/usr/share/doc/libbzdev-doc/ByExample.pdf</CODE></B>.
+    This is a copy of
+    <EM>An Introduction to the BZDev Java Class Library with Examples</EM>.
+  <LI><B><CODE>/usr/share/doc/libbzdev-doc/SimScript.pdf</CODE></B>.
+    This is a copy of
+    <EM>Simulation Scripting Guide for the Bzdevclass library</EM>.
+    It describes how to create factories.
+  <LI><B><CODE>/usr/share/doc/libbzdev-doc/Factories.pdf</CODE></B>.
+    This is a copy of
+    <EM>Programming Named-Objects and their Factories</EM>.  This
+    guide concentrates on how to create new objects and their
+    factories.
+</UL>
+The path names for these documents, of course, is system dependent.
 
 <H1><A name="savedFormat">Saved-file format</A></H1>
 
@@ -2144,5 +2208,5 @@ with the following attributes
  -->
 <!--  LocalWords:  userdist gcsdist subspacings subgrid subspacing
  -->
-<!--  LocalWords:  javascript gridXOrigin gridYOrigin
+<!--  LocalWords:  javascript gridXOrigin gridYOrigin URI's
  -->
