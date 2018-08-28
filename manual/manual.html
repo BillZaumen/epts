@@ -14,43 +14,51 @@ is to make it easy to take a background, typically an image, overlay a
 series of points or curves on top of it, and then scale and/or
 translate the positions of the points and curves so that the locations
 of the points or control points are expressed in a specific coordinate
-system.  Because EPTS is designed to support a specific set of tasks,
-there are a large number of keyboard shortcuts.  It also uses a
-template processor that makes it relatively easy to display paths
-textually in a variety of formats, including user-defined formats.
-Command-line options are used with templates and make it easy to use
-EPTS as part of a 'build' environment (Java programs such as ANT or
-the traditional Unix/Linux use of Makefiles).
+system.  The points and paths can then be written to an output stream
+in a variety of text formats, each specified by a template, for use
+by other programs.
 <P>
-When using the BZDev class library's <CODE>graphs</CODE>
-and <CODE>anim2d</CODE> packages, there are three coordinate systems
-that are used:
+Because EPTS is designed to support a specific set of tasks, there are
+a large number of keyboard shortcuts.  It also uses a template
+processor that makes it relatively easy to display paths textually in
+a variety of formats, including user-defined formats.  Command-line
+options are used with templates and make it easy to use EPTS as part
+of a 'build' environment (e.g., Java programs such as ANT or the
+traditional Unix/Linux use of Makefiles).
+<P>
+EPTS makes use of three coordinate systems, one indirectly:
 <UL>
-  <LI> the standard Java user-space coordinates, which measures
-    distances in units of "points" (1/72 inches) and where the
+  <LI> Java user-space coordinates, which is display-centric where
+    distances are in units of "points" (1/72 inches) and where the
     positive X direction points left and the positive Y direction
     points down. Without any explicit scaling, the JRE (Java Runtime
     Environment) will scale images so that one pixel covers a square
     that is 1 point by 1 point in size. This may represent several
     pixels on a display or output device (e.g., a high-resolution
-    printer).  User-space coordinates are floating point numbers.
-    As a result, if an output device contains 4 pixels for each
-    1x1 point square, and the image is scaled down by a factor of 2,
-    there will be no degradation in image quality.
+    printer).  User-space coordinates are floating point numbers.  As
+    a result, if an output device contains 4 pixels for each 1x1 point
+    square, and the image is scaled down by a factor of 2, there will
+    be no degradation in image quality.
   <LI> image space coordinates, in which one unit corresponds to a
-    pixel of an image. The BZDev graphs package and the anim2d package
-    will specify if an image, before scaling, would be rendered so
-    that one pixel's height and width correspond to one unit in either
-    user space or graph coordinate space. EPTS assumes that graph
-    coordinate space was chosen, and allows an appropriate scale
-    factor to be defined so that a distance in image space will be
-    mapped to a corresponding distance in graph coordinate space.
+    pixel of an image. If an image is used directly, one pixel in the
+    image will take up 1 unit in user space. When scripts are used
+    to create the background image, however, an image can be scaled
+    and incorporated in the background image. Image-space coordinates,
+    however, are not used for any other purposes and can be ignored
+    except when images are being added to a background by using a script.
+    The procedure for adding an image using a script is provided in the
+    BZDev library documentation for the package
+    <CODE>org.bzdev.anim2d.AnimationLayer2DFactory</CODE> (the
+    <A href="#guides">Additional Documentation</A> section provides citations
+    to the documentation.
   <LI> GCS (Graph Coordinate Space) coordinates, in which distances are
     measured in application-specific coordinates (e.g., meters) and
     where the positive X direction points left and the positive Y
     direction points up. EPTS allows distances to be specified in either
     custom units or meters.  If custom units are not used, all other
-    units will be converted to meters.
+    units will be converted to meters.  Graph coordinate space is define
+    by the BZDev class library, specifically the class
+    <CODE>org.bzdev.graphs.Graph</CODE>.
 </UL>
 EPTS will display an image and allow one to overlay this image with
 points and B&eacute;zier curves, expressing their locations and control
@@ -1131,7 +1139,7 @@ When real numbers are needed as values in options, a suffix specifying
 a unit may be added to the number, as describe in the
 <A href="#units">Units</A> section.
 <P>
-There are four options that do not fit into well-defined categories:
+There are five options that do not fit into well-defined categories:
 <UL>
   <LI><B><CODE>--</CODE></B>. This option simply indicates the end of
     options, and is provided in case a file name starts with a
@@ -1170,6 +1178,17 @@ There are four options that do not fit into well-defined categories:
     unless the <CODE>--image</CODE> option is also present, but
     the <CODE>--image</CODE> option can not be used with this option
     unless the argument for <CODE>--image</CODE> is an EPTS saved state.
+  <LI><B><CODE>--gui</CODE></B>. This option indicates that the program
+    might be run without directly starting the program from a terminal
+    window. The current working directory will be set to
+    that containing the file specified by the first non-option argument,
+    provided that the file is an image file or an EPTS saved state. In
+    addition, error messages (with a couple of exceptions) will appear
+    in windows rather than being printed to standard output. This is
+    provided because when a program is started using a window system,
+    the current working directory is often not the one containing its
+    argument file and messages to standard output or standard error
+    might not be visible to the user.
 </UL>
 
 <H2><A name="units">Units</A></H2>
@@ -1667,7 +1686,7 @@ non-null value and will provide several methods:
     in user-space units.
   <LI><B><CODE>epts.getHeight()</CODE></B> to determine the frame height
     in user-space units.
-  <LI><B><CODE>epts.gethasDistances()</CODE></B> to determine if user-space
+  <LI><B><CODE>epts.hasDistances()</CODE></B> to determine if user-space
     and graph-coordinate-space distances are valid (true if valid, false if
     not).
   <LI><B><CODE>epts.getUserDist()</CODE></B> to determine a user-space
@@ -1939,7 +1958,7 @@ the following:
     <EM>An Introduction to the BZDev Java Class Library with Examples</EM>.
   <LI><B><CODE>/usr/share/doc/libbzdev-doc/SimScript.pdf</CODE></B>.
     This is a copy of
-    <EM>Simulation Scripting Guide for the Bzdevclass library</EM>.
+    <EM>Simulation Scripting Guide for the BZDev class library</EM>.
     It describes how to create factories.
   <LI><B><CODE>/usr/share/doc/libbzdev-doc/Factories.pdf</CODE></B>.
     This is a copy of
@@ -2208,5 +2227,5 @@ with the following attributes
  -->
 <!--  LocalWords:  userdist gcsdist subspacings subgrid subspacing
  -->
-<!--  LocalWords:  javascript gridXOrigin gridYOrigin URI's
+<!--  LocalWords:  javascript gridXOrigin gridYOrigin URI's centric
  -->

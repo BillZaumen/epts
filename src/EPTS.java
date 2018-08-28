@@ -14,6 +14,7 @@ import java.io.LineNumberReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.Reader;
+import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -47,6 +48,7 @@ import org.bzdev.obnaming.misc.BasicStrokeParm.Cap;
 import org.bzdev.obnaming.misc.BasicStrokeParm.Join;
 import org.bzdev.scripting.Scripting;
 import org.bzdev.swing.ErrorMessage;
+import org.bzdev.swing.SimpleConsole;
 import org.bzdev.swing.WholeNumbTextField;
 import org.bzdev.util.SafeFormatter;
 import org.bzdev.util.TemplateProcessor;
@@ -147,18 +149,35 @@ public class EPTS {
     }
     static HashSet<String> sbcpAppended = new HashSet<>();
 
+    static boolean guiMode = false;
+
+    private static void displayError(String string) {
+	if (guiMode) {
+	    ErrorMessage.displayFormat((Component)null,
+				       localeString("eptsErrorTitle"),
+				       "%s", string);
+	} else {
+	    if (string.startsWith("epts:")) {
+		System.err.println(string);
+	    } else {
+		System.err.println("epts: " + string);
+	    }
+	}
+    }
+
     private static void readConfigFiles(String languageName, String fileName) {
 	File file = new File (fileName);
 	if (!file.exists()) {
 	    return;
 	}
 	if (!file.isFile()) {
-	    System.err.println(errorMsg("notConfigFile", fileName));
+	    displayError(errorMsg("notConfigFile", fileName));
+
 	    System.exit(1);
 	}
 
 	if (!file.canRead()) {
-	    System.err.println(errorMsg("configFileNotReadable", fileName));
+	    displayError(errorMsg("configFileNotReadable", fileName));
 	    System.exit(1);
 	}
 	try {
@@ -191,14 +210,14 @@ public class EPTS {
 			if (line.length() < 6) {
 			    int lno = reader.getLineNumber();
 			    String msg = errorMsg("directive", fileName, lno);
-			    System.err.println(msg);
+			    displayError(msg);
 			    System.exit(1);
 			}
 			char ch = line.charAt(5);
 			if (!Character.isSpaceChar(ch)) {
 			    int lno = reader.getLineNumber();
 			    String msg = errorMsg("directive", fileName, lno);
-			    System.err.println(msg);
+			    displayError(msg);
 			    System.exit(1);
 			}
 			String cmd = line.substring(6).trim();
@@ -228,7 +247,7 @@ public class EPTS {
 			    int lno = reader.getLineNumber();
 			    String msg =
 				errorMsg("endExpected", fileName, lno);
-			    System.err.println(msg);
+			    displayError(msg);
 			    error = true;
 			}
 			if (langsearch || langsection) {
@@ -237,7 +256,7 @@ public class EPTS {
 				int lno = reader.getLineNumber();
 				String msg =
 				    errorMsg("syntax", fileName, lno);
-				System.err.println(msg);
+				displayError(msg);
 				error = true;
 			    } else {
 				String name = parts[0];
@@ -247,7 +266,7 @@ public class EPTS {
 				    int lno = reader.getLineNumber();
 				    String msg =
 					errorMsg("propname",fileName,lno,name);
-				    System.err.println(msg);
+				    displayError(msg);
 				    error = true;
 				    continue;
 				}
@@ -308,7 +327,7 @@ public class EPTS {
 			    int lno = reader.getLineNumber();
 			    String msg =
 				errorMsg("endExpected", fileName, lno);
-			    System.err.println(msg);
+			    displayError(msg);
 			    error = true;
 			    continue;
 			}
@@ -346,7 +365,7 @@ public class EPTS {
 				int lno = reader.getLineNumber();
 				String msg =
 				    errorMsg("urlParse", fileName, lno);
-				System.err.println(msg);
+				displayError(msg);
 				System.exit(1);
 			    }
 			}
@@ -356,12 +375,12 @@ public class EPTS {
 		int lno = reader.getLineNumber();
 		String msg =
 		    errorMsg("exceptionMsg", fileName, lno, e.getMessage());
-		System.err.println(msg);
+		displayError(msg);
 		System.exit(1);
 	    }
 	    reader.close();
 	} catch (Exception er) {
-	    System.err.println(errorMsg("scException", er.getMessage()));
+	    displayError(errorMsg("scException", er.getMessage()));
 	    System.exit(1);
 	}
     }
@@ -501,11 +520,13 @@ public class EPTS {
 
 
     static boolean stackTrace = false;
-    static void printStackTrace(Throwable e, PrintStream out) {
+    static void printStackTrace(Throwable e, Appendable out) {
 	StackTraceElement[] elements = e.getStackTrace();
-	for (StackTraceElement element: elements) {
-	    out.println("    " + element);
-	}
+	try {
+	    for (StackTraceElement element: elements) {
+		out.append("    " + element + "\n");
+	    }
+	} catch (IOException ioe) {}
     }
 
     static class NameValuePair {
@@ -519,95 +540,103 @@ public class EPTS {
 	public Object getValue() {return value;}
     }
 
-    static Graph doScripts(ScriptingEnv se,
-			   List<NameValuePair> bindings,
-			   List<String> targetList)
-    {
-	final File cdir = new File(System.getProperty("user.dir"));
-	// ScriptingEnv se = new ScriptingEnv(languageName, a2dName);
-	for (NameValuePair binding: bindings) {
-	    se.putScriptObject(binding.getName(), binding.getValue());
-	}
-	String current = null;
-	try {
-	    for (String filename: targetList) {
-		InputStream is;
-		current = filename;
-		if (maybeURL(filename)) {
-		    URL url = new URL(cdir.toURI().toURL(), filename);
-		    is = url.openStream();
-		} else {
-		    is = new FileInputStream(filename);
-		}
-		Reader r = new InputStreamReader(is, "UTF-8");
-		r = new BufferedReader(r);
-		se.evalScript(filename, r);
+    static String initialcwd = System.getProperty("user.dir");
+    static File initialcwdFile = (initialcwd == null)? null:
+	new File(initialcwd);
+
+    static SimpleConsole console = null;
+
+    static void processDoScriptException(Exception e) {
+	if (guiMode) {
+	    try {
+		JFrame frame =
+		    new JFrame(localeString("consoleTitle"));
+		frame.setLayout(new BorderLayout());
+		frame.setPreferredSize(new Dimension(800, 600));
+		frame.setDefaultCloseOperation
+		    (JFrame.DISPOSE_ON_CLOSE);
+		frame.addWindowListener
+		    (new WindowAdapter() {
+			    @Override
+			    public void windowClosed
+				(WindowEvent e)
+			    {
+				System.exit(1);
+			    }
+			});
+		console = new SimpleConsole();
+		JScrollPane scrollPane =
+		    new JScrollPane(console);
+		frame.add(scrollPane, BorderLayout.CENTER);
+		frame.pack();
+		frame.setVisible(true);
+	    } catch (Exception ie) {
+		System.err.println("could not create frame:"
+				   +ie.getMessage());
+		System.exit(1);
 	    }
-	} catch (FileNotFoundException ef) {
-	    System.err.println(errorMsg("readError", current, ef.getMessage()));
-	    System.exit(1);
-	} catch (IOException eio) {
-	    String msg = errorMsg("readError", current, eio.getMessage());
-	    System.err.println(msg);
-	    System.exit(1);
-	} catch (Exception e) {
-	    if (stackTrace) {
-		System.err.println(e.getClass().getName() + ": "
-				   + e.getMessage());
-		printStackTrace(e, System.err);
-		Throwable cause = e.getCause();
+	}
+	Appendable output = (console == null)? System.err: console;
+	if (stackTrace) {
+	    Throwable cause = e.getCause();
+	    try {
+		output.append(e.getClass().getName() + ": "
+			      + e.getMessage() + "\n");
+		printStackTrace(e, output);
 		while (cause != null) {
-		    System.err.println("---------");
-		    System.err.println(cause.getClass().getName() + ": "
-				       + cause.getMessage());
-		    printStackTrace(cause, System.err);
+		    output.append("---------\n");
+		    output.append(cause.getClass().getName() + ": "
+				  + cause.getMessage() + "\n");
+		    printStackTrace(cause, output);
 		    cause = cause.getCause();
 		}
-	    } else {
-		Throwable cause = e.getCause();
-		Class<?> ec = e.getClass();
-		String msg;
-		if (e instanceof ScriptException) {
-		    ScriptException sex = (ScriptException)e;
-		    String fn = sex.getFileName();
-		    int ln = sex.getLineNumber();
-		    if (cause != null) {
-			String m = cause.getMessage();
-			if (ln != -1) {
-			    // Some scripting-related exceptions tag
-			    // a string containing of the form
-			    //  (FILENAME#LINENO)
-			    // to the end of a message.  This is redundant
-			    // so we will eliminate it when it matches the
-			    // file name and line number we are printing.
-			    // The following lines contain all the 'cause'
-			    // messages anyway, so all the information is
-			    // available.  The lack of redundancy makes the
-			    // first message easier to read.
-			    String tail = String.format("(%s#%d)", fn, ln);
-			    if (m.endsWith(tail)) {
-				m = m.substring(0, m.lastIndexOf(tail));
-				m = m.trim();
-			    }
+	    } catch (IOException eio) {}
+	} else {
+	    Throwable cause = e.getCause();
+	    Class<?> ec = e.getClass();
+	    String msg;
+	    if (e instanceof ScriptException) {
+		ScriptException sex = (ScriptException)e;
+		String fn = sex.getFileName();
+		int ln = sex.getLineNumber();
+		if (cause != null) {
+		    String m = cause.getMessage();
+		    if (ln != -1) {
+			// Some scripting-related exceptions tag
+			// a string containing of the form
+			//  (FILENAME#LINENO)
+			// to the end of a message.  This is redundant
+			// so we will eliminate it when it matches the
+			// file name and line number we are printing.
+			// The following lines contain all the 'cause'
+			// messages anyway, so all the information is
+			// available.  The lack of redundancy makes the
+			// first message easier to read.
+			String tail = String.format("(%s#%d)", fn, ln);
+			if (m.endsWith(tail)) {
+			    m = m.substring(0, m.lastIndexOf(tail));
+			    m = m.trim();
 			}
-			if (e.getMessage().contains(m)) {
-			    if (ln == -1) {
-				msg = errorMsg("unnumberedException", fn,m);
-			    } else {
-				msg = errorMsg("numberedException",fn,ln,m);
-			    }
+		    }
+		    if (e.getMessage().contains(m)) {
+			if (ln == -1) {
+			    msg = errorMsg("unnumberedException", fn,m);
 			} else {
-			    msg =
-				errorMsg("scriptException", e.getMessage());
+			    msg = errorMsg("numberedException",fn,ln,m);
 			}
 		    } else {
-			msg = errorMsg("scriptException", e.getMessage());
+			msg =
+			    errorMsg("scriptException", e.getMessage());
 		    }
 		} else {
-		    String cn = e.getClass().getName();
-		    msg = errorMsg("exception2", cn, e.getMessage());
+		    msg = errorMsg("scriptException", e.getMessage());
 		}
-		System.err.println(msg);
+	    } else {
+		String cn = e.getClass().getName();
+		msg = errorMsg("exception2", cn, e.getMessage());
+	    }
+	    try {
+		output.append(msg + "\n");
 		while (cause != null) {
 		    Class<?> clasz = cause.getClass();
 		    Class<?> target =
@@ -616,11 +645,88 @@ public class EPTS {
 		    String tn = errorMsg("ldotsConfigException");
 		    String cn =(clasz.equals(target))? tn: clasz.getName();
 		    msg = errorMsg("continued", cn, cause.getMessage());
-		    System.err.println("  " + msg);
+		    output.append("  " + msg + "\n");
 		    cause = cause.getCause();
 		}
+	    } catch (IOException eio) {
+		System.err.println("unexpected eio");
+	    } catch (Throwable t) {
+		t.printStackTrace(System.err);
 	    }
+	}
+    }
+
+    static Graph doScripts(ScriptingEnv se,
+			   List<NameValuePair> bindings,
+			   List<String> targetList,
+			   List<String> targetList2)
+    {
+	File cdir = new File(System.getProperty("user.dir"));
+	// ScriptingEnv se = new ScriptingEnv(languageName, a2dName);
+	for (NameValuePair binding: bindings) {
+	    se.putScriptObject(binding.getName(), binding.getValue());
+	}
+	String current = null;
+	try {
+	    if (targetList != null) {
+		for (String filename: targetList) {
+		    InputStream is;
+		    current = filename;
+		    if (maybeURL(filename)) {
+			URL url = new URL(cdir.toURI().toURL(), filename);
+			is = url.openStream();
+		    } else {
+			is = new FileInputStream(filename);
+		    }
+		    Reader r = new InputStreamReader(is, "UTF-8");
+		    r = new BufferedReader(r);
+		    se.evalScript(filename, r);
+		}
+	    }
+	    if (targetList2 != null) {
+		cdir = initialcwdFile;
+		for (String filename: targetList2) {
+		    InputStream is;
+		    current = filename;
+		    if (maybeURL(filename)) {
+			URL url = new URL(cdir.toURI().toURL(), filename);
+			is = url.openStream();
+		    } else {
+			File ifile = new File(cdir, filename);
+			ifile = ifile.getCanonicalFile();
+			is = new FileInputStream(ifile);
+		    }
+		    Reader r = new InputStreamReader(is, "UTF-8");
+		    r = new BufferedReader(r);
+		    se.evalScript(filename, r);
+		}
+	    }
+	} catch (FileNotFoundException ef) {
+	    displayError(errorMsg("readError", current, ef.getMessage()));
 	    System.exit(1);
+	} catch (IOException eio) {
+	    String msg = errorMsg("readError", current, eio.getMessage());
+	    displayError(msg);
+	    System.exit(1);
+	} catch (Exception e) {
+	    if (guiMode) {
+		final Exception ee = e;
+		try {
+		    SwingUtilities.invokeAndWait(() -> {
+			    processDoScriptException(e);
+			});
+		} catch (InterruptedException ie) {
+		} catch (InvocationTargetException ite) {
+		}
+	    } else {
+		processDoScriptException(e);
+	    }
+	    if (guiMode) {
+		System.out.println("doScript exiting, returning null");
+		return null;
+	    } else {
+		System.exit(1);
+	    }
 	}
 	try {
 	    se.drawGraph(image);
@@ -629,8 +735,8 @@ public class EPTS {
 	    double yscale = graph.getYScale();
 	    if (scale != yscale) {
 		double max = Math.max(Math.abs(scale), Math.abs(yscale));
-		if (Math.abs((scale-yscale)/max) > 1.e-12) {
-		    System.err.println(errorMsg("xyScale", scale, yscale));
+		if (max == 0.0 || Math.abs((scale-yscale)/max) > 1.e-12) {
+		    displayError(errorMsg("xyScale", scale, yscale));
 		    System.exit(1);
 		}
 	    }
@@ -639,7 +745,8 @@ public class EPTS {
 	    if (stackTrace) {
 		e.printStackTrace(System.err);
 	    } else {
-		System.err.println(errorMsg("exception", e.getMessage()));
+		e.printStackTrace();
+		displayError(errorMsg("exception", e.getMessage()));
 	    }
 	    System.exit(1);
 	    return null;
@@ -949,7 +1056,7 @@ public class EPTS {
 			emsg = e.getClass().getName();
 		    }
 		    String msg = errorMsg("cannotReadImage", imageArg, emsg);
-		    System.err.println(msg);
+		    displayError(msg);
 		    System.exit(1);
 		}
 	    } else {
@@ -963,6 +1070,25 @@ public class EPTS {
     static URI imageURI = null;
     static Image image = null;
     static boolean custom = false;
+    static final Color endColor = Colors.getColorByCSS("darkred");
+
+    static void appendFinalMsg() {
+	System.out.println("in appendFinalMsg");
+	try {
+	    SwingUtilities.invokeAndWait(() -> {
+		    console.perform((cc) -> {
+			    cc.addSeparatorIfNeeded();
+			    cc.setBold(true);
+			    cc.setTextForeground(endColor);
+			    cc.append(errorMsg("doScriptConsole") + "\n");
+			});
+		});
+	} catch (InterruptedException ie) {
+	    displayError(errorMsg("doScriptConsole"));
+	} catch (InvocationTargetException ite) {
+	    displayError(errorMsg("doScriptConsole"));
+	}
+    }
 
     static void init(String argv[]) throws Exception {
 	final File cdir = new File(System.getProperty("user.dir"));
@@ -1030,7 +1156,7 @@ public class EPTS {
 		    if (arg.startsWith("-J")) arg = arg.substring(2);
 		    int ind = arg.indexOf('=');
 		    if (ind < 0) {
-			System.err.println(errorMsg("badArgument", arg));
+			displayError(errorMsg("badArgument", arg));
 			System.exit(1);
 		    }
 		    String[] pair = new String[2];
@@ -1039,7 +1165,7 @@ public class EPTS {
 		    String name = pair[0];
 		    String value = pair[1];
 		    if (propertyNotAllowed(name)) {
-			System.err.println(errorMsg("badArgProp", name));
+			displayError(errorMsg("badArgProp", name));
 			System.exit(1);
 		    }
 		    if (name.equals("scrunner.sysconf")) {
@@ -1058,7 +1184,7 @@ public class EPTS {
 		} else if (argv[index].equals("-L")) {
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1069,7 +1195,7 @@ public class EPTS {
 		} else if (argv[index].equals("--class")) {
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1086,7 +1212,7 @@ public class EPTS {
 		    }
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1102,7 +1228,7 @@ public class EPTS {
 		} else if (argv[index].equals("--script")) {
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1113,7 +1239,7 @@ public class EPTS {
 		} else if (argv[index].equals("--image")) {
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1140,8 +1266,6 @@ public class EPTS {
 				}
 				if (imageArg.endsWith(".epts")) {
 				    iparser = new EPTSParser();
-				    String oldcwd =
-					System.getProperty("user.dir");
 				    File parent = ifile.getParentFile();
 				    if (parent != null) {
 					System.setProperty
@@ -1159,7 +1283,10 @@ public class EPTS {
 				    imageURI = iparser.getImageURI();
 				    image = iparser.getImage();
 				    custom = iparser.usesCustom();
-				    System.setProperty("user.dir", oldcwd);
+				    if (parent != null) {
+					System.setProperty("userdir",
+							   initialcwd);
+				    }
 				} else {
 				    imageURI = ifile.getCanonicalFile().toURI();
 				    image = ImageIO.read(ifile);
@@ -1169,7 +1296,7 @@ public class EPTS {
 			    // image = null; imageURI = null;
 			    String msg = errorMsg
 				("readError", argv[index], ex.getMessage());
-			    System.err.println(msg);
+			    displayError(msg);
 			    System.exit(1);
 			}
 		    }
@@ -1178,14 +1305,14 @@ public class EPTS {
 		} else if (argv[index].equals("--port")) {
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
 		    try {
 			port = Integer.parseInt(argv[index]);
 		    } catch (Exception e) {
-			System.err.println
+			displayError
 			    (errorMsg("notInteger", argv[index]));
 			System.exit(1);
 					   
@@ -1199,7 +1326,7 @@ public class EPTS {
 		    if (svg == false) {
 			if (flatness != 0.0 || templateURL != null
 			    || straight || elevate) {
-			    System.err.println
+			    displayError
 				(errorMsg("noSVG"));
 			    System.exit(1);
 			}
@@ -1212,7 +1339,7 @@ public class EPTS {
 		} else if (argv[index].equals("--stroke-color")) {
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1228,7 +1355,7 @@ public class EPTS {
 		} else if (argv[index].equals("--stroke-gcs-mode")) {
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1240,7 +1367,7 @@ public class EPTS {
 		} else if (argv[index].equals("--stroke-cap")) {
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1252,7 +1379,7 @@ public class EPTS {
 		} else if (argv[index].equals("--stroke-dash-incr")) {
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1265,7 +1392,7 @@ public class EPTS {
 		} else if (argv[index].equals("--stroke-dash-pattern")) {
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1275,7 +1402,7 @@ public class EPTS {
 		} else if (argv[index].equals("--stroke-dash-phase")) {
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1288,7 +1415,7 @@ public class EPTS {
 		} else if (argv[index].equals("--stroke-join")) {
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1300,7 +1427,7 @@ public class EPTS {
 		} else if (argv[index].equals("--stroke-miter-limit")) {
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1313,7 +1440,7 @@ public class EPTS {
 		} else if (argv[index].equals("--stroke-width")) {
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1323,7 +1450,7 @@ public class EPTS {
 		} else if (argv[index].equals("--fill-color")) {
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1339,7 +1466,7 @@ public class EPTS {
 		} else if (argv[index].equals("--zorder")) {
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1356,7 +1483,7 @@ public class EPTS {
 		} else if (argv[index].equals("--map")) {
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1374,13 +1501,13 @@ public class EPTS {
 			    if (mapFile.canRead()) {
 				map = createMap(new FileInputStream(mapFile));
 			    } else {
-				System.err.println
+				displayError
 				    (errorMsg("cannotRead", argv[index]));
 				System.exit(1);
 			    }
 			}
 		    } catch (Exception e) {
-			System.err.println
+			displayError
 			    (errorMsg("ioError", argv[index], e.getMessage()));
 			System.exit(1);
 		    }
@@ -1389,7 +1516,7 @@ public class EPTS {
 		} else if (argv[index].equals("--package")) {
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1399,7 +1526,7 @@ public class EPTS {
 		} else if (argv[index].equals("--pname")) {
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1419,13 +1546,13 @@ public class EPTS {
 		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--flatness")) {
 		    if (svg) {
-			System.err.println
+			displayError
 			    (errorMsg("svgmode","--flatness"));
 			System.exit(1);
 		    }
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1438,13 +1565,13 @@ public class EPTS {
 		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--limit")) {
 		    if (svg) {
-			System.err.println
+			displayError
 			    (errorMsg("svgmode","--limit"));
 			System.exit(1);
 		    }
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1457,7 +1584,7 @@ public class EPTS {
 		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--straight")) {
 		    if (svg) {
-			System.err.println
+			displayError
 			    (errorMsg("svgmode","--straight"));
 			System.exit(1);
 		    }
@@ -1465,7 +1592,7 @@ public class EPTS {
 		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--elevate"))  {
 		    if (svg) {
-			System.err.println
+			displayError
 			    (errorMsg("svgmode","--elevate"));
 			System.exit(1);
 		    }
@@ -1473,7 +1600,7 @@ public class EPTS {
 		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--gcs")) {
 		    if (svg) {
-			System.err.println
+			displayError
 			    (errorMsg("svgmode","--gcs"));
 			System.exit(1);
 		    }
@@ -1481,13 +1608,13 @@ public class EPTS {
 		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--template")) {
 		    if (svg) {
-			System.err.println
+			displayError
 			    (errorMsg("svgmode","--template"));
 			System.exit(1);
 		    }
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1511,7 +1638,7 @@ public class EPTS {
 		} else if (argv[index].equals("--tname")) {
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1537,7 +1664,7 @@ public class EPTS {
 		} else if (argv[index].equals("-o")) {
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1547,13 +1674,13 @@ public class EPTS {
 			f = f.getCanonicalFile();
 			if (f.exists()) {
 			    if (f.canWrite() == false) {
-				System.err.println
+				displayError
 				    (errorMsg("cannotWrite", outName));
 				System.exit(1);
 			    }
 			} else {
 			    if (f.getParentFile().canWrite() == false) {
-				System.err.println
+				displayError
 				    (errorMsg("cannotWrite", outName));
 				System.exit(1);
 			    }
@@ -1564,7 +1691,7 @@ public class EPTS {
 		} else if (argv[index].equals("--winding-rule")) {
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1582,7 +1709,7 @@ public class EPTS {
 		} else if (argv[index].equals("--boolean")) {
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1603,11 +1730,11 @@ public class EPTS {
 			} catch (Exception e) {
 			    String msg = errorMsg("badBoolean",
 						  argv[index-1], tokens[1]);
-			    System.err.println(msg);
+			    displayError(msg);
 			    System.exit(1);
 			}
 		    } else {
-			System.err.println(errorMsg("noEqual", argv[index-1]));
+			displayError(errorMsg("noEqual", argv[index-1]));
 			System.exit(1);
 		    }
 		    argsList.add(argv[index-1]);
@@ -1615,7 +1742,7 @@ public class EPTS {
 		} else if (argv[index].equals("--int")) {
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1629,11 +1756,11 @@ public class EPTS {
 						  tokens[1],
 						  argv[index-1],
 						  e.getMessage());
-			    System.err.println(msg);
+			    displayError(msg);
 			    System.exit(1);
 			}
 		    } else {
-			System.err.println(errorMsg("noEqual", argv[index-1]));
+			displayError(errorMsg("noEqual", argv[index-1]));
 			System.exit(1);
 		    }
 		    argsList.add(argv[index-1]);
@@ -1641,7 +1768,7 @@ public class EPTS {
 		} else if (argv[index].equals("--double")) {
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1655,11 +1782,11 @@ public class EPTS {
 						  tokens[1],
 						  argv[index-1],
 						  e.getMessage());
-			    System.err.println(msg);
+			    displayError(msg);
 			    System.exit(1);
 			}
 		    } else {
-			System.err.println(errorMsg("noEqual", argv[index-1]));
+			displayError(errorMsg("noEqual", argv[index-1]));
 			System.exit(1);
 		    }
 		    argsList.add(argv[index-1]);
@@ -1667,7 +1794,7 @@ public class EPTS {
 		} else if (argv[index].equals("--string")) {
 		    index++;
 		    if (index == argv.length) {
-			System.err.println
+			displayError
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
@@ -1676,7 +1803,7 @@ public class EPTS {
 			String value = tokens[1];
 			bindings.add(new NameValuePair(tokens[0], value));
 		    } else {
-			System.err.println(errorMsg("noEqual", argv[index-1]));
+			displayError(errorMsg("noEqual", argv[index-1]));
 			System.exit(1);
 		    }
 		    argsList.add(argv[index-1]);
@@ -1685,11 +1812,14 @@ public class EPTS {
 		    custom = true;
 		} else if (argv[index].equals("--mksUnits")) {
 		    custom = false;
+		} else if (argv[index].equals("--gui")) {
+		    guiMode = true;
+		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--")) {
 		    argsList.add(argv[index]);
 		    jcontinue = false;
 		} else if (argv[index].startsWith("-")) {
-		    System.err.println(errorMsg("unknownOption", argv[index]));
+		    displayError(errorMsg("unknownOption", argv[index]));
 		    System.exit(1);
 		} else {
 		    if (languageName == null) {
@@ -1700,19 +1830,23 @@ public class EPTS {
 			processImageArg(argv[index], targetList, cdir);
 			if (imageURI != null) {
 			    imageMode = true;
+			    if (guiMode && imageURI != null
+				&& imageURI.getScheme().equals("file")) {
+				File ifile = new File(imageURI);
+				File parent = ifile.getParentFile();
+				if (parent != null) {
+				    initialcwdFile = parent.getCanonicalFile();
+				    initialcwd = parent.getCanonicalPath();
+				    System.setProperty("user.dir", initialcwd);
+				}
+			    }
 			}
 			// Infer script mode from first file-name argument,
 			// which is not an image file. processLanguageName
 			// will return a non-null value only if the file
 			// has an extension suitable for a script.
-			System.out.println("got here 1");
-			System.out.println("targetList.isEmpty() = "
-					   +targetList.isEmpty());
-			System.out.println("!imageMode = " + (!imageMode));
-			System.out.println("argv[index] = " + argv[index]);
 			if (targetList.size() == 1) {
 			    if (processLanguageName(argv[index]) != null) {
-				System.out.println("got here 1a");
 				if (scriptMode == false) {
 				    scriptMode = true;
 				    a2dName = "a2d";
@@ -1733,12 +1867,22 @@ public class EPTS {
 		    processImageArg(argv[index], targetList, cdir);
 		    if (targetList.isEmpty()) {
 			imageMode = true;
+			if (guiMode && imageURI != null
+			    && imageURI.getScheme().equals("file")) {
+			    File ifile = new File(imageURI);
+			    File parent = ifile.getParentFile();
+			    if (parent != null) {
+				initialcwdFile = parent;
+				initialcwd = parent.getCanonicalPath();
+				System.setProperty("user.dir", initialcwd);
+			    }
+			}
 		    }
+
 		    // Infer script mode from first file-name argument,
 		    // which is not an image file. processLanguageName
 		    // will return a non-null value only if the file
 		    // has an extension suitable for a script.
-		    System.out.println("got here 2");
 		    if (targetList.size() == 1) {
 			if (processLanguageName(argv[index]) != null) {
 			    if (scriptMode == false) {
@@ -1755,19 +1899,19 @@ public class EPTS {
 
 	if ((imageMode ^ scriptMode) == false) {
 	    if (iparser == null && (imageMode || scriptMode)) {
-		System.err.println(errorMsg("modes1"));
-		System.err.println(errorMsg("modes2", imageArg));
+		displayError(errorMsg("modes1"));
+		displayError(errorMsg("modes2", imageArg));
 		System.exit(1);
 	    }
 	}
 
 	if (!scriptMode && imageMode && targetList.size() != 0) {
-	    System.err.println(errorMsg("targetLengthNonZero"));
+	    displayError(errorMsg("targetLengthNonZero"));
 	    System.exit(1);
 	}
 
 	if (scriptMode && targetList.size() == 0) {
-	    System.err.println(errorMsg("targetLength0"));
+	    displayError(errorMsg("targetLength0"));
 	    System.exit(1);
 	}
 
@@ -1786,7 +1930,7 @@ public class EPTS {
 		if (ln == null) {
 		    String msg =
 			(errorMsg("badScriptingLanguageName",languageName));
-		    System.err.println(msg);
+		    displayError(msg);
 		    System.exit(1);
 		} else {
 		    languageName = ln;
@@ -1830,7 +1974,7 @@ public class EPTS {
 				  + (new File(pf, "epts.policy")
 				     .getCanonicalPath()));
 		} catch (Exception eio) {
-		    System.err.println(errorMsg("policyFile"));
+		    displayError(errorMsg("policyFile"));
 		    System.exit(1);
 		}
 	    }
@@ -1856,7 +2000,7 @@ public class EPTS {
 		Process process = pb.start();
 		System.exit(process.waitFor());
 	    } catch (Exception e) {
-		System.err.println(errorMsg("scException", e.getMessage()));
+		displayError(errorMsg("scException", e.getMessage()));
 		System.exit(1);
 	    }
 	} else if (dryrun) {
@@ -1938,7 +2082,6 @@ public class EPTS {
 		eptsFile = new File(fileArg);
 	    }
 	    iparser = new EPTSParser();
-	    String oldcwd = System.getProperty("user.dir");
 	    File parent = eptsFile.getParentFile();
 	    if (parent != null) {
 		System.setProperty("user.dir", parent.getCanonicalPath());
@@ -1954,7 +2097,6 @@ public class EPTS {
 		image = iparser.getImage();
 		imageMode = true;
 	    }
-	    System.setProperty("user.dir", oldcwd);
 	}
 	if (imageMode) {
 	    if (imageURI == null) {
@@ -2026,7 +2168,15 @@ public class EPTS {
 		if (iparser == null) {
 		    ScriptingEnv se = new ScriptingEnv(languageName, a2dName,
 						       width, height);
-		    Graph graph = doScripts(se, bindings, targetList);
+		    Graph graph = doScripts(se, bindings, targetList, null);
+		    // null returned only if a console was shown.
+		    // so we print a message to stderr just in case
+		    // and then return. The application will exit when
+		    // the user closes the console.
+		    if ((console != null) && (graph == null)) {
+			appendFinalMsg();
+			return;
+		    }
 		    new EPTSWindow(graph, bindings, targetList, custom,
 				   se, null,
 				   image, imageURI, null, null);
@@ -2040,7 +2190,15 @@ public class EPTS {
 						       width, height,
 						       userDist, gcsDist,
 						       rpn, xo, yo);
-		    Graph graph = doScripts(se, bindings, targetList);
+		    Graph graph = doScripts(se, bindings, targetList, null);
+		    // null returned only if a console was shown.
+		    // so we print a message to stderr just in case
+		    // and then return. The application will exit when
+		    // the user closes the console.
+		    if ((console != null) && (graph == null)) {
+			appendFinalMsg();
+			return;
+		    }
 		    // If no eptsFile, we are just reading a saved state
 		    // to copy the image.
 		    PointTMR rows[] = (eptsFile == null)? null:
@@ -2058,7 +2216,15 @@ public class EPTS {
 	    }
 	} else if (scriptMode) {
 	    ScriptingEnv se = new ScriptingEnv(languageName, a2dName);
-	    Graph graph = doScripts(se, bindings, targetList);
+	    Graph graph = doScripts(se, bindings, targetList, null);
+	    // null returned only if a console was shown.
+	    // so we print a message to stderr just in case
+	    // and then return. The application will exit when
+	    // the user closes the console.
+	    if ((console != null) && (graph == null)) {
+		appendFinalMsg();
+		return;
+	    }
 	    EPTSWindow.setPort(port);
 	    new EPTSWindow(graph, bindings, targetList, custom, se, null,
 			   null, null, null, null);
@@ -2072,7 +2238,7 @@ public class EPTS {
 			filename =
 			    (new File(new URI(filename))).getCanonicalPath();
 		    } else if (maybeURL(filename)) {
-			System.err.println
+			displayError
 			    (errorMsg("urlForSavedState", filename));
 			System.exit(1);
 		    }
@@ -2086,10 +2252,18 @@ public class EPTS {
 		    if (outName == null) {
 			EPTSWindow.setPort(port);
 			for (String name: parser.getCodebase()) {
-			    URL[] urls =
-				URLPathParser.getURLs(null, name,
-						      ourCodebaseDir,
-						      System.err);
+			    StringBuilder sb = new StringBuilder();
+			    URL[] urls = null;
+			    try {
+				urls = URLPathParser.getURLs(null, name,
+							     ourCodebaseDir,
+							     sb);
+			    } catch (Exception urle) {
+				if (sb.length() != 0) {
+				    displayError(sb.toString());
+				    System.exit(1);
+				}
+			    }
 			    if (urls.length != 1) {
 				String title = errorMsg("errorTitle");
 				String msg = errorMsg("multipleURLs");
@@ -2146,15 +2320,26 @@ public class EPTS {
 			    ArrayList<NameValuePair> bl =
 				new ArrayList<>(pbindings.size()
 						+ bindings.size());
+			    /*
 			    ArrayList<String> tl =
 				new ArrayList<>(ptargetList.size()
 						+ targetList.size());
+			    */
 			    bl.addAll(pbindings);
 			    bl.addAll(bindings);
-			    tl.addAll(ptargetList);
+			    // tl.addAll(ptargetList);
 			    targetList.remove(0);
-			    tl.addAll(targetList);
-			    Graph graph = doScripts(se, bl, tl);
+			    // tl.addAll(targetList);
+			    Graph graph = doScripts(se, bl, ptargetList,
+						    targetList);
+			    // null returned only if a console was shown.
+			    // so we print a message to stderr just in case
+			    // and then return. The application will exit when
+			    // the user closes the console.
+			    if ((console != null) && (graph == null)) {
+				appendFinalMsg();
+				return;
+			    }
 			    new EPTSWindow(graph, pbindings, ptargetList,
 					   parser.usesCustom(),
 					   se,
@@ -2181,8 +2366,16 @@ public class EPTS {
 						      userdist, gcsdist,
 						      rpn, xo, yo);
 				targetList.remove(0);
-				Graph graph = doScripts(se, bindings,
+				Graph graph = doScripts(se, bindings, null,
 							targetList);
+				// null returned only if a console was shown.
+				// so we print a message to stderr just in case
+				// and then return. The application will
+				// exit when the user closes the console.
+				if ((console != null) && (graph == null)) {
+				    appendFinalMsg();
+				    return;
+				}
 				new EPTSWindow(graph, bindings, targetList,
 					       parser.usesCustom(),
 					       se,
@@ -2370,7 +2563,7 @@ public class EPTS {
 			os.flush();
 			System.exit(0);
 		    } else {
-			System.err.println(errorMsg("tooManyArgs"));
+			displayError(errorMsg("tooManyArgs"));
 			System.exit(1);
 		    }
 		} catch (Exception e) {
@@ -2378,11 +2571,11 @@ public class EPTS {
 		    System.exit(1);
 		}
 	    } else {
-		System.err.println(errorMsg("eptsFileExpected"));
+		displayError(errorMsg("eptsFileExpected"));
 		System.exit(1);
 	    }
 	} else {
-	    System.err.println(errorMsg("tooManyArgs"));
+	    displayError(errorMsg("tooManyArgs"));
 	    System.exit(1);
 	}
     }

@@ -191,7 +191,7 @@ $(JROOT_BIN)/epts: epts.sh MAJOR MINOR \
 	(cd $(JROOT); mkdir -p $(JROOT_BIN))
 	sed s/BZDEVDIR/$(BZDEVDIR_SED)/g epts.sh > $(JROOT_BIN)/epts
 	chmod u+x $(JROOT_BIN)/epts
-	if [ "$(DESTDIR)" = "" ] ; \
+	if [ "$(DESTDIR)" = "" -a ! -f $(JROOT_JARDIR)/libbzdev.jar ] ; \
 	then ln -sf $(EXTDIR)/libbzdev.jar $(JROOT_JARDIR)/libbzdev.jar ; \
 	fi
 

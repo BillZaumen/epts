@@ -34,7 +34,11 @@ is to make it easy to take a background, typically an image, overlay a
 series of points or curves on top of it, and then scale and/or
 translate the positions of the points and curves so that the locations
 of the points or control points are expressed in a specific coordinate
-system. Arguments that are not options can be one of three types of files:
+system. The points and paths can then be written to an output stream
+in a variety of text formats, each specified by a template, for use
+by other programs.
+.PP
+Arguments that are not options can be one of three types of files:
 .TP
 .IR IFILE .
 This file type represents an image file. Its file-name extension must be
@@ -44,7 +48,7 @@ supports.
 .IR EFILE .
 This file represents an EPTS saved state and its file name ends in
 the extension "epts". It is an XML file with a specific document type
-and XML namespace. Its docuement is described in the EPTS manual
+and XML namespace. Its document is described in the EPTS manual
 (available via the "Help" menu) and in the man page
 .BR epts (5).
 .TP
@@ -82,6 +86,51 @@ variable as described below.  If the name of this variable is not
 the
 .B \-\-script
 option must be used to indicate the appropriate variable name.
+.PP
+EPTS makes use of three coordinate systems, one indirectly:
+.TP
+.BR Java\ user\-space\ coordinates .
+This coordinate system is display-centric where distances are in units
+of "points" (1/72 inches) and where the positive X direction points
+left and the positive Y direction points down. Without any explicit
+scaling, the JRE (Java Runtime Environment) will scale images so that
+one pixel covers a square that is 1 point by 1 point in size. This may
+represent several pixels on a display or output device (e.g., a
+high-resolution printer).  User-space coordinates are floating point
+numbers.  As a result, if an output device contains 4 pixels for each
+1x1 point square, and the image is scaled down by a factor of 2, there
+will be no degradation in image quality.
+.TP
+.BR Image\ space\ coordinates .
+In this coordinate system, a unit corresponds to a pixel of an
+image. If an image is used directly, one pixel in the image will take
+up 1 unit in user space. When scripts are used to create the
+background image, however, an image can be scaled and incorporated in
+the background image. Image-space coordinates, however, are not used
+for any other purposes and can be ignored except when images are being
+added to a background by using a script.  The procedure for adding an
+image using a script is provided in the BZDev library documentation
+for the package <CODE>org.bzdev.anim2d.AnimationLayer2DFactory</CODE>
+(the section \fIUSER GUIDES AND API DOCUMENTATION\fR provides
+citations to the documentation.
+.TP
+.BR GCS\ (Graph\ Coordinate\ Space)\ coordinates .
+In this coordinated system distances are measured in
+application-specific coordinates (e.g., meters) and where the positive
+X direction points left and the positive Y direction points up. EPTS
+allows distances to be specified in either custom units or meters.  If
+custom units are not used, all other units will be converted to
+meters.  Graph coordinate space is define by the BZDev class library,
+specifically the class
+.BR org.bzdev.graphs.Graph .
+.PP
+Finally, EPTS uses a template processor that makes it relatively easy
+to display paths textually in a variety of formats, including
+user-defined formats.  Command-line options are used with templates
+and make it easy to use EPTS as part of a 'build' environment (e.g.,
+Java programs such as ANT or the traditional Unix/Linux use of
+Makefiles). A large number of options are specific to templates
+and are described below.
 .SH OPTIONS
 .PP
 Most options can grouped into three types.
@@ -169,6 +218,18 @@ option can not be used with the
 option unless the argument for the
 .B \-\-image
 option is an EPTS saved state that contains an image.
+.TP
+.B \-\-gui
+This option indicates that the program might be run without directly
+starting the program from a terminal window. The current working
+directory will be set to that containing the file specified by the
+first non-option argument, provided that the file is an image file or
+an EPTS saved state. In addition, error messages (with a couple of
+exceptions) will appear in windows rather than being printed to
+standard output. This is provided because when a program is started
+using a window system, the current working directory is often not the
+one containing its argument file and messages to standard output or
+standard error might not be visible to the user.
 .PP
 If neither of the options
 .B \-\-image
@@ -316,7 +377,7 @@ An option indicating the template must also be present: either
 .B \-\-template
 or
 .BR \-\-svg .
-The later is a special case that allows SVG (Scalable Vector Graphics)
+The later is a special case that allows SVG (Scaleable Vector Graphics)
 files to be created.  There are two types of templates: table templates
 and path templates. Table templates are assumed by default. For a path
 template, a
@@ -1136,7 +1197,7 @@ to determine the frame width in user-space units.
 .B epts.getHeight()
 to determine the frame height in user-space units.
 .TP
-.B epts.gethasDistances()
+.B epts.hasDistances()
 to determine if user-space and graph-coordinate-space distances are
 valid (true if valid, false if not).
 .TP
@@ -1495,7 +1556,7 @@ This is a copy of \fIAn Introduction to the BZDev Java Class Library
 with Examples\fR.
 .TP
 .B /usr/share/doc/libbzdev-doc/SimScript.pdf
-This is a copy of \fISimulation Scripting Guide for the Bzdev class library\fR.
+This is a copy of \fISimulation Scripting Guide for the BZDev class library\fR.
 It describes how to create factories.
 .TP
 .B /usr/share/doc/libbzdev-doc/Factories.pdf
@@ -1533,12 +1594,16 @@ file override those in the system configuration file.
 \"  LocalWords:  PACKAGENAME JavaLocations JavaPaths fillColor css nm
 \"  LocalWords:  subparameter fIA HSL hsl fIH fIS fIL hsla drawColor
 \"  LocalWords:  rgba unclosed subpaths incr gcsMode miterlimit CLI
-\"  LocalWords:  pathname JavaPathBuilders zorder AnimationPath
+\"  LocalWords:  pathname JavaPathBuilders zorder AnimationPath JRE
 \"  LocalWords:  DFactory JavaPathFactories fBepts fIEFILE fIVNAME
 \"  LocalWords:  boolean fIBVALUE BVALUE getWidth getHeight userdist
-\"  LocalWords:  hasDistances getUserDist getGCSDist nanometers
+\"  LocalWords:  hasDistances getUserDist getGCSDist nanometers gui
 \"  LocalWords:  EMCAScript frameWidth frameHeight gcsdist xorigin
 \"  LocalWords:  yorigin xfract yfract strokeWidth gridZorder subgrid
-\"  LocalWords:  subspacing subspacings axisColor spacingColor
+\"  LocalWords:  subspacing subspacings axisColor spacingColor fIUSER
 \"  LocalWords:  subspacingColor gridXOrigin gridYOrigin gridColor
-\"  LocalWords:  radialSpacing angularSpacing
+\"  LocalWords:  radialSpacing angularSpacing namespace centric fBa
+\"  LocalWords:  Runtime Makefiles getRefPointName getXOrigin typeof
+\"  LocalWords:  getYOrigin getXFract RefPointName getYFract fRWhen
+\"  LocalWords:  href CGS initFrames scheduleFrames fIAn fISimulation
+\"  LocalWords:  fIProgramming
