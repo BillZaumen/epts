@@ -544,11 +544,19 @@ public class EPTS {
     static File initialcwdFile = (initialcwd == null)? null:
 	new File(initialcwd);
 
+
+    static SimpleConsole.ExitAccessor exitAccessor =
+	new SimpleConsole.ExitAccessor();
+
     static SimpleConsole console = null;
 
     static void processDoScriptException(Exception e) {
 	if (guiMode) {
 	    try {
+		console = SimpleConsole.newFramedInstance
+		    (800, 600, localeString("consoleTitle"), true,
+		     exitAccessor);
+		/*
 		JFrame frame =
 		    new JFrame(localeString("consoleTitle"));
 		frame.setLayout(new BorderLayout());
@@ -570,10 +578,9 @@ public class EPTS {
 		frame.add(scrollPane, BorderLayout.CENTER);
 		frame.pack();
 		frame.setVisible(true);
+		*/
 	    } catch (Exception ie) {
-		System.err.println("could not create frame:"
-				   +ie.getMessage());
-		System.exit(1);
+		console = null;
 	    }
 	}
 	Appendable output = (console == null)? System.err: console;
@@ -722,7 +729,6 @@ public class EPTS {
 		processDoScriptException(e);
 	    }
 	    if (guiMode) {
-		System.out.println("doScript exiting, returning null");
 		return null;
 	    } else {
 		System.exit(1);
@@ -1073,7 +1079,6 @@ public class EPTS {
     static final Color endColor = Colors.getColorByCSS("darkred");
 
     static void appendFinalMsg() {
-	System.out.println("in appendFinalMsg");
 	try {
 	    SwingUtilities.invokeAndWait(() -> {
 		    console.perform((cc) -> {
