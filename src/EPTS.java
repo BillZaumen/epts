@@ -1828,7 +1828,11 @@ public class EPTS {
 		    System.exit(1);
 		} else {
 		    if (languageName == null) {
-			languageName = processLanguageName(argv[index]);
+			String extension = processLanguageName(argv[index]);
+			if (extension != null) {
+			    languageName =
+				Scripting.getLanguageNameByExtension(extension);
+			}
 		    }
 		    argsList.add(argv[index]);
 		    if (!imageMode && targetList.isEmpty()) {
@@ -1865,7 +1869,11 @@ public class EPTS {
 		}
 	    } else {
 		if (languageName == null) {
-		    languageName = processLanguageName(argv[index]);
+		    String extension = processLanguageName(argv[index]);
+		    if (extension != null) {
+			languageName =
+			    Scripting.getLanguageNameByExtension(extension);
+		    }
 		}
 		argsList.add(argv[index]);
 		if (!imageMode && targetList.isEmpty()) {
