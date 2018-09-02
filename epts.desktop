@@ -10,11 +10,15 @@ Terminal=false
 Type=Application
 Icon=/usr/share/icons/hicolor/scalable/apps/epts.svg
 Categories=Application;Graphics;
-X-Ayatana-Desktop-Shortcuts=New
-OnlyShowIn=GNOME;Unity;
 StartupNotify=true
+Actions=new-window;stacktrace
 
-[New Shortcut Group]
+[Desktop Action new-window]
 Name=New EPTS Window
-Exec=epts
+Exec=epts --gui
+TargetEnvironment=Unity
+
+[Desktop Action stacktrace]
+Name = New Window, Stack Traces Enabled
+Exec=epts --gui --stackTrace
 TargetEnvironment=Unity

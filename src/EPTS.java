@@ -31,6 +31,7 @@ import java.util.LinkedList;
 import java.util.ResourceBundle;
 import java.util.Properties;
 import java.util.regex.Pattern;
+import java.util.Set;
 import javax.imageio.*;
 import javax.script.ScriptException;
 import javax.swing.*;
@@ -550,12 +551,13 @@ public class EPTS {
 
     static SimpleConsole console = null;
 
-    static void processDoScriptException(Exception e) {
+    static void processDoScriptException(String filename, Exception e) {
 	if (guiMode) {
 	    try {
 		console = SimpleConsole.newFramedInstance
 		    (800, 600, localeString("consoleTitle"), true,
 		     exitAccessor);
+		console.setSeparatorColor(Color.BLACK);
 		/*
 		JFrame frame =
 		    new JFrame(localeString("consoleTitle"));
@@ -584,6 +586,16 @@ public class EPTS {
 	    }
 	}
 	Appendable output = (console == null)? System.err: console;
+	if (console != null) {
+	    console.addSeparatorIfNeeded();
+	    console.setBold(true);
+	}
+	try {
+	    output.append(errorMsg("processingFile", filename) + "\n\n");
+	} catch (IOException eio) {}
+	if (console != null) {
+	    console.setBold(false);
+	}
 	if (stackTrace) {
 	    Throwable cause = e.getCause();
 	    try {
@@ -718,15 +730,16 @@ public class EPTS {
 	} catch (Exception e) {
 	    if (guiMode) {
 		final Exception ee = e;
+		final String fn = current;
 		try {
 		    SwingUtilities.invokeAndWait(() -> {
-			    processDoScriptException(e);
+			    processDoScriptException(fn, e);
 			});
 		} catch (InterruptedException ie) {
 		} catch (InvocationTargetException ite) {
 		}
 	    } else {
-		processDoScriptException(e);
+		processDoScriptException(current, e);
 	    }
 	    if (guiMode) {
 		return null;
@@ -1095,6 +1108,68 @@ public class EPTS {
 	}
     }
 
+    static void fork(ArrayList<String>jargsList, ArrayList<String> argsList,
+		     String policyFile, boolean dryrun)
+    {
+	jargsList.add("EPTS");
+	jargsList.add(0, sbcp.toString());
+	jargsList.add(0, "-classpath");
+	if (policyFile == null) {
+	    try {
+		File pf = new File(EPTS.class.getProtectionDomain()
+				   .getCodeSource().getLocation().toURI());
+		pf = pf.getParentFile();
+		jargsList.add(0, "-Djava.security.policy="
+			      + (new File(pf, "epts.policy")
+				 .getCanonicalPath()));
+	    } catch (Exception eio) {
+		displayError(errorMsg("policyFile"));
+		System.exit(1);
+	    }
+	}
+	String classLoader = defs.getProperty("java.system.class.loader");
+	if (classLoader == null) {
+	    jargsList.add(0, "-Djava.system.class.loader="
+			  + "org.bzdev.lang.DMClassLoader");
+	}
+	jargsList.add(0, "-Depts.alreadyforked=true");
+	jargsList.add(0, javacmd);
+	jargsList.addAll(argsList);
+	if (dryrun) {
+	    for (String s: jargsList) {
+		System.out.print(s);
+		System.out.print(" ");
+	    }
+	    System.out.println();
+	    System.exit(0);
+	}
+	ProcessBuilder pb = new ProcessBuilder(jargsList);
+	pb.inheritIO();
+	try {
+	    Process process = pb.start();
+	    System.exit(process.waitFor());
+	} catch (Exception e) {
+	    displayError(errorMsg("scException", e.getMessage()));
+	    System.exit(1);
+	}
+    }
+
+    public static boolean extensionMatch(File f, String[] extensions) {
+	String name = f.getName();
+	if (name == null) return false;
+	int index = name.lastIndexOf('.');
+	if (index == -1) return false;
+	String ext = name.substring(index+1);
+	for (String extension: extensions) {
+	    if (ext.equals(extension)) return true;
+	}
+	return false;
+    }
+    private static boolean scriptMode = false;
+    private static boolean imageMode = false;
+    private static String a2dName = null;
+    private static boolean dryrun = false;
+
     static void init(String argv[]) throws Exception {
 	final File cdir = new File(System.getProperty("user.dir"));
 
@@ -1107,11 +1182,7 @@ public class EPTS {
 	ArrayList<String> jargsList = new ArrayList<>();
 	ArrayList<String> targetList = new ArrayList<>();
 	Map<String,String> map = null;
-	boolean dryrun = false;
 	boolean jcontinue = true;
-	boolean scriptMode = false;
-	String a2dName = null;
-	boolean imageMode = false;
 	boolean hasCodebase = false;
 	boolean webserverOnly = false;
 	ArrayList<String> argsList = new ArrayList<>();
@@ -1975,47 +2046,7 @@ public class EPTS {
 	if (policyFile == null && scriptMode) mustFork = true;
 	if (policyFile == null && !scriptMode && !imageMode) mustFork = true;
 	if (!alreadyForked &&  mustFork) {
-	    jargsList.add("EPTS");
-	    jargsList.add(0, sbcp.toString());
-	    jargsList.add(0, "-classpath");
-	    if (policyFile == null) {
-		try {
-		    File pf = new File(EPTS.class.getProtectionDomain()
-				       .getCodeSource().getLocation().toURI());
-		    pf = pf.getParentFile();
-		    jargsList.add(0, "-Djava.security.policy="
-				  + (new File(pf, "epts.policy")
-				     .getCanonicalPath()));
-		} catch (Exception eio) {
-		    displayError(errorMsg("policyFile"));
-		    System.exit(1);
-		}
-	    }
-	    String classLoader = defs.getProperty("java.system.class.loader");
-	    if (classLoader == null) {
-		jargsList.add(0, "-Djava.system.class.loader="
-			      + "org.bzdev.lang.DMClassLoader");
-	    }
-	    jargsList.add(0, "-Depts.alreadyforked=true");
-	    jargsList.add(0, javacmd);
-	    jargsList.addAll(argsList);
-	    if (dryrun) {
-		for (String s: jargsList) {
-		    System.out.print(s);
-		    System.out.print(" ");
-		}
-		System.out.println();
-		System.exit(0);
-	    }
-	    ProcessBuilder pb = new ProcessBuilder(jargsList);
-	    pb.inheritIO();
-	    try {
-		Process process = pb.start();
-		System.exit(process.waitFor());
-	    } catch (Exception e) {
-		displayError(errorMsg("scException", e.getMessage()));
-		System.exit(1);
-	    }
+	    fork(jargsList, argsList, policyFile, dryrun);
 	} else if (dryrun) {
 	    jargsList.add(0, "EPTS");
 	    jargsList.add(0, sbcp.toString());
@@ -2059,28 +2090,102 @@ public class EPTS {
 	    // No arguments that would indicate a saved state, image file,
 	    // or script files, so open a dialog box prompting for
 	    // the input to use (an image file
-	    imageMode = true;
 	    SwingUtilities.invokeAndWait(new Runnable() {
 		    public void run() {
-			JFileChooser fc = new JFileChooser(cdir);
-			String[] extensions = ImageIO.getReaderFileSuffixes();
-			FileNameExtensionFilter filter =
-			    new FileNameExtensionFilter("Images", extensions);
-			fc.setFileFilter(filter);
-			int status = fc.showOpenDialog(null);
-			if (status == JFileChooser.APPROVE_OPTION) {
-			    File f = fc.getSelectedFile();
-			    try {
-				imageURI = f.toURI();
-				image = ImageIO.read(f);
-			    } catch (Exception e) {
-				ErrorMessage.setComponent(null);
-				ErrorMessage.display(e);
-				System.exit(1);
+			for(;;) {
+			    JFileChooser fc = new JFileChooser(cdir);
+			    fc.setAcceptAllFileFilterUsed(false);
+			    String[] extensions =
+				ImageIO.getReaderFileSuffixes();
+			    FileNameExtensionFilter filter =
+				new FileNameExtensionFilter
+				(localeString("Images"), extensions);
+			    Set<String> extensionSet =
+				Scripting.getExtensionSet();
+			    String[] sextensions =
+				extensionSet.toArray
+				(new String[extensionSet.size()]);
+			    ArrayList<String> allExtensionsList =
+				new ArrayList<>();
+			    allExtensionsList.add("epts");
+			    for (String ext: extensions) {
+				allExtensionsList.add(ext);
 			    }
-			}/* else {
-			    System.exit(0);
-			    }*/
+			    for (String ext: sextensions) {
+				allExtensionsList.add(ext);
+			    }
+			    String[] allExtensions = allExtensionsList
+				.toArray(new String[allExtensionsList.size()]);
+			    FileNameExtensionFilter afilter =
+				new FileNameExtensionFilter
+				(localeString("eptsRecognized"),
+				 allExtensions);
+			    String eptsExtensions[] = {"epts"};
+			    FileNameExtensionFilter efilter =
+				new FileNameExtensionFilter
+				 (localeString("EPTSSavedStates"),
+				  eptsExtensions);
+			    fc.addChoosableFileFilter(afilter);
+			    fc.addChoosableFileFilter(efilter);
+			    fc.addChoosableFileFilter(filter);
+			    FileNameExtensionFilter sfilter =
+				new FileNameExtensionFilter
+				(localeString("Scripts"), sextensions);
+			    fc.addChoosableFileFilter(sfilter);
+			    int status = fc.showOpenDialog(null);
+			    if (status == JFileChooser.APPROVE_OPTION) {
+				File f = fc.getSelectedFile();
+				try {
+				    if (extensionMatch(f, eptsExtensions)) {
+					targetList.add(f.getCanonicalPath());
+					break;
+				    } else if (extensionMatch(f, extensions)) {
+					imageMode = true;
+					imageURI = f.toURI();
+					image = ImageIO.read(f);
+					break;
+				    } else if (extensionMatch(f, sextensions)) {
+					// script case.
+					scriptMode = true;
+					String pathname = f.getCanonicalPath();
+					argsList.add(pathname);
+					if (!alreadyForked) {
+					    // need to add
+					    // -Djava.security.policy=...
+					    // if not already there
+					    fork(jargsList, argsList,
+						 policyFile, dryrun);
+					} else {
+					    targetList.add(pathname);
+					}
+					String ext =
+					    processLanguageName(pathname);
+					if (a2dName == null) a2dName = "a2d";
+					if (ext != null) {
+					    languageName =
+						Scripting
+						.getLanguageNameByExtension
+						(ext);
+					}
+					break;
+				    } else {
+					ErrorMessage.setComponent(null);
+					ErrorMessage.display
+					    (null, null,
+					     errorMsg("unrecognizedFNE"));
+				    }
+				    continue;
+				} catch (Exception e) {
+				    ErrorMessage.setComponent(null);
+				    ErrorMessage.display(e);
+				    System.exit(1);
+				}
+			    } else {
+				// So we try a blank image
+				imageMode = true;
+				break;
+			    }
+			}
 		    }
 		});
 	}

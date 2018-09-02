@@ -61,18 +61,22 @@ will be inferred from the file name.  Otherwise the
 .B \-L
 option must be used to set the scripting language.
 .PP
-With no arguments, EPTS assumes the background is an image and will
-ask the user for an image file. If the first (and only) non-option
-argument is a file containing an image
-For commands that specify an image
-file
+With no arguments, EPTS will open a dialog box asking for the name of
+an image file, an EPTS saved-state file, or a script, which must use the
+default animation name
+.BR a2d .
+The file name selected will be an implicit file-name argument, the
+only one provided.  For commands that specify an image file
 .I IFILE
-explicitly, that file will be used as the background.  For commands
-that specify an EPTS file
+explicitly or implicitly, that file will be used as the
+background. For commands that specify a script file
+.I SFILE
+explicitly or implicitly, that script will be run to generate the
+background.  For commands that specify an EPTS file
 .I EFILE
-explicitly, the state of a previously saved session will be restored.
-In this case, the current working directory will be set to the
-directory containing the file
+explicitly or implicitly, the state of a previously saved session will
+be restored.  In this case, the current working directory will be set
+to the directory containing the file
 .IR EFILE .
 After
 .IR EFILE,

@@ -1059,7 +1059,9 @@ name of the output file, with a file name of <CODE>-</CODE> indicating
 standard output.
 <P>
 If the <CODE>epts</CODE> command is run with no arguments, the program
-will open a dialog box asking for the name of an image file to open.
+will open a dialog box asking for the name of an image file to open,
+an EPTS saved state to restore, or a script to run (which will use the
+default animation name <CODE>a2d</CODE>.
 This file will provide a background image that will appear in the
 program's main window. For example, on a Linux system, one can type
 <CODE>epts</CODE> as a command:
@@ -1072,7 +1074,12 @@ This will bring up a dialog box asking for an image file:
 <BR>
 <CENTER><IMG src="dialog.png"></CENTER>
 <BR>
-If the epts command is run with multiple fine-name arguments, the program's
+If more diagnostics are needed, use the CLI (Command-Line Interface) with
+the <CODE>--stackTrace</CODE> option. On Linux systems, there is a desktop
+option that adds this flag automatically.
+
+<P>
+If the epts command is run with multiple file-name arguments, the program's
 behavior depends on the file format for the first argument:
 <UL>
   <LI> if the argument is an EPTS saved-state file, whose file-name
