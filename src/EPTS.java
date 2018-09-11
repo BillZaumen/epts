@@ -20,6 +20,7 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -36,11 +37,11 @@ import javax.imageio.*;
 import javax.script.ScriptException;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
-
 import org.bzdev.graphs.Colors;
 import org.bzdev.graphs.Graph;
 import org.bzdev.graphs.RefPointName;
 import org.bzdev.imageio.ImageMimeInfo;
+import org.bzdev.io.ZipDocFile;
 import org.bzdev.lang.UnexpectedExceptionError;
 import org.bzdev.net.URLClassLoaderOps;
 import org.bzdev.net.URLPathParser;
@@ -79,19 +80,22 @@ public class EPTS {
     private static final String dotDotDotSep = dotDotDot + File.separator;
     private static final String tildeSep = "~" + File.separator;
     private static String ourCodebase;
-    private static String ourCodebaseDir;
-    // private static String ourCodebase2;
-    // private static String ourCodebaseDir2;
+    // used to set ourCodebaseDir, which is declared to be final.
+    private static String ourCodebaseDir2;
+
     static {
 	try {
 	    File f = (new File(EPTS.class.getProtectionDomain()
 			       .getCodeSource().getLocation().toURI()))
 		.getCanonicalFile();
+	    // The path to the EPTS jar file
 	    ourCodebase = f.getCanonicalPath();
 	    f = (new File(Scripting.class.getProtectionDomain()
 			       .getCodeSource().getLocation().toURI()))
 		.getCanonicalFile();
-	    ourCodebaseDir = f.getParentFile().getCanonicalPath();
+	    // The path to the libbzdev.jar file with symbolic links
+	    // resolved.
+	    ourCodebaseDir2 = f.getParentFile().getCanonicalPath();
 	    /*
 	    f = (new File(EPTS.class.getProtectionDomain()
 			       .getCodeSource().getLocation().toURI()))
@@ -105,6 +109,7 @@ public class EPTS {
 	    System.exit(1);
 	}
     }
+    static final String ourCodebaseDir = ourCodebaseDir2;
 
     private static Properties defs = new Properties();
     private static boolean propertyNotAllowed(String name) {
@@ -999,10 +1004,11 @@ public class EPTS {
 	}
 	if (!result) {
 	    if (!s.contains(File.separator) && s.contains("/")) {
-		// relative URI use URI-path syntax and the "/"
-		// is not a file-separator character, so we'll treat it
-		// as a relative URI if a "/" appears but there is no
-		// file-separator character in the string.
+		// relative URIs use URI-path syntax, so if there is a
+		// "/" and the "/" is not a file-separator character,
+		// we'll treat it as a relative URI if a "/" appears
+		// but there is no file-separator character in the
+		// string.
 		return true;
 	    }
 	}
@@ -1032,6 +1038,32 @@ public class EPTS {
     }
 
 
+
+    public static boolean isImagePath(String path) {
+	if (path == null) return false;
+	path = path.trim();
+	if (path.length() == 0) return false;
+	if (maybeURL(path)) {
+	    int ind = path.indexOf('#');
+	    if (ind > -1) {
+		path = path.substring(0, ind);
+	    }
+	    ind = path.indexOf('?');
+	    if (ind > -1) {
+		path = path.substring(0, ind);
+	    }
+	}
+	int i = path.lastIndexOf('.');
+	if (i == -1) return false;
+	path = path.substring(i+1).toLowerCase();
+	for (String suffix: ImageIO.getReaderFileSuffixes()) {
+	    suffix = suffix.toLowerCase();
+	    if (path.equals(suffix)) return true;
+	}
+	return false;
+    }
+
+
     static void processImageArg(String imageArg, ArrayList<String>targetList,
 				File cdir)
     {
@@ -1045,20 +1077,26 @@ public class EPTS {
 	    if (extInd < imageArg.length()) {
 		extension = imageArg.substring(extInd);
 	    }
-	    if (extension != null
+	    if (isImagePath(imageArg)
+		/*extension != null
 		&& ImageMimeInfo
-		.getMIMETypeForSuffix(extension) != null) {
+		.getMIMETypeForSuffix(extension) != null*/) {
 		// implied image mode based on file-name
 		// extension
 		try {
 		    if (maybeURL(imageArg)
 			&& !(imageArg.startsWith("file:")
-			     && imageArg.endsWith(".epts"))) {
-			URL imageURL = new URL(cdir.toURI()
-					       .toURL(),
-					       imageArg);
-			imageURI = imageURL.toURI();
-			image = ImageIO.read(imageURL);
+			     /*&& imageArg.endsWith(".epts")*/)) {
+			try {
+			    URL imageURL = new URL(cdir.toURI()
+						   .toURL(),
+						   imageArg);
+			    imageURI = imageURL.toURI();
+			    image = ImageIO.read(imageURL);
+			} catch (Exception e) {
+			    e.printStackTrace(System.err);
+			    System.exit(1);
+			}
 		    } else {
 			File ifile = null;
 			if (imageArg.startsWith("file:")) {
@@ -1132,6 +1170,7 @@ public class EPTS {
 	    jargsList.add(0, "-Djava.system.class.loader="
 			  + "org.bzdev.lang.DMClassLoader");
 	}
+	jargsList.add(0, "-Depts.fdrUsed="+(fdrUsed? "true": "false"));
 	jargsList.add(0, "-Depts.alreadyforked=true");
 	jargsList.add(0, javacmd);
 	jargsList.addAll(argsList);
@@ -1170,14 +1209,251 @@ public class EPTS {
     private static String a2dName = null;
     private static boolean dryrun = false;
 
+    private static String inputFile = null;
+    private static boolean fdrUsed = false;
+
+    private static final Runnable fileDialogRunnable = new Runnable() {
+	    public void run() {
+		String cdir = System.getProperty("user.dir");
+		for(;;) {
+		    JFileChooser fc = new JFileChooser(cdir);
+		    fc.setAcceptAllFileFilterUsed(false);
+		    String[] extensions =
+			ImageIO.getReaderFileSuffixes();
+		    FileNameExtensionFilter filter =
+			new FileNameExtensionFilter
+			(localeString("Images"), extensions);
+		    Set<String> extensionSet =
+			Scripting.getExtensionSet();
+		    String[] sextensions =
+			extensionSet.toArray
+			(new String[extensionSet.size()]);
+		    ArrayList<String> allExtensionsList =
+			new ArrayList<>();
+		    allExtensionsList.add("epts");
+		    allExtensionsList.add("eptc");
+		    for (String ext: extensions) {
+			allExtensionsList.add(ext);
+		    }
+		    for (String ext: sextensions) {
+			allExtensionsList.add(ext);
+		    }
+		    String[] allExtensions = allExtensionsList
+			.toArray(new String[allExtensionsList.size()]);
+		    FileNameExtensionFilter afilter =
+			new FileNameExtensionFilter
+			(localeString("StatesConfImagesScripts"),
+			 allExtensions);
+		    String eptsExtensions[] = {"epts", "eptc"};
+		    FileNameExtensionFilter efilter =
+			new FileNameExtensionFilter
+			(localeString("EPTSSavedStatesConf"),
+			 eptsExtensions);
+		    fc.addChoosableFileFilter(afilter);
+		    fc.addChoosableFileFilter(efilter);
+		    fc.addChoosableFileFilter(filter);
+		    FileNameExtensionFilter sfilter =
+			new FileNameExtensionFilter
+			(localeString("Scripts"), sextensions);
+		    fc.addChoosableFileFilter(sfilter);
+		    int status = fc.showOpenDialog(null);
+		    if (status == JFileChooser.APPROVE_OPTION) {
+			File f = fc.getSelectedFile();
+			try {
+			    if (extensionMatch(f, eptsExtensions)) {
+				inputFile = f.getCanonicalPath();
+				break;
+			    } else if (extensionMatch(f, extensions)) {
+				inputFile = f.getCanonicalPath();
+				break;
+			    } else if (extensionMatch(f, sextensions)) {
+				inputFile = f.getCanonicalPath();
+				break;
+			    } else {
+				ErrorMessage.setComponent(null);
+				ErrorMessage.display
+				    (null, null,
+				     errorMsg("unrecognizedFNE"));
+			    }
+			    continue;
+			} catch (Exception e) {
+			    ErrorMessage.setComponent(null);
+			    ErrorMessage.display(e);
+			    System.exit(1);
+			}
+		    } else {
+			inputFile = null;
+			break;
+		    }
+		}
+		fdrUsed = true;
+	    }
+	};
+
+
+    private static String[] preprocessArgs(int ind, String[] argv, String arg) {
+	if (arg == null) {
+	    try {
+		SwingUtilities.invokeAndWait(fileDialogRunnable);
+		if (inputFile != null) {
+		    boolean by1 =
+			(argv.length > 0 && argv[argv.length-1].equals("--"));
+		    String[] newargv = new String[argv.length + (by1? 1: 2)];
+		    System.arraycopy(argv, 0, newargv, 0, argv.length);
+		    if (!by1) newargv[argv.length] = "--";
+		    newargv[argv.length+ (by1? 0: 1)] = inputFile;
+		    argv = newargv;
+		    arg = inputFile;
+		} else {
+		    // we must have canceled
+		    if (ind > -1 && ind < 2) {
+			System.exit(0);
+		    }
+		}
+	    } catch (Exception e) {
+		e.printStackTrace(System.err);
+		System.exit(1);
+	    }
+	}
+	if (arg != null /*&& !arg.startsWith("-")*/) {
+	    String ext = null;
+	    boolean url = false;
+	    try {
+		if (maybeURL(arg)) {
+		    if (arg.startsWith("file:")) {
+			ext = getExtension(arg);
+			url = true;
+		    }
+		} else {
+		    ext = getExtension(arg);
+		}
+		if (ext != null && ext.equals("eptc")) {
+		    if (url) {
+			arg = new File(new URI(arg)).getAbsolutePath();
+		    }
+		    ZipDocFile zdf =
+			new ZipDocFile(arg, Charset.forName("UTF-8"));
+		    if (needInitialConfig) {
+			readConfigFiles(null);
+			needInitialConfig = false;
+		    }
+		    argv = Setup.getSetupArgs(zdf, new File(arg));
+		    zdf.close();
+		}
+	    }  catch (Exception e) {
+		e.printStackTrace(System.err);
+		System.exit(1);
+	    }
+	}
+	return argv;
+    }
+
+    private static String[][] argpatterns = {
+	{"--sessionConfig"},			// index 0
+	{"--stackTrace", "--sessionConfig"},	// index 1
+	{"--gui", "--stackTrace", "--"},	// index 2
+	{"--gui", "--stackTrace"},		// index 3
+	{"--gui", "--"},			// index 4
+	{"--gui"},				// index 5
+	{"--stackTrace", "--"},			// index 6
+	{"--stackTrace"},			// index 7
+	{"--"}					// index 8
+    };
+
+    private static int getAPIndex(String[] argv) {
+	int ind = -1;
+	for (String[] pattern: argpatterns) {
+	    ind++;
+	    int n = pattern.length;
+	    if (argv.length < n) continue;
+	    if (argv.length > n+1) continue;
+	    boolean cont = false;
+	    for (int i = 0; i < n; i++) {
+		if (!pattern[i].equals(argv[i])) {
+		    cont = true;
+		    break;
+		}
+	    }
+	    if (cont) continue;
+	    return ind;
+	}
+	return -1;
+    }
+
+    private static String getArgFromIndex(String[] argv, int ind) {
+	if (ind == -1) return null;
+	int n = argpatterns[ind].length;
+	if (n >= argv.length) {
+	    return null;
+	} else {
+	    return argv[n];
+	}
+    }
+
+    private static boolean needInitialConfig = true;
+
     static void init(String argv[]) throws Exception {
 	final File cdir = new File(System.getProperty("user.dir"));
 
+	String alreadyForkedString = System.getProperty("epts.alreadyforked");
+	boolean alreadyForked = (alreadyForkedString != null)
+	    && alreadyForkedString.equals("true");
+	if (System.getProperty("epts.alreadyforked") == null
+	    || !(System.getProperty("epts.alreadyforked").equals("true"))) {
+	    sysconf = defaultSysConfigFile();
+	    usrconf = defaultUsrConfigFile();
+	}
+	String fdrUsedString = System.getProperty("epts.fdrUsed");
+	if (fdrUsedString != null && fdrUsedString.equals("true")) {
+	    fdrUsed = true;
+	}
+	// special cases.
+
+	if (!alreadyForked) {
+	    if (argv.length == 0) {
+		argv = preprocessArgs(-1, argv, null);
+		/*
+		System.out.println("arguments:");
+		for (String s: argv) {
+		    System.out.println("    " + s);
+		}
+		*/
+	    } else {
+		int ind = getAPIndex(argv);
+		System.out.println("ind = " + ind);
+		if (ind > -1 && ind < 2) {
+		    if (argv.length != 1+ind) {
+			System.err.println
+			    (localeString("noArgsSessionConfig"));
+			System.exit(1);
+		    }
+		    if (argv[0].equals("--stackTrace")) {
+			stackTrace = true;
+		    }
+		    if (needInitialConfig) {
+			readConfigFiles(null);
+			needInitialConfig = false;
+		    }
+		    argv = Setup.getSetupArgs(null, null);
+		    System.out.println("arguments:");
+		    for (String s: argv) {
+			System.out.println("    " + s);
+		    }
+		} else if (ind != -1) {
+		    String arg = getArgFromIndex(argv, ind);
+		    System.out.println("arg = " + arg);
+		    argv = preprocessArgs(ind, argv, arg);
+		    System.out.println("arguments:");
+		    for (String s: argv) {
+			System.out.println("    " + s);
+		    }
+		}
+	    }
+	}
 	int index = -1;
 	int port = 0;
 
 	File eptsFile = null;
-
 
 	ArrayList<String> jargsList = new ArrayList<>();
 	ArrayList<String> targetList = new ArrayList<>();
@@ -1209,15 +1485,6 @@ public class EPTS {
 	EPTSParser iparser = null;
 
 	ArrayList<NameValuePair> bindings = new ArrayList<>();
-
-	String alreadyForkedString = System.getProperty("epts.alreadyforked");
-	boolean alreadyForked = (alreadyForkedString != null)
-	    && alreadyForkedString.equals("true");
-	if (System.getProperty("epts.alreadyforked") == null
-	    || !(System.getProperty("epts.alreadyforked").equals("true"))) {
-	    sysconf = defaultSysConfigFile();
-	    usrconf = defaultUsrConfigFile();
-	}
 
 	while ((++index) < argv.length) {
 	    if (jcontinue) {
@@ -1301,7 +1568,7 @@ public class EPTS {
 			    codebaseSet.add(argv[index]);
 			}
 		    }
-		} else if (argv[index].equals("--script")) {
+		} else if (argv[index].equals("--animation")) {
 		    index++;
 		    if (index == argv.length) {
 			displayError
@@ -1309,7 +1576,7 @@ public class EPTS {
 			System.exit(1);
 		    }
 		    a2dName = argv[index];
-		    scriptMode = true;
+		    // scriptMode = true;
 		    argsList.add(argv[index-1]);
 		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--image")) {
@@ -1990,7 +2257,7 @@ public class EPTS {
 	}
 
 	if (!scriptMode && imageMode && targetList.size() != 0) {
-	    displayError(errorMsg("targetLengthNonZero"));
+	    displayError(errorMsg("noImagesAndScripts"));
 	    System.exit(1);
 	}
 
@@ -2007,7 +2274,10 @@ public class EPTS {
 	    // need to extend class path because scripting-language-independent
 	    // class path entries in the configuration files may be needed for
 	    // scripting languages to be recognized.
-	    readConfigFiles(null);
+	    if (needInitialConfig) {
+		readConfigFiles(null);
+		needInitialConfig = false;
+	    }
 	    if (!Scripting.supportsLanguage(languageName)) {
 		String ln =
 		    Scripting.getLanguageNameByAlias(languageName);
@@ -2086,7 +2356,7 @@ public class EPTS {
 	    return;
 	}
 
-	if (!imageMode && !scriptMode && targetList.size() == 0) {
+	if (!fdrUsed && !imageMode && !scriptMode && targetList.size() == 0) {
 	    // No arguments that would indicate a saved state, image file,
 	    // or script files, so open a dialog box prompting for
 	    // the input to use (an image file
@@ -2118,7 +2388,7 @@ public class EPTS {
 				.toArray(new String[allExtensionsList.size()]);
 			    FileNameExtensionFilter afilter =
 				new FileNameExtensionFilter
-				(localeString("eptsRecognized"),
+				(localeString("StatesImagesScripts"),
 				 allExtensions);
 			    String eptsExtensions[] = {"epts"};
 			    FileNameExtensionFilter efilter =
@@ -2188,6 +2458,9 @@ public class EPTS {
 			}
 		    }
 		});
+	} else if (fdrUsed && !imageMode && !scriptMode
+		   && targetList.size() == 0) {
+	    imageMode = true;
 	}
 	if (!imageMode && scriptMode && targetList.size() > 1 &&
 	    targetList.get(0).endsWith(".epts") && outName == null) {

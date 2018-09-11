@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mime-info xmlns='http://www.freedesktop.org/standards/shared-mime-info'>
-  <mime-type type="application/x.epts+xml">
+  <mime-type type="application/vnd.bzdev.epts-state+xml">
     <comment>EPTS saved-state file</comment>
     <sub-class-of type='application/xml; charset="utf-8"'/>
     <magic priority="80">
@@ -17,5 +17,25 @@
     <glob pattern="*.epts"/>  
     <root-XML namespaceURI="http://bzdev.org/DTD/epts-1.0.dtd"
               localName="epts"/>
+  </mime-type>
+  <mime-type type="application/vnd.bzdev.epts-config+zip">
+    <comment>EPTS scripting-configuration file</comment>
+    <sub-class-of type="application/zip" />
+      <magic priority="80">
+	<match type="little16" offset="26" value="9">
+	  <match type="little16" offset="28" value="38">
+	    <match type="string" offset="30" value="META-INF/">
+	      <match type="little16" offset="39" value="0xFACE">
+		<match type="little16" offset="41" value="36">
+		  <match type="string" offset="43"
+			 value="application/vnd.bzdev.epts-config+zip">
+		  </match>
+		</match>
+	      </match>
+	    </match>
+	  </match>
+	</match>
+      </magic>
+      <glob pattern="*.eptc"/>
   </mime-type>
 </mime-info>

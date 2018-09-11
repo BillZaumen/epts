@@ -4,10 +4,28 @@ epts \- epts file format
 .SH DESCRIPTION
 The program
 .B epts
-allows its state to be saved in XML files that use the file extension
-.BR epts .
+allows its state to be saved in XML files with the file extension
+.B epts
+and a session configuration is a ZIP files with the file extension
+.BR eptc .
+The saved-state files describe a background, how to set up a
+coordinate system in application-specific units, the codebases needed
+to run scripts, the scripting-language use any specific image used to
+generate a background, scripting-language variables that must be
+provided, andf the points and paths are placed over the background.
+The session configuration files provides parameters needed to
+configure a saved-state file, and any options that might have to be
+passed to the
+.B java
+command used to start the Java Virtual Machine (these options, when
+present, will typicaly be ones needed to configure the JVM so that
+it has more memory available to it).
 .PP
-This file starts with the following lines:
+EPTS also makes use of template files. There are some general
+guidlines for the syntax of these files.
+.SH SAVED-STATE FILES
+.B epts
+file starts with the following lines:
 .IP
 .B
 <?xml version="1.1" encoding="UTF-8"?>
@@ -115,7 +133,7 @@ element specified
 .B true
 for its
 .B imageURIExists
-attribute's value, there is a single argument that represents the URI
+attribute\'s value, there is a single argument that represents the URI
 for the image. When this URI is an relative URI, it must refer to a
 subdirectory of the directory in which the EPTS file is located, or
 that directory itself.
@@ -156,7 +174,7 @@ The values for
 .I XORIGIN
 and
 .I YORIGIN
-are the X-Y coordinates of the image's reference point
+are the X-Y coordinates of the image\'s reference point
 in graph coordinate space units (custom units if
 .I IND1
 is 0; otherwise meters), so no unit conversion is used for these
@@ -243,7 +261,7 @@ is either a string (\fBjava.lang.String\fR), a
 an array of
 .BR KeyMap , or a
 .BR KeyMapList .
-The keys name directives. When a key's value is a string, the
+The keys name directives. When a key\'s value is a string, the
 directive is a simple directive.  Otherwise it is an iterative
 directive. When the value of an iterative directive is a single
 .BR KeyMap ,
@@ -271,7 +289,7 @@ by the name of its key.
 
 .SH TABLE TEMPLATE FORMAT
 EPTS can generate text files, describing all paths and locations
-stored in EPTS's table, based on a template.
+stored in EPTS\'s table, based on a template.
 .PP
 For a table template, EPTS defines several global directive.
 The global directives
@@ -827,6 +845,116 @@ or
 .BR CLOSE .
 This is separated from its replacement by whitespace.  Leading or
 trailing whitespace is removed.
+.SH SESSION-CONFIGURATION FILES
+Session-Configuration files are Zip archives that start with
+the following byte sequence.
+.TP
+.BR Bytes\ 0\ to\ 3 :
+50 4B 03 04
+.TP
+.BR Bytes\ 8\ to\ 9 :
+00 00
+.TP
+.BR Bytes\ 14\ to\ 25 :
+.TP
+00 00 00 00 00 00 00 00 00 00 00 00
+.TP
+.BR Bytes\ 26\ to\ 27 :
+09 00
+.TP
+.BR Bytes\ 28\ to\ 29 :
+29 00
+.TP
+.BR Bytes\ 30\ to\ 38 :
+4d 45 54 41 2d 49 4e 46 2f
+.TP
+.BR Bytes\ 39\ to\ 40 :
+ce  fa
+.TP
+.BR Bytes\ 41\ to\ 42 :
+25 00 (the 16-bit unsigned integer 37 in little-endian byte order)
+.TP
+.BR Bytes\ 43\ to\ 20 :
+61 70 70 6c 69 63 61 74 69 6f 6e 2f 76 6e 64 2e 62 7a 64 65 76
+2e 65 70 74 73 2d 63 6f  6e 66 69 67 2b 7a 69 70 (the unterminated
+ASCII string "application/vnd.bzdev.epts-config+zip")
+.PP
+The remainder of the ZIP file includes the following ZIP
+entries:
+.TP
+.BR inputfile .
+The ZIP-file entry <CODE>inputfile</CODE> contains an XML-encoded
+.B String
+providing a file name.
+.TP
+.BR animation .
+The ZIP-file entry <CODE>animation</CODE> contains an XML-encoded
+.B String
+giving the name of the scripting-language variable whose value will be
+an instance of
+.B org.bzdev.anim2d.Animation
+after scripts are run.
+.TP
+.BR scriptingLang .
+The ZIP-file entry
+.B scriptingLang
+contains an XML-encoded
+.B String
+providing the name of the scripting language in use, with the name
+.B (DEFAULT)
+used to indicate the default language.
+.TP
+.BR joptions .
+The ZIP-file entry
+.B joptions
+contains an XML-encoded object that is equal to the value returned by
+the
+.B getDataVector
+method of
+.B DefaultTableModel
+for a table containing options for the command
+.BR java .
+.TP
+.BR codebase .
+The ZIP-file entry
+.B codebase
+contains an XML-encoded object that is equal to the value returned by
+the
+.B getDataVector
+method of
+.B DefaultTableModel
+for a table containing additional codebases.
+.TP
+.BR scripts .
+The ZIP-file entry
+.B scripts
+contains an XML-encoded object that is equal to the value returned by
+the
+
+.B getDataVector
+method of
+.B DefaultTableModel
+for a table containing the path names or URLS for scripts that should
+be executed.
+.TP
+.BR variables .
+The ZIP-file entry
+.B variables
+contains an XML-encoded object that is equal to the value returned by
+the
+.B getDataVector
+method of
+.B DefaultTableModel
+for a table specifying variables and their values.  Each row of this
+table consists of four columns: the first column provides the
+variables\' names; the second column provides the variables\' types; the
+third column provides the variables\' values; the fourth column
+provides the variables\' units which are meaningful for real-valued
+variables and not other types.
+.PP
+The second and fourth columns\' values are encoded as integers
+providing the index the instances of JComboBox used to edit their
+values.
 .SH SEE ALSO
 .BR epts (1)
 \"  LocalWords:  EPTS epts xml UTF br DOCTYPE xmlns fIWIDTH fB URI nm

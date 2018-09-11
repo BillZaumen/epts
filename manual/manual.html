@@ -18,6 +18,50 @@ system.  The points and paths can then be written to an output stream
 in a variety of text formats, each specified by a template, for use
 by other programs.
 <P>
+While there are many command-line options, mostly used to configure
+templates and scripts, there are some GUI-specific options that are
+used when EPTS is started by a window system.  There are two EPTS-specific
+file formats as well:
+<UL>
+  <LI>EPTS Saved-State files. These files must use the file-name extension
+    <B><CODE>epts</CODE></B>. They provide the data needed to reconstruct
+    the background  and the paths and points that were configured.
+  <LI>EPTS Session-Configuration files.  These files must use the
+    file-name extension <B><CODE>eptc</CODE></B>. They provide EPTS
+    configuration data specific to a given session: information needed
+    to construct a saved-state file when scripting is used, additional
+    codebases needed for scripts, scripting-language variables that
+    can be set, and arguments that should be passed to
+    the <CODE>java</CODE> command used to start the Java virtual
+    machine (e.g., arguments to adjust the amount of memory allocated
+    to the JVM).
+</UL>
+When a window system is used, it will tyically be configured to allow
+a number of operations to be performed without using the command-line
+interface. For example, the GNOME desktop file provided with EPTS provides
+the following actions:
+<UL>
+  <LI><B>(Default Behavior)</B>. When the user double-clicks the EPTS
+    application's icon, EPTS will ask the user to select a file: either
+    an EPTS saved-state file, an EPTS session-configuration file, an
+    image in a recognized format (JPEG, PNG, etc.), or a script file with
+    recognized file extension (by default, "js" and "es", although additional
+    scripting languages may be configured).
+  <LI><B>New Window</B> This opens a new EPTS window and is equivalent to
+    the default behavior.
+  <LI><B>New Window, Stacktraces Enabled</B>. This opens a new EPTS
+    window and is equivalent to the default behavior but with stack traces
+    enabled, which prints additional information in some cases when
+    errors occur.
+  <LI><B>Configure Session</B>. This opens a dialog box that allows the
+    user to configure a new session. The user can optionally save the
+    session configuration. Unless the user cancels the operation, this
+    option effectively sets the appropriate command-line options and uses
+    those.
+  <LI><B>Configure Session, Stacktraces Enabled</B>. This is equivalent
+    to the Configure Session action, but with stack traces enabled.
+</UL>
+<P>
 Because EPTS is designed to support a specific set of tasks, there are
 a large number of keyboard shortcuts.  It also uses a template
 processor that makes it relatively easy to display paths textually in
@@ -513,37 +557,52 @@ and
 <BLOCKQUOTE><PRE><CODE>
       epts -o paths.js --template sresource:ECMAScriptPaths saved.epts
 </CODE></PRE></BLOCKQUOTE>
-are equivalent. The built-in table templates are the following:
+are equivalent. Table templates by default will produce entries for all
+paths and locations. To restrict the paths or to use them in some
+specialized way, the <CODE>--tname</CODE> command-line option can be used.
+For example, if the <CODE>saved.epts</CODE> file in the example above includes
+a path named <CODE>firstPath</CODE> and path named <CODE>secondPath</CODE>
+in its table, the command
+<BLOCKQUOTE><PRE><CODE>
+      epts -o path.js --template:ECMAScriptPaths \
+          --tname firstPath -tname secondPath saved.epts
+</CODE></PRE></BLOCKQUOTE>
+will include only these two paths in its output file <CODE>path.js</CODE>.
+<P>
+The built-in table templates are the following:
 <UL>
   <LI><B><CODE>sresource:ECMAScript</CODE></B>.  This option will print the
     information included in the EPTS table. Each path or location is
     represented by an ECMAScript variable. For locations, the value
     assigned to the variable is an object whose properties
     <CODE>x</CODE> and <CODE>y</CODE> provide the coordinates of the
-    point. For paths, if stroke or color options are not used, the
-    object will be an array of objects, each describing a control
-    point. In this case, the value assigned to the variable will be
-    an object that can be used to configure an instance of
+    point. If there are no <CODE>--tname</CODE> options, all paths and
+    locations are included in the output; otherwise only the ones
+    specified by <CODE>--tname</CODE> options are included. For paths,
+    if stroke or color options are not used, the object will be an
+    array of objects, each describing a control point. In this case,
+    the value assigned to the variable will be an object that can be
+    used to configure an instance of
     <CODE>org.bzdev.geom.SplinePathBuilder</CODE>. When the corresponding
     <CODE>--tname</CODE> option's argument names a single EPTS path,
     the array can also be used to configure an instance of
     <CODE>org.bzdev.anim2d.AnimationPath2DFactory</CODE> or
     <CODE>org.bzdev.geom.BasicSplinePathBuilder</CODE>. If a stroke or
-    color option is provided,
-    the object will be an array of two objects, where the first object
-    describes a stroke, color, and Z-order, and where the second
-    object contains an array of control points describing the path
-    itself.  Because of the constraints imposed by the class
+    color option is provided, the object will be an array of two
+    objects, where the first object describes a stroke, color, and
+    Z-order, and where the second object contains an array of control
+    points describing the path itself.  Because of the constraints
+    imposed by the class
     <CODE>AnimationPath2DFactory</CODE> the corresponding
     <CODE>--tname</CODE> option must name a single EPTS path when a
     stroke or color option is provided.
-  <LI><B><CODE>sresource:ECMAScriptLayers</CODE></B>.
-    This option will print the information included in the EPTS
-    table. Each path is represented by an ECMAScript variable. Location
-    entries are ignored.  For each <CODE>--tname</CODE> option, or
-    all paths if there are no <CODE>--tname</CODE> options, the
-    value assigned to each variable will be an array of objects.
-    The array can be used to configure an instance of
+  <LI><B><CODE>sresource:ECMAScriptLayers</CODE></B>.  This option
+    will print the information included in the EPTS table. Each path
+    is represented by an ECMAScript variable. Location entries are
+    ignored.  For the paths specified by <CODE>--tname</CODE> options,
+    or all paths if there are no <CODE>--tname</CODE> options, the
+    value assigned to each variable will be an array of objects.  The
+    array can be used to configure an instance of
     <CODE>org.bzdev.anim2d.AnimationLayer2DFactory</CODE>.
     One may use the <CODE>--tname</CODE> option to include only
     specific paths and optionally to use a new variable name that
@@ -553,11 +612,20 @@ are equivalent. The built-in table templates are the following:
   <LI><B><CODE>sresource:EMCAScriptLocations</CODE></B>.
     This template provides the same ECMAScript statements that the
     <CODE>sresource:ECMAScript</CODE> template produces, but only
-    locations are included, not paths.
+    locations are included, not paths. For the locations specified by
+    the <CODE>--tname</CODE> options, or all locations if there are
+    no <CODE>--tname</CODE> options, the value assigned to each
+    variable will be an object specifying a location.
   <LI><B><CODE>sresource:ECMAScriptPaths</CODE></B>.
     This template provides the same ECMAScript statements that the
     <CODE>sresource:ECMAScript</CODE> template produces, but only
-    paths are included, not locations.
+    paths are included, not locations. For the paths specified
+    by <CODE>--tname</CODE> options, or all paths if there are
+    no <CODE>--tname</CODE> options, the value assigned to each
+    variable will be an array of objects.  The array can be used to
+    configure a path using
+    <CODE>org.bzdev.anim2d.AnimationPath2DFactory</CODE> or
+    <CODE>org.bzdev.geom.BasicSplinePathBuilder</CODE>.
   <LI><B><CODE>sresource:JavaLocations</CODE></B>.  This template
     provides a Java class containing fields that are instances of
     the Java class <CODE>java.awt.geom.Path2D</CODE> with each field
@@ -631,6 +699,9 @@ The built-in path-iterator templates are
     <CODE>x2</CODE>, and <CODE>y2</CODE>. The values for these are
     numbers or empty strings.
 </UL>
+Unlike table templates, for path templates precisely one <CODE>--pname</CODE>
+option is used (the last one provided). Multiple <CODE>--pname</CODE> options
+are used, however, with the <CODE>--svg</CODE> option.
 
 <H2><A name="templateSyntax">Template syntax</A></H2>
 <P>
@@ -1058,12 +1129,13 @@ Options that generate files use the <CODE>-o</CODE> flag to set the
 name of the output file, with a file name of <CODE>-</CODE> indicating
 standard output.
 <P>
-If the <CODE>epts</CODE> command is run with no arguments, the program
-will open a dialog box asking for the name of an image file to open,
-an EPTS saved state to restore, or a script to run (which will use the
-default animation name <CODE>a2d</CODE>.
-This file will provide a background image that will appear in the
-program's main window. For example, on a Linux system, one can type
+If the <CODE>epts</CODE> command is run with no arguments or only
+<CODE>--gui</CODE> argument the, the program will open a dialog box
+asking for the name of an image file to open, an EPTS saved state to
+restore, or a script to run (which will use the default animation
+name <CODE>a2d</CODE>.  This file will provide a background image that
+will appear in the program's main window. For example, on a Linux
+system, one can type
 <CODE>epts</CODE> as a command:
 <BR>
 <BR>
@@ -1074,10 +1146,49 @@ This will bring up a dialog box asking for an image file:
 <BR>
 <CENTER><IMG src="dialog.png"></CENTER>
 <BR>
-If more diagnostics are needed, use the CLI (Command-Line Interface) with
-the <CODE>--stackTrace</CODE> option. On Linux systems, there is a desktop
-option that adds this flag automatically.
-
+There are several combinations of command-line arguments that are
+treated specially:
+<UL>
+  <LI> <CODE>--sessionConfig</CODE> will open a dialog box that will
+    allow a session to be configured.
+  <LI> <CODE>--stackTrace --sessionConfig</CODE> will open a dialog
+    box that will allow a session to be configured. Stack traces will
+    be included in various error messages.
+  <LI><CODE>--gui --stackTrace --</CODE>  <B><EM>FILE</EM></B>  will open the
+    specified file.  This file may be a saved-state file
+    (extension <CODE>epts</CODE>), a session configuration file
+    (extension <CODE>eptc</CODE>), a script, or an image file. For some
+    error messages, a stack trace may be provided.
+  <LI><CODE>--gui --stackTrace </CODE> with no additional arguments
+    will request an input file.  This file may be a saved-state file
+    (extension <CODE>epts</CODE>), a session configuration file
+    (extension <CODE>eptc</CODE>), a script, or an image file. For
+    some error messages, a stack trace may be provided.
+  <LI><CODE>--gui --</CODE> <B><EM>FILE</EM></B> will open the
+    specified file.  This file may be a saved-state file
+    (extension <CODE>epts</CODE>), a session configuration file
+    (extension <CODE>eptc</CODE>), a script, or an image file.
+  <LI><CODE>--gui</CODE> with no additional arguments will open a dialog
+    box that will ask for a file to read. This file may be a saved-state
+    file (extension <CODE>epts</CODE>), a session configuration file
+    (extension <CODE>eptc</CODE>), a script,  or an image file.
+  <LI><CODE>--stackTrace --</CODE> <B><EM>FILE</EM></B> will open an
+    input file, treating it specially if it is a session configuration
+    file. Some error messages will provide stack traces.  The file can
+    be either a session configuration file, a saved-state file, an
+    image file, or a script.
+  <LI><CODE>--stackTrace</CODE> will ask for a file to open. The file
+    can be either a session configuration file, a saved-state file, an
+    image file, or a script.p
+  <LI><CODE>--</CODE> <B><EM>FILE</EM></B> will open an input file,
+    treating it specially if it is a session configuration file. The
+    file can be either a session configuration file, a saved-state
+    file, an image file, or a script.
+</UL>
+Special cases that include an argument that may be a file name always
+include the option <CODE>--</CODE> before the file name so that file
+names that start with "<CODE>-</CODE>" will not be confused with
+options.
 <P>
 If the epts command is run with multiple file-name arguments, the program's
 behavior depends on the file format for the first argument:
@@ -1093,7 +1204,7 @@ behavior depends on the file format for the first argument:
     script <CODE>sresource:grid.js</CODE> will overlay an image with
     a rectangular grid of lines. If the animation the script provides
     is not stored in a variable named <CODE>a2d</CODE>, the
-    <CODE>--script</CODE> option will also be needed.
+    <CODE>--animation</CODE> option will also be needed.
   <LI> if the argument is an image file, the image it contains will
     be used as a background image. No additional arguments are allowed.
     To enhance an image by using a script, one should create a new
@@ -1111,12 +1222,12 @@ behavior depends on the file format for the first argument:
     and these will be processed in the order lists.  These scripts
     must provide an animation and assign it to the variable
     "<CODE>a2d</CODE>" (the name can be different if
-    the <CODE>--script</CODE> option is present). The animation will
+    the <CODE>--animation</CODE> option is present). The animation will
     not be run by epts, and should not be run by scripts. The
     objects the animation initially creates will be used to generate
     the image. If the animation the script provides
     is not stored in a variable named <CODE>a2d</CODE>, the
-    <CODE>--script</CODE> option will also be needed.
+    <CODE>--animation</CODE> option will also be needed.
 </UL>
 In addition, the file names can be URIs; however, for a saved-state
 file the URI's scheme must be "<CODE>file</CODE>".  Unless the first
@@ -1160,7 +1271,7 @@ There are five options that do not fit into well-defined categories:
     common image formats are PNG and JPEG. These can use the file-name
     extensions "png" and "jpg" respectively.  If the file name is
     literally "-", EPTS will prompt for an image size and will create
-    an image containing a white background. The <CODE>--script</CODE>
+    an image containing a white background. The <CODE>--animation</CODE>
     option may not be used with this option if <EM>IFILE</EM> is not
     an EPTS saved state.  When <EM>IFILE</EM> is an EPTS saved state
     for a saved state that is the argument for an <CODE>--image</CODE>
@@ -1172,7 +1283,7 @@ There are five options that do not fit into well-defined categories:
     number <EM>PORT</EM> must be a valid TCP port number (1 to 65535
     inclusive, but some ports are reserved or require system
     privileges).
-  <LI><B><CODE>--script</CODE></B> <B><EM>A2D</EM></B>. This option
+  <LI><B><CODE>--animation</CODE></B> <B><EM>A2D</EM></B>. This option
     indicates that scripts will use the variable <EM>A2D</EM> to
     store the animation used to reference an image. The
     argument <EM>A2D</EM> is the name of a scripting-language variable
@@ -1196,6 +1307,15 @@ There are five options that do not fit into well-defined categories:
     the current working directory is often not the one containing its
     argument file and messages to standard output or standard error
     might not be visible to the user.
+  <LI><B><CODE>--sessionConfig</CODE></B>.  This argument is recognized if
+    it is the only argument used or if it is preceeded by
+    the <CODE>--stackTrace</CODE> argument; otherwise an error will be
+    generated. It is intended for use by window systems for starting
+    EPTS in a particular mode.  When this option is provided, EPTS
+    will first show the user a dialog box that allows the user to
+    provide data for various scripting-related arguments. The user
+    will be given an opportunity to save the configuration before
+    proceeding to run EPTS with the corresponding arguments.
 </UL>
 
 <H2><A name="units">Units</A></H2>
@@ -1587,11 +1707,12 @@ provided by the scrunner command. These are
     consisting only of "~" is replaced with the user's home
     directory. A leading "~~" is replaced with "~", and a leading
     "..." followed by the name separator ("/" for Unix) is replaced by
-    the directory in which the EPTS program's JAR file is
-    located. This will typically be the same directory as the BZDev
-    class library's JAR file. If an EPTS session is saved, the saved
-    file will not contain the files and directories provided by
-    the <CODE>--codebase</CODE> options for security reasons.
+    the directory in which the BZDev class library's JAR file is
+    located. If an EPTS session is saved, the saved
+    file will contain the files and directories provided by
+    the <CODE>--codebase</CODE> options, but for security reasons the
+    user will be asked to confirm all codebases except those in the
+    same directory as the BZDev class library.
     Finally, the substitutions for '|', '~', and '...' (followed by the
     file-name separator) apply only to the <CODE>--codebase</CODE>
     option, not to file-name arguments that appear after the last option.
@@ -1631,12 +1752,12 @@ provided by the scrunner command. These are
     <BR>
     Start EPTS with an image preloaded as its
     background.
-  <LI><B><CODE>epts --script anim commands.js</CODE></B>
+  <LI><B><CODE>epts --animation anim commands.js</CODE></B>
     <BR>
     Start EPTS and run the script provided in commands.js to generate
     an image from an animation <CODE>anim</CODE> (an instance of
     <CODE>org.bzdev.anim2d.Animation2D</CODE>).
-  <LI><B><CODE>epts --codebase foo.jar --script anim commands.js</CODE></B>
+  <LI><B><CODE>epts --codebase foo.jar --animation anim commands.js</CODE></B>
     <BR>
     Start EPTS and run the script provided in commands.js to generate
     an image from an animation <CODE>a2d</CODE> (an instance of
@@ -1677,7 +1798,7 @@ defined. The first is named <CODE>scripting</CODE> and contains a
 scripting context (the use of this is described in the BZDev class
 library and <CODE>scrunner</CODE> documentation.) The second is the
 variable <CODE>epts</CODE>, which is defined when EPTS is running. The
-<CODE>--script</CODE> option, when present, sets the name of the
+<CODE>--animation</CODE> option, when present, sets the name of the
 scripting-language variable referring to the animation, with a default
 variable name of "<CODE>a2d</CODE>". When a new script is run, EPTS
 checks if the animation was created and if it is, EPTS will set the
@@ -1948,34 +2069,8 @@ variables that configure polar grids are the following:
     javascript value java.lang.Long.MAX_VALUE (2<SUP>53</SUP> - 1).
 </UL>
 
-<H1><A name="guides">Additional Documentation</A></H1>
-API documentation and several user guides are useful when creating
-scripts or using the files generated by some of the templates.
-The locations of these documents on a typical Linux system are
-the following:
-<UL>
-  <LI><B><CODE>/usr/share/doc/libbzdev-doc/api/index.html</CODE></B>.
-    The web page for the API documentation for the BZDev class library.
-  <LI><B><CODE>/usr/share/doc/libbzdev-doc/factories-api/index.html</CODE></B>.
-    The web page for the BZDev class library's factories and their
-    parameters. This is usually sufficient for determining how to to
-    configure a factory.
-  <LI><B><CODE>/usr/share/doc/libbzdev-doc/ByExample.pdf</CODE></B>.
-    This is a copy of
-    <EM>An Introduction to the BZDev Java Class Library with Examples</EM>.
-  <LI><B><CODE>/usr/share/doc/libbzdev-doc/SimScript.pdf</CODE></B>.
-    This is a copy of
-    <EM>Simulation Scripting Guide for the BZDev class library</EM>.
-    It describes how to create factories.
-  <LI><B><CODE>/usr/share/doc/libbzdev-doc/Factories.pdf</CODE></B>.
-    This is a copy of
-    <EM>Programming Named-Objects and their Factories</EM>.  This
-    guide concentrates on how to create new objects and their
-    factories.
-</UL>
-The path names for these documents, of course, is system dependent.
 
-<H1><A name="savedFormat">Saved-file format</A></H1>
+<H1><A name="savedFormat">Saved-state file format</A></H1>
 
 EPTS will generate an XML file to save the state of a session (the XML
 specification can be found at
@@ -2196,6 +2291,90 @@ with the following attributes
     of the image, with positive values pointing up.
 </UL>
 
+<H1><A name="configFormat">The saved-configuration-file format</A></H1>
+
+EPTS can also save a subset of its command-line arguments in a
+configuration  file.  The arguments saved are those needed to
+set a saved-state file or image file, specify an animation name,
+configure codebases, specify scripts, specify scripting
+parameters, and request more memory from the
+Java Virtual Machine. The file format is based on the BZDev library
+class <CODE>org.bzdev.io.ZipDocFile</CODE>: essentially a zip file
+with an embedded media type and zip entries that are XML-encoded
+using the Java method <CODE>java.beans.XMLEncoder</CODE>:
+<UL>
+  <LI> The media type is <CODE>application/vnd.bzdev.epts-config+zip</CODE>.
+  <LI> The ZIP-file entry <CODE>inputfile</CODE> contains an XML-encoded
+    <CODE>String</CODE> providing a file name.
+  <LI> The ZIP-file entry <CODE>animation</CODE> contains an XML-encoded
+    <CODE>String</CODE> giving the name of the scripting-language variable
+    whose value will be an instance of <CODE>org.bzdev.anim2d.Animation</CODE>
+    after scripts are run.
+  <LI> The ZIP-file entry <CODE>scriptingLang</CODE> contains an XML-encoded
+    <CODE>String</CODE> providing the name of
+    the scripting language in use, with the name <CODE>(DEFAULT)</CODE>
+    used to indicate the default language.
+  <LI> The ZIP-file entry <CODE>joptions</CODE> contains an XML-encoded
+    object that is equal to the value returned by the
+    <CODE>getDataVector</CODE> method of <CODE>DefaultTableModel</CODE>
+    for a table containing options for the command <CODE>java</CODE>.
+  <LI> The ZIP-file entry <CODE>codebase</CODE> contains an XML-encoded
+    object that is equal to the value returned by the
+    <CODE>getDataVector</CODE> method of <CODE>DefaultTableModel</CODE>
+    for a table containing additional codebases.
+  <LI> The ZIP-file entry <CODE>scripts</CODE> contains an XML-encoded
+    object that is equal to the value returned by the
+    <CODE>getDataVector</CODE> method of <CODE>DefaultTableModel</CODE>
+    for a table containing the path names or URLS for scripts that should
+    be executed.
+  <LI> The ZIP-file entry <CODE>variables</CODE>  contains an XML-encoded
+    object that is equal to the value returned by the
+    <CODE>getDataVector</CODE> method of <CODE>DefaultTableModel</CODE>
+    for a table specifying variables and their values.  Each row of
+    this table consists of four columns:
+    <UL>
+      <LI> The first column provides the variables' names.
+      <LI> The second column provides the variables' types.
+      <LI> The third column provides the variables' values.
+      <LI> The fourth column provides the variables' units,
+	which are meaningful for real-valued variables and not other
+	types.
+    </UL>
+    The second and fourth columns' values are encoded as integers
+    providing the index the instances of JComboBox used to edit
+    their values.
+</UL>
+Files using this format must have the file-name extension <CODE>eptc</CODE>
+in order to be recognized by the <CODE>epts</CODE> command.
+
+<H1><A name="guides">Additional Documentation</A></H1>
+
+API documentation and several user guides are useful when creating
+scripts or using the files generated by some of the templates.
+The locations of these documents on a typical Linux system are
+the following:
+<UL>
+  <LI><B><CODE>/usr/share/doc/libbzdev-doc/api/index.html</CODE></B>.
+    The web page for the API documentation for the BZDev class library.
+  <LI><B><CODE>/usr/share/doc/libbzdev-doc/factories-api/index.html</CODE></B>.
+    The web page for the BZDev class library's factories and their
+    parameters. This is usually sufficient for determining how to to
+    configure a factory.
+  <LI><B><CODE>/usr/share/doc/libbzdev-doc/ByExample.pdf</CODE></B>.
+    This is a copy of
+    <EM>An Introduction to the BZDev Java Class Library with Examples</EM>.
+  <LI><B><CODE>/usr/share/doc/libbzdev-doc/SimScript.pdf</CODE></B>.
+    This is a copy of
+    <EM>Simulation Scripting Guide for the BZDev class library</EM>.
+    It describes how to create factories.
+  <LI><B><CODE>/usr/share/doc/libbzdev-doc/Factories.pdf</CODE></B>.
+    This is a copy of
+    <EM>Programming Named-Objects and their Factories</EM>.  This
+    guide concentrates on how to create new objects and their
+    factories.
+</UL>
+The path names for these documents, of course, is system dependent.
+
 </BODY>
 </HTML>
 <!--  LocalWords:  EPTS PoinTS BZDev anim zier ECMA GCS JRE Runtime
@@ -2235,4 +2414,6 @@ with the following attributes
 <!--  LocalWords:  userdist gcsdist subspacings subgrid subspacing
  -->
 <!--  LocalWords:  javascript gridXOrigin gridYOrigin URI's centric
+ -->
+<!--  LocalWords:  codebases tyically Stacktraces JComboBox
  -->

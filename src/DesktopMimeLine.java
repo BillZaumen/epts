@@ -9,7 +9,8 @@ public class DesktopMimeLine {
     public static void main(String argv[]) {
 	StringBuilder sb = new StringBuilder();
 
-	sb.append("MimeType=application/x.epts+xml;");
+	sb.append("MimeType=application/vnd.bzdev.epts-state+xml;");
+	sb.append("application/vnd.bzdev.epts-scriptconf+zip;");
 	for (String mt: ImageMimeInfo.getMimeTypes()) {
 	    mt = mt.replaceAll(";","\\;");
 	    sb.append(mt);

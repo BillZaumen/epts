@@ -92,6 +92,8 @@ public class EPTSWindow {
 
     boolean shouldSaveScripts = false;
 
+    List<String> savedStateCodebase = null;
+
     public void save(File f) throws IOException {
 	TemplateProcessor.KeyMap keymap = new TemplateProcessor.KeyMap();
 	configGCSPane.saveState();
@@ -156,14 +158,19 @@ public class EPTSWindow {
 	    }
 	}
 
-	List<String> codebase = EPTS.getCodebase();
+	List<String> codebase = savedStateCodebase != null?
+	    savedStateCodebase: EPTS.getCodebase();
 	if (codebase.size() > 0) {
 	    TemplateProcessor.KeyMap cbmap = new TemplateProcessor.KeyMap();
 	    TemplateProcessor.KeyMapList pmaplist =
 		new TemplateProcessor.KeyMapList();
 	    keymap.put("hasCodebase", cbmap);
 	    cbmap.put("pathlist", pmaplist);
+	    int offset = EPTS.ourCodebaseDir.length();
 	    for (String path: codebase) {
+		if (path.startsWith(EPTS.ourCodebaseDir)) {
+		    path = "..." + path.substring(offset);
+		}
 		TemplateProcessor.KeyMap pmap =  new TemplateProcessor.KeyMap();
 		pmap.put("path", path);
 		pmaplist.add(pmap);
@@ -3515,6 +3522,9 @@ public class EPTSWindow {
 	throws IllegalStateException, IOException, InterruptedException
     {
 	savedFile = inputFile;
+	if (parser != null) {
+	    savedStateCodebase = parser.getCodebase();
+	}
 	if (parser.imageURIExists()) {
 	    URI uri = parser.getImageURI();
 	    Image image = parser.getImage();
@@ -3617,6 +3627,9 @@ public class EPTSWindow {
 	    this.animationName = se.getAnimationName();
 	    scriptMode = true;
 	    shouldSaveScripts = (parser == null) || (image == null);
+	}
+	if (parser != null) {
+	    savedStateCodebase = parser.getCodebase();
 	}
 	SwingUtilities.invokeLater(new Runnable() {
 		public void run() {

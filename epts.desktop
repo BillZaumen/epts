@@ -3,22 +3,28 @@ Encoding=UTF-8
 Name=EPTS
 GenericName=Point and Bezier-Path Editor
 Comment=Create and edit EPTS files describing points and Bezier paths
-Exec=epts --gui %u
+Exec=epts --gui -- %u
 TryExec=epts
-MimeType=application/x.epts+xml;application/javascript;application/ecmascript;image/vnd.wap.wbmp;image/png;image/jpeg;image/bmp;image/gif;
+MimeType=application/vnd.bzdev.epts-state+xml;application/vnd.bzdev.epts-scriptconf+zip;application/javascript;application/ecmascript;image/vnd.wap.wbmp;image/png;image/jpeg;image/bmp;image/gif;
 Terminal=false
 Type=Application
 Icon=/usr/share/icons/hicolor/scalable/apps/epts.svg
 Categories=Application;Graphics;
 StartupNotify=true
-Actions=new-window;stacktrace
+Actions=newWindow;stacktrace;config;tracedconfig
 
-[Desktop Action new-window]
-Name=New EPTS Window
+[Desktop Action newWindow]
+Name=New Window
 Exec=epts --gui
-TargetEnvironment=Unity
 
 [Desktop Action stacktrace]
-Name = New Window, Stack Traces Enabled
+Name = New Window, Stacktraces Enabled
 Exec=epts --gui --stackTrace
-TargetEnvironment=Unity
+
+[Desktop Action config]
+Name = Configure Session
+Exec=epts --sessionConfig
+
+[Desktop Action tracedconfig]
+Name = Configure Session, Stacktraces Enabled
+Exec=epts --stackTrace --sessionConfig

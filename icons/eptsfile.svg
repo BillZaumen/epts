@@ -27,7 +27,7 @@
      inkscape:pageshadow="2"
      inkscape:zoom="0.61816406"
      inkscape:cx="339.71564"
-     inkscape:cy="392.22846"
+     inkscape:cy="198.10524"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -45,7 +45,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -168,5 +168,38 @@
        id="path859"
        d="M 71.478462,281.1602 H 157.50942"
        style="fill:none;stroke:#808080;stroke-width:1.56500006;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <text
+       xml:space="preserve"
+       style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:11.28888893px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold Italic';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       x="71.478462"
+       y="143.41318"
+       id="text31"><tspan
+         sodipodi:role="line"
+         id="tspan29"
+         x="71.478462"
+         y="143.41318"
+         style="stroke-width:0.26458332;fill:#0000ff">saved</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:11.28888893px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold Italic';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       x="114.87016"
+       y="143.088"
+       id="text37"><tspan
+         sodipodi:role="line"
+         id="tspan35"
+         x="114.87016"
+         y="143.088"
+         style="fill:#0000ff;stroke-width:0.26458332">state</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:113.30613708px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';letter-spacing:0px;word-spacing:0px;fill:#00ffff;fill-opacity:1;stroke:none;stroke-width:0.59013611;"
+       x="73.716431"
+       y="254.17767"
+       id="text35"><tspan
+         sodipodi:role="line"
+         id="tspan33"
+         x="73.716431"
+         y="254.17767"
+         style="fill:#00ffff;stroke-width:0.59013611;">S</tspan></text>
   </g>
 </svg>

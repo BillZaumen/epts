@@ -4,6 +4,11 @@ epts \- create points and Bezier curves/splines
 .SH SYNOPTSIS
 .B epts
 .br
+.B epts\ \-\-sessionConfig
+.br
+.br
+.BI epts\ \-\-\   CFILE
+.br
 .B epts
 [\fI\,SCROPTION\/\fR]...
 .I IFILE
@@ -19,10 +24,10 @@ epts \- create points and Bezier curves/splines
 .I EFILE
 .br
 .B epts
-[\fI\,SCROPTION\/\fR]... [\fB\-\-script \fI VNAME\fR] [\fI\,SOPTION\/\fR]... [\fI\,SFILE\/\fR]...
+[\fI\,SCROPTION\/\fR]... [\fB\-\-animation \fI VNAME\fR] [\fI\,SOPTION\/\fR]... [\fI\,SFILE\/\fR]...
 .br
 .B epts
-[\fI\,SCROPTION\/\fR]... [\fB\-\-script \fI VNAME\fR] [\fI\,SOPTION\/\fR]... \fIEFILE\fR [\fI\,SFILE\/\fR]...
+[\fI\,SCROPTION\/\fR]... [\fB\-\-animation \fI VNAME\fR] [\fI\,SOPTION\/\fR]... \fIEFILE\fR [\fI\,SFILE\/\fR]...
 .br
 .B epts
 [\fI\,SCROPTION\/\fR]... [\fI\,TOPTION\/\fR]... [\fI\,EFILE\/\fR]
@@ -38,7 +43,14 @@ system. The points and paths can then be written to an output stream
 in a variety of text formats, each specified by a template, for use
 by other programs.
 .PP
-Arguments that are not options can be one of three types of files:
+Arguments that are not options can be one of four types of files:
+.TP
+.IR CFILE .
+This file type represents a session-configuration file. Its file-name
+extension is "eptc". This file is a Zip file with an embedded mime
+type and is created by using the
+.B \-\-sessionConfig
+option.
 .TP
 .IR IFILE .
 This file type represents an image file. Its file-name extension must be
@@ -46,10 +58,10 @@ one that is recognized by Java for the image-file formats that Java
 supports.
 .TP
 .IR EFILE .
-This file represents an EPTS saved state and its file name ends in
-the extension "epts". It is an XML file with a specific document type
-and XML namespace. Its document is described in the EPTS manual
-(available via the "Help" menu) and in the man page
+This file represents an EPTS saved state and its file name extension
+is "epts". It is an XML file with a specific document type and XML
+namespace. Its document is described in the EPTS manual (available via
+the "Help" menu) and in the man page
 .BR epts (5).
 .TP
 .IR SFILE .
@@ -88,7 +100,7 @@ The scripts must create an animation that is assigned to a scripting-language
 variable as described below.  If the name of this variable is not
 .BR a2d ,
 the
-.B \-\-script
+.B \-\-animation
 option must be used to indicate the appropriate variable name.
 .PP
 EPTS makes use of three coordinate systems, one indirectly:
@@ -169,7 +181,7 @@ formats supported are those that Java supports. In practice, the image
 file will be a JPEG or PNG file. If the file name is literally "\-",
 EPTS will prompt for an image size and will create an image containing
 a white background. The
-.B \-\-script
+.B \-\-animation
 option may not be used with this option. When
 .I IFILE
 is an EPTS saved-state file, any points or paths recorded in the
@@ -195,7 +207,7 @@ is the host name (or IP address) of the system on which EPTS is running.
 Valid port numbers range from 1 to 65535 inclusive, although many are
 reserved for other purposes or require system privileges.
 .TP
-.BI \-\-script\  VNAME
+.BI \-\-animation\  VNAME
 The argument
 .I VNAME
 is the name of a scripting-language variable whose value is an
@@ -218,7 +230,7 @@ object will determine the size of the image unless the
 option is also present. The
 .B \-\-image
 option can not be used with the
-.B \-\-script
+.B \-\-animation
 option unless the argument for the
 .B \-\-image
 option is an EPTS saved state that contains an image.
@@ -234,11 +246,96 @@ standard output. This is provided because when a program is started
 using a window system, the current working directory is often not the
 one containing its argument file and messages to standard output or
 standard error might not be visible to the user.
+.TP
+.B \-\-sessionConfig
+This argument is recognized if it is the only argument used or if it
+is preceeded by the
+.B \-\-stackTrace
+argument; otherwise an error will be generated. It is intended for use
+by window systems for starting EPTS in a particular mode.  When this
+option is provided, EPTS will first show the user a dialog box that
+allows the user to provide data for various scripting-related
+arguments. The user will be given an opportunity to save the
+configuration before proceeding to run EPTS with the corresponding
+arguments.
 .PP
-If neither of the options
+There are several combinations of command-line arguments that are
+treated specially:
+.TP
+.B \-\-sessionConfig
+will open a dialog box that will allow a session to be configured.
+.TP
+.B \-\-stackTrace\ \-\-sessionConfig
+will open a dialog box that will allow a session to be
+configured. Stack traces will be included in various error messages.
+.TP
+.BI \-\-gui\ \-\-stackTrace\ \-\- FILE
+will open the specified file.  This file may be a saved-state file
+(extension
+.BR epts ),
+a session configuration file (extension
+.BR eptc ),
+a script, or an image file. For some error messages, a stack trace may
+be provided.
+.TP
+.B \-\-gui\ \-\-stackTrace
+will request that the user selects a file.  This file may be a
+saved-state file (extension
+.BR epts ),
+a session configuration file (extension
+.BR eptc ),
+a script, or an image file. For some error messages, a stack trace may
+be provided.
+.TP
+.BI \-\-gui\ \-\- FILE
+will open the specified file.  This file may be a saved-state file
+(extension
+.B epts ),
+a session configuration file
+(extension
+.B eptc ),
+a script, or an image file.
+.TP
+.B \-\-gui
+with no additional arguments will open a dialog
+box that will ask for a file to read. This file may be a saved-state
+file (extension
+.BR epts ),
+a session configuration file
+(extension
+.B eptc ),
+a script,  or an image file.
+.TP
+.BI \-\-stackTrace\ \-\- FILE
+will open an
+input file, treating it specially if it is a session configuration
+file. Some error messages will provide stack traces.  The file can
+be either a session configuration file, a saved-state file, an
+image file, or a script.
+.TP
+.B \-\-stackTrace
+will ask for a file to open. The file
+can be either a session configuration file, a saved-state file, an
+image file, or a script.p
+.TP
+.BI \-\- FILE
+will open an input file,
+treating it specially if it is a session configuration file. The
+file can be either a session configuration file, a saved-state
+file, an image file, or a script.
+.PP
+Special cases that include an argument that may be a file name always
+include the option
+.B \-\-
+before the file name so that file
+names that start with
+.B \-
+will not be confused with options.
+.PP
+If the options are not part of a special sequence and neither of the options
 .B \-\-image
 or
-.B \-\-script
+.B \-\-animation
 are present, the first file-name argument must provide the name
 of a file containing a saved state.  By convention, this file should
 end with the file-name extension
@@ -249,13 +346,13 @@ Additional file-name arguments may provide scripts, but to have
 additional arguments, the saved-state file must have used scripts
 to create the image that will be displayed. If the saved-state file
 contains an image but no scripting data, the
-.B \-\-script
+.B \-\-animation
 option is needed.
 .PP
 If both the
 .B \-\-image
 and
-.B \-\-script
+.B \-\-animation
 options are present or if the first file-name argument is an EPTS
 saved state, the scripting language variable
 .B epts
@@ -1018,23 +1115,23 @@ stroke or color option is provided.
 This option will print the information included in the EPTS
 table. Each path is represented by an ECMAScript variable. Location
 entries are ignored.  For each
-.B --tname
+.B \-\-tname
 option, or
 all paths if there are no
-.B --tname
+.B \-\-tname
 options, the
 value assigned to each variable will be an array of objects.
 The array can be used to configure an instance of
 .B org.bzdev.anim2d.AnimationLayer2DFactory</CODE>.
 One may use the
-.B --tname
+.B \-\-tname
 option to include only
 specific paths and optionally to use a new variable name that
 represents a single path or the concatenation of multiple paths.
 When a
-.B --tname
+.B \-\-tname
 option is used, a
-.B --winding-rule</CODE>
+.B \-\-winding-rule</CODE>
 option may be used, as can color or stroke options.
 .TP
 .B sresource:ECMAScriptLocations
@@ -1081,18 +1178,18 @@ This template provides a Java class containing fields that are
 instances of the Java interface
 .B org.bzdev.obnaming.NamedObjectFactory.IndexedSetter
 with each field named by the name provided by a
-.B --tname
+.B \-\-tname
 option for a path. If there are no
-.B --tname
+.B \-\-tname
 options, the field names are the names of all the paths defined in the
 EPTS table.  The arguments to the
-.B --tname
+.B \-\-tname
 options must be simple names that match the names of paths defined in
 the EPTS table. For a specific
-.B --tname
+.B \-\-tname
 option, color or stroke options can be specified (these must precede
 the
-.B --tname
+.B \-\-tname
 option to which they apply).
 .PP
 The path-iterator templates are the following:
@@ -1179,7 +1276,7 @@ and
 documentation.) The second is the variable
 .BR epts ,
 which is defined when EPTS is running. The
-.B \-\-script
+.B \-\-animation
 option, when present, sets the name of the
 scripting-language variable referring to the animation, with a default
 variable name of "\fBa2d\fR". When a new script is run,
@@ -1304,7 +1401,7 @@ coordinates.
 .PP
 While there is a default behavior in both cases, the grids can be tuned
 if necessary.  These scripts must be used with the option
-.B \-\-script\ a2d
+.B \-\-animation\ a2d
 as the variable representing an animation is
 .B a2d
 in both cases. If another script assigns a value to
@@ -1477,13 +1574,13 @@ build-in script (grid.js) is used to add a grid overlaying that image
 but not overlaying points or paths. The grid spacing corresponds to
 10 feet in graph coordinate space.
 .TP
-.B epts\ \-\-script a2d\ \-\-double\ spacing=10ft\ saved.epts\ sresource:grid.js
+.B epts\ \-\-animation a2d\ \-\-double\ spacing=10ft\ saved.epts\ sresource:grid.js
 Start EPTS, restoring its state to one saved in a previous session.
 The saved state specifies an image and an additional build-in script
 (grid.js) is used to add a grid overlaying that image but not
 overlaying points or paths. Because the saved state does not use
 scripts, a
-.B \-\-script
+.B \-\-animation
 option is needed to indicate the name to use to create the animation
 that will generate the grid. The grid spacing corresponds to
 10 feet in graph coordinate space.
@@ -1498,7 +1595,7 @@ to EPTS's code base.
 Start EPTS with an image preloaded as its
 background.
 .TP
-.B epts\ \-\-script\ a2d\ commands.js
+.B epts\ \-\-animation\ a2d\ commands.js
 Start EPTS and run the script provided in commands.js to generate
 an image from an animation
 .B a2d
@@ -1506,7 +1603,7 @@ an image from an animation
 .BR org.bzdev.anim2d.Animation2D ).
 .TP
 .B
-epts\ \-\-codebase\ foo.jar\ \-\-script\ a2d\ commands.js
+epts\ \-\-codebase\ foo.jar\ \-\-animation\ a2d\ commands.js
 Start EPTS and run the script provided in commands.js to generate
 an image from an animation
 .B a2d

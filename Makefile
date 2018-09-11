@@ -74,8 +74,12 @@ TARGETICON_PNG = epts.png
 # (originals in Icons subdirectory)
 #
 SOURCE_FILE_ICON = icons/eptsfile.svg
-TARGET_FILE_ICON = application-x.epts+xml.svg
-TARGET_FILE_ICON_PNG = application-x.epts+xml.png
+TARGET_FILE_ICON = application-vnd.bzdev.epts-state+xml.svg
+TARGET_FILE_ICON_PNG = application-vnd.bzdev.epts-state+xml.png
+
+SOURCE_CFILE_ICON = icons/eptcfile.svg
+TARGET_CFILE_ICON = application-vnd.bzdev.epts-config+zip.svg
+TARGET_CFILE_ICON_PNG = application-vnd.bzdev.epts-config+zip.png
 
 
 JROOT_DOCDIR = $(JROOT)$(SYS_DOCDIR)
@@ -95,7 +99,7 @@ EXTLIBS=$(EXTDIR)/libbzdev.jar
 MANS = $(JROOT_MANDIR)/man1/epts.1.gz $(JROOT_MANDIR)/man5/epts.5.gz
 
 
-ICONS = $(SOURCEICON) $(SOURCE_FILE_ICON)
+ICONS = $(SOURCEICON) $(SOURCE_FILE_ICON) $(SOURCE_CFILE_ICON)
 
 JFILES = $(wildcard src/*.java)
 PROPERTIES = src/EPTS.properties
@@ -239,6 +243,8 @@ install: all
 	install -m 0644 -T mime/epts.xml $(MIMEDIR)/packages/epts.xml
 	install -m 0644 -T $(SOURCE_FILE_ICON) \
 		$(MIME_ICON_DIR)/$(TARGET_FILE_ICON)
+	install -m 0644 -T $(SOURCE_CFILE_ICON) \
+		$(MIME_ICON_DIR)/$(TARGET_CFILE_ICON)
 	for i in $(ICON_WIDTHS) ; do \
 	    install -d $(ICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR) ; \
 	done;
@@ -246,6 +252,10 @@ install: all
 	    inkscape -w $$i -e tmp.png $(SOURCE_FILE_ICON) ; \
 	    install -m 0644 -T tmp.png \
 	    $(ICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR)/$(TARGET_FILE_ICON_PNG); \
+	    rm tmp.png ; \
+	    inkscape -w $$i -e tmp.png $(SOURCE_CFILE_ICON) ; \
+	    install -m 0644 -T tmp.png \
+	    $(ICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR)/$(TARGET_CFILE_ICON_PNG); \
 	    rm tmp.png ; \
 	done
 	install -m 0644 $(JROOT_JARDIR)/epts.jar $(BZDEVDIR)
