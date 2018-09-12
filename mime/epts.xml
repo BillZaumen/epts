@@ -26,7 +26,7 @@
 	  <match type="little16" offset="28" value="38">
 	    <match type="string" offset="30" value="META-INF/">
 	      <match type="little16" offset="39" value="0xFACE">
-		<match type="little16" offset="41" value="36">
+		<match type="little16" offset="41" value="37">
 		  <match type="string" offset="43"
 			 value="application/vnd.bzdev.epts-config+zip">
 		  </match>
