@@ -486,6 +486,86 @@ public class EPTS {
     static int width = 1024;
     static int height = 1024;
 
+    static final String reservedTdefNames[] = {
+	"varname",
+	"windingRule",  "hasWindingRule",
+	"segments",
+	"type", "ltype", "atype",
+	"method",
+	"has0",	"has1",	"has2",
+	"x0", "y0", "x1", "y1", "x2", "y2",
+	"hasMoveTo", "hasLineTo", "hasQuadTo", "hasCubicTo", "hasClose",
+	"area", "circumference", "pathLength",
+	"vindex", "index", "pindex",
+	"location",
+	"x", "y", "xp", "yp", "ypr", "xy",
+	"items", "pathStatement", "pathItem", "optcomma",
+	"draw", "fill", "hasAttributes", "gcsMode", "hasGcsMode",
+	"drawColor", "hasDrawColor", "fillColor", "hasFillColor",
+	"strokeCap", "hasStrokeCap", "strokeWidth", "hasStrokeWidth",
+	"strokeJoin", "hasStrokeJoin","miterLimit", "hasMiterLimit",
+	"dashIncrement", "hasDashIncrement", "dashPhase", "hasDashPhase",
+	"dashPattern", "hasDashPattern",
+	"zorder", "hasZorder",
+	"width", "height", "package", "hasPackage",
+	"class", "hasClass", "optSpace", "public"
+    };
+    static HashSet<String> reservedTdefSet =
+	new HashSet<>(2*reservedTdefNames.length);
+
+    static {
+	for (String s: reservedTdefNames) {
+	    reservedTdefSet.add(s);
+	}
+    }
+
+    public static final boolean isReservedTdef(String name) {
+	int ind = name.indexOf(":");
+	if (ind > -1) {
+	    String test = name.substring(0, ind).trim();
+	    name = name.substring(ind+1).trim();
+	    if (reservedTdefSet.contains(test)) return true;
+	}
+	return reservedTdefSet.contains(name);
+    }
+
+    static final String EMPTYMAP = "<EMPTY KEYMAP>";
+    static HashMap<String,String> tdefTable = new HashMap<>();
+
+    static void storeTDef(String name, String value)
+	throws IllegalStateException
+    {
+	int ind = name.indexOf(":");
+	if (ind > -1) {
+	    String test = name.substring(0, ind).trim();
+	    if (tdefTable.containsKey(name)) {
+		throw new IllegalStateException(errorMsg("storeTDef", test));
+	    }
+	    tdefTable.put(test, EMPTYMAP);
+	    name = name.substring(ind+1).trim();
+	}
+	if (tdefTable.containsKey(name)) {
+	    throw new IllegalStateException(errorMsg("storeTDef", name));
+	}
+	tdefTable.put(name, value);
+    }
+
+
+    static void addDefinitionsTo(TemplateProcessor.KeyMap map)
+    {
+	for (Map.Entry<String,String> entry: tdefTable.entrySet()) {
+	    String value = entry.getValue();
+	    if (value == EMPTYMAP) {
+		// use '==' so we have to literally match the constant
+		// defined above.
+		map.put(entry.getKey(), new TemplateProcessor.KeyMap());
+	    } else {
+		map.put(entry.getKey(), value);
+	    }
+	}
+    }
+
+
     public static class FilterInfo {
 	String name;
 	String[] nameArray;
@@ -1306,7 +1386,7 @@ public class EPTS {
 		    arg = inputFile;
 		} else {
 		    // we must have canceled
-		    if (ind > -1 && ind < 2) {
+		    if (ind > -1 && ind < 4) {
 			System.exit(0);
 		    }
 		}
@@ -1333,11 +1413,34 @@ public class EPTS {
 		    }
 		    ZipDocFile zdf =
 			new ZipDocFile(arg, Charset.forName("UTF-8"));
+		    String mediaType = zdf.getMimeType();
+		    if (!mediaType.equals
+			("application/vnd.bzdev.epts-config+zip")) {
+			throw new IOException("notEPTCFile");
+		    }
 		    if (needInitialConfig) {
 			readConfigFiles(null);
 			needInitialConfig = false;
 		    }
 		    argv = Setup.getSetupArgs(zdf, new File(arg));
+		    zdf.close();
+		}
+		if (ext != null && ext.equals("eptt")) {
+		    if (url) {
+			arg = new File(new URI(arg)).getAbsolutePath();
+		    }
+		    ZipDocFile zdf =
+			new ZipDocFile(arg, Charset.forName("UTF-8"));
+		    String mediaType = zdf.getMimeType();
+		    if (!mediaType.equals
+			("application/vnd.bzdev.epts-template-config+zip")) {
+			throw new IOException("notEPTTFile");
+		    }
+		    if (needInitialConfig) {
+			readConfigFiles(null);
+			needInitialConfig = false;
+		    }
+		    argv = TemplateSetup.getSetupArgs(zdf, new File(arg));
 		    zdf.close();
 		}
 	    }  catch (Exception e) {
@@ -1350,14 +1453,17 @@ public class EPTS {
 
     private static String[][] argpatterns = {
 	{"--sessionConfig"},			// index 0
-	{"--stackTrace", "--sessionConfig"},	// index 1
-	{"--gui", "--stackTrace", "--"},	// index 2
-	{"--gui", "--stackTrace"},		// index 3
-	{"--gui", "--"},			// index 4
-	{"--gui"},				// index 5
-	{"--stackTrace", "--"},			// index 6
-	{"--stackTrace"},			// index 7
-	{"--"}					// index 8
+	{"--templateConfig"},			// index 1
+	{"--stackTrace", "--sessionConfig"},	// index 2
+	{"--stackTrace", "--templateConfig"},	// index 3
+	{"--gui", "--stackTrace", "--"},	// index 4
+	{"--gui", "--stackTrace"},		// index 5
+	{"--gui", "--"},			// index 6
+	{"--gui"},				// index 7
+	{"--stackTrace", "--"},			// index 8
+	{"--stackTrace"},			// index 9
+	{"--"},					// index 10
+	{}					// index11
     };
 
     private static int getAPIndex(String[] argv) {
@@ -1375,6 +1481,15 @@ public class EPTS {
 		}
 	    }
 	    if (cont) continue;
+	    if (ind == (argpatterns.length - 1)) {
+		if (argv.length == 1
+		    && (argv[0].endsWith(".eptc")
+			|| argv[0].endsWith(".eptt"))) {
+		    return ind;
+		} else {
+		    continue;
+		}
+	    }
 	    return ind;
 	}
 	return -1;
@@ -1418,11 +1533,43 @@ public class EPTS {
 		    System.out.println("    " + s);
 		}
 		*/
+	    } else if ((argv.length == 3 &&
+			argv[0].equals("-o")
+			&& argv[2].endsWith(".eptt")
+			&& argv[2].charAt(0) != '-')
+		       || (argv.length == 4 &&
+			   argv[0].equals("-o")
+			   && argv[2].equals("--")
+			   && argv[3].endsWith(".epntt"))) {
+		String outfile = argv[1];
+		if (outfile.startsWith("file:")) {
+		    outfile = (new File(new URI(outfile))).getAbsolutePath();
+		}
+		String infile = argv[argv.length - 1];
+		if (infile.startsWith("file:")) {
+		    infile = (new File(new URI(infile))).getAbsolutePath();
+		}
+		ZipDocFile zdf = new ZipDocFile(infile,
+						Charset.forName("UTF-8"));
+		if (!zdf.getMimeType().equals
+		    ("application/vnd.bzdev.epts-template-config+zip")) {
+		    throw new IOException("notEPTTFile");
+		}
+		// create args without starting the GUI.
+		TemplateSetup.outFile = outfile;
+		TemplateSetup.restore(zdf, false, null);
+		zdf.close();
+		try {
+		    argv = TemplateSetup.generate();
+		} catch (Exception e) {
+		    e.printStackTrace();
+		    System.exit(1);
+		}
 	    } else {
 		int ind = getAPIndex(argv);
-		System.out.println("ind = " + ind);
-		if (ind > -1 && ind < 2) {
-		    if (argv.length != 1+ind) {
+		if (ind > -1 && ind < 4) {
+		    if (argv.length != argpatterns[ind].length) {
+			System.out.println(argv.length + " " + ind);
 			System.err.println
 			    (localeString("noArgsSessionConfig"));
 			System.exit(1);
@@ -1434,19 +1581,30 @@ public class EPTS {
 			readConfigFiles(null);
 			needInitialConfig = false;
 		    }
-		    argv = Setup.getSetupArgs(null, null);
+		    if (argv[argv.length-1].equals("--sessionConfig")) {
+			argv = Setup.getSetupArgs(null, null);
+		    } else if (argv[argv.length-1].equals("--templateConfig")) {
+			argv = TemplateSetup.getSetupArgs(null, null);
+		    } else {
+			System.err.println("option \"" + argv[argv.length-1]
+					   + "\" not recognized");
+			System.exit(-1);
+		    }
+		    /*
 		    System.out.println("arguments:");
 		    for (String s: argv) {
 			System.out.println("    " + s);
 		    }
+		    */
 		} else if (ind != -1) {
 		    String arg = getArgFromIndex(argv, ind);
-		    System.out.println("arg = " + arg);
 		    argv = preprocessArgs(ind, argv, arg);
+		    /*
 		    System.out.println("arguments:");
 		    for (String s: argv) {
 			System.out.println("    " + s);
 		    }
+		    */
 		}
 	    }
 	}
@@ -1977,6 +2135,31 @@ public class EPTS {
 		    String resource = argv[index].substring(11);
 		    String tname = "resource:" + resource;
 		    templateURL = new URL(tname);
+		    argsList.add(argv[index]);
+		} else if (argv[index].equals("--tdef")) {
+		    index++;
+		    if (index == argv.length) {
+			displayError
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    String tdef = argv[index];
+		    int tdefEqInd = tdef.indexOf('=');
+		    if (tdefEqInd > -1) {
+			String tdefName = tdef.substring(0, tdefEqInd).trim();
+			String tdefValue = tdef.substring(tdefEqInd+1).trim();
+			if (isReservedTdef(tdefName)) {
+			    displayError(errorMsg("reservedTdef", tdefName));
+			    System.exit(1);
+			}
+			if (tdefValue.length() > 0) {
+			    storeTDef(tdefName, tdefValue);
+			}
+		    } else {
+			displayError(errorMsg("illformedArg", tdef));
+			System.exit(1);
+		    }
+		    argsList.add(argv[index-1]);
 		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--tname")) {
 		    index++;
@@ -2800,6 +2983,7 @@ public class EPTS {
 							   gcs);
 			    kmap.put("width", "" + parser.getWidth());
 			    kmap.put("height", "" + parser.getHeight());
+			    addDefinitionsTo(kmap);
 			    tp  = new TemplateProcessor(kmap);
 			} else if (svg) {
 			    TemplateProcessor.KeyMap svgmap =
@@ -2874,6 +3058,7 @@ public class EPTS {
 				kmap.put("public", "public");
 				kmap.put("optSpace", " ");
 			    }
+			    addDefinitionsTo(kmap);
 			    tp = new TemplateProcessor(kmap);
 			} else {
 			    TemplateProcessor.KeyMap kmap =
@@ -2948,6 +3133,7 @@ public class EPTS {
 				kmap.put("public", "public");
 				kmap.put("optSpace", " ");
 			    }
+			    addDefinitionsTo(kmap);
 			    tp = new TemplateProcessor(kmap);
 			}
 			tp.processURL(templateURL, "UTF-8", os);

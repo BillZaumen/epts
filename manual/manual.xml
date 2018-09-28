@@ -97,9 +97,12 @@
 	    uri="sresource:manual/manual.html#tableElement"
 	    href="manual.html#tableElement"/>
     </node>
-    <node title="Saved-Configuration format"
+    <node title="Saved-configuration format"
 	  uri="sresource:manual/manual.html#configFormat"
 	  href="manual.html#configFormat"/>
+    <node title="Template-processing format"
+	  uri="sresource:manual/manual.html#templateConfig"
+	  href="manual.html#templateConfig"/>
     <node title="AdditionalDocumentation"
 	  uri="sresource:manual/manual.html#guides"
 	  href="manual.html#guides"/>

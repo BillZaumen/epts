@@ -23,7 +23,7 @@
     <sub-class-of type="application/zip" />
       <magic priority="80">
 	<match type="little16" offset="26" value="9">
-	  <match type="little16" offset="28" value="38">
+	  <match type="little16" offset="28" value="41">
 	    <match type="string" offset="30" value="META-INF/">
 	      <match type="little16" offset="39" value="0xFACE">
 		<match type="little16" offset="41" value="37">
@@ -37,5 +37,25 @@
 	</match>
       </magic>
       <glob pattern="*.eptc"/>
+  </mime-type>
+  <mime-type type="application/vnd.bzdev.epts-template-config+zip">
+    <comment>EPTS scripting-configuration file</comment>
+    <sub-class-of type="application/zip" />
+      <magic priority="80">
+	<match type="little16" offset="26" value="9">
+	  <match type="little16" offset="28" value="50">
+	    <match type="string" offset="30" value="META-INF/">
+	      <match type="little16" offset="39" value="0xFACE">
+		<match type="little16" offset="41" value="46">
+		  <match type="string" offset="43"
+			 value="application/vnd.bzdev.epts-template-config+zip">
+		  </match>
+		</match>
+	      </match>
+	    </match>
+	  </match>
+	</match>
+      </magic>
+      <glob pattern="*.eptt"/>
   </mime-type>
 </mime-info>

@@ -1,0 +1,2480 @@
+import java.awt.*;
+import java.awt.event.*;
+import java.beans.XMLEncoder;
+import java.beans.XMLDecoder;
+import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.*;
+import java.util.zip.ZipEntry;
+import javax.swing.*;
+import javax.swing.event.*;
+import javax.swing.filechooser.*;
+import javax.swing.table.*;
+import javax.swing.text.*;
+import javax.xml.parsers.*;
+
+import org.bzdev.graphs.Colors;
+import org.bzdev.io.*;
+import org.bzdev.swing.*;
+import org.bzdev.swing.text.CharDocFilter;
+
+import org.xml.sax.helpers.*;
+import org.xml.sax.*;
+
+public class TemplateSetup {
+
+    static String errorMsg(String key, Object... args) {
+	return EPTS.errorMsg(key, args);
+    }
+
+    static String localeString(String key) {
+	return EPTS.localeString(key);
+    }
+
+    private static CharDocFilter cfilter = new CharDocFilter();
+    static {
+	cfilter.setAllowedChars("--..09eeEE++");
+    }
+
+    private static CharDocFilter icfilter = new CharDocFilter();
+    static {
+	icfilter.setAllowedChars("--09");
+    }
+    private static DocumentFilter dpfilter = new DocumentFilter() {
+	    @Override
+	    public void insertString(DocumentFilter.FilterBypass fb,
+				     int offs,
+				     String str,
+				     AttributeSet a)
+		throws BadLocationException 
+	    {
+		if (offs == 0 && !str.startsWith("-")) {
+		    Toolkit.getDefaultToolkit().beep();
+		} else if (!str.matches("[- \u2423]*")) {
+		    Toolkit.getDefaultToolkit().beep();
+		} else {
+		    str = str.replace(' ', '\u2423');
+		    super.insertString(fb, offs, str, a);
+		}
+	    }
+	    @Override
+	    public void replace(DocumentFilter.FilterBypass fb,
+				int offs, int length,
+				String str,
+				AttributeSet a)
+		throws BadLocationException 
+	    {
+		if (offs == 0 && !str.startsWith("-")) {
+		    Toolkit.getDefaultToolkit().beep();
+		} else if (!str.matches("[- \u2423]*")) {
+		    Toolkit.getDefaultToolkit().beep();
+		} else {
+		    str = str.replace(' ', '\u2423');
+		    super.replace(fb, offs, length, str, a);
+		}
+	    }
+	    @Override
+	    public void remove(DocumentFilter.FilterBypass fb,
+			       int offs, int len)
+		throws BadLocationException 
+	    {
+		if (offs == 0) {
+		    Document doc = fb.getDocument();
+		    int doclen = doc.getLength();
+		    if (len == 0) {
+			return;	// nothing to do
+		    } else if (doclen <= len) {
+			super.remove(fb, offs, len);
+		    } else {
+			if (doc.getText(len,1).equals("-")) {
+			    super.remove(fb, offs, len);
+			} else {
+			    Toolkit.getDefaultToolkit().beep();
+			}
+		    }
+		} else {
+		    super.remove(fb, offs, len);
+		}
+	    }
+	};
+
+        
+
+    private static InputVerifier iv = new InputVerifier() {
+	    public boolean verify(JComponent c) {
+		if (c instanceof VTextField) {
+		    VTextField tf = (VTextField)c;
+		    String text = tf.getText();
+		    try {
+			double val = new Double(text);
+			if (val < 0.0) return false;
+			return true;
+		    } catch (Exception e) {
+			return false;
+		    }
+		}
+		return false;
+	    }
+	};
+
+    private static InputVerifier iiv = new InputVerifier() {
+	    public boolean verify(JComponent c) {
+		if (c instanceof VTextField) {
+		    VTextField tf = (VTextField)c;
+		    String text = tf.getText();
+		    try {
+			int val = new Integer(text);
+			return true;
+		    } catch (Exception e) {
+			return false;
+		    }
+		}
+		return false;
+	    }
+	};
+
+    private static InputVerifier liv = new InputVerifier() {
+	    public boolean verify(JComponent c) {
+		if (c instanceof VTextField) {
+		    VTextField tf = (VTextField)c;
+		    String text = tf.getText();
+		    try {
+			long val = new Long(text);
+			return true;
+		    } catch (Exception e) {
+			return false;
+		    }
+		}
+		return false;
+	    }
+	};
+
+    private static String[] templateTypes = {
+	localeString("SVG"),
+	localeString("TableTemplate"),
+	localeString("PathIteratorTemplate")
+    };
+
+    public static enum TType {
+	SVG, TT, PIT
+    }
+
+    static TType templateType = null;
+    
+
+    public static class BasicData {
+	public int templateTypeInd = -1;
+	public boolean useBuiltins = false;
+	public String template = null;
+	public String savedState = null;
+	public String mapName = null;
+    }
+
+    private static BasicData basicData = new BasicData();
+
+
+    private static String strokeCaps[] = {
+ 	"butt",
+	"round",
+	"square"
+    };
+
+    private static  String strokeCaps2[] = new String[strokeCaps.length];
+
+    private static String strokeJoins[] = {
+	"bevel",
+	"miter",
+	"round"
+    };
+
+    private static String strokeJoins2[] = new String[strokeJoins.length];
+
+    private static String windingRules[] = {
+	"evenodd", "nonzero"
+    };
+
+    private static String[] windingRules2 = new String[windingRules.length];
+
+    static {
+	for (int i = 0; i < strokeCaps.length; i++) {
+	    strokeCaps2[i] = localeString(strokeCaps[i]);
+	}
+	for (int i = 0; i < strokeJoins.length; i++) {
+	    strokeJoins2[i] = localeString(strokeJoins[i]);
+	}
+
+	for (int i = 0; i < windingRules2.length; i++) {
+	    windingRules2[i] = localeString(windingRules[i]);
+	}
+
+    }
+
+
+    public static class SBPair {
+	public String key;
+	public boolean value;
+    }
+
+    Object defCols[] = {
+	localeString("iterationName"),
+	localeString("varName"),
+	localeString("valueName")
+    };
+
+    private static String templatesWithClassOrPackage[] = {
+	"JavaLayers", "JavaLocations",
+	"JavaPathBuilders", "JavaPathFactories"
+    };
+    
+    private static final String SRESOURCE_PROTO = "sresource:";
+    private static final int SRESOURCE_PROTO_LEN = SRESOURCE_PROTO.length();
+
+    private static boolean mayUseClassOrPackage(String template) {
+	if (template.length() < SRESOURCE_PROTO_LEN) return false;
+	if  (!template.startsWith(SRESOURCE_PROTO)) {
+	    return false;
+	}
+	template = template.substring(SRESOURCE_PROTO_LEN);
+	for (String s: templatesWithClassOrPackage) {
+	    if (s.equals(template)) {
+		return true;
+	    }
+	}
+	return false;
+    }
+
+    private static int status = 0;
+    private static String[] results = null;
+    private static boolean dialogButtonPushed = false;
+
+    private static void addComponent(JPanel panel, JComponent component,
+				     GridBagLayout gridbag,
+				     GridBagConstraints c)
+    {
+	gridbag.setConstraints(component, c);
+	panel.add(component);
+    }
+
+    static File cdir = new File(System.getProperty("user.dir"));
+
+    private static String chooseTemplateOptions1[] = {
+	"ECMAScriptLayers",
+	"ECMAScriptLocations",
+	"ECMAScriptPaths",
+	"ECMAScript",
+	"JavaLayers",
+	"JavaLocations",
+	"JavaPathBuilders",
+	"JavaPathFactories",
+    };
+
+    private static String chooseTemplateOptions2[] = {
+	"area", "circumference", "pathlength", "SegmentsCVS"
+    };
+
+    private static boolean templateMatch(String savedState, int index) {
+	switch (index) {
+	case 0:
+	    return savedState.trim().length() == 0;
+	case 1:
+	    for (String s: chooseTemplateOptions1) {
+		if (s.equals(savedState)) {
+		    return true;
+		}
+	    }
+	    return false;
+	case 2:
+	    for (String s: chooseTemplateOptions2) {
+		if (s.equals(savedState)) {
+		    return true;
+		}
+	    }
+	    return false;
+	default:
+	    return false;
+	}
+    }
+
+    private static String chooseTemplate(JPanel pane, boolean builtin) {
+	if (builtin) {
+	    if (templateType == null) return null;
+	    switch (templateType) {
+	    case TT:
+		String result1 = (String)JOptionPane.showInputDialog
+		    (pane, localeString("chooseTemplateMsg"),
+		     localeString("chooseTemplateTitle"),
+		     JOptionPane.PLAIN_MESSAGE,
+		     null, chooseTemplateOptions1, chooseTemplateOptions1[3]);
+		return "sresource:" + result1;
+	    case PIT:
+		String result2 = (String)JOptionPane.showInputDialog
+		    (pane, localeString("chooseTemplateMsg"),
+		     localeString("chooseTemplateTitle"),
+		     JOptionPane.PLAIN_MESSAGE,
+		     null, chooseTemplateOptions2, chooseTemplateOptions2[2]);
+		return "sresource:" + result2;
+	    default:
+		return null;
+	    }
+	} else {
+	    // no restriction on how users might name template files
+	    JFileChooser fc = new JFileChooser(cdir);
+	    int status = fc.showOpenDialog(pane);
+	    if (status == JFileChooser.APPROVE_OPTION) {
+		File f = fc.getSelectedFile().getAbsoluteFile();
+		File parent = f.getParentFile();
+		if (parent != null) cdir = parent;
+	       return f.getAbsolutePath();
+	    } else {
+		return null;
+	    }
+	}
+    }
+    
+    private static String chooseSavedStateFile(JPanel pane) {
+	String extensions[] = {"epts"};
+	String fname = localeString("BasicFTypes");
+	JFileChooser fc = new JFileChooser(cdir);
+	fc.setAcceptAllFileFilterUsed(false);
+	FileNameExtensionFilter filter =
+	    new FileNameExtensionFilter(fname, extensions);
+	fc.addChoosableFileFilter(filter);
+	int status = fc.showOpenDialog(pane);
+	if (status == JFileChooser.APPROVE_OPTION) {
+	    File f = fc.getSelectedFile().getAbsoluteFile();
+	    File parent = f.getParentFile();
+	    if (parent != null) cdir = parent;
+	    return f.getAbsolutePath();
+	} else {
+	    return null;
+	}
+    }
+
+    private static String chooseSavedConfigFile(JPanel pane) {
+	String extensions[] = {"eptt"};
+	String fname = localeString("BasicTTypes");
+	JFileChooser fc = new JFileChooser(cdir);
+	fc.setAcceptAllFileFilterUsed(false);
+	FileNameExtensionFilter filter =
+	    new FileNameExtensionFilter(fname, extensions);
+	fc.addChoosableFileFilter(filter);
+	if (savedConfigFileName != null) {
+	    fc.setSelectedFile(new File(savedConfigFileName));
+	}
+	int status = fc.showOpenDialog(pane);
+	if (status == JFileChooser.APPROVE_OPTION) {
+	    File f = fc.getSelectedFile().getAbsoluteFile();
+	    File parent = f.getParentFile();
+	    if (parent != null) cdir = parent;
+	    return f.getAbsolutePath();
+	} else {
+	    return null;
+	}
+    }
+
+    private static String chooseFile(JPanel pane) {
+	JFileChooser fc = new JFileChooser(cdir);
+	int status = fc.showOpenDialog(pane);
+	if (status == JFileChooser.APPROVE_OPTION) {
+	    File f = fc.getSelectedFile().getAbsoluteFile();
+	    File parent = f.getParentFile();
+	    if (parent != null) cdir = parent;
+	    return f.getAbsolutePath();
+	} else {
+	    return null;
+	}
+    }
+
+
+    static JLabel templateLabel = null;
+    static JTextField templateTF = null;
+    static JButton templateButton = null;
+
+    static JCheckBox useBuiltinCheckBox = null;
+    static JLabel savedStateLabel = null;
+    static JTextField savedStateTF = null;
+    static JButton savedStateButton = null;
+    static JLabel mapLabel = null;
+    static JTextField mapTF = null;
+    static JButton mapButton = null;
+
+    static JLabel outFileLabel = null;
+    static JTextField outFileTF = null;
+    static JButton outFileButton = null;
+    static JButton saveWriteButton = null;
+    static JButton saveExitButton = null;
+    static JButton writeButton = null;
+    static JButton exitButton = null;
+
+    private static
+	javax.swing.Timer templateTimer = new javax.swing.Timer(2000, (ae) -> {
+		mapLabel.setEnabled(true);
+	    mapTF.setEnabled(true);
+	    mapButton.setEnabled(true);
+	});
+
+    static JButton addPathButton = null;
+    static JButton delPathButton = null;
+    static JTable compoundPathTable = null;
+    static JScrollPane compoundPathSP = null;
+    static JLabel subpathLabel = null;
+    static JTable subpathTable = null;
+    static JScrollPane subpathSP = null;
+    static JTable pathLocTable = null;
+    static Object compoundPathCols[] = {localeString("ExtraPaths")};
+    static Object pathlocCols[] = {"\u2714", localeString("LocPaths")};
+    static Object subpathCols[] = {localeString("Subpaths")};
+    private static void configTable(JTable table, boolean selectFirst) {
+	table.setColumnSelectionAllowed(false);
+	table.setRowSelectionAllowed(true);
+	if (selectFirst) {
+	    table.setRowSelectionInterval(0,0);
+	}
+    }
+
+    private static void setupCompoundPaths() {
+	Set<String> kset = pathmap.keySet();
+	String[] keys = new  String[kset.size()];
+	int ind = 0;
+	for (String key: kset) {
+	    keys[ind++] = key;
+	}
+	compoundPathTable.clearSelection();
+	DefaultTableModel tm = (DefaultTableModel)compoundPathTable.getModel();
+	tm.setRowCount(0);
+	ind = 0;
+	for (String key: keys) {
+	    Object[] data = {key};
+	    tm.addRow(data);
+	    ind++;
+	}
+	if (ind < 16) {
+	    tm.setRowCount(16);	    
+	}
+    }
+
+    static JCheckBox drawColorCheckBox = null;
+    static JLabel drawColorExample = null;
+    static JButton drawColorButton = null;
+    static JCheckBox fillColorCheckBox = null;
+    static JLabel fillColorExample = null;
+    static JButton fillColorButton = null;
+    static JLabel capLabel = null;
+    static JComboBox<String> capCB = null;
+    static JLabel dashIncrLabel = null;
+    static VTextField dashIncrTF = null;
+    static JLabel dashPatternLabel = null;
+    static VTextField dashPatternTF = null;
+    static JLabel dashPatternPhaseLabel = null;
+    static VTextField dashPatternPhaseTF = null;
+    static JLabel strokeJoinLabel = null;
+    static JComboBox<String> strokeJoinCB = null;
+    static JLabel miterLimitLabel = null;
+    static VTextField miterLimitTF = null;
+    static JCheckBox strokeGCSCheckBox = null;
+    static JLabel strokeWidthLabel = null;
+    static VTextField strokeWidthTF = null;
+    static JLabel windingRuleLabel = null;
+    static JComboBox<String> windingRuleCB = null;
+    static JLabel zorderLabel = null;
+    static VTextField zorderTF = null;
+
+    private static class ColorChooser {
+	static JColorChooser cc;
+	static JDialog dialog;
+	static Color orig;
+	static Color result;
+	static {
+	    cc = new JColorChooser();
+	    cc.addChooserPanel(new CSSColorChooserPanel());
+	    dialog = JColorChooser.createDialog
+		(dataPanel, localeString("ColorChooser"), true, cc,
+		 (e) -> {
+		    result = cc.getColor(); 
+		 },
+		 (e) -> {
+		     result = orig;
+		 });
+	}
+	public static Color showDialog(Color c) {
+	    orig = c;
+	    cc.setColor(orig);
+	    dialog.setVisible(true);
+	    return result;
+	}
+    }
+
+    public enum FlatnessMode  {
+	NORMAL, STRAIGHT,  ELEVATE,
+    }
+
+    public static class GlobalData {
+	public boolean usesTableTemplate;
+	public String packageName;
+	public String className;
+	public boolean isPublic;
+	public FlatnessMode fmode = FlatnessMode.NORMAL;
+	public double flatness;
+	public int limit = 10;
+	public boolean gcs;
+    };
+    static GlobalData globalData = new GlobalData();
+
+    public static class PathLocInfo {
+	public boolean isPath;
+	public boolean active = false;
+	public double strokeWidth = 1.0;
+	public boolean strokeGCS = false;
+	public boolean draw = false;
+	public Color drawColor = Color.BLACK;
+	public boolean fill = false;
+	public Color fillColor = Color.BLACK;
+	public int capIndex = 0;
+	public double dashIncr = 10.0;
+	public String dashPattern = "-";
+	public double dashPhase = 0.0;
+	public int joinIndex = 0;
+	public double miterLimit = 10.0;
+	public int windingRuleInd = 0;
+	public long zorder = 0;
+
+	public PathLocInfo() {isPath = false;}
+
+
+	public PathLocInfo(boolean isPath) {
+	    this.isPath = isPath;
+	}
+    }
+
+    public static class PathLocMap extends TreeMap<String,PathLocInfo> {
+	public PathLocMap() {super();}
+    }
+    static PathLocMap pathLocMap = new PathLocMap();
+    static PathLocInfo currentPLI = null;
+
+    static void populateDataPanel() {
+	if (currentPLI == null) return;
+	if (currentPLI.isPath == false) {
+	    return;
+	}
+	strokeWidthTF.setText("" + currentPLI.strokeWidth);
+	strokeGCSCheckBox.setSelected(currentPLI.strokeGCS);
+	drawColorCheckBox.setSelected(currentPLI.draw);
+	drawColorExample.setBackground(currentPLI.drawColor);
+	fillColorCheckBox.setSelected(currentPLI.fill);
+	fillColorExample.setBackground(currentPLI.fillColor);
+	capCB.setSelectedIndex(currentPLI.capIndex);
+	dashIncrTF.setText("" + currentPLI.dashIncr);
+	dashPatternTF.setText(currentPLI.dashPattern);
+	dashPatternPhaseTF.setText("" + currentPLI.dashPhase);
+	strokeJoinCB.setSelectedIndex(currentPLI.joinIndex);
+	miterLimitTF.setText("" + currentPLI.miterLimit);
+	windingRuleCB.setSelectedIndex(currentPLI.windingRuleInd);
+	zorderTF.setText("" + currentPLI.zorder);
+    }
+
+
+    private static CardLayout dataPanelCL = null;
+    private static JPanel dataPanel = null; 
+    private static JPanel emptyDataPanel = null;
+    private static JPanel pathDataPanel = null;
+
+    // use when the text is already validated.
+    private static double parseDouble(String text) {
+	try {
+	    return Double.parseDouble(text);
+	} catch (Exception e) {}
+	return 0.0;
+    }
+    // use when the text is already validated.
+    private static int parseInteger(String text) {
+	try {
+	    return Integer.parseInt(text);
+	} catch (Exception e) {}
+	return 0;
+    }
+
+    // use when the text is already validated.
+    private static long parseLong(String text) {
+	try {
+	    return Long.parseLong(text);
+	} catch (Exception e) {}
+	return 0L;
+    }
+
+    static final char openspace = '\u2423';
+
+    static void createConfigTable(JPanel panel) {
+	panel.setLayout(new BorderLayout());
+
+	dataPanelCL = new CardLayout();
+	dataPanel = new JPanel();
+	emptyDataPanel = new JPanel();
+	pathDataPanel = new JPanel();
+
+	dataPanel.setLayout(dataPanelCL);
+	dataPanel.add(emptyDataPanel, "empty");
+	dataPanel.add(pathDataPanel, "data");
+	dataPanelCL.show(dataPanel, "empty");
+	
+
+	TableModel cftm = new DefaultTableModel(pathlocCols, 16) {
+		public Class<?> getColumnClass(int col) {
+		    return (col == 0)? Boolean.class: String.class;
+		}
+	    };
+	cftm.addTableModelListener((tme) -> {
+		String type = "NONE";
+		switch(tme.getType()) {
+		case TableModelEvent.INSERT:
+		    type = "INSERT";
+		    break;
+		case TableModelEvent.UPDATE:
+		    type = "UPDATE";
+		    int col = tme.getColumn();
+		    if (col == 0) {
+			currentPLI.active = (Boolean)
+			    cftm.getValueAt(tme.getFirstRow(), col);
+		    }
+		    break;
+		case TableModelEvent.DELETE:
+		    type = "DELETE";
+		    break;
+		}
+	    });
+	pathLocTable = new JTable() {
+		public boolean isCellEditable(int row, int column) {
+		    return column == 0;
+		}
+	    };
+	
+	pathLocTable.setModel(cftm);
+	pathLocTable.getTableHeader().setReorderingAllowed(false);
+	JScrollPane pathlocSP = new JScrollPane(pathLocTable);
+	pathLocTable.setFillsViewportHeight(true);
+	configTable(pathLocTable, false);
+	pathLocTable.getSelectionModel().setSelectionMode
+	    (ListSelectionModel.SINGLE_SELECTION);
+	pathLocTable.getColumnModel().getColumn(0).setPreferredWidth(15);
+	int twidth = 15;
+	// twidth = Setup.configColumn(subpathTable, 0," ");
+	twidth += Setup.configColumn(pathLocTable, 1,
+				     "mmmmmmmmmmmmmmmmmmmm");
+	pathlocSP.setPreferredSize (new Dimension(twidth+10, 275));
+	panel.add(pathlocSP, BorderLayout.LINE_START);
+	panel.add(dataPanel, BorderLayout.LINE_END);
+
+	pathLocTable.getSelectionModel().addListSelectionListener((lse) -> {
+		int ind = pathLocTable.getSelectedRow();
+		if (ind == -1) {
+		    dataPanelCL.show(dataPanel, "empty");
+		} else  {
+		    String s = (String)pathLocTable.getValueAt(ind, 1);
+		    currentPLI = pathLocMap.get(s);
+		    pathLocTable.setValueAt(currentPLI.active, ind, 0);
+		    if (currentPLI.isPath) {
+			populateDataPanel();
+			dataPanelCL.show(dataPanel, "data");
+		    } else {
+			dataPanelCL.show(dataPanel, "empty");
+		    }
+		}
+	    });
+
+
+	drawColorCheckBox = new JCheckBox("DrawColor");
+	drawColorCheckBox.addActionListener((ae) -> {
+		currentPLI.draw = drawColorCheckBox.isSelected();
+	    });
+	drawColorExample = new JLabel("    ");
+	drawColorExample.setOpaque(true);
+	drawColorButton = new JButton(localeString("ChooseColor"));
+	drawColorButton.addActionListener((ae) -> {
+		currentPLI.drawColor
+		    = ColorChooser.showDialog(currentPLI.drawColor);
+		drawColorExample.setBackground(currentPLI.drawColor);
+	    });
+	fillColorCheckBox = new JCheckBox(localeString("FillColor"));
+	fillColorCheckBox.addActionListener((ae) -> {
+		currentPLI.fill = fillColorCheckBox.isSelected();
+	    });
+	fillColorExample = new JLabel("    ");
+	fillColorExample.setOpaque(true);
+	fillColorButton = new JButton(localeString("ChooseColor"));
+	fillColorButton.addActionListener((ae) -> {
+		currentPLI.fillColor
+		    = ColorChooser.showDialog(currentPLI.drawColor);
+		fillColorExample.setBackground(currentPLI.fillColor);
+	    });
+	capLabel = new JLabel(localeString("PathCap"));
+	capCB = new JComboBox<String>();
+	for (String s: strokeCaps2) {
+	    capCB.addItem(s);
+	}
+	capCB.addActionListener((ae) -> {
+		currentPLI.capIndex = capCB.getSelectedIndex();
+	    });
+	dashIncrLabel = new JLabel(localeString("DashIncr"));
+	dashIncrTF = new VTextField(16) {
+		protected void onAccepted() {
+		    currentPLI.dashIncr = parseDouble(getText());
+		}
+	    };
+	dashIncrTF.setAllowEmptyTextField(true);
+	AbstractDocument adoc = (AbstractDocument)dashIncrTF.getDocument();
+	adoc.setDocumentFilter(cfilter);
+	dashIncrTF.setInputVerifier(iv);
+	dashPatternLabel = new JLabel(localeString("DashPattern"));
+	PlainDocument dpdoc = new PlainDocument();
+	dpdoc.setDocumentFilter(dpfilter);
+	dashPatternTF = new VTextField(16) {
+		protected void onAccepted() {
+		    currentPLI.dashPattern =
+			dashPatternTF.getText().replace('\u2423', ' ');
+		}
+	    };
+	dashPatternTF.setAllowEmptyTextField(true);
+	dashPatternTF.setDocument(dpdoc);
+	dashPatternPhaseLabel = new JLabel(localeString("DashPatternPhase"));
+	dashPatternPhaseTF = new VTextField(16) {
+		protected void onAccepted() {
+		    currentPLI.dashPhase = parseDouble(getText());
+		}
+	    };
+	dashPatternPhaseTF.setAllowEmptyTextField(true);
+	adoc = (AbstractDocument)dashPatternPhaseTF.getDocument();
+	adoc.setDocumentFilter(cfilter);
+	dashPatternPhaseTF.setInputVerifier(iv);
+	strokeGCSCheckBox = new JCheckBox(localeString("StrokeGCS"));
+	strokeGCSCheckBox.setSelected(false);
+	strokeGCSCheckBox.addActionListener((ae) -> {
+		currentPLI.strokeGCS = strokeGCSCheckBox.isSelected();
+	    });
+	strokeJoinLabel = new JLabel("StrokeJoin");
+	strokeJoinCB = new JComboBox<String>();
+	for (String s: strokeJoins2) {
+	    strokeJoinCB.addItem(s);
+	}
+	strokeJoinCB.setSelectedIndex(0);
+	strokeJoinCB.addActionListener((ae) -> {
+		currentPLI.joinIndex = strokeJoinCB.getSelectedIndex();
+	    });
+	miterLimitLabel = new JLabel(localeString("MiterLimit"));
+	miterLimitTF = new VTextField(16) {
+		protected void onAccepted() {
+		    currentPLI.miterLimit = parseDouble(getText());
+		}
+	    };
+	miterLimitTF.setAllowEmptyTextField(true);
+	adoc = (AbstractDocument)miterLimitTF.getDocument();
+	adoc.setDocumentFilter(cfilter);
+	miterLimitTF.setInputVerifier(iv);
+	strokeWidthLabel = new JLabel(localeString("StrokeWidth"));
+	strokeWidthTF = new VTextField(16) {
+		protected void onAccepted() {
+		    currentPLI.strokeWidth = parseDouble(getText());
+		}
+	    };
+	strokeWidthTF.setAllowEmptyTextField(true);
+	adoc = (AbstractDocument)strokeWidthTF.getDocument();
+	adoc.setDocumentFilter(cfilter);
+	strokeWidthTF.setInputVerifier(iv);
+	windingRuleLabel = new JLabel(localeString("WindingRule"));
+	windingRuleCB = new JComboBox<String>();
+	for (String s: windingRules2) {
+	    windingRuleCB.addItem(s);
+	}
+	windingRuleCB.addActionListener((ae) -> {
+		currentPLI.windingRuleInd = windingRuleCB.getSelectedIndex();
+	    });
+	zorderLabel = new JLabel(localeString("zorder"));
+	zorderTF = new VTextField(10) {
+		protected void onAccepted() {
+		    currentPLI.zorder = parseLong(getText());
+		}
+	    };
+	zorderTF.setAllowEmptyTextField(true);
+	adoc = (AbstractDocument)zorderTF.getDocument();
+	adoc.setDocumentFilter(icfilter);
+	zorderTF.setInputVerifier(liv);
+	
+
+	GridBagLayout gridbag = new GridBagLayout();
+	GridBagConstraints c = new GridBagConstraints();
+	c.insets = new Insets(4, 8, 4, 8);
+	pathDataPanel.setLayout(gridbag);
+	
+    	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.LINE_END;
+	addComponent(pathDataPanel, strokeWidthLabel, gridbag, c);
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(pathDataPanel, strokeWidthTF, gridbag, c);
+
+    	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.LINE_END;
+	addComponent(pathDataPanel, new JLabel(" "), gridbag, c);
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(pathDataPanel, strokeGCSCheckBox, gridbag, c);
+
+	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.LINE_END;
+	addComponent(pathDataPanel, drawColorCheckBox, gridbag, c);
+	JPanel colorPanel1 = new JPanel(new FlowLayout());
+	colorPanel1.add(drawColorExample);
+	colorPanel1.add(drawColorButton);
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(pathDataPanel, colorPanel1, gridbag, c);
+
+	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.LINE_END;
+	addComponent(pathDataPanel, fillColorCheckBox, gridbag, c);
+	JPanel colorPanel2 = new JPanel(new FlowLayout());
+	colorPanel2.add(fillColorExample);
+	colorPanel2.add(fillColorButton);
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(pathDataPanel, colorPanel2, gridbag, c);
+	
+	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.LINE_END;
+	addComponent(pathDataPanel, capLabel, gridbag, c);
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(pathDataPanel, capCB , gridbag, c);
+
+	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.LINE_END;
+	addComponent(pathDataPanel, dashIncrLabel, gridbag, c);
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(pathDataPanel, dashIncrTF, gridbag, c);
+
+	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.LINE_END;
+	addComponent(pathDataPanel, dashPatternLabel, gridbag, c);
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(pathDataPanel, dashPatternTF, gridbag, c);
+
+	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.LINE_END;
+	addComponent(pathDataPanel, dashPatternPhaseLabel, gridbag, c);
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(pathDataPanel, dashPatternPhaseTF , gridbag, c);
+
+
+    	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.LINE_END;
+	addComponent(pathDataPanel, strokeJoinLabel , gridbag, c);
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(pathDataPanel, strokeJoinCB, gridbag, c);
+
+
+    	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.LINE_END;
+	addComponent(pathDataPanel, miterLimitLabel , gridbag, c);
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(pathDataPanel, miterLimitTF, gridbag, c);
+
+    	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.LINE_END;
+	addComponent(pathDataPanel, windingRuleLabel, gridbag, c);
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(pathDataPanel, windingRuleCB, gridbag, c);
+
+    	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.LINE_END;
+	addComponent(pathDataPanel, zorderLabel , gridbag, c);
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(pathDataPanel, zorderTF, gridbag, c);
+
+}
+
+    static JComboBox<String> subpathComboBox = null;
+    static String[] initialPaths = null;
+    static HashSet<String> initialSet = new HashSet<>();
+    static String[] locations = null;
+
+
+    static void initPathData(Parser parser) {
+	// subpathComboBox.addItem(""); // (Done in getSetupArgs)
+	initialPaths = parser.getPaths();
+	locations = parser.getLocations();
+	for (String s: locations) {
+	    initialSet.add(s);
+	}
+	if (subpathComboBox != null) {
+	    subpathComboBox.removeAllItems();
+	    subpathComboBox.addItem("");
+	}
+	if (initialPaths != null) {
+	    for (String s: initialPaths) {
+		if (subpathComboBox != null) {
+		    subpathComboBox.addItem(s);
+		}
+		initialSet.add(s);
+	    }
+	}
+    }
+
+    public static class PathMap extends LinkedHashMap<String,Vector<String>> {
+	public PathMap() {super();}
+    }
+
+    static PathMap pathmap = new PathMap();
+
+    static boolean subpathEditingAllowed = false;
+
+    static void setupAllowedSubpaths() {
+	int n = initialPaths.length;
+	subpathLabel.setText(localeString("subpathTbl1"));
+	subpathTable.setRowSelectionAllowed(false);
+	CellEditor ce = subpathTable.getCellEditor();
+	if (ce != null) {
+	    ce.stopCellEditing();
+	}
+	subpathEditingAllowed = false;
+	DefaultTableModel tm = (DefaultTableModel) subpathTable.getModel();
+	tm.setRowCount(0);
+	tm.setRowCount(n > 16? n: 16);
+	for (int i = 0; i < n; i++) {
+	    subpathTable.setValueAt(initialPaths[i], i, 0);
+	}
+    }
+
+    static JPanel globalPanel = null;
+    static CardLayout globalCL = null;
+
+    static JLabel packageNameLabel = null;
+    static JTextField packageNameTF = null;
+    static JLabel classNameLabel = null;
+    static JTextField classNameTF = null;
+    static JCheckBox publicClassCheckBox = null;
+
+
+    static JLabel flatnessLabel = null;
+    static VTextField flatnessTF = null;
+    static JLabel limitLabel = null;
+    static WholeNumbTextField limitTF = null;
+    static JRadioButton normalRB = null;
+    static JRadioButton straightRB = null;
+    static JRadioButton elevateRB = null;
+    static JCheckBox gcsCheckBox= null;
+
+    static void createGlobalPanel() {
+	globalPanel = new JPanel();
+	globalCL = new CardLayout();
+	JPanel svgPanel = new JPanel();
+	JPanel ttPanel = new JPanel();
+	JPanel piPanel = new JPanel();
+	packageNameLabel = new JLabel(localeString("PackageName"));
+	packageNameTF = new JTextField(32);
+	packageNameTF.addActionListener((ae) -> {
+		globalData.packageName = packageNameTF.getText().trim();
+	    });
+	classNameLabel = new JLabel(localeString("ClassName"));
+	classNameTF = new JTextField(32);
+	classNameTF.addActionListener((ae) -> {
+		globalData.className = classNameTF.getText().trim();
+	    });
+	publicClassCheckBox = new JCheckBox(localeString("PublicClass"));
+	publicClassCheckBox.addActionListener((ae) -> {
+		globalData.isPublic = publicClassCheckBox.isSelected();
+	    });
+	publicClassCheckBox.setSelected(false);
+	GridBagLayout gridbag = new GridBagLayout();
+	GridBagConstraints c = new GridBagConstraints();
+	ttPanel.setLayout(gridbag);
+	c.insets = new Insets(4, 8, 4, 8);
+	ttPanel.setLayout(gridbag);
+	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.LINE_END;
+	addComponent(ttPanel, packageNameLabel, gridbag, c);
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(ttPanel, packageNameTF, gridbag, c);
+	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.LINE_END;
+	addComponent(ttPanel, classNameLabel, gridbag, c);
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(ttPanel, classNameTF, gridbag, c);
+	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.LINE_END;
+	addComponent(ttPanel, new JLabel(" "), gridbag, c);
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(ttPanel, publicClassCheckBox, gridbag, c);
+	
+	flatnessLabel = new JLabel(localeString("Flatness"));
+	flatnessTF = new VTextField(16) {
+		public void onAccepted() {
+		    globalData.flatness = parseDouble(getText());
+		}
+	    };
+	flatnessTF.setAllowEmptyTextField(true);
+	AbstractDocument adoc = (AbstractDocument)flatnessTF.getDocument();
+	adoc.setDocumentFilter(cfilter);
+	flatnessTF.setInputVerifier(iv);
+	limitLabel = new JLabel(localeString("Limit"));
+	limitTF = new WholeNumbTextField("", 5) {
+		public void onAccepted() {
+		    globalData.limit = getValue();
+		}
+	    };
+	limitTF.setDefaultValue(-1);
+	JLabel segmentOps = new JLabel(localeString("SegmentOptions"));
+	normalRB = new JRadioButton(localeString("Normal"));
+	straightRB = new JRadioButton(localeString("Straight"));
+	elevateRB = new JRadioButton(localeString("Elevate"));
+	normalRB.setSelected(true);
+	normalRB.addActionListener((ae) -> {
+		if (normalRB.isSelected()) {
+		    globalData.fmode = FlatnessMode.NORMAL;
+		}
+	    });
+	straightRB.addActionListener((ae) -> {
+		if (straightRB.isSelected()) {
+		    globalData.fmode = FlatnessMode.STRAIGHT;
+		}
+	    });
+	elevateRB.addActionListener((ae) -> {
+		if (elevateRB.isSelected()) {
+		    globalData.fmode = FlatnessMode.ELEVATE;
+		}
+	    });
+	ButtonGroup group = new ButtonGroup();
+	group.add(normalRB);
+	group.add(straightRB);
+	group.add(elevateRB);
+	gcsCheckBox = new JCheckBox(localeString("GCSMode"));
+	gcsCheckBox.setSelected(false);
+
+	gridbag = new GridBagLayout();
+	c = new GridBagConstraints();
+	piPanel.setLayout(gridbag);
+	c.insets = new Insets(4, 8, 4, 8);
+	piPanel.setLayout(gridbag);
+	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.LINE_END;
+	addComponent(piPanel, flatnessLabel, gridbag, c);
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(piPanel, flatnessTF, gridbag, c);
+	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.LINE_END;
+	addComponent(piPanel, limitLabel, gridbag, c);
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(piPanel, limitTF, gridbag, c);
+	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.LINE_END;
+	addComponent(piPanel, new JLabel(" "), gridbag, c);
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(piPanel, normalRB, gridbag, c);
+	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.LINE_END;
+	addComponent(piPanel, new JLabel(" "), gridbag, c);
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(piPanel, straightRB, gridbag, c);
+	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.LINE_END;
+	addComponent(piPanel, new JLabel(" "), gridbag, c);
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(piPanel, elevateRB, gridbag, c);
+	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.LINE_END;
+	addComponent(piPanel, new JLabel(" "), gridbag, c);
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(piPanel, gcsCheckBox, gridbag, c);
+
+	globalPanel.setLayout(globalCL);
+	globalPanel.add(svgPanel, "svg");
+	globalPanel.add(ttPanel, "tt");
+	globalPanel.add(piPanel, "pi");
+    }
+
+    private static String savedConfigFileName = null;
+    private static boolean save(JPanel panel) {
+	String fname = chooseSavedConfigFile(panel);
+	if (fname != null) {
+	    savedConfigFileName = fname;
+	} else {
+	    return false;
+	}
+	try {
+	    OutputStream os = new FileOutputStream(fname);
+	    ZipDocWriter zos = new ZipDocWriter
+		(os, "application/vnd.bzdev.epts-template-config+zip");
+
+	    os = zos.nextOutputStream("basicData", true, 9);
+	    XMLEncoder enc = new XMLEncoder(os);
+	    enc.writeObject(basicData);
+	    enc.close();
+	    os.close();
+	    os = zos.nextOutputStream("pathmap", true, 9);
+	    enc = new XMLEncoder(os);
+	    enc.writeObject(pathmap);
+	    enc.close();
+	    os.close();
+	    
+	    os = zos.nextOutputStream("globalData", true, 9);
+	    enc = new XMLEncoder(os);
+	    enc.writeObject(globalData);
+	    enc.close();
+	    os.close();
+
+	    os = zos.nextOutputStream("pathLocMap", true, 9);
+	    enc = new XMLEncoder(os);
+	    enc.writeObject(pathLocMap);
+	    enc.close();
+	    os.close();
+
+	    os = zos.nextOutputStream("outfile", false, 0);
+	    enc = new XMLEncoder(os);
+	    enc.writeObject(outFileTF.getText());
+	    enc.close();
+	    os.close();
+	    zos.close();
+	    return true;
+	} catch (Exception e) {
+	    return false;
+	}
+    }
+
+    private static String colorString(Color c) {
+	String name = Colors.getCSSName(c);
+	if (name == null) {
+	    int alpha = c.getAlpha();
+	    int red = c.getRed();
+	    int green = c.getGreen();
+	    int blue = c.getBlue();
+	    if (alpha == 255) {
+		return String.format("rgb(%d,%d,%d)", red, green, blue);
+	    } else {
+		double dalpha = alpha / 255.0;
+		return String.format("rgba(%d,%d,%d,%g)",
+				     red, green, blue, dalpha);
+	    }
+	} else {
+	    return name;
+	}
+    }
+
+    static String outFile = null;
+
+    public static String[] generate() {
+	ArrayList<String> list = new ArrayList<>();
+	list.add("-o");
+	list.add(outFile);
+	if (basicData.mapName != null) {
+	    String name = basicData.mapName.trim();
+	    if (name.length() > 0) {
+		list.add("--map");
+		list.add(name);
+	    }
+	}
+	String tname = (basicData.template == null)? "":
+	    basicData.template.trim();
+	switch(templateType) {
+	case SVG:
+	    list.add("--svg");
+	    break;
+	case TT:
+	case PIT:
+	    if (tname.length() > 0) {
+		list.add("--template");
+		list.add(tname);
+	    } else {
+		System.err.println("no template name");
+		return null;
+	    }
+	}
+	if (globalData.usesTableTemplate) {
+	    String pname = (globalData.packageName == null)? "":
+		globalData.packageName.trim();
+	    String cname = (globalData.className == null)? "":
+		globalData.className.trim();
+	    if (pname.length() > 0) {
+		list.add("--package");
+		list.add(pname);
+	    }
+	    if (cname.length() > 0) {
+		list.add("--class");
+		list.add(cname);
+	    }
+	    if (globalData.isPublic) {
+		list.add("--public");
+	    }
+	} else {
+	    switch(globalData.fmode) {
+	    case STRAIGHT:
+		list.add("--straight");
+		if (globalData.limit != 10) {
+		    list.add("--limit");
+		    list.add("" + globalData.limit);
+		}
+		if (globalData.flatness > 0.0) {
+		    list.add("--flatness");
+		    list.add("" + globalData.flatness);
+		}
+		break;
+	    case ELEVATE:
+		list.add("--elevate");
+		break;
+	    }
+	}
+	for (Map.Entry<String,PathLocInfo> entry: pathLocMap.entrySet())  {
+	    String name = entry.getKey();
+	    PathLocInfo pli = entry.getValue();
+	    if (pli.active == false) continue;
+	    switch(templateType) {
+	    case SVG:
+	    case TT:
+		if (pli.isPath) {
+		    if (pli.draw) {
+			list.add("--stroke-width");
+			list.add("" + pli.strokeWidth);
+			list.add("--stroke-dash-incr");
+			list.add("" + pli.dashIncr);
+			list.add("--stroke-dash-pattern");
+			list.add(pli.dashPattern);
+			list.add("--stroke-dash-phase");
+			list.add("" + pli.dashPhase);
+			list.add("--stroke-cap");
+			list.add(strokeCaps[pli.capIndex]);
+			list.add("--stroke-join");
+			list.add(strokeJoins[pli.joinIndex]);
+			list.add("--stroke-miter-limit");
+			list.add("" + pli.miterLimit);
+			list.add("--stroke-color");
+			list.add(colorString(pli.drawColor));
+			list.add("--stroke-gcs-mode");
+			list.add("" + pli.strokeGCS);
+		    }
+		    if (pli.fill) {
+			list.add("--fill-color");
+			list.add(colorString(pli.fillColor));
+		    }
+		    list.add("--winding-rule");
+		    list.add(windingRules[pli.windingRuleInd]);
+		}
+		list.add("--tname");
+		break;
+	    case PIT:
+		list.add("--pname");
+	    }
+	    Vector<String> vector = pathmap.get(name);
+	    int n = (vector == null)? 0: vector.size();
+	    if (n == 0) {
+		list.add(name);
+	    } else {
+		StringBuilder sb = new StringBuilder();
+		sb.append(name);
+		sb.append(':');
+		int cnt = 0;
+		for (String s: vector) {
+		    sb.append(s);
+		    if ((++cnt) < n) {
+			sb.append(',');
+		    }
+		}
+		list.add(sb.toString());
+	    }
+	}
+
+	list.add("--");
+	if (basicData.savedState != null) {
+	    basicData.savedState = basicData.savedState.trim();
+	    list.add(basicData.savedState);
+	}
+	String[] results = new String[list.size()];
+	return list.toArray(results);
+    }
+
+    static boolean restore(ZipDocFile zf, boolean setComponents, JPanel panel) {
+	try {
+	    ZipEntry ze = zf.getEntry("basicData");
+	    InputStream is = zf.getInputStream(ze);
+	    XMLDecoder dec = new XMLDecoder(is);
+	    Object result = dec.readObject();
+	    if (result instanceof BasicData) {
+		basicData = (BasicData) result;
+		if (setComponents) {
+		    templateTypeCB.setSelectedIndex(basicData.templateTypeInd);
+		}
+		switch(basicData.templateTypeInd) {
+		case -1:
+		    templateType = null;
+		    break;
+		case 0:
+		    templateType = TType.SVG;
+		    break;
+		case 1:
+		    templateType = TType.TT;
+		    break;
+		case 2:
+		    templateType = TType.PIT;
+		    break;
+		default:
+		    break;
+		}
+		if (setComponents) {
+		    useBuiltinCheckBox.setSelected(basicData.useBuiltins);
+		    templateTF.setText(basicData.template);
+		    savedStateTF.setText(basicData.savedState);
+		    mapTF.setText(basicData.mapName);
+		}
+		processSavedState(basicData.savedState, panel);
+	    }
+	    dec.close();
+	    is.close();
+
+	    ze = zf.getEntry("pathmap");
+	    is = zf.getInputStream(ze);
+	    dec = new XMLDecoder(is);
+	    result = dec.readObject();
+	    if (result instanceof PathMap) {
+		pathmap = (PathMap) result;
+	    }
+	    dec.close();
+	    is.close();
+
+	    ze = zf.getEntry("globalData");
+	    is = zf.getInputStream(ze);
+	    dec = new XMLDecoder(is);
+	    result = dec.readObject();
+	    if (result instanceof GlobalData) {
+		globalData = (GlobalData) result;
+	    }
+	    dec.close();
+	    is.close();
+
+	    ze = zf.getEntry("pathLocMap");
+	    is = zf.getInputStream(ze);
+	    dec = new XMLDecoder(is);
+	    result = dec.readObject();
+	    if (result instanceof PathLocMap) {
+		pathLocMap = (PathLocMap) result;
+	    }
+	    dec.close();
+	    is.close();
+
+	    ze = zf.getEntry("outfile");
+	    is = zf.getInputStream(ze);
+	    dec = new XMLDecoder(is);
+	    result = dec.readObject();
+	    if (result instanceof String) {
+		String outfile = (String) result;
+		if (outfile != null && outfile.length() > 0) {
+		    if (setComponents) {
+			outFileTF.setText(outfile);
+		    }
+		}
+		if (outFile == null) {
+		    outFile = outfile;
+		}
+	    }
+	    dec.close();
+	    is.close();
+	    return true;
+	} catch  (Exception e) {
+	    return false;
+	}
+    }
+
+
+
+    static void createFinishPane(final JDialog dialog, final JPanel panel) {
+	outFileLabel = new JLabel(localeString("outFile"));
+	outFileTF = new JTextField(32);
+	outFileButton = new JButton(localeString("outFileButton"));
+	outFileButton.addActionListener((ae) -> {
+		String name = chooseFile(panel);
+		if (name != null) {
+		    outFileTF.setText(name);
+		}
+	    });
+	GridBagLayout gridbag = new GridBagLayout();
+	GridBagConstraints c = new GridBagConstraints();
+	c.insets = new Insets(4, 8, 4, 8);
+	panel.setLayout(gridbag);
+	
+	c.anchor = GridBagConstraints.LINE_END;
+	c.gridwidth = 1;
+	addComponent(panel, outFileLabel, gridbag, c);
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = GridBagConstraints.RELATIVE;
+	addComponent(panel, outFileTF, gridbag, c);
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(panel, outFileButton, gridbag, c);
+
+	saveWriteButton = new JButton(localeString("SaveAndWrite"));
+	saveWriteButton.addActionListener((ae) -> {
+		if (save(panel)) {
+		    outFile = outFileTF.getText().trim();
+		    results = generate();
+		    dialog.setVisible(false);
+		}
+	    });
+
+	saveExitButton = new JButton(localeString("SaveAndExit"));
+	saveExitButton.addActionListener((ae) -> {
+		if (save(panel)) {
+		    System.exit(0);
+		}
+	    });
+	writeButton = new JButton(localeString("JustWrite"));
+	writeButton.addActionListener((ae) -> {
+		outFile = outFileTF.getText().trim();
+		results = generate();
+		dialog.setVisible(false);
+	    });
+	exitButton = new JButton(localeString("JustExit"));
+	exitButton.addActionListener((ae) -> {
+		System.exit(0);
+	    });
+
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(panel, new JLabel(" "), gridbag, c);
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = 1;
+	addComponent(panel, new JLabel(" "), gridbag, c);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(panel, new JLabel(localeString("WriteSaveOptions")),
+		     gridbag, c);
+
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(panel, new JLabel(" "), gridbag, c);
+
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = 1;
+	addComponent(panel, new JLabel(" "), gridbag, c);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(panel, saveWriteButton, gridbag, c);
+	c.gridwidth = 1;
+	addComponent(panel, new JLabel(" "), gridbag, c);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(panel, saveExitButton, gridbag, c);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(panel, new JLabel(" "), gridbag, c);
+	c.gridwidth = 1;
+	addComponent(panel, new JLabel(" "), gridbag, c);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(panel, writeButton, gridbag, c);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(panel, new JLabel(" "), gridbag, c);
+	c.gridwidth = 1;
+	addComponent(panel, new JLabel(" "), gridbag, c);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(panel, exitButton, gridbag, c);
+    }
+
+
+    static void createPathTables(JPanel panel)
+    {
+	GridBagLayout gridbag = new GridBagLayout();
+	GridBagConstraints c = new GridBagConstraints();
+	c.insets = new Insets(4, 8, 4, 8);
+	panel.setLayout(gridbag);
+
+	addPathButton = new JButton(localeString("newCompound"));
+	addPathButton.addActionListener((ae) -> {
+		String name = (String)JOptionPane.showInputDialog
+		    (panel, localeString("addAdditionalName"),
+		     localeString("addNameTitle"), JOptionPane.PLAIN_MESSAGE);
+		if (name == null) return;
+		name = name.trim();
+		if (name.length() == 0) return;
+		if (pathmap.containsKey(name)) {
+		    JOptionPane.showMessageDialog
+			(panel,
+			 errorMsg("nameExists1"),
+			 localeString("errorTitle"),
+			 JOptionPane.ERROR_MESSAGE);
+		    return;
+		}
+		if (initialSet.contains(name)) {
+		    JOptionPane.showMessageDialog
+			(panel,
+			 errorMsg("nameExists2"),
+			 localeString("errorTitle"),
+			 JOptionPane.ERROR_MESSAGE);
+		    return;
+		}
+		compoundPathTable.clearSelection();
+		DefaultTableModel tm = (DefaultTableModel)
+		    compoundPathTable.getModel();
+		pathmap.put(name, new Vector<String>());
+		Object[] data = {name};
+		int n =  compoundPathTable.getRowCount();
+		if (n > 16) {
+		    tm.addRow(data);
+		} else {
+		    int i;
+		    for (i = 0 ; i < 16; i++) {
+			Object obj = tm.getValueAt(i, 0);
+			if (obj == null) {
+			    break;
+			} else if (((String)obj).trim().length() == 0) {
+			    break;
+			}
+		    }
+		    if (i < 16) { 
+			n = i;
+			tm.setValueAt(name, i, 0);
+		    } else {
+			tm.addRow(data);
+		    }
+		}
+		compoundPathTable.setRowSelectionInterval(n,n);
+
+	    });
+	delPathButton = new JButton(localeString("deleteSelected"));
+	delPathButton.addActionListener((ae) -> {
+		int[] selected = compoundPathTable.getSelectedRows();
+		if (selected  == null || selected.length == 0) return;
+		Arrays.sort(selected);
+		DefaultTableModel tm = (DefaultTableModel)
+		    compoundPathTable.getModel();
+		for (int i = selected.length-1; i > -1; i--) {
+		    int index  = selected[i];
+		    String name = (String)
+			compoundPathTable.getValueAt(index,0);
+		    pathmap.remove(name);
+		    tm.removeRow(index);
+		}
+	    });
+	TableModel cptm = new DefaultTableModel(compoundPathCols, 16) {
+		public Class<?> getColumnClass(int col) {
+		    return String.class;
+		}
+	    };
+	compoundPathTable = new JTable() {
+		public boolean isCellEditable(int row, int column) {
+		    return false;
+		}
+	    };
+	compoundPathTable.setModel(cptm);
+	int twidth = Setup.configColumn(compoundPathTable, 0,
+					"mmmmmmmmmmmmmmmmmmmm");
+
+	compoundPathSP = new JScrollPane(compoundPathTable);
+	compoundPathTable.setFillsViewportHeight(true);
+	configTable(compoundPathTable, true);
+
+	compoundPathSP.setPreferredSize(new Dimension(twidth+10, 275));
+	TableModel sptm = new DefaultTableModel(subpathCols, 16) {
+		public Class<?> getColumnClass(int col) {
+		    return String.class;
+		}
+	    };
+
+	compoundPathTable.getSelectionModel()
+	    .addListSelectionListener((se) -> {
+		    int selcount = compoundPathTable.getSelectedRowCount();
+		    if (selcount == 0) {
+			return;
+		    } else if (selcount == 1) {
+			String name = (String)compoundPathTable.getValueAt
+			    (compoundPathTable.getSelectedRow(), 0);
+			if (pathmap.containsKey(name)) {
+			    Vector<String> values =
+				new Vector<String>(pathmap.get(name));
+			    DefaultTableModel tm = (DefaultTableModel)
+				subpathTable.getModel();
+			    int n = values.size();
+			    tm.setRowCount(n);
+			    int i = 0;
+			    for (String s: values) {
+				tm.setValueAt(s, i++, 0);
+			    }
+			    if (n < 15) {
+				tm.setRowCount(16);
+			    } else {
+				tm.setRowCount(n+2);
+			    }
+			    subpathLabel.setText(localeString("subpathTbl2"));
+			    subpathTable.setRowSelectionAllowed(true);
+			    subpathEditingAllowed = true;
+			} else {
+			    setupAllowedSubpaths();
+			}
+		    } else {
+			setupAllowedSubpaths();
+		    }
+	    });
+
+
+	subpathLabel = new JLabel(localeString("subpathTbl1"));
+	subpathTable = new JTable() {
+		public boolean isCellEditable(int row, int column) {
+		    return (column == 0) && subpathEditingAllowed;
+		}
+	    };
+	subpathTable.setModel(sptm);
+	subpathTable.getTableHeader().setReorderingAllowed(false);
+	subpathSP = new JScrollPane(subpathTable);
+	subpathTable.setFillsViewportHeight(true);
+	configTable(subpathTable, false);
+	twidth = Setup.configColumn(subpathTable, 0,
+				     "mmmmmmmmmmmmmmmmmmmm");
+	subpathSP.setPreferredSize (new Dimension(twidth+10, 275));
+	subpathTable.getColumnModel().getColumn(0).setCellEditor
+	    (new DefaultCellEditor(subpathComboBox));
+
+	subpathTable.getModel().addTableModelListener((tme) -> {
+		if (compoundPathTable.getSelectedRowCount() == 1) {
+		    String name = (String)compoundPathTable.getValueAt
+			(compoundPathTable.getSelectedRow(), 0);
+		    if (name == null) return;
+		    name = name.trim();
+		    if (name.length() == 0) return;
+		    Vector<String>v = pathmap.get(name);
+		    if (v == null) return;
+		    int n = subpathTable.getRowCount();
+		    Vector<String> values =new Vector<String>(n);
+		    for (int i = 0; i < n; i++) {
+			String val = (String)subpathTable.getValueAt(i, 0);
+			if (val == null) continue;
+			val = val.trim();
+			if (val.length() != 0) {
+			    values.add((String)subpathTable.getValueAt(i, 0));
+			}
+		    }
+		    pathmap.put(name, values);
+		}
+	    });
+
+	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.CENTER;
+	JPanel buttonPanel = new JPanel(new BorderLayout());
+	buttonPanel.add(addPathButton, "North");
+	buttonPanel.add(delPathButton, "South");
+	addComponent(panel, buttonPanel, gridbag, c);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	c.anchor = GridBagConstraints.CENTER;
+	addComponent(panel, subpathLabel, gridbag, c);
+	
+	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.LINE_START;
+	addComponent(panel, compoundPathSP, gridbag, c);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(panel, subpathSP, gridbag, c);
+    }
+
+
+    private static void doEnables(JTabbedPane tabpane) {
+	Component piComponents[] = {
+	    /*addPathButton, delPathButton,
+	      compoundPathTable, subpathLabel, subpathTable */
+	};
+
+	Component svgComponents[] = {
+	    addPathButton, delPathButton,
+	    compoundPathTable, subpathLabel, subpathTable
+	};
+
+	Component ttComponents[] = {
+	    /*templateLabel, templateTF, templateButton, savedStateLabel,
+	    savedStateTF, savedStateButton, outFileLabel,
+	    outFileTF, outFileButton, mapLabel, mapButton, mapTF,*/
+	    /*addPathButton, delPathButton,
+	      compoundPathTable, subpathLabel, subpathTable, */
+	    /* publicClassCheckBox, packageNameLabel,
+	       packageNameTF, classNameLabel, classNameTF */
+	};
+
+	Component allComponents[] = {
+	    templateLabel, templateTF, templateButton,
+	    useBuiltinCheckBox, mapLabel, mapTF, mapButton,
+	    /* addPathButton, delPathButton,
+	       compoundPathTable, subpathLabel, subpathTable,
+	    publicClassCheckBox, packageNameLabel,
+	    packageNameTF, classNameLabel, classNameTF,*/
+	};
+	if (templateType == null) {
+	    // disable almost everything.
+	    if (tabpane != null) {
+		tabpane.setEnabledAt(1, false);
+		tabpane.setEnabledAt(2, false);
+		tabpane.setEnabledAt(3, false);
+		tabpane.setEnabledAt(4, false);
+	    }
+	    for (Component c: allComponents) {
+		c.setEnabled(false);
+	    }
+	} else {
+	    if (tabpane != null) {
+		tabpane.setEnabledAt(1, true);
+		tabpane.setEnabledAt(3, true);
+		tabpane.setEnabledAt(4, true);
+	    }
+	    switch(templateType) {
+	    case SVG:
+		globalCL.show(globalPanel, "svg");
+		for (Component c: svgComponents) {
+		    c.setEnabled(true);
+		}
+	    break;
+	    case TT:
+		if (tabpane != null) {
+		    if (mayUseClassOrPackage(templateTF.getText())) {
+			tabpane.setEnabledAt(2, true);
+		    } else {
+			tabpane.setEnabledAt(2, false);
+		    }
+		}
+		globalCL.show(globalPanel, "tt");
+		for (Component c: ttComponents) { 
+		    c.setEnabled(true);
+		}
+	    break;
+	    case PIT:
+		if (tabpane != null) {
+		    tabpane.setEnabledAt(2, true);
+		}
+		globalCL.show(globalPanel, "pi");
+		for (Component c: piComponents) {
+		    c.setEnabled(true);
+		}
+	    default:
+		break;
+	    }
+	}
+    }
+
+    static void processSavedState(String fname, JPanel panel) {
+	if (!fname.endsWith(".epts")) {
+	    if (panel == null) {
+		System.err.println(errorMsg("eptsFileExpected"));
+		System.exit(1);
+	    } else {
+		JOptionPane.showMessageDialog(panel,
+					      errorMsg("eptsFileExpected"),
+					      localeString("errorTitle"),
+					      JOptionPane.ERROR_MESSAGE);
+		return;
+	    }
+	}
+	try {
+	    if (fname.startsWith("file:")) {
+		fname = (new File(new URI(fname)))
+		    .getCanonicalPath();
+	    } else if (EPTS.maybeURL(fname)) {
+		if (panel == null) {
+		    System.err.println(errorMsg("eptsFileExpected"));
+		    System.exit(1);
+		} else {
+		    JOptionPane.showMessageDialog(panel,
+						  errorMsg("eptsFileExpected"),
+						  localeString("errorTitle"),
+						  JOptionPane.ERROR_MESSAGE);
+		    return;
+		}
+	    }
+	    InputStream is = new FileInputStream(fname);
+	    Parser parser = new Parser();
+	    parser.parse(is);
+	    initPathData(parser);
+	    is.close();
+	} catch (Exception e) {
+	    e.printStackTrace();
+	    if (panel == null) {
+		System.err.println(errorMsg("eptsFileExpected"));
+		System.exit(1);
+	    } else {
+		JOptionPane.showMessageDialog(panel,
+					      errorMsg("eptsFileExpected"),
+					      localeString("errorTitle"),
+					      JOptionPane.ERROR_MESSAGE);
+	    }
+	}
+    }
+
+
+    static JComboBox<String> templateTypeCB = null;
+    private static boolean freezeTemplateType = false;
+    private static void freezeTemplateType(boolean mode) {
+	freezeTemplateType = mode;
+	if (mode) {
+	    templateTypeCB.setFocusable(false);
+	} else {
+	    templateTypeCB.setFocusable(true);
+	}
+    }
+    private static String lastSavedState = "";
+
+    public static String[] getSetupArgs(ZipDocFile zf, File zfile)
+    {
+	try {
+	    results = null;
+	    SwingUtilities.invokeAndWait(() -> {
+		    JDialog dialog = new JDialog();
+		    subpathComboBox = new JComboBox<String>();
+		    subpathComboBox.addItem(" ");
+		    JPanel topPanel = new JPanel();
+		    topPanel.setLayout(new BorderLayout());
+		    JTabbedPane tabpane = new JTabbedPane();
+		    topPanel.add(tabpane, "Center");
+
+		    JPanel basicPanel = new JPanel();
+		    JPanel addPathPanel = new JPanel();
+		    JPanel configPanel = new JPanel();
+		    JPanel finishPanel = new JPanel();
+		    GridBagLayout gridbag = new GridBagLayout();
+		    basicPanel.setLayout(gridbag);
+		    JLabel templateTypeLabel =
+			new JLabel(localeString("templateType"));
+		    templateTypeCB =
+			new JComboBox<String>(templateTypes) {
+			    public void processMouseEvent(MouseEvent e) {
+				if (freezeTemplateType == false) {
+				    super.processMouseEvent(e);
+				}
+			    }
+			    };
+		    templateTypeCB.addPopupMenuListener
+			(new PopupMenuListener() {
+				@Override
+				public void
+				    popupMenuCanceled(PopupMenuEvent e) {
+				}
+				@Override
+				public void popupMenuWillBecomeVisible
+				    (PopupMenuEvent e)
+				{
+				    if (freezeTemplateType) {
+					/*
+					 * Need to delay hiding the popup:
+					 * otherwise the popup will be made
+					 * visible after we asked to hide it.
+					 */
+					SwingUtilities.invokeLater(() -> {
+						templateTypeCB
+						    .setPopupVisible(false);
+					    });
+				    }
+				}
+				@Override
+				public void popupMenuWillBecomeInvisible
+				    (PopupMenuEvent e) {
+				}
+			    });
+		    templateTypeCB.setSelectedIndex(-1);
+		    useBuiltinCheckBox =
+			new JCheckBox(localeString("useBuiltin"));
+		    useBuiltinCheckBox.setSelected(true);
+ 		    JButton acceptTypeButton =
+			new JButton(localeString("AcceptType"));
+		    templateTypeCB.addActionListener((ae) -> {
+			    int index = templateTypeCB.getSelectedIndex();
+			    switch (index) {
+			    case -1: templateType = null; break;
+			    case 0: templateType = TType.SVG; break;
+			    case 1: templateType = TType.TT; break;
+			    case 2: templateType = TType.PIT; break;
+			    }
+			    boolean enable = (index > -1);
+			    String tplate = templateTF.getText().trim();
+			    if (tplate.startsWith("sresource:")) {
+				if (!templateMatch(tplate, index)) {
+				    tplate = "";
+				    templateTF.setText(tplate);
+				}
+			    }
+			    String savedState = savedStateTF.getText().trim();
+			    if (savedState.length() > 0) {
+				acceptTypeButton.setEnabled(enable);
+				if (!savedState.equals(lastSavedState)) {
+				    DefaultTableModel tm = (DefaultTableModel)
+					compoundPathTable.getModel();
+				    compoundPathTable.clearSelection();
+				    subpathTable.clearSelection();
+				    pathmap.clear();
+				    tm.setRowCount(0);
+				    tm.setRowCount(16);
+				    tm = (DefaultTableModel)
+					subpathTable.getModel();
+				    tm.setRowCount(0);
+				    tm.setRowCount(16);
+				}
+			    } else {
+				// acceptTypeButton.setEnabled(false);
+			    }
+			    enable = (index > 0);
+			    templateLabel.setEnabled(enable);
+			    templateTF.setEnabled(enable);
+			    templateButton.setEnabled(enable);
+			    useBuiltinCheckBox.setEnabled(enable);
+			    enable = (index == 1);
+			    if (enable) {
+				String ttext = templateTF.getText().trim();
+				enable = (ttext.length() != 0 &&
+					  !ttext.startsWith("sresource:"));
+			    }
+			    mapLabel.setEnabled(enable);
+			    mapTF.setEnabled(enable);
+			    mapButton.setEnabled(enable);
+			});
+
+		    JButton resetTypeButton = 
+			new JButton(localeString("ResetType"));
+		    resetTypeButton.setEnabled(false);
+		    acceptTypeButton.setEnabled(false);
+		    acceptTypeButton.addActionListener((ae) -> {
+			    String savedState1 = savedStateTF.getText().trim();
+			    if (savedState1.length() > 0) {
+				if (!savedState1.equals(lastSavedState)) {
+				    DefaultTableModel tm = (DefaultTableModel)
+					compoundPathTable.getModel();
+				    compoundPathTable.clearSelection();
+				    subpathTable.clearSelection();
+				    pathmap.clear();
+				    tm.setRowCount(0);
+				    tm.setRowCount(16);
+				    tm = (DefaultTableModel)
+					subpathTable.getModel();
+				    tm.setRowCount(0);
+				    tm.setRowCount(16);
+				}
+			    }
+			    int index = templateTypeCB.getSelectedIndex();
+			    basicData.templateTypeInd = index;
+			    if (index > -1) {
+				String fname = savedStateTF.getText().trim();
+				processSavedState(fname, topPanel);
+				if (fname.length() > 0) {
+				    if (!fname.equals(lastSavedState)) {
+					DefaultTableModel tm =
+					    (DefaultTableModel)
+					    compoundPathTable.getModel();
+					compoundPathTable.clearSelection();
+					subpathTable.clearSelection();
+					pathmap.clear();
+					tm.setRowCount(0);
+					tm.setRowCount(16);
+					tm = (DefaultTableModel)
+					    subpathTable.getModel();
+					tm.setRowCount(0);
+					tm.setRowCount(16);
+				    }
+				}
+			    }
+			    switch (index) {
+			    case -1:
+				JOptionPane.showMessageDialog
+				    (topPanel,
+				     errorMsg("mustSelectTemplateType"),
+				     localeString("errorTitle"),
+				     JOptionPane.ERROR_MESSAGE);
+				return;
+			    case 0:
+				templateType = TType.SVG;
+				break;
+			    case 1:
+				templateType = TType.TT;
+				break;
+			    case 2:
+				templateType = TType.PIT;
+				break;
+			    }
+			    doEnables(tabpane);
+			    setupAllowedSubpaths();
+			    // templateTypeCB.setEnabled(false);
+			    freezeTemplateType(true);
+			    useBuiltinCheckBox.setEnabled(false);
+			    basicData.useBuiltins =
+				useBuiltinCheckBox.isSelected();
+			    templateLabel.setEnabled(false);
+			    // templateTF.setEnabled(false);
+			    basicData.template = templateTF.getText().trim();
+			    templateButton.setEnabled(false);
+			    resetTypeButton.setEnabled(true);
+			    acceptTypeButton.setEnabled(false);
+			    // savedStateLabel.setEnabled(false);
+			    String savedState = savedStateTF.getText().trim();
+			    basicData.savedState = savedState;
+			    lastSavedState = savedState;
+			    savedStateTF.setEnabled(false);
+			    savedStateButton.setEnabled(false);
+			    // mapLabel.setEnabled(false);
+			    mapTF.setEnabled(false);
+			    mapButton.setEnabled(false);
+			    basicData.mapName  = mapTF.getText().trim();
+			});
+		    resetTypeButton.addActionListener((ae) -> {
+			    resetTypeButton.setEnabled(false);
+			    acceptTypeButton.setEnabled(false);
+			    freezeTemplateType(false);
+			    savedStateLabel.setEnabled(true);
+			    savedStateTF.setEnabled(true);
+			    savedStateButton.setEnabled(true);
+			    doEnables(tabpane);
+			    compoundPathTable.clearSelection();
+			    subpathTable.clearSelection();
+			    int index = templateTypeCB.getSelectedIndex();
+			    boolean enable = (index > -1);
+			    if (savedStateTF.getText().trim().length() > 0) {
+				acceptTypeButton.setEnabled(enable);
+			    } else {
+				acceptTypeButton.setEnabled(false);
+			    }
+			    enable = (index > 0);
+			    templateLabel.setEnabled(enable);
+			    templateTF.setEnabled(enable);
+			    templateButton.setEnabled(enable);
+			    useBuiltinCheckBox.setEnabled(enable);
+			    enable = (index == 1);
+			    if (enable) {
+				String ttext = templateTF.getText().trim();
+				enable = (ttext.length() != 0 &&
+					  !ttext.startsWith("sresource:"));
+			    }
+			    mapLabel.setEnabled(enable);
+			    mapTF.setEnabled(enable);
+			    mapButton.setEnabled(enable);
+			    tabpane.setEnabledAt(1, false);
+			    tabpane.setEnabledAt(2, false);
+			    tabpane.setEnabledAt(3, false);
+			    tabpane.setEnabledAt(4, false);
+			});
+
+		    templateLabel =
+			new JLabel(localeString("templateTF"));
+		    templateTF = new JTextField(32);
+		    templateTF.setDisabledTextColor(Color.BLACK);
+		    templateTF.addKeyListener(new KeyAdapter() {
+			    @Override
+			    public void keyReleased(KeyEvent ke) {
+				String text = templateTF.getText().trim();
+				if (text.length() == 0) {
+				    if (templateTimer.isRunning()) {
+					templateTimer.stop();
+				    }
+				    mapLabel.setEnabled(false);
+				    mapTF.setEnabled(false);
+				    mapButton.setEnabled(false);
+				} else if (text.startsWith(SRESOURCE_PROTO)) {
+				    if (templateTimer.isRunning()) {
+					templateTimer.stop();
+				    }
+				    mapLabel.setEnabled(false);
+				    mapTF.setEnabled(false);
+				    mapButton.setEnabled(false);
+				} else if (SRESOURCE_PROTO.startsWith(text)) {
+				    // wait 2 seconds and if there are
+				    // no more characters typed, then
+				    // enable the map components.
+				    if (templateTimer.isRunning()) {
+					templateTimer.restart();
+				    } else {
+					templateTimer.start();
+				    }
+				} else {
+				    if (templateTimer.isRunning()) {
+					templateTimer.stop();
+				    }
+				    mapLabel.setEnabled(true);
+				    mapTF.setEnabled(true);
+				    mapButton.setEnabled(true);
+				}
+				if (savedStateTF.getText().trim().length() > 0
+				    && templateTypeCB.getSelectedIndex()!=-1) {
+				    acceptTypeButton.setEnabled(true);
+				} else {
+				    acceptTypeButton.setEnabled(false);
+				}
+			    }
+			});
+
+
+		    templateButton = new
+			JButton(localeString("templateButton"));
+		    templateButton.addActionListener((ae) -> {
+			    String name = chooseTemplate
+				(topPanel, useBuiltinCheckBox.isSelected());
+			    if (name != null) {
+				templateTF.setText(name);
+				if (templateType == TType.TT &&
+				    !name.startsWith("sresource:")) {
+				    mapLabel.setEnabled(true);
+				    mapTF.setEnabled(true);
+				    mapButton.setEnabled(true);
+				} else {
+				    mapLabel.setEnabled(false);
+				    mapTF.setEnabled(false);
+				    mapButton.setEnabled(false);
+				    
+				}
+			    }
+				
+			});
+		    savedStateLabel =
+			new JLabel(localeString("savedState"));
+		    savedStateTF = new JTextField(32);
+		    savedStateTF.setDisabledTextColor(Color.BLACK);
+		    savedStateTF.addKeyListener(new KeyAdapter() {
+			    @Override
+			    public void keyReleased(KeyEvent ke) {
+				String text = savedStateTF.getText().trim();
+				if (text.length() > 0
+				    && templateTypeCB.getSelectedIndex()!=-1) {
+				    acceptTypeButton.setEnabled(true);
+				} else {
+				    acceptTypeButton.setEnabled(false);
+				}
+			    }
+			});
+		    savedStateButton =
+			new JButton(localeString("savedStateButton"));
+		    savedStateButton.addActionListener((ae) -> {
+			    String name = chooseSavedStateFile(topPanel);
+			    if (name != null) {
+				savedStateTF.setText(name);
+				if (templateTypeCB.getSelectedIndex() != -1) {
+				    acceptTypeButton.setEnabled(true);
+				}
+
+			    }
+			});
+		    mapLabel = new JLabel(localeString("mapName"));
+		    mapTF = new JTextField(32);
+		    mapTF.setDisabledTextColor(Color.BLACK);
+		    mapButton = new JButton(localeString("mapNameButton"));
+		    mapButton.addActionListener((ae) -> {
+			    String name = chooseFile(topPanel);
+			    if (name != null) {
+				mapTF.setText(name);
+			    }
+			});
+		    
+		    GridBagConstraints c = new GridBagConstraints();
+		    c.insets = new Insets(4, 8, 4, 8);
+		    c.anchor = GridBagConstraints.LINE_END;
+		    c.gridwidth = 1;
+		    addComponent(basicPanel, templateTypeLabel, gridbag, c);
+		    c.anchor = GridBagConstraints.LINE_START;
+		    addComponent(basicPanel, templateTypeCB, gridbag, c);
+		    c.gridwidth = GridBagConstraints.RELATIVE;
+		    c.anchor = GridBagConstraints.LINE_START;
+		    addComponent(basicPanel, useBuiltinCheckBox, gridbag, c);
+		    c.gridwidth = GridBagConstraints.REMAINDER;
+		    addComponent(basicPanel, new JLabel(" "), gridbag, c);
+
+		    c.anchor = GridBagConstraints.LINE_END;
+		    c.gridwidth = 1;
+		    addComponent(basicPanel, templateLabel, gridbag, c);
+		    c.anchor = GridBagConstraints.LINE_START;
+		    c.gridwidth = GridBagConstraints.RELATIVE;
+		    addComponent(basicPanel, templateTF, gridbag, c);
+		    c.anchor = GridBagConstraints.LINE_START;
+		    c.gridwidth = GridBagConstraints.REMAINDER;
+		    addComponent(basicPanel, templateButton, gridbag, c);
+
+		    c.anchor = GridBagConstraints.LINE_END;
+		    c.gridwidth = 1;
+		    addComponent(basicPanel, savedStateLabel, gridbag, c);
+		    c.anchor = GridBagConstraints.LINE_START;
+		    c.gridwidth = GridBagConstraints.RELATIVE;
+		    addComponent(basicPanel, savedStateTF, gridbag, c);
+		    c.anchor = GridBagConstraints.LINE_START;
+		    c.gridwidth = GridBagConstraints.REMAINDER;
+		    addComponent(basicPanel, savedStateButton, gridbag, c);
+
+		    c.anchor = GridBagConstraints.LINE_END;
+		    c.gridwidth = 1;
+		    addComponent(basicPanel, mapLabel, gridbag, c);
+		    c.anchor = GridBagConstraints.LINE_START;
+		    c.gridwidth = GridBagConstraints.RELATIVE;
+		    addComponent(basicPanel, mapTF, gridbag, c);
+		    c.anchor = GridBagConstraints.LINE_START;
+		    c.gridwidth = GridBagConstraints.REMAINDER;
+		    addComponent(basicPanel, mapButton, gridbag, c);
+
+		    for (int i = 0; i < 3; i++) {
+			c.anchor = GridBagConstraints.CENTER;
+			c.gridwidth = GridBagConstraints.REMAINDER;
+			addComponent(basicPanel, new JLabel(" "), gridbag, c);
+		    }
+
+		    c.anchor = GridBagConstraints.CENTER;
+		    c.gridwidth = GridBagConstraints.REMAINDER;
+		    JPanel separator = new JPanel();
+		    separator.setPreferredSize(new Dimension(600,2));
+		    separator.setBackground(Color.BLUE);
+		    addComponent(basicPanel, separator, gridbag, c);
+
+		    for (int i = 0; i < 2; i++) {
+			c.anchor = GridBagConstraints.CENTER;
+			c.gridwidth = GridBagConstraints.REMAINDER;
+			addComponent(basicPanel, new JLabel(" "), gridbag, c);
+		    }
+
+		    c.gridwidth = 1;
+		    c.anchor = GridBagConstraints.LINE_START;
+		    addComponent(basicPanel, new JLabel(" "), gridbag, c);
+		    addComponent(basicPanel, acceptTypeButton, gridbag, c);
+		    c.gridwidth = GridBagConstraints.RELATIVE;
+		    addComponent(basicPanel, resetTypeButton, gridbag, c);
+		    c.gridwidth = GridBagConstraints.REMAINDER;
+		    addComponent(basicPanel, new JLabel(" "), gridbag, c);
+
+		    createPathTables(addPathPanel);
+		    createGlobalPanel();
+		    createConfigTable(configPanel);
+		    createFinishPane(dialog, finishPanel);
+
+		    if (zf != null) {
+			// templateType is null and templateTypeCB has its
+			// selected index set to null as well
+			if (restore(zf, true, topPanel))  {
+			    doEnables(null);
+			    acceptTypeButton.setEnabled(false);
+			    resetTypeButton.setEnabled(true);
+			    useBuiltinCheckBox.setEnabled(false);
+			    freezeTemplateType(true);
+			    setupAllowedSubpaths();
+			    setupCompoundPaths();
+			    // templateLabel.setEnabled(false);
+			    templateTF.setEnabled(false);
+			    templateButton.setEnabled(false);
+			    savedStateButton.setEnabled(false);
+			    savedStateTF.setEnabled(false);
+			    mapTF.setEnabled(false);
+			    mapButton.setEnabled(false);
+			}
+		    }
+
+		    tabpane.add(localeString("Basic"), basicPanel);
+		    tabpane.add(localeString("AddPaths"), addPathPanel);
+		    tabpane.add(localeString("Global"), globalPanel);
+		    tabpane.add(localeString("Configure"), configPanel);
+		    tabpane.add(localeString("Finish"), finishPanel);
+
+		    doEnables(tabpane);
+
+		    if (zf != null) {
+			resetTypeButton.setEnabled(true);
+		    }
+		    
+		    tabpane.addChangeListener((ce) -> {
+			    int index = tabpane.getSelectedIndex();
+			    if (index == 3) {
+				// populate table
+				HashSet<String> hset =
+				    new HashSet<> (2*(locations.length
+						      + initialPaths.length
+						      + pathmap.size()));
+				for (String s: locations) {
+				    hset.add(s);
+				    if (!pathLocMap.containsKey(s)) {
+					pathLocMap.put(s,
+						       new PathLocInfo(false));
+				    }
+				}
+				for (String s: initialPaths) {
+				    hset.add(s);
+				    if (!pathLocMap.containsKey(s)) {
+					pathLocMap.put(s,
+						       new PathLocInfo(true));
+				    }
+				}
+				for (String s: pathmap.keySet()) {
+				    hset.add(s);
+				    if (!pathLocMap.containsKey(s)) {
+					pathLocMap.put(s,
+						       new PathLocInfo(true));
+				    }
+				}
+				DefaultTableModel tm1 = (DefaultTableModel)
+				    pathLocTable.getModel();
+				tm1.setRowCount(0);
+				// to prevent concurrent modification exception
+				// copy the set to an array
+				Set<String> kset = pathLocMap.keySet();
+				String[] keys = new String[kset.size()];
+				int kind = 0;
+				for (String s: kset) {
+				    keys[kind++] = s;
+				}
+				for (String s: keys) {
+				    if (!hset.contains(s)) {
+					pathLocMap.remove(s);
+				    } else {
+					PathLocInfo pathLocInfo
+					    = pathLocMap.get(s);
+					Vector<Object> row = new Vector<>(2);
+					row.add(new Boolean
+						(pathLocInfo.active));
+					row.add(s);
+					DefaultTableModel tm =
+					    (DefaultTableModel)
+					    pathLocTable.getModel();
+					tm.addRow(row);
+				    }
+				}
+				index = pathLocTable.getSelectedRow();
+				if (index == -1) {
+				    dataPanelCL.show(dataPanel, "empty");
+				} else {
+				    String s = (String)
+					pathLocTable.getValueAt(index,1);
+				    currentPLI = pathLocMap.get(s);
+				    if (currentPLI.isPath) {
+					populateDataPanel();
+					dataPanelCL.show(dataPanel, "data");
+				    } else {
+					dataPanelCL.show(dataPanel, "empty");
+				    }
+				}
+			    }
+			});
+
+
+		    dialog.setModalityType
+			(Dialog.ModalityType.APPLICATION_MODAL);
+		    dialog.setTitle("EPTS Setup");
+		    dialog.setContentPane(topPanel);
+		    dialog.pack();
+		    dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		    dialog.addWindowListener(new WindowAdapter() {
+			    public void windowClosing(WindowEvent we) {
+				if (dialogButtonPushed == false) {
+				    System.exit(0);
+				}
+			    }
+			});
+		    dialog.setVisible(true);
+
+		});
+	} catch (Exception e) {
+	    e.printStackTrace(System.err);
+	    System.exit(1);
+	}
+	return results;
+    }
+
+
+    static class PathInfo {
+	PathInfo pathInfo = null;
+	Vector subpaths = null;
+	Boolean gcsMode = null;
+
+	Color fillColor = null;
+	Color strokeColor = null;
+	String strokeCap = null;
+	Boolean strokeGCSMode = null;
+
+	Double dashIncr = null;
+	String dashPattern = null;
+	String strokeJoin = null;
+	Double miterLimit = null;
+	Double strokeWidth = null;
+
+	private static Long zorder = null;
+    }
+
+    // XML parser that only recovers path and location names.
+    // This is a minimal implementation with no error handling.
+    // It just looks for 'row' elements and processes those. These
+    // elements have attributes but do not have contents.
+    static class Parser {
+	SAXParser parser;
+
+	Parser() throws ParserConfigurationException, SAXException {
+	    SAXParserFactory factory = SAXParserFactory.newInstance();
+	    factory.setValidating(false);
+	    parser = factory.newSAXParser();
+	}
+
+	ArrayList<String> paths;
+	ArrayList<String> locations;
+
+	public String[] getPaths() {
+	    if (paths == null) return null;
+	    String[] results = new String[paths.size()];
+	    return paths.toArray(results);
+	}
+
+	public String[] getLocations() {
+	    if (locations == null) return null;
+	    String[] results = new String[locations.size()];
+	    return locations.toArray(results);
+	}
+
+	public void parse(InputStream is) throws SAXException, IOException {
+	    OurDefaultHandler handler = new OurDefaultHandler();
+	    parser.parse(is, handler);
+	}
+	
+	class OurDefaultHandler extends DefaultHandler {
+	    public void startDocument() {
+		paths = new ArrayList<String>();
+		locations = new ArrayList<String>();
+	    }
+	    public void startElement(String uri, String localName,
+				     String qName, Attributes attr)
+		throws SAXException 
+	    {
+		if (qName.equals("row")) {
+		    String varname = attr.getValue("varname");
+		    if (varname != null) {
+			varname = varname.trim();
+			if (varname.length() > 0) {
+			    String type = attr.getValue("type");
+			    if (type != null) {
+				type = type.trim();
+				if (type.equals("LOCATION")) {
+				    locations.add(varname);
+				} else if (type.equals("PATH_START")) {
+				    paths.add(varname);
+				}
+			    }
+
+			}
+		    }
+		}
+	    }
+
+	    public void endDocument() {
+		locations.sort(null);
+		paths.sort(null);
+	    }
+	}
+    }
+
+    /*
+    public static void main(String argv[]) throws Exception {
+	org.bzdev.protocols.Handlers.enable();
+	String[] results;
+	if (argv.length == 0) {
+	    results = getSetupArgs(null, null);
+	} else {
+	    File f = new File(argv[0]);
+	    ZipDocFile zf = new ZipDocFile(f);
+	    results = getSetupArgs(zf, f);
+	    zf.close();
+	}
+	
+	System.out.println("command-line arguments:");
+	for (String arg: results) {
+	    System.out.println("   " + arg);
+	}
+    }
+    */
+}

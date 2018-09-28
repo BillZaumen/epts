@@ -20,13 +20,13 @@ by other programs.
 <P>
 While there are many command-line options, mostly used to configure
 templates and scripts, there are some GUI-specific options that are
-used when EPTS is started by a window system.  There are two EPTS-specific
+used when EPTS is started by a window system.  There are three EPTS-specific
 file formats as well:
 <UL>
-  <LI>EPTS Saved-State files. These files must use the file-name extension
+  <LI>EPTS saved-state files. These files must use the file-name extension
     <B><CODE>epts</CODE></B>. They provide the data needed to reconstruct
     the background  and the paths and points that were configured.
-  <LI>EPTS Session-Configuration files.  These files must use the
+  <LI>EPTS session-configuration files.  These files must use the
     file-name extension <B><CODE>eptc</CODE></B>. They provide EPTS
     configuration data specific to a given session: information needed
     to construct a saved-state file when scripting is used, additional
@@ -35,6 +35,10 @@ file formats as well:
     the <CODE>java</CODE> command used to start the Java virtual
     machine (e.g., arguments to adjust the amount of memory allocated
     to the JVM).
+  <LI>EPTS template-configuration files. These files must use the
+    file-name extension <B><CODE>eptt</CODE></B>, and provide EPTS
+    configuration data for template processing. These files are an
+    alternative to providing a long series of command-line options.
 </UL>
 When a window system is used, it will tyically be configured to allow
 a number of operations to be performed without using the command-line
@@ -59,7 +63,11 @@ the following actions:
     option effectively sets the appropriate command-line options and uses
     those.
   <LI><B>Configure Session, Stacktraces Enabled</B>. This is equivalent
-    to the Configure Session action, but with stack traces enabled.
+    to the Configure Session action, but with stack-traces enabled.
+  <LI><B>Template Processing</B>. This opens a dialog box for setting
+    up template-related options and saving them.
+  <LI><B>Template Processing with Stacktraces</B>. This is equivalent
+    to the Template Processing action but with stack-traces enabled
 </UL>
 <P>
 Because EPTS is designed to support a specific set of tasks, there are
@@ -1151,8 +1159,13 @@ treated specially:
 <UL>
   <LI> <CODE>--sessionConfig</CODE> will open a dialog box that will
     allow a session to be configured.
+  <LI> <CODE>--templateConfig</CODE> will open a dialog box that
+    will allow template processing to be configured.
   <LI> <CODE>--stackTrace --sessionConfig</CODE> will open a dialog
     box that will allow a session to be configured. Stack traces will
+    be included in various error messages.
+  <LI> <CODE>--stackTrace --templateConfig</CODE> will open a dialog box that
+    will allow template processing to be configured. Stack traces will
     be included in various error messages.
   <LI><CODE>--gui --stackTrace --</CODE>  <B><EM>FILE</EM></B>  will open the
     specified file.  This file may be a saved-state file
@@ -1228,6 +1241,14 @@ behavior depends on the file format for the first argument:
     the image. If the animation the script provides
     is not stored in a variable named <CODE>a2d</CODE>, the
     <CODE>--animation</CODE> option will also be needed.
+  <LI> if a non-option argument is a file whose extension is <CODE>eptc</CODE>
+    or <CODE>eptt</CODE>, it must be the only non-option argument. Either
+    can be proceeded by <CODE>--gui</CODE>, <CODE>--stackTrace</CODE> and/or
+    <CODE>--</CODE> in that order (all are optional). For the <CODE>eptt</CODE>
+    case, this option may be proceeded by the arguments <CODE>-o</CODE>
+    <EM>OUTFILE</EM>, in which case a GUI will not appear, which is desirable
+    when the command is being run by software such as <CODE>make</CODE> that
+    tracks file dependencies.
 </UL>
 In addition, the file names can be URIs; however, for a saved-state
 file the URI's scheme must be "<CODE>file</CODE>".  Unless the first
@@ -1308,7 +1329,7 @@ There are five options that do not fit into well-defined categories:
     argument file and messages to standard output or standard error
     might not be visible to the user.
   <LI><B><CODE>--sessionConfig</CODE></B>.  This argument is recognized if
-    it is the only argument used or if it is preceeded by
+    it is the only argument used or if it is preceded by
     the <CODE>--stackTrace</CODE> argument; otherwise an error will be
     generated. It is intended for use by window systems for starting
     EPTS in a particular mode.  When this option is provided, EPTS
@@ -1403,10 +1424,14 @@ The options specific to the EPTS command when templates are used are:
     B&eacute;zier curve segments.
   <LI><B><CODE>--fill-color</CODE></B> <B><EM>COLOR</EM></B>. This
     option is used for table templates and applies to the path
-    specified by the following <CODE>--tname</CODE> option. It sets the <CODE>fill</CODE>
-    attribute to <EM>COLOR</EM> in an SVG path and
-    the <CODE>drawColor.css</CODE> subparameter for table
-    templates. It applies to a path specified by the
+    specified by the following <CODE>--tname</CODE> option. It sets
+    the <CODE>fill</CODE> attribute to <EM>COLOR</EM> in an SVG path
+    and the parameter <CODE>fillColor</CODE> to <EM>COLOR</EM> as the
+    only element in a <CODE>hasFillColor</CODE> iterative parameter
+    for table templates. When used with animation-object factories,
+    it will determine if there is a <CODE>drawColor.css</CODE>
+    subparameter.
+    This option applies to a path specified by the
     next <CODE>--tname</CODE> option. The value of <EM>COLOR</EM> can
     be any color specification accepted by SVG (the same as those
     defined by the CSS2 specification). A value of none indicates that
@@ -1509,8 +1534,12 @@ The options specific to the EPTS command when templates are used are:
     option is used for table templates and applies to the path
     specified by the following <CODE>--tname</CODE> option. It sets the
     stroke attribute to <EM>COLOR</EM> in an SVG path and
-    the <CODE>drawColor.css</CODE> subparameter in table templates.
-    It applies to a path specified by the next <CODE>--tname</CODE>
+    the <CODE>drawColor</CODE> parameter to <EM>COLOR</EM> as the
+    only element in a <CODE>hasDrawColor</CODE> iterative parameter
+    for use in table templates. Built-in templates that configure
+    animation-object factories use these to set
+    the <CODE>drawColor.css</CODE> subparameter.
+    This option applies to a path specified by the next <CODE>--tname</CODE>
     option. The value of <EM>COLOR</EM> can be any color specification
     accepted by SVG (the same as those defined by the CSS2
     specification). A value of none indicates that no color is
@@ -1627,6 +1656,52 @@ The options specific to the EPTS command when templates are used are:
     <CODE>--winding-rule</CODE>, may be used (at least one will
     typically be provided). A <CODE>--template</CODE> option must not
     be provided.
+  <LI><B><CODE>--tdef</CODE></B>
+    <B><EM>DEFNAME</EM><CODE>=</CODE><EM>DEFVALUE</EM></B>.
+    This option adds template key-value pairs for use by the template
+    processor in addition to the ones defined by EPTS. The argument
+    <EM>DEFVALUE</EM> is a string. If empty, the definition is ignored.
+    Otherwise, <EM>DEFNAME</EM> can be a name or a pair of names
+    separated by a colon.  In the latter case, the first name in the pair
+    is treated as an iteration key with a single iteration, mimicking
+    an 'if' statement, and the second name is the name to which the
+    value will be assigned.  For example, the argument
+    <CODE>--tdef hasCount:count=30</CODE> will result in the
+    template text
+    <BLOCKQUOTE>
+      <CODE>$(hasCount:endCount)count = $(count);$(endCount)</CODE>
+    </BLOCKQUOTE>
+    being changed into
+    <BLOCKQUOTE><CODE>count = 30</CODE></BLOCKUOTE>
+    when this <CODE>--tdef</CODE>
+    is present and into empty text when this <CODE>--tdef</CODE> is not
+    present. A number of names are reserved:
+    <CODE>area</CODE>, <CODE>atype</CODE>, <CODE>circumference</CODE>,
+    <CODE>class</CODE>, <CODE>dashIncrement</CODE>, <CODE>dashPattern</CODE>,
+    <CODE>dashPhase</CODE>, <CODE>draw</CODE>, <CODE>drawColor</CODE>,
+    <CODE>fill</CODE>, <CODE>fillColor</CODE>, <CODE>gcsMode</CODE>,
+    <CODE>has0</CODE>, <CODE>has1</CODE>, <CODE>has2</CODE>,
+    <CODE>hasAttributes</CODE>, <CODE>hasClass</CODE>, <CODE>hasClose</CODE>,
+    <CODE>hasCubicTo</CODE>, <CODE>hasDashIncrement</CODE>,
+    <CODE>hasDashPattern</CODE>, <CODE>hasDashPhase</CODE>,
+    <CODE>hasDrawColor</CODE>, <CODE>hasFillColor</CODE>,
+    <CODE>hasGcsMode</CODE>, <CODE>hasLineTo</CODE>, <CODE>hasMiterLimit</CODE>,
+    <CODE>hasMoveTo</CODE>, <CODE>hasPackage</CODE>, <CODE>hasQuadTo</CODE>,
+    <CODE>hasStrokeCap</CODE>, <CODE>hasStrokeJoin</CODE>,
+    <CODE>hasStrokeWidth</CODE>, <CODE>hasWindingRule</CODE>,
+    <CODE>hasZorder</CODE>, <CODE>height</CODE>, <CODE>index</CODE>,
+    <CODE>items</CODE>, <CODE>location</CODE>, <CODE>ltype</CODE>,
+    <CODE>method</CODE>, <CODE>miterLimit</CODE>, <CODE>optSpace</CODE>,
+    <CODE>optcomma</CODE>, <CODE>package</CODE>, <CODE>pathItem</CODE>,
+    <CODE>pathLength</CODE>, <CODE>pathStatement</CODE>,
+    <CODE>pindex</CODE>, <CODE>public</CODE>, <CODE>segments</CODE>,
+    <CODE>strokeCap</CODE>, <CODE>strokeJoin</CODE>, <CODE>strokeWidth</CODE>,
+    <CODE>type</CODE>, <CODE>varname</CODE>, <CODE>vindex</CODE>,
+    <CODE>width</CODE>, <CODE>windingRule</CODE>, <CODE>x</CODE>,
+    <CODE>x0</CODE>, <CODE>x1</CODE>, <CODE>x2</CODE>, <CODE>xp</CODE>,
+    <CODE>xy</CODE>, <CODE>y</CODE>, <CODE>y0</CODE>, <CODE>y1</CODE>,
+    <CODE>y2</CODE>, <CODE>yp</CODE>, <CODE>ypr</CODE>,
+    and <CODE>zorder</CODE>.
   <LI><B><CODE>--template:</CODE></B><EM>RESOURCE</EM>.
     This option is a shortcut that behaves like the option
     <CODE>--template sresource:</CODE><EM>RESOURCE</EM>.
@@ -2347,6 +2422,166 @@ using the Java method <CODE>java.beans.XMLEncoder</CODE>:
 Files using this format must have the file-name extension <CODE>eptc</CODE>
 in order to be recognized by the <CODE>epts</CODE> command.
 
+<H1><A name="templateConfig">The template-processing-file format</A></H1>
+
+EPTS can also save command-line arguments suitable for template processing
+in a template-processing configuration file. As with the
+saved-configuration-file format, the file format is based on the BZDev
+library class <CODE>org.bzdev.io.ZipDocFile</CODE>, using Java method
+<CODE>java.beans.XMLEncoder</CODE> to encode each zip-file entry:
+<UL>
+  <LI> the media type is
+    <CODE>application/vnd.bzdev.epts-template-config+zip</CODE>.
+  <LI> The ZIP-file entry <CODE>basicData</CODE> contains an XML-encoded
+    <CODE>TemplateSetup.BasicData</CODE> object. The inner class
+    <CODE>BasicData</CODE> is defined as follows:
+    <BLOCKQUOTE><PRE><CODE>
+    public static class BasicData {
+	public int templateTypeInd = -1;
+	public boolean useBuiltins = false;
+	public String template = null;
+	public String savedState = null;
+	public String mapName = null;
+    }
+    </CODE></PRE></BLOCKQUOTE>
+    The field <CODE>templateTypeInd</CODE> sets the selected index of
+    a <CODE>javax.swing.JComboBox</CODE> whose values are "SVG",
+    "Table Template", or "PI Template". The field <CODE>useBuiltins</CODE>
+    sets the state of a check box indicating if a "choose" button should
+    pick a builtin template or a template stored in an external file.
+    The Strings <CODE>template</CODE>, <CODE>savedState</CODE>, and
+    <CODE>mapName</CODE> are the names of the files or URLs provided by
+    the <CODE>--template</CODE> option, the first file-name argument,
+    of the <CODE>--map</CODE> option respectively.
+  <LI> The ZIP-file entry <CODE>pathmap</CODE> contains an XML-encoded
+    <CODE>TemplateSetup.PathMap</CODE> object. The inner class
+    <CODE>PathMap</CODE> is defined as follows:
+    <BLOCKQUOTE><PRE><CODE>
+    public static class PathMap extends LinkedHashMap<String,Vector<String>> {
+	    public PathMap() {super();}
+    }
+    </CODE></PRE></BLOCKQUOTE>
+    This table is used to generate <CODE>--tname</CODE> and
+    <CODE>--pname</CODE> options for the case in which a path is
+    defined as a concatenation of paths in the EPTS table.  The key is
+    the name of the new path and the corresponding value is a
+    <CODE>java.util.Vector</CODE> whose type parameter is <CODE>String</CODE>
+    and whose elements are the names of the path to concatenate.
+  <LI> The ZIP-file entry <CODE>globalData</CODE> contains an XML-encoded
+    <CODE>TemplateSetup.GlobalData</CODE> object. The inner class
+    <CODE>GlobalData</CODE> is defined as follows:
+    <BLOCKQUOTE><PRE><CODE>
+    public static class GlobalData {
+	public boolean usesTableTemplate;
+        // Table Template options
+	public String packageName;
+	public String className;
+	public boolean isPublic;
+        // Path-Iterator Template (--pname) options
+	public FlatnessMode fmode = FlatnessMode.NORMAL;
+	public double flatness;
+	public int limit = 10;
+	public boolean gcs;
+    }
+    </CODE></PRE></BLOCKQUOTE>
+
+    The field <CODE>usesTableTemplate</CODE> is true if options for
+    table templates should be generated and false if options for path
+    templates should be generated.  The field <CODE>packageName</CODE>
+    is the argument for a <CODE>--package</CODE> option; the
+    field <CODE>--className</CODE> is the argument for
+    a <CODE>--class</CODE> option; the field <CODE>flatness</CODE> is
+    the argument for a <CODE>--flatness</CODE> option; and the
+    field <CODE>limit</CODE> is the argument fora <CODE>--limit</CODE>
+    option. When the field <CODE>isPublic</CODE> has the value
+    <CODE>true</CODE>, a <CODE>--public</CODE> option may be generated,
+    and when the field <CODE>gcs</CODE> has the value
+    <CODE>true</CODE>, a <CODE>--gcs</CODE> option may be generated.
+    Finally, the field <CODE>fmode</CODE> can have the values
+    <CODE>TemplateSetup.FlatnessMode.NORMAL</CODE>,
+    <CODE>TemplateSetup.FlatnessMode.STRAIGHT</CODE>, or
+    <CODE>TemplateSetup.FlatnessMode.ELEVATED</CODE>, with the last
+    two implying the options <CODE>--straight</CODE> and
+    <CODE>--elevate</CODE> respectively.
+  <LI> The ZIP-file entry <CODE>pathLocMap</CODE> contains an XML-encoded
+    <CODE>TemplateSetup.PathLocMap</CODE> object.  The inner class
+    <CODE>PathLocMap</CODE> is defined as follows:
+    <BLOCKQUOTE><PRE><CODE>
+     public static class PathLocMap extends TreeMap<String,PathLocInfo> {
+	public PathLocMap() {super();}
+    }
+    </CODE></PRE></BLOCKQUOTE>
+    where the inner class <CODE>TemplateSetup.PathLocInfo</CODE> is defined by
+    <BLOCKQUOTE><PRE><CODE>
+    public static class PathLocInfo {
+	public boolean isPath;
+	public boolean active = false;
+	public double strokeWidth = 1.0;
+	public boolean strokeGCS = false;
+	public boolean draw = false;
+	public Color drawColor = Color.BLACK;
+	public boolean fill = false;
+	public Color fillColor = Color.BLACK;
+	public int capIndex = 0;
+	public double dashIncr = 10.0;
+	public String dashPattern = "-";
+	public double dashPhase = 0.0;
+	public int joinIndex = 0;
+	public double miterLimit = 10.0;
+	public int windingRuleInd = 0;
+	public long zorder = 0;
+
+	public PathLocInfo() {isPath = false;}
+
+	public PathLocInfo(boolean isPath) {
+	    this.isPath = isPath;
+	}
+    </CODE></PRE></BLOCKQUOTE>
+    This table sets parameters associated with paths and locations,
+    including paths that are defined in the PathMap table.  The
+    entries are ignored if the fields <CODE>isPath</CODE> and
+    <CODE>active</CODE> are both <CODE>false</CODE>.
+    The field <CODE>strokeWdith</CODE> determines the value of
+    the <CODE>--stroke-width</CODE> option; the field
+    <CODE>strokeGCS</CODE> determines the value of the
+    <CODE>--stroke-gcs-mode</CODE> option; the
+    field <CODE>drawColor</CODE> determines the value of
+    the <CODE>--stroke-color</CODE> option; the
+    field <CODE>fillColor</CODE> determines the value of
+    the <CODE>--fill-color</CODE> option; the
+    field <CODE>capIndex</CODE> determines the value of
+    the <CODE>--stroke-cap</CODE> option; the
+    field <CODE>dashIncr</CODE> determines the value of
+    the <CODE>--stroke-dash-incr</CODE> option; the
+    field <CODE>dashIncr</CODE> determines the value of
+    the <CODE>--stroke-dash-incr</CODE> option; the
+    field <CODE>dashPattern</CODE> determines the value of
+    the <CODE>--stroke-dash-pattern</CODE> option; the
+    field <CODE>dashPhase</CODE> determines the value of
+    the <CODE>--stroke-dash-phase</CODE> option; the
+    field <CODE>joinIndex</CODE> determines the value of
+    the <CODE>--stroke-join</CODE> option; the
+    field <CODE>windingRuleInd</CODE> determines the value of
+    the <CODE>--winding-rule</CODE> option; and the
+    field <CODE>zorder</CODE> determines the value of
+    the <CODE>--zorder</CODE> option.  The field <CODE>--draw</CODE>
+    must have a value of <CODE>true</CODE> for stroke-related options
+    to be used. Similarly the field <CODE>--fill</CODE> must have the
+    value <CODE>true</CODE> for the fill-color option to be used.
+    The values of the field <CODE>capIndex</CODE> indicate a value
+    from the sequence <CODE>butt</CODE>, <CODE>round</CODE>, and
+    <CODE>square</CODE>, with 0 indicating the first, 1 indicating the
+    second, and 2 representing the last of this sequence.  Finally,
+    the values of the field <CODE>joinIndex</CODE> indicate a value
+    from the sequence <CODE>bevel</CODE>, <CODE>miter</CODE>, and
+    <CODE>round</CODE>, with 0 indicating the first, 1 indicating
+    the second, and 2 representing the last of this sequence.
+  <LI> The ZIP-file entry <CODE>outfile</CODE> contains an XML-encoded
+    <CODE>String</CODE> giving an output-file name (an empty string if there
+    is no output file specified), and may be overridden by a command-line
+    option.
+</UL>
+
 <H1><A name="guides">Additional Documentation</A></H1>
 
 API documentation and several user guides are useful when creating
@@ -2415,5 +2650,7 @@ The path names for these documents, of course, is system dependent.
  -->
 <!--  LocalWords:  javascript gridXOrigin gridYOrigin URI's centric
  -->
-<!--  LocalWords:  codebases tyically Stacktraces JComboBox
+<!--  LocalWords:  codebases tyically Stacktraces JComboBox DEFNAME
+ -->
+<!--  LocalWords:  DEFVALUE PathMap
  -->

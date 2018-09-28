@@ -419,7 +419,6 @@ public class Setup {
 		if (ce != null) {
 		    ce.stopCellEditing();
 		}
-
 		int ncols = table.getColumnCount();
 		int nrows = table.getRowCount();
 		int offset =  0;
@@ -452,7 +451,7 @@ public class Setup {
     }
 
     // returns the colum width
-    private static int configColumn(JTable table, int col, String example) {
+    static int configColumn(JTable table, int col, String example) {
 	TableCellRenderer tcr = table.getDefaultRenderer(String.class);
 	int w;
 	if (tcr instanceof DefaultTableCellRenderer) {
@@ -480,8 +479,9 @@ public class Setup {
     private static void configTable(JTable table) {
 	table.setColumnSelectionAllowed(false);
 	table.setRowSelectionAllowed(true);
-	table.setColumnSelectionAllowed(false);
+	// table.setColumnSelectionAllowed(false);
 	table.setRowSelectionInterval(0,0);
+	table.getTableHeader().setReorderingAllowed(false);
     }
 
     static String tableErrorMsg = null;
@@ -1249,4 +1249,4 @@ public class Setup {
 	}
 	return results;
     }
-    }
+}

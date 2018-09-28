@@ -5,13 +5,13 @@ GenericName=Point and Bezier-Path Editor
 Comment=Create and edit EPTS files describing points and Bezier paths
 Exec=epts --gui -- %u
 TryExec=epts
-MimeType=application/vnd.bzdev.epts-state+xml;application/vnd.bzdev.epts-config+zip;application/javascript;application/ecmascript;image/vnd.wap.wbmp;image/png;image/jpeg;image/bmp;image/gif;
+MimeType=application/vnd.bzdev.epts-state+xml;application/vnd.bzdev.epts-config+zip;application/vnd.bzdev.epts-template-config+zip;application/javascript;application/ecmascript;image/vnd.wap.wbmp;image/png;image/jpeg;image/bmp;image/gif;
 Terminal=false
 Type=Application
 Icon=/usr/share/icons/hicolor/scalable/apps/epts.svg
 Categories=Application;Graphics;
 StartupNotify=true
-Actions=stacktrace;config;tracedconfig
+Actions=stacktrace;config;tracedconfig;tconfig;tracedtconfig
 
 [Desktop Action stacktrace]
 Name = New Window, Stacktraces Enabled
@@ -24,3 +24,11 @@ Exec=epts --sessionConfig
 [Desktop Action tracedconfig]
 Name = Configure Session, Stacktraces Enabled
 Exec=epts --stackTrace --sessionConfig
+
+[Desktop Action tconfig]
+Name = Template Processing
+Exec = epts --templateConfig
+
+[Desktop Action tracedtconfig]
+Name = Template Processing with Stacktraces
+Exec = epts --stackTrace --templateConfig

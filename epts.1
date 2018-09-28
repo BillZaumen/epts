@@ -4,10 +4,13 @@ epts \- create points and Bezier curves/splines
 .SH SYNOPTSIS
 .B epts
 .br
-.B epts\ \-\-sessionConfig
+.B epts\ \fR[\fB\-\-stackTrace\fR]\fB\ \-\-sessionConfig
 .br
+.B epts\ \fR[\fB\-\-stackTrace\fR]\fB\ \-\-templateConfig
 .br
 .BI epts\ \-\-\   CFILE
+.br
+.BI epts\ \- o\  OFILE\ TCFILE
 .br
 .B epts
 [\fI\,SCROPTION\/\fR]...
@@ -46,11 +49,30 @@ by other programs.
 Arguments that are not options can be one of four types of files:
 .TP
 .IR CFILE .
-This file type represents a session-configuration file. Its file-name
-extension is "eptc". This file is a Zip file with an embedded mime
-type and is created by using the
+This file type represents a session-configuration file or a
+template-configuration file. Its file-name extension is "eptc" for a
+session-configuration file and "eptt" for a template-configuraton
+file. These files are Zip files with an embedded mime type and are
+created by using the
 .B \-\-sessionConfig
-option.
+or the
+.B \-\-templateConfig
+options. These option sprovide a GUI for creating the corresponding
+files and provides an alternative to using the command-line
+interface.  If a template-configuration file
+.I TCFILE
+is the only file-name argument, ends in the extension "eptt",
+and is preceded by a
+.B \-o
+option (which is followed by a file name
+.I OFILE
+for an output file), EPTS will run without starting a GUI and will use
+the file
+.I TCFILE
+to determine any additional options for processing, with the output file
+.I OFILE
+overriding any output file provided by
+.IR TCFILE .
 .TP
 .IR IFILE .
 This file type represents an image file. Its file-name extension must be
@@ -126,7 +148,8 @@ the background image. Image-space coordinates, however, are not used
 for any other purposes and can be ignored except when images are being
 added to a background by using a script.  The procedure for adding an
 image using a script is provided in the BZDev library documentation
-for the package <CODE>org.bzdev.anim2d.AnimationLayer2DFactory</CODE>
+for the package
+.B org.bzdev.anim2d.AnimationLayer2DFactory
 (the section \fIUSER GUIDES AND API DOCUMENTATION\fR provides
 citations to the documentation.
 .TP
@@ -318,6 +341,12 @@ will ask for a file to open. The file
 can be either a session configuration file, a saved-state file, an
 image file, or a script.p
 .TP
+.B \-\-templateConfig
+will start a GUI (a dialog box) that will in effect set up the
+command-line options for the user. The user can save the
+configuration in a "eptt" file for later use or can procede to
+run epts as if the corresponding options had been provided.
+.TP
 .BI \-\- FILE
 will open an input file,
 treating it specially if it is a session configuration file. The
@@ -502,7 +531,8 @@ option is used, and provides a class name for table templates that
 generate Java code (e.g., a single Java class definition). The
 argument
 .I CLASSNAME
-is the simple name for a class.
+is the simple name for a class that will be defined in the output
+file.
 .TP
 .B \-\-elevate
 This flag applies when the
@@ -517,13 +547,14 @@ This option sets the
 attribute to
 .I COLOR
 in an SVG path, and sets the
-.B fillColor.css
-subparameter to
+.B fillColor
+parameter in templates to
 .I COLOR
-for table templates.
-It applies to a path specified by the next
-.B \-\-pname
-option or
+for table templates as the only element for a
+.B hasFillColor
+iterative parameter.
+It applies to a path specified by the
+next
 .B \-\-tname
 option. The value of
 .I COLOR
@@ -645,7 +676,8 @@ option is used, and provides a class name for table templates that
 generate Java code (e.g., a single Java class definition). The
 argument
 .I PACKAGENAME
-is the fully-qualified class name for a Java package.
+is the fully-qualified class name for a Java package. This will generally
+appear in the first line of the output file.
 .TP
 .BI \-\-pname\  PNAME
 This option's argument
@@ -740,7 +772,7 @@ is a real number in the range [0,1].
 .BI \-\-stroke-cap\  VALUE
 This option is
 used for table templates and applies to the path specified by the
-following <CODE>
+following
 .B \-\-tname
 option. Its values can be one of the following:
 .BR butt ,
@@ -760,7 +792,7 @@ specified by the following
 .B \-\-tname
 option. The argument
 .I VALUE
-is the length assigned to a "\-</CODE" or "\ " in a dash pattern.
+is the length assigned to a "\-" or "\ " in a dash pattern.
 .I VALUE
 is specified in graph coordinate space when the option
 .B \-\-stroke-gcs-mode is
@@ -821,13 +853,13 @@ This option is used for table templates and applies to the path specified
 by the following
 .B \-\-tname
 option. Its values can be one of the following:
-.BR bevel</CODE> ,
+.BR bevel ,
 which joins path segments by connecting the outer corners of their
 wide outlines with a straight segment;
-.BR miter</CODE> ,
+.BR miter ,
 which joins path segments by extending their outside edges until they
 meet;
-.BR round</CODE> ,
+.BR round ,
 which joins path segments by rounding off the corner at a radius of
 half the line width.
 .TP
@@ -894,6 +926,103 @@ and
 .B \-\-stroke-width
 may be used (at least one will typically be provided).
 .TP
+.B \-\-tdef\ \fIDEFNAME\fB=\fIVALUE\fB
+This option adds template key-value pairs for use by the template
+processor in addition to the ones defined by EPTS. The argument
+.I DEFVALUE
+is a string. If empty, the definition is ignored.  Otherwise,
+.I DEFNAME
+can be a name or a pair of names separated by a colon. In the latter
+case, the first name in the pair is treated as an iteration key with a
+single iteration, mimicking an 'if' statement, and the second name is
+the name to which the value will be assigned.  For example, the
+argument
+.B --tdef hasCount:count=30
+will result in the
+template text
+.br
+.B $(hasCount:endCount)count\ =\ $(count);$(endCount)
+being changed into the text
+.B count\ =\ 30
+when this
+.B--tdef
+is present and into empty text when this
+.B --tdef
+is not present.  A number of variable names are reserved:
+.BR area ,
+.BR atype ,
+.BR circumference ,
+.BR class ,
+.BR dashIncrement ,
+.BR dashPattern ,
+.BR dashPhase ,
+.BR draw ,
+.BR drawColor ,
+.BR fill ,
+.BR fillColor ,
+.BR gcsMode ,
+.BR has0 ,
+.BR has1 ,
+.BR has2 ,
+.BR hasAttributes ,
+.BR hasClass ,
+.BR hasClose ,
+.BR hasCubicTo ,
+.BR hasDashIncrement ,
+.BR hasDashPattern ,
+.BR hasDashPhase ,
+.BR hasDrawColor ,
+.BR hasFillColor ,
+.BR hasGcsMode ,
+.BR hasLineTo ,
+.BR hasMiterLimit ,
+.BR hasMoveTo ,
+.BR hasPackage ,
+.BR hasQuadTo ,
+.BR hasStrokeCap ,
+.BR hasStrokeJoin ,
+.BR hasStrokeWidth ,
+.BR hasWindingRule ,
+.BR hasZorder ,
+.BR height ,
+.BR index ,
+.BR items ,
+.BR location ,
+.BR ltype ,
+.BR method ,
+.BR miterLimit ,
+.BR optSpace ,
+.BR optcomma ,
+.BR package ,
+.BR pathItem ,
+.BR pathLength ,
+.BR pathStatement ,
+.BR pindex ,
+.BR public ,
+.BR segments ,
+.BR strokeCap ,
+.BR strokeJoin ,
+.BR strokeWidth ,
+.BR type ,
+.BR varname ,
+.BR vindex ,
+.BR width ,
+.BR windingRule ,
+.BR x ,
+.BR x0 ,
+.BR x1 ,
+.BR x2 ,
+.BR xp ,
+.BR xy ,
+.BR y ,
+.BR y0 ,
+.BR y1 ,
+.BR y2 ,
+.BR yp ,
+.BR ypr ,
+and
+.BR zorder .
+.TP
 .BI \-\-template: RESOURCE
 This option is a shortcut for the option
 .BI \-\-template\ sresource: RESOURCE
@@ -932,8 +1061,10 @@ These templates are described below.
 This option's argument
 .I TNAME
 provides the name of a variable that names a path.  When this option
-is provided, a table template must be used and the keymap is
-the table keymap as described by the
+is provided, either the
+.B \-\-svg
+option must be present or a table template must be used, in which case
+the keymap is the table keymap as described by the
 manual page
 .BR epts (5)
 and by the on-line manual for
@@ -1093,18 +1224,19 @@ point. For paths, if stroke or color options are not used, the
 object will be an array of objects, each describing a control
 point. In this case, the value assigned to the variable will be
 an object that can be used to configure an instance of
-.B org.bzdev.geom.SplinePathBuilder</CODE>. When the corresponding
+.BR org.bzdev.geom.SplinePathBuilder .
+When the corresponding
 .B \-\-tname
 option\'s argument names a single EPTS path,
 the array can also be used to configure an instance of
 .B org.bzdev.anim2d.AnimationPath2DFactory
 or
-.B org.bzdev.geom.BasicSplinePathBuilder</CODE>. If a stroke or
-color option is provided,
-the object will be an array of two objects, where the first object
-describes a stroke, color, and Z-order, and where the second
-object contains an array of control points describing the path
-itself.  Because of the constraints imposed by the class
+.BR org.bzdev.geom.BasicSplinePathBuilder .
+If a stroke or color option is provided, the object will be an array
+of two objects, where the first object describes a stroke, color, and
+Z-order, and where the second object contains an array of control
+points describing the path itself.  Because of the constraints imposed
+by the class
 .B AnimationPath2DFactory
 the corresponding
 .B \-\-tname
@@ -1122,7 +1254,7 @@ all paths if there are no
 options, the
 value assigned to each variable will be an array of objects.
 The array can be used to configure an instance of
-.B org.bzdev.anim2d.AnimationLayer2DFactory</CODE>.
+.BR org.bzdev.anim2d.AnimationLayer2DFactory .
 One may use the
 .B \-\-tname
 option to include only
@@ -1131,7 +1263,7 @@ represents a single path or the concatenation of multiple paths.
 When a
 .B \-\-tname
 option is used, a
-.B \-\-winding-rule</CODE>
+.B \-\-winding-rule
 option may be used, as can color or stroke options.
 .TP
 .B sresource:ECMAScriptLocations
