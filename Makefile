@@ -81,6 +81,10 @@ SOURCE_CFILE_ICON = icons/eptcfile.svg
 TARGET_CFILE_ICON = application-vnd.bzdev.epts-config+zip.svg
 TARGET_CFILE_ICON_PNG = application-vnd.bzdev.epts-config+zip.png
 
+SOURCE_TCFILE_ICON = icons/epttfile.svg
+TARGET_TCFILE_ICON = application-vnd.bzdev.epts-template-config+zip.svg
+TARGET_TCFILE_ICON_PNG = application-vnd.bzdev.epts-template-config+zip.png
+
 
 JROOT_DOCDIR = $(JROOT)$(SYS_DOCDIR)
 JROOT_JARDIR = $(JROOT)/jar
@@ -99,7 +103,8 @@ EXTLIBS=$(EXTDIR)/libbzdev.jar
 MANS = $(JROOT_MANDIR)/man1/epts.1.gz $(JROOT_MANDIR)/man5/epts.5.gz
 
 
-ICONS = $(SOURCEICON) $(SOURCE_FILE_ICON) $(SOURCE_CFILE_ICON)
+ICONS = $(SOURCEICON) $(SOURCE_FILE_ICON) $(SOURCE_CFILE_ICON) \
+	$(SOURCE_TCFILE_ICON)
 
 JFILES = $(wildcard src/*.java)
 PROPERTIES = src/EPTS.properties
@@ -245,18 +250,23 @@ install: all
 		$(MIME_ICON_DIR)/$(TARGET_FILE_ICON)
 	install -m 0644 -T $(SOURCE_CFILE_ICON) \
 		$(MIME_ICON_DIR)/$(TARGET_CFILE_ICON)
+	install -m 0644 -T $(SOURCE_TCFILE_ICON) \
+		$(MIME_ICON_DIR)/$(TARGET_TCFILE_ICON)
 	for i in $(ICON_WIDTHS) ; do \
 	    install -d $(ICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR) ; \
 	done;
 	for i in $(ICON_WIDTHS) ; do \
-	    inkscape -w $$i -e tmp.png $(SOURCE_FILE_ICON) ; \
-	    install -m 0644 -T tmp.png \
-	    $(ICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR)/$(TARGET_FILE_ICON_PNG); \
-	    rm tmp.png ; \
-	    inkscape -w $$i -e tmp.png $(SOURCE_CFILE_ICON) ; \
-	    install -m 0644 -T tmp.png \
-	    $(ICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR)/$(TARGET_CFILE_ICON_PNG); \
-	    rm tmp.png ; \
+	  inkscape -w $$i -e tmp.png $(SOURCE_FILE_ICON) ; \
+	  install -m 0644 -T tmp.png \
+	  $(ICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR)/$(TARGET_FILE_ICON_PNG); \
+	  rm tmp.png ; \
+	  inkscape -w $$i -e tmp.png $(SOURCE_CFILE_ICON) ; \
+	  install -m 0644 -T tmp.png \
+	  $(ICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR)/$(TARGET_CFILE_ICON_PNG); \
+	  inkscape -w $$i -e tmp.png $(SOURCE_TCFILE_ICON) ; \
+	  install -m 0644 -T tmp.png \
+	  $(ICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR)/$(TARGET_TCFILE_ICON_PNG); \
+	  rm tmp.png ; \
 	done
 	install -m 0644 $(JROOT_JARDIR)/epts.jar $(BZDEVDIR)
 	install -m 0644 $(JROOT_JARDIR)/epts.policy $(BZDEVDIR)
