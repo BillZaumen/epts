@@ -216,7 +216,14 @@ public class TemplateSetup {
 	public boolean value;
     }
 
-    Object defCols[] = {
+    static Object tdefCols[] = {
+	localeString("TestDirective"),
+	localeString("Directive"),
+	localeString("DirectiveValue")
+    };
+
+
+    static Object defCols[] = {
 	localeString("iterationName"),
 	localeString("varName"),
 	localeString("valueName")
@@ -231,9 +238,9 @@ public class TemplateSetup {
     private static final int SRESOURCE_PROTO_LEN = SRESOURCE_PROTO.length();
 
     private static boolean mayUseClassOrPackage(String template) {
-	if (template.length() < SRESOURCE_PROTO_LEN) return false;
+	if (template.length() < SRESOURCE_PROTO_LEN) return true;
 	if  (!template.startsWith(SRESOURCE_PROTO)) {
-	    return false;
+	    return true;
 	}
 	template = template.substring(SRESOURCE_PROTO_LEN);
 	for (String s: templatesWithClassOrPackage) {
@@ -601,6 +608,73 @@ public class TemplateSetup {
 	    return Long.parseLong(text);
 	} catch (Exception e) {}
 	return 0L;
+    }
+
+    static Vector tdefVector = null;
+
+    static JTable tdefTable = null;
+
+    static void createTDefTable(final JTabbedPane tabpane, JPanel panel) {
+	panel.setLayout(new BorderLayout());
+	DefaultTableModel tdtm;
+	if (tdefVector == null) {
+	    tdtm = new DefaultTableModel(tdefCols, 16) {
+		    public Class<?> getColumnClass(int col) {
+			return String.class;
+		    }
+		};
+	    tdefVector  = tdtm.getDataVector();
+	} else {
+	    tdtm =
+		new DefaultTableModel(tdefVector, new Vector<Object>
+				      (Arrays.asList(tdefCols)));
+	}
+	tdtm.addTableModelListener((tme) -> {
+		switch (tme.getType()) {
+		case TableModelEvent.DELETE:
+		    break;
+		case TableModelEvent.INSERT:
+		case TableModelEvent.UPDATE:
+		    {
+			int col = tme.getColumn();
+			if (col == 2) break;
+			int startRow = tme.getFirstRow();
+			int lastRow = tme.getLastRow();
+			for (int i = startRow; i <= lastRow; i++) {
+			    String name = (String)tdtm.getValueAt(i, col);
+			    if (name == null) continue;
+			    name = name.trim();
+			    if (name.length() == 0) continue;
+			    if (EPTS.isReservedTdef(name)) {
+				tabpane.setSelectedIndex(1);
+			    }
+			    while (EPTS.isReservedTdef(name)) {
+				String msg = errorMsg("tdefNameQ", name, i+1);
+				name = JOptionPane
+				    .showInputDialog(tabpane,
+						     msg,
+						     localeString("tdefTitle"),
+						     JOptionPane.ERROR_MESSAGE);
+				if (name == null) name = "";
+				if (!EPTS.isReservedTdef(name)) {
+				    tdtm.setValueAt(name, i, col);
+				}
+			    }
+			}
+		    }
+		}
+	    });
+	tdefTable = new JTable();
+	tdefTable.setModel(tdtm);
+	tdefTable.getTableHeader().setReorderingAllowed(false);
+	JScrollPane tdefSP = new JScrollPane(tdefTable);
+	tdefTable.setFillsViewportHeight(true);
+	int twidth = Setup.configColumn(tdefTable, 0, "mmmmmmmmmmm");
+	twidth += Setup.configColumn(tdefTable, 1, "mmmmmmmmmmm");
+	twidth += Setup.configColumn(tdefTable, 2,
+				     "mmmmmmmmmmmmmmmmmmmmmmmmmm");
+	tdefSP.setPreferredSize(new Dimension(twidth+10, 275));
+	panel.add(tdefSP, BorderLayout.CENTER);
     }
 
     static final char openspace = '\u2423';
@@ -1130,7 +1204,15 @@ public class TemplateSetup {
 	    enc.writeObject(pathmap);
 	    enc.close();
 	    os.close();
-	    
+	    os = zos.nextOutputStream("tdefTable", true, 9);
+	    CellEditor ce = tdefTable.getCellEditor();
+	    if (ce != null) {
+		ce.stopCellEditing();
+	    }
+	    enc = new XMLEncoder(os);
+	    enc.writeObject(tdefVector);
+	    enc.close();
+	    os.close();
 	    os = zos.nextOutputStream("globalData", true, 9);
 	    enc = new XMLEncoder(os);
 	    enc.writeObject(globalData);
@@ -1177,7 +1259,16 @@ public class TemplateSetup {
     static String outFile = null;
 
     public static String[] generate() {
+	if (tdefTable != null) {
+	    CellEditor ce = tdefTable.getCellEditor();
+	    if (ce != null) {
+		ce.stopCellEditing();
+	    }
+	}
 	ArrayList<String> list = new ArrayList<>();
+	if (EPTS.stackTrace) {
+	    list.add("--stackTrace");
+	}
 	list.add("-o");
 	list.add(outFile);
 	if (basicData.mapName != null) {
@@ -1187,6 +1278,36 @@ public class TemplateSetup {
 		list.add(name);
 	    }
 	}
+	for (Object obj: tdefVector) {
+	    if (obj instanceof Vector) {
+		Vector v = (Vector) obj;
+		String test = (String)v.get(0);
+		String var = (String) v.get(1);
+		String val = (String) v.get(2);
+		if (test == null) test= "";
+		if (var == null) var = "";
+		if (val == null) val = "";
+		test = test.trim();
+		var = var.trim();
+		if (test.length() > 0) {
+		    if (var.length() > 0) {
+			if (val.length() > 0) {
+			    list.add("--tdef");
+			    list.add(test + ":" + var + "=" + val);
+			}
+		    } else {
+			list.add("--tdef");
+			list.add(test);
+		    }
+		} else {
+		    if (var.length() > 0 && val.length() > 0) {
+			list.add("--tdef");
+			list.add(var + "=" + val);
+		    }
+		}
+	    }
+	}
+
 	String tname = (basicData.template == null)? "":
 	    basicData.template.trim();
 	switch(templateType) {
@@ -1342,7 +1463,18 @@ public class TemplateSetup {
 	    }
 	    dec.close();
 	    is.close();
-
+	    ze = zf.getEntry("tdefTable");
+	    if (ze != null) {
+		is = zf.getInputStream(ze);
+		dec = new XMLDecoder(is);
+		result = dec.readObject();
+		if (result instanceof Vector) {
+		    tdefVector = (Vector)result;
+		    Vector v1 = (Vector)tdefVector.get(0);
+		}
+		dec.close();
+		is.close();
+	    }
 	    ze = zf.getEntry("pathmap");
 	    is = zf.getInputStream(ze);
 	    dec = new XMLDecoder(is);
@@ -1352,7 +1484,6 @@ public class TemplateSetup {
 	    }
 	    dec.close();
 	    is.close();
-
 	    ze = zf.getEntry("globalData");
 	    is = zf.getInputStream(ze);
 	    dec = new XMLDecoder(is);
@@ -1714,18 +1845,22 @@ public class TemplateSetup {
 		tabpane.setEnabledAt(2, false);
 		tabpane.setEnabledAt(3, false);
 		tabpane.setEnabledAt(4, false);
+		tabpane.setEnabledAt(5, false);
 	    }
 	    for (Component c: allComponents) {
 		c.setEnabled(false);
 	    }
 	} else {
 	    if (tabpane != null) {
-		tabpane.setEnabledAt(1, true);
-		tabpane.setEnabledAt(3, true);
+		tabpane.setEnabledAt(2, true);
 		tabpane.setEnabledAt(4, true);
+		tabpane.setEnabledAt(5, true);
 	    }
 	    switch(templateType) {
 	    case SVG:
+		if (tabpane != null) {
+		    tabpane.setEnabledAt(1, false);
+		}
 		globalCL.show(globalPanel, "svg");
 		for (Component c: svgComponents) {
 		    c.setEnabled(true);
@@ -1733,10 +1868,12 @@ public class TemplateSetup {
 	    break;
 	    case TT:
 		if (tabpane != null) {
+		    tabpane.setEnabledAt(1, !templateTF.getText()
+					 .startsWith(SRESOURCE_PROTO));
 		    if (mayUseClassOrPackage(templateTF.getText())) {
-			tabpane.setEnabledAt(2, true);
+			tabpane.setEnabledAt(3, true);
 		    } else {
-			tabpane.setEnabledAt(2, false);
+			tabpane.setEnabledAt(3, false);
 		    }
 		}
 		globalCL.show(globalPanel, "tt");
@@ -1746,7 +1883,9 @@ public class TemplateSetup {
 	    break;
 	    case PIT:
 		if (tabpane != null) {
-		    tabpane.setEnabledAt(2, true);
+		    tabpane.setEnabledAt(1, !templateTF.getText()
+					 .startsWith(SRESOURCE_PROTO));
+		    tabpane.setEnabledAt(3, true);
 		}
 		globalCL.show(globalPanel, "pi");
 		for (Component c: piComponents) {
@@ -1833,6 +1972,7 @@ public class TemplateSetup {
 		    topPanel.add(tabpane, "Center");
 
 		    JPanel basicPanel = new JPanel();
+		    JPanel tdefPanel = new JPanel();
 		    JPanel addPathPanel = new JPanel();
 		    JPanel configPanel = new JPanel();
 		    JPanel finishPanel = new JPanel();
@@ -2234,6 +2374,7 @@ public class TemplateSetup {
 		    c.gridwidth = GridBagConstraints.REMAINDER;
 		    addComponent(basicPanel, new JLabel(" "), gridbag, c);
 
+		    if (zf == null) createTDefTable(tabpane, tdefPanel);
 		    createPathTables(addPathPanel);
 		    createGlobalPanel();
 		    createConfigTable(configPanel);
@@ -2242,7 +2383,9 @@ public class TemplateSetup {
 		    if (zf != null) {
 			// templateType is null and templateTypeCB has its
 			// selected index set to null as well
-			if (restore(zf, true, topPanel))  {
+			if (restore(zf, true, topPanel)) {
+			    // delayed because we need tdefVector
+			    createTDefTable(tabpane, tdefPanel);
 			    doEnables(null);
 			    acceptTypeButton.setEnabled(false);
 			    resetTypeButton.setEnabled(true);
@@ -2257,10 +2400,14 @@ public class TemplateSetup {
 			    savedStateTF.setEnabled(false);
 			    mapTF.setEnabled(false);
 			    mapButton.setEnabled(false);
+			} else {
+			    // could not restore state
+			    System.exit(1);
 			}
 		    }
 
 		    tabpane.add(localeString("Basic"), basicPanel);
+		    tabpane.add(localeString("TDefs"), tdefPanel);
 		    tabpane.add(localeString("AddPaths"), addPathPanel);
 		    tabpane.add(localeString("Global"), globalPanel);
 		    tabpane.add(localeString("Configure"), configPanel);
@@ -2273,8 +2420,12 @@ public class TemplateSetup {
 		    }
 		    
 		    tabpane.addChangeListener((ce) -> {
+			    CellEditor tdefce = tdefTable.getCellEditor();
+			    if (tdefce != null) {
+				tdefce.stopCellEditing();
+			    }
 			    int index = tabpane.getSelectedIndex();
-			    if (index == 3) {
+			    if (index == 4) {
 				// populate table
 				HashSet<String> hset =
 				    new HashSet<> (2*(locations.length
@@ -2457,24 +2608,4 @@ public class TemplateSetup {
 	    }
 	}
     }
-
-    /*
-    public static void main(String argv[]) throws Exception {
-	org.bzdev.protocols.Handlers.enable();
-	String[] results;
-	if (argv.length == 0) {
-	    results = getSetupArgs(null, null);
-	} else {
-	    File f = new File(argv[0]);
-	    ZipDocFile zf = new ZipDocFile(f);
-	    results = getSetupArgs(zf, f);
-	    zf.close();
-	}
-	
-	System.out.println("command-line arguments:");
-	for (String arg: results) {
-	    System.out.println("   " + arg);
-	}
-    }
-    */
 }

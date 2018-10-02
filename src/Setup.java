@@ -1005,6 +1005,9 @@ public class Setup {
 				ArrayList<String> arglist =
 				    new ArrayList<>(64);
 				arglist.add("--gui");
+				if (EPTS.stackTrace) {
+				    arglist.add("--stackTrace");
+				}
 				int len = javaOptionTable.getRowCount();
 				for (int i = 0; i < len; i++) {
 				    String s = (String)

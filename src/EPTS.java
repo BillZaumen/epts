@@ -538,16 +538,24 @@ public class EPTS {
 	int ind = name.indexOf(":");
 	if (ind > -1) {
 	    String test = name.substring(0, ind).trim();
-	    if (tdefTable.containsKey(name)) {
+	    if (tdefTable.containsKey(test)) {
 		throw new IllegalStateException(errorMsg("storeTDef", test));
 	    }
-	    tdefTable.put(test, EMPTYMAP);
+	    if (value != null  && value.length() > 0) {
+		tdefTable.put(test, EMPTYMAP);
+	    }
 	    name = name.substring(ind+1).trim();
 	}
 	if (tdefTable.containsKey(name)) {
 	    throw new IllegalStateException(errorMsg("storeTDef", name));
 	}
-	tdefTable.put(name, value);
+	if (value != null) {
+	    if (value.length() != 0) {
+		tdefTable.put(name, value);
+	    }
+	} else {
+	    tdefTable.put(name, EMPTYMAP);
+	}
     }
 
 
@@ -1490,6 +1498,13 @@ public class EPTS {
 		    continue;
 		}
 	    }
+	    switch(ind) {
+	    case 2: case 3: case 4: case 5: case 8: case 9:
+		stackTrace = true;
+		break;
+	    default:
+		break;
+	    }
 	    return ind;
 	}
 	return -1;
@@ -1504,6 +1519,34 @@ public class EPTS {
 	    return argv[n];
 	}
     }
+
+    private static String ofoptions[] = {
+	"--stackTrace",	"-o", "--"
+    };
+
+    private static String templateCase(String argv[]) {
+	int index = 0;
+	if (argv.length == 1) return null;
+	if (!argv[argv.length-1].endsWith(".eptt")) return null;
+	String result = null;
+	for (int i = 0; i < argv.length-1; i++) {
+	    String option = argv[i];
+	    int j;
+	    for (j = 0; j < ofoptions.length; j++) {
+		if (ofoptions[j].equals(option)) break;
+	    }
+	    if (j == ofoptions.length) {
+		return null;
+	    }
+	    if (argv[i].equals("--stackTrace")) stackTrace = true;
+	    if (argv[i].equals("--") && argv.length != i+2) return null;
+	    if (argv[i].equals("-o")) {
+		result = argv[++i];
+	    }
+	}
+	return result;
+    }
+
 
     private static boolean needInitialConfig = true;
 
@@ -1523,7 +1566,7 @@ public class EPTS {
 	    fdrUsed = true;
 	}
 	// special cases.
-
+	String outfile = null;
 	if (!alreadyForked) {
 	    if (argv.length == 0) {
 		argv = preprocessArgs(-1, argv, null);
@@ -1533,15 +1576,15 @@ public class EPTS {
 		    System.out.println("    " + s);
 		}
 		*/
-	    } else if ((argv.length == 3 &&
+	    } else if ((outfile = templateCase(argv)) != null /*(argv.length == 3 &&
 			argv[0].equals("-o")
 			&& argv[2].endsWith(".eptt")
 			&& argv[2].charAt(0) != '-')
 		       || (argv.length == 4 &&
 			   argv[0].equals("-o")
 			   && argv[2].equals("--")
-			   && argv[3].endsWith(".epntt"))) {
-		String outfile = argv[1];
+			   && argv[3].endsWith(".epntt"))*/) {
+		// String outfile = argv[1];
 		if (outfile.startsWith("file:")) {
 		    outfile = (new File(new URI(outfile))).getAbsolutePath();
 		}
@@ -2147,7 +2190,7 @@ public class EPTS {
 		    int tdefEqInd = tdef.indexOf('=');
 		    if (tdefEqInd > -1) {
 			String tdefName = tdef.substring(0, tdefEqInd).trim();
-			String tdefValue = tdef.substring(tdefEqInd+1).trim();
+			String tdefValue = tdef.substring(tdefEqInd+1);
 			if (isReservedTdef(tdefName)) {
 			    displayError(errorMsg("reservedTdef", tdefName));
 			    System.exit(1);
@@ -2156,8 +2199,12 @@ public class EPTS {
 			    storeTDef(tdefName, tdefValue);
 			}
 		    } else {
-			displayError(errorMsg("illformedArg", tdef));
-			System.exit(1);
+			if (tdef.indexOf(":") > 0) {
+			    displayError(errorMsg("illformedArg", tdef));
+			    System.exit(1);
+			} else {
+			    storeTDef(tdef, null);
+			}
 		    }
 		    argsList.add(argv[index-1]);
 		    argsList.add(argv[index]);

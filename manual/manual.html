@@ -67,7 +67,7 @@ the following actions:
   <LI><B>Template Processing</B>. This opens a dialog box for setting
     up template-related options and saving them.
   <LI><B>Template Processing with Stacktraces</B>. This is equivalent
-    to the Template Processing action but with stack-traces enabled
+    to the Template Processing action but with stack-traces enabled.
 </UL>
 <P>
 Because EPTS is designed to support a specific set of tasks, there are
@@ -1197,6 +1197,10 @@ treated specially:
     treating it specially if it is a session configuration file. The
     file can be either a session configuration file, a saved-state
     file, an image file, or a script.
+  <LI><B><EM>TCOPTIONS</EM> <EM>TCFILE</EM></B> will process a
+    template-configuration file <EM>TCFILE</EM> in match mode provided
+    that <EM>TCOPTIONS</EM> contains a <CODE>-o</CODE> option and no
+    other options beside <CODE>--</CODE>, and <CODE>--stackTrace</CODE>.
 </UL>
 Special cases that include an argument that may be a file name always
 include the option <CODE>--</CODE> before the file name so that file
@@ -1663,7 +1667,7 @@ The options specific to the EPTS command when templates are used are:
     <EM>DEFVALUE</EM> is a string. If empty, the definition is ignored.
     Otherwise, <EM>DEFNAME</EM> can be a name or a pair of names
     separated by a colon.  In the latter case, the first name in the pair
-    is treated as an iteration key with a single iteration, mimicking
+    is treated as an iteration directive with a single iteration, mimicking
     an 'if' statement, and the second name is the name to which the
     value will be assigned.  For example, the argument
     <CODE>--tdef hasCount:count=30</CODE> will result in the
@@ -2453,6 +2457,30 @@ library class <CODE>org.bzdev.io.ZipDocFile</CODE>, using Java method
     <CODE>mapName</CODE> are the names of the files or URLs provided by
     the <CODE>--template</CODE> option, the first file-name argument,
     of the <CODE>--map</CODE> option respectively.
+  <LI> The ZIP file entry <CODE>tdefTable</CODE> contains an XML-encoded
+    <CODE>java.util.Vector</CODE>, each of whose elements are instances
+    of <CODE>java.util.Vector</CODE> with three elements, all instances of
+    <CODE>java.lang.String</CODE>.  Of these three elements, the first
+    names an iterative directive with a single iteration, the second
+    names a directive that will be defined, and the third provides a value for
+    that directive. Each of these
+    is used to generate a <CODE>--tdef</CODE> option.  If the
+    iterative directive is <EM>TEST</EM>, the directive is
+    <EM>VAR</EM>, and the value is <EM>VAL</EM>, then
+    <UL>
+      <LI> If <EM>TEST</EM>, <EM>VAR</EM>, and <EM>VAL</EM> are not empty
+	strings, the corresponding <CODE>--tdef</CODE> option is
+	<CODE>--tdef</CODE>
+	<EM>TEST</EM><CODE>:</CODE><EM>VAR</EM><CODE>=</CODE><EM>VAL</EM>
+      <LI> If <EM>TEST</EM> is empty but <EM>VAR</EM> and <EM>VAL</EM>
+	are not empty strings, the corresponding <CODE>--tdef</CODE>
+	option is
+	<CODE>--tdef</CODE> <EM>VAR</EM><CODE>=</CODE><EM>VAL</EM>
+      <LI> If <EM>TEST</EM> is not empty but <EM>VAR</EM> and <EM>VAL</EM>
+	are empty the corresponding <CODE>--tdef</CODE>
+	option is <CODE>--tdef</CODE> <EM>TEST</EM>.
+    </UL>
+    Other combinations are ignored.
   <LI> The ZIP-file entry <CODE>pathmap</CODE> contains an XML-encoded
     <CODE>TemplateSetup.PathMap</CODE> object. The inner class
     <CODE>PathMap</CODE> is defined as follows:

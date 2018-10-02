@@ -1004,9 +1004,27 @@ ASCII string "application/vnd.bzdev.epts-template-config+zip")
 The remainder of the ZIP file includes the following ZIP
 entries:
 .TP
-.BR basicData.
+.BR basicData .
 This contains an XML representation of an instance of the class
 .BR TemplateSetup.BasicData .
+.TP
+.BR tdefTable .
+This contains an XML representation of an instance of the class
+.BR java.util.Vector ,
+each element of which is an instance of
+.B java.util.Vector with a size of 3 and representing columns of a table for
+a specific row.
+For each row, the first column contains a
+.B String
+giving the name of a
+.B org.bzdev.util.TemplateProcessor
+iterative directive representing a test (this directive contains a
+single iteration), the second column contains
+.B String
+providing a directive name, and the third
+column contains a
+.B String
+providing the directive's value.
 .TP
 .BR pathmap .
 This contains an XML representation of an instance of the class
@@ -1053,5 +1071,5 @@ via the EPTS help menu.
 \"  LocalWords:  codebase PCDATA xrefpointGCS yrefpointGCS codebases
 \"  LocalWords:  endian unterminated inputfile scriptingLang joptions
 \"  LocalWords:  getDataVector DefaultTableModel JComboBox basicData
-\"  LocalWords:  TemplateSetup pathmap PathMap globalData
+\"  LocalWords:  TemplateSetup pathmap PathMap globalData tdefTable
 \"  LocalWords:  pathLocMap outfile
