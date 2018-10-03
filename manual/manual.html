@@ -71,12 +71,13 @@ the following actions:
 </UL>
 <P>
 Because EPTS is designed to support a specific set of tasks, there are
-a large number of keyboard shortcuts.  It also uses a template
-processor that makes it relatively easy to display paths textually in
-a variety of formats, including user-defined formats.  Command-line
-options are used with templates and make it easy to use EPTS as part
-of a 'build' environment (e.g., Java programs such as ANT or the
-traditional Unix/Linux use of Makefiles).
+a large number of <A href="#shortcuts">keyboard shortcuts</A>.  It
+also uses a template processor that makes it relatively easy to
+display paths textually in a variety of formats, including
+user-defined formats.  Command-line options are used with templates
+and make it easy to use EPTS as part of a 'build' environment (e.g.,
+Java programs such as ANT or the traditional Unix/Linux use of
+Makefiles).
 <P>
 EPTS makes use of three coordinate systems, one indirectly:
 <UL>
@@ -459,9 +460,22 @@ surrounding the selected point.
 
 <H1><A name="shortcuts">Keyboard shortcuts</A></H1>
 
-Some shortcuts apply regardless of the current mode:
+Two shortcuts apply for both the EPTS sessions (these files have
+the <CODE>epts</CODE> extension) and for dialog
+boxes used to set up saved-configuration files and template-processing
+files (these have the <CODE>eptc</CODE> and <CODE>eptt</CODE> file-name
+extensions respectively):
 <UL>
   <LI> Control-Q. This will cause EPTS to terminate.
+  <LI> Control-S. This will save the current state or configuration
+    displayed in window or dialog box. If the current session was restored
+    from a saved state or configuration, the corresponding file will be
+    replaced.
+</UL>
+The remaining shortcuts apply to saved states.
+
+Some saved-state shortcuts apply regardless of the current mode:
+<UL>
   <LI> Control-P. This will print the table.
   <LI> Control-Z. This is an "undo" operation.
   <LI> Control-Minus. Zoom out.
@@ -494,7 +508,7 @@ Some shortcuts apply regardless of the current mode:
     name will be generated.  A generated name starts with the
     string <CODE>path</CODE> and ends with a positive integer.
 </UL>
-
+<P>
 By contrast, some key combinations apply only when adding a point to
 a path or creating an isolated point at a specific location:
 <UL>

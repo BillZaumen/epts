@@ -33,6 +33,7 @@ import java.util.ResourceBundle;
 import java.util.Properties;
 import java.util.regex.Pattern;
 import java.util.Set;
+import java.util.TreeSet;
 import javax.imageio.*;
 import javax.script.ScriptException;
 import javax.swing.*;
@@ -486,7 +487,7 @@ public class EPTS {
     static int width = 1024;
     static int height = 1024;
 
-    static final String reservedTdefNames[] = {
+    static final String reservedTDefNames[] = {
 	"varname",
 	"windingRule",  "hasWindingRule",
 	"segments",
@@ -510,13 +511,19 @@ public class EPTS {
 	"width", "height", "package", "hasPackage",
 	"class", "hasClass", "optSpace", "public"
     };
-    static HashSet<String> reservedTdefSet =
-	new HashSet<>(2*reservedTdefNames.length);
+    // use a TreeSet because a dialog box has a table of these in
+    // alphabetical order.
+    static TreeSet<String> reservedTDefSet =
+	new TreeSet<>(/*2*reservedTDefNames.length*/);
 
     static {
-	for (String s: reservedTdefNames) {
-	    reservedTdefSet.add(s);
+	for (String s: reservedTDefNames) {
+	    reservedTDefSet.add(s);
 	}
+    }
+
+    public static Set<String> getReservedTDefNames() {
+	return Collections.unmodifiableSet(reservedTDefSet);
     }
 
     public static final boolean isReservedTdef(String name) {
@@ -524,9 +531,9 @@ public class EPTS {
 	if (ind > -1) {
 	    String test = name.substring(0, ind).trim();
 	    name = name.substring(ind+1).trim();
-	    if (reservedTdefSet.contains(test)) return true;
+	    if (reservedTDefSet.contains(test)) return true;
 	}
-	return reservedTdefSet.contains(name);
+	return reservedTDefSet.contains(name);
     }
 
     static final String EMPTYMAP = "<EMPTY KEYMAP>";
@@ -2192,7 +2199,7 @@ public class EPTS {
 			String tdefName = tdef.substring(0, tdefEqInd).trim();
 			String tdefValue = tdef.substring(tdefEqInd+1);
 			if (isReservedTdef(tdefName)) {
-			    displayError(errorMsg("reservedTdef", tdefName));
+			    displayError(errorMsg("reservedTDef", tdefName));
 			    System.exit(1);
 			}
 			if (tdefValue.length() > 0) {

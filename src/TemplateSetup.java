@@ -358,7 +358,7 @@ public class TemplateSetup {
 	}
     }
 
-    private static String chooseSavedConfigFile(JPanel pane) {
+    private static String chooseSavedConfigFile(Component pane) {
 	String extensions[] = {"eptt"};
 	String fname = localeString("BasicTTypes");
 	JFileChooser fc = new JFileChooser(cdir);
@@ -614,6 +614,11 @@ public class TemplateSetup {
 
     static JTable tdefTable = null;
 
+    private static final Object rdataColNames[] = {
+	localeString("reservedDirective")
+    };
+
+
     static void createTDefTable(final JTabbedPane tabpane, JPanel panel) {
 	panel.setLayout(new BorderLayout());
 	DefaultTableModel tdtm;
@@ -640,6 +645,9 @@ public class TemplateSetup {
 			if (col == 2) break;
 			int startRow = tme.getFirstRow();
 			int lastRow = tme.getLastRow();
+			if (startRow == -1 || lastRow == -1 || col == -1) {
+			    return;
+			}
 			for (int i = startRow; i <= lastRow; i++) {
 			    String name = (String)tdtm.getValueAt(i, col);
 			    if (name == null) continue;
@@ -670,11 +678,115 @@ public class TemplateSetup {
 	JScrollPane tdefSP = new JScrollPane(tdefTable);
 	tdefTable.setFillsViewportHeight(true);
 	int twidth = Setup.configColumn(tdefTable, 0, "mmmmmmmmmmm");
-	twidth += Setup.configColumn(tdefTable, 1, "mmmmmmmmmmm");
+	twidth += Setup.configColumn(tdefTable, 1, "mmmmmmmm");
 	twidth += Setup.configColumn(tdefTable, 2,
-				     "mmmmmmmmmmmmmmmmmmmmmmmmmm");
+				     "mmmmmmmmmmmmmmmmmmmm");
 	tdefSP.setPreferredSize(new Dimension(twidth+10, 275));
 	panel.add(tdefSP, BorderLayout.CENTER);
+
+	JPanel top = new JPanel(new FlowLayout());
+	JButton addRowButton = new JButton(localeString("addTDefRow"));
+	JButton clearRowsButton = new JButton(localeString("clearTDefSel"));
+	JButton compactRows = new JButton(localeString("compactRows"));
+	addRowButton.addActionListener((ae) -> {
+		DefaultTableModel tm = (DefaultTableModel) tdefTable.getModel();
+		Vector v = new Vector<Object>();
+		tm.addRow(v);
+	    });
+	clearRowsButton.addActionListener((ae) -> {
+		for(int i: tdefTable.getSelectedRows()) {
+		    for (int j = 0; j < 3; j++) {
+			tdefTable.setValueAt("", i, j);
+		    }
+		}
+	    });
+	compactRows.addActionListener((ae) -> {
+		DefaultTableModel tm = (DefaultTableModel) tdefTable.getModel();
+		int rcount = tm.getRowCount();
+		System.out.println("initial rcount = " + rcount);
+		int i = rcount-1;
+		while (i >= 0) {
+		    Object o0 = tm.getValueAt(i, 0);
+		    Object o1 = tm.getValueAt(i, 1);
+		    Object o2 = tm.getValueAt(i, 2);
+		    String s0 = (o0 == null)? "": (String)o0;
+		    String s1 = (o1 == null)? "": (String)o1;
+		    String s2 = (o2 == null)? "": (String)o2;
+		    s0 = s0.trim();
+		    s1 = s1.trim();
+		    if (s0.length() == 0 && s1.length() == 0
+			&& s2.length() == 0) {
+			rcount--;
+		    } else {
+			break;
+		    }
+		    i--;
+		}
+		System.out.println("new rcount = " + rcount);
+		int target = rcount-1;
+		System.out.println("target = " + target);
+		i = 0;
+		for (int j = 0; j < rcount; j++) {
+		    Object o0 = tm.getValueAt(i, 0);
+		    Object o1 = tm.getValueAt(i, 1);
+		    Object o2 = tm.getValueAt(i, 2);
+		    String s0 = (o0 == null)? "": (String)o0;
+		    String s1 = (o1 == null)? "": (String)o1;
+		    String s2 = (o2 == null)? "": (String)o2;
+		    s0 = s0.trim();
+		    s1 = s1.trim();
+		    if (s0.length() == 0 && s1.length() == 0
+			&& s2.length() == 0) {
+			tm.moveRow(i,i,target);
+		    } else {
+			i++;
+		    }
+		}
+		System.out.println("i = " + i);
+		// if we reset the size too soon, Swing gets
+		// confused.
+		final int ii = i;
+		SwingUtilities.invokeLater(() -> {
+			tm.setRowCount((ii < 16)? 16: ii);
+		    });
+	    });
+
+	top.add(addRowButton);
+	top.add(clearRowsButton);
+
+	top.add(compactRows);
+	panel.add(top, BorderLayout.PAGE_START);
+
+	Set<String> rdataSet = EPTS.getReservedTDefNames();
+	Object[][] rdata = new Object[rdataSet.size()][1];
+	int i = 0;
+	for (String name: rdataSet) {
+	    rdata[i++][0] = name;
+	}
+	JTable reservedTable = new JTable(rdata, rdataColNames) {
+		public boolean isCellEditable(int row, int col) {
+		    return false;
+		}
+		public Class<?> getColumnClass(int row) {
+		    return String.class;
+		}
+	    };
+	reservedTable.setRowSelectionAllowed(false);
+	reservedTable.setColumnSelectionAllowed(false);
+
+	JScrollPane rtSP = new JScrollPane(reservedTable);
+	reservedTable.setFillsViewportHeight(true);
+	twidth = Setup.configColumn(reservedTable, 0,
+				    localeString("longestRTStr"));
+	rtSP.setPreferredSize(new Dimension(twidth+10,275));
+	panel.add(rtSP, BorderLayout.LINE_END);
+	
+	JPanel bottom = new JPanel(new FlowLayout());
+	JLabel tdefInstructions = new JLabel(localeString("tdefInstructions"));
+	bottom.add(tdefInstructions);
+	panel.add(bottom, BorderLayout.PAGE_END);
+	reservedTable.setBackground(tdefInstructions.getBackground());
+	
     }
 
     static final char openspace = '\u2423';
@@ -1182,14 +1294,24 @@ public class TemplateSetup {
     }
 
     private static String savedConfigFileName = null;
-    private static boolean save(JPanel panel) {
+    
+    private static boolean save(Component panel) {
 	String fname = chooseSavedConfigFile(panel);
 	if (fname != null) {
-	    savedConfigFileName = fname;
+	    if (createConfigFile(panel, fname)) {
+		savedConfigFileName = fname;
+		return true;
+	    } else {
+		return false;
+	    }
 	} else {
 	    return false;
 	}
+    }
+
+    private static boolean createConfigFile(Component panel, String fname) {
 	try {
+	    System.out.println(fname); 
 	    OutputStream os = new FileOutputStream(fname);
 	    ZipDocWriter zos = new ZipDocWriter
 		(os, "application/vnd.bzdev.epts-template-config+zip");
@@ -1233,6 +1355,10 @@ public class TemplateSetup {
 	    zos.close();
 	    return true;
 	} catch (Exception e) {
+	    JOptionPane.showMessageDialog
+		(panel, errorMsg("saveFailed", fname, e.getMessage()),
+		 localeString("errorTitle"),
+		 JOptionPane.ERROR_MESSAGE);
 	    return false;
 	}
     }
@@ -1958,6 +2084,14 @@ public class TemplateSetup {
     }
     private static String lastSavedState = "";
 
+    private static int CTRL = InputEvent.CTRL_DOWN_MASK;
+    private static int CTRL_SHIFT =
+	InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK;
+
+    private static int KEY_MASK = CTRL_SHIFT | InputEvent.META_DOWN_MASK
+	| InputEvent.ALT_DOWN_MASK | InputEvent.ALT_GRAPH_DOWN_MASK;
+
+
     public static String[] getSetupArgs(ZipDocFile zf, File zfile)
     {
 	try {
@@ -2510,6 +2644,39 @@ public class TemplateSetup {
 				}
 			    }
 			});
+		    if (zfile != null) {
+			savedConfigFileName = zfile.getAbsolutePath();
+		    }
+		    Action quitAction = new AbstractAction() {
+			    public void actionPerformed(ActionEvent e) {
+				System.exit(0);
+			    }
+			};
+		    tabpane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+			.put(KeyStroke.getKeyStroke("control Q"),"quit");
+		    tabpane.getActionMap().put("quit", quitAction);
+
+		    Action saveAction = new AbstractAction() {
+			    public void actionPerformed(ActionEvent e) {
+				if (!resetTypeButton.isEnabled()) {
+				    JOptionPane.showMessageDialog
+					(topPanel,
+					 errorMsg("mustAcceptBeforeSave"),
+					 localeString("errorTitle"),
+					 JOptionPane.ERROR_MESSAGE);
+				    return;
+				} else if
+					(savedConfigFileName == null) {
+				    save(dialog);
+				} else {
+				    createConfigFile(dialog,
+						     savedConfigFileName);
+				}
+			    }
+			};
+		    tabpane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+			.put(KeyStroke.getKeyStroke("control S"), "save");
+		    tabpane.getActionMap().put("save", saveAction);
 		    dialog.setVisible(true);
 
 		});

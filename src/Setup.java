@@ -20,6 +20,7 @@ import javax.swing.event.*;
 import javax.swing.filechooser.*;
 import javax.swing.table.*;
 import javax.swing.text.EditorKit;
+import org.bzdev.lang.CallableArgs;
 import org.bzdev.scripting.Scripting;
 import org.bzdev.io.ZipDocFile;
 import org.bzdev.io.ZipDocWriter;
@@ -644,6 +645,8 @@ public class Setup {
 	localeString("Cancel")
     };
     private static JButton[] buttons = new JButton[options.length];
+    private static ActionListener[] buttonActionListeners =
+	new ActionListener[options.length];
 
     private static boolean dialogButtonPushed = false;
 
@@ -657,7 +660,7 @@ public class Setup {
 	for (int i = 0; i < options.length; i++) {
 	    final int index = i;
 	    JButton b = new JButton((String)options[i]);
-	    b.addActionListener((e) -> {
+	    ActionListener al = (e) -> {
 		    CellEditor ce = javaOptionTable.getCellEditor();
 		    if (ce != null) {
 			ce.stopCellEditing();
@@ -682,9 +685,11 @@ public class Setup {
 			d.setVisible(false);
 			d.dispose();
 		    }
-		});
+	    };
+	    b.addActionListener(al);
 	    panel.add(b);
 	    buttons[i] = b;
+	    buttonActionListeners[i] = al;
 	    if (i < 2) b.setEnabled(false);
 	}
 	return panel;
@@ -950,6 +955,145 @@ public class Setup {
 					       scriptTable,
 					       varTable),
 				 "South");
+
+		     CallableArgs<File> saveCallable=new CallableArgs<File>() {
+			     public void call(File... zfiles) {
+				 File zfile = zfiles[0];
+				 String cd = System.getProperty("user.dir");
+				 JFileChooser saveChooser =
+				 new JFileChooser(cd);
+				 FileNameExtensionFilter fne =
+				 new FileNameExtensionFilter
+				 ("EPTS Saved Setup", "eptc");
+				 for(;;) {
+				     int retval = (zfile != null)?
+					 JFileChooser.APPROVE_OPTION:
+					 saveChooser.showDialog
+					 (null, "Save EPTS Setup");
+				     if (retval==JFileChooser.APPROVE_OPTION) {
+					 try {
+					     File f = (zfile != null)? zfile:
+						 saveChooser.getSelectedFile();
+					     if (!f.getName()
+						 .endsWith(".eptc")) {
+						 JOptionPane.showMessageDialog
+						     (tabpane,
+						      errorMsg("eptc",
+							       f.getName()),
+						      "Setup Error",
+						      JOptionPane
+						      .ERROR_MESSAGE);
+						 continue;
+					     }
+					     OutputStream fos =
+						 new FileOutputStream(f);
+					     ZipDocWriter zdw = new
+						 ZipDocWriter
+						 (fos,
+						  "application/vnd.bzdev"
+						  +".epts-config+zip");
+					     OutputStream os =
+						 zdw.nextOutputStream
+						 ("inputfile", false, 0);
+					     XMLEncoder enc = new
+						 XMLEncoder(os);
+					     enc.writeObject
+						 (inputFileTF.getText());
+					     enc.close(); os.close();
+					     os =
+						 zdw.nextOutputStream
+						 ("animation", false, 0);
+					     enc = new XMLEncoder(os);
+					     enc.writeObject(animTF.getText());
+					     enc.close(); os.close();
+
+					     os =
+						 zdw.nextOutputStream
+						 ("scriptingLang", false, 0);
+					     enc = new XMLEncoder(os);
+					     int ilang =
+						 langCB.getSelectedIndex();
+					     String lang = (ilang == 0)?
+						 DEFAULT_LANG:
+						 langCB.getItemAt(ilang);
+					     enc.writeObject(lang);
+					     enc.close(); os.close();
+
+					     os = zdw.nextOutputStream
+						 ("joptions", true, 9);
+					     enc = new XMLEncoder(os);
+					     Vector v0 = ((DefaultTableModel)
+							  javaOptionTable
+							  .getModel())
+						 .getDataVector();
+					     enc.writeObject(v0);
+					     enc.close();
+					     os.close();
+					     os = zdw.nextOutputStream
+						 ("codebase", true, 9);
+					     enc = new XMLEncoder(os);
+					     Vector v1 =
+						 ((DefaultTableModel)
+						  codebaseTable.getModel())
+						 .getDataVector();
+					     enc.writeObject(v1);
+					     enc.close();
+					     os.close();
+					     Vector v2 =
+						 ((DefaultTableModel)
+						  scriptTable.getModel())
+						 .getDataVector();
+					     os = zdw.nextOutputStream
+						 ("scripts", true, 9);
+					     enc = new XMLEncoder(os);
+					     enc.writeObject(v2);
+					     enc.close();
+					     os.close();
+					     Vector v3 = (Vector)
+						 (((Vector)
+						   (((DefaultTableModel)
+						     varTable.getModel())
+						    .getDataVector()))
+						  .clone());
+					     fixupVector(v3);
+					     os = zdw.nextOutputStream
+						 ("variables", true, 9);
+					     enc = new XMLEncoder(os);
+					     enc.writeObject(v3);
+					     enc.close();
+					     os.close();
+					     zdw.close();
+					 } catch (Exception ee) {
+					     JOptionPane.showMessageDialog
+						 (tabpane,ee.getMessage(),
+						  "Setup Error",
+						  JOptionPane.ERROR_MESSAGE);
+					     continue;
+					 }
+				     }
+				     break;
+				 }
+			     }
+			 };
+
+		    Action quitAction = new AbstractAction() {
+			    public void actionPerformed(ActionEvent e) {
+				System.exit(0);
+			    }
+			};
+		    tabpane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+			.put(KeyStroke.getKeyStroke("control Q"),"quit");
+		    tabpane.getActionMap().put("quit", quitAction);
+
+		    Action saveAction = new AbstractAction() {
+			    public void actionPerformed(ActionEvent e) {
+				saveCallable.call(zfile);
+			    }
+			};
+		    tabpane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+			.put(KeyStroke.getKeyStroke("control S"), "save");
+		    tabpane.getActionMap().put("save", saveAction);
+
 		    JDialog dialog = new JDialog();
 		    dialog.setModalityType
 			(Dialog.ModalityType.APPLICATION_MODAL);
@@ -1127,120 +1271,7 @@ public class Setup {
 			}
 		    }
 		    if (status == 0 || status == 1) {
-			String cd = System.getProperty("user.dir");
-			JFileChooser saveChooser = new JFileChooser(cd);
-			FileNameExtensionFilter fne =
-			    new FileNameExtensionFilter
-			    ("EPTS Saved Setup", "eptc");
-			for(;;) {
-			    int retval = (zfile != null)?
-				JFileChooser.APPROVE_OPTION:
-				saveChooser.showDialog(null, "Save EPTS Setup");
-			    if (retval == JFileChooser.APPROVE_OPTION) {
-				try {
-				    File f = (zfile != null)? zfile:
-					saveChooser.getSelectedFile();
-				    if (!f.getName().endsWith(".eptc")) {
-					JOptionPane.showMessageDialog
-					    (tabpane,
-					     errorMsg("eptc", f.getName()),
-					     "Setup Error",
-					     JOptionPane.ERROR_MESSAGE);
-					continue;
-				    }
-				    OutputStream fos = new FileOutputStream(f);
-				    ZipDocWriter zdw = new
-					ZipDocWriter(fos,
-						     "application/vnd.bzdev"
-						     +".epts-config+zip");
-				    OutputStream os =
-					zdw.nextOutputStream("inputfile",
-							     false, 0);
-				    XMLEncoder enc = new XMLEncoder(os);
-				    enc.writeObject(inputFileTF.getText());
-				    enc.close(); os.close();
-				    os =
-					zdw.nextOutputStream("animation",
-							     false, 0);
-				    enc = new XMLEncoder(os);
-				    enc.writeObject(animTF.getText());
-				    enc.close(); os.close();
-
-				    os =
-					zdw.nextOutputStream("scriptingLang",
-							     false, 0);
-				    enc = new XMLEncoder(os);
-				    int ilang = langCB.getSelectedIndex();
-				    String lang = (ilang == 0)?
-					DEFAULT_LANG:
-					langCB.getItemAt(ilang);
-				    enc.writeObject(lang);
-				    enc.close(); os.close();
-
-				    os = zdw.nextOutputStream("joptions",
-							      true, 9);
-				    enc = new XMLEncoder(os);
-				    Vector v0 = ((DefaultTableModel)
-						 javaOptionTable.getModel())
-					.getDataVector();
-				    enc.writeObject(v0);
-				    enc.close();
-				    os.close();
-				    os = zdw.nextOutputStream("codebase",
-							      true, 9);
-				    enc = new XMLEncoder(os);
-				    Vector v1 = ((DefaultTableModel)
-						 codebaseTable.getModel())
-					.getDataVector();
-				    enc.writeObject(v1);
-				    enc.close();
-				    os.close();
-
-				    Vector v2 = ((DefaultTableModel)
-						 scriptTable.getModel())
-					.getDataVector();
-				    os = zdw.nextOutputStream("scripts",
-							      true, 9);
-				    enc = new XMLEncoder(os);
-				    enc.writeObject(v2);
-				    enc.close();
-				    os.close();
-				    Vector v3 = (Vector)
-					(((Vector)(((DefaultTableModel)
-						    varTable.getModel())
-						   .getDataVector()))
-					 .clone());
-				    fixupVector(v3);
-				    /*
-				    int vsize = v3.size();
-				    for (int i = 0; i < vsize; i++) {
-					Vector v = (Vector)
-					    (((Vector)(v3.elementAt(i)))
-					     .clone());
-					v.setElementAt
-					    (getTypeIndex(v.elementAt(1)), 1);
-					v.setElementAt
-					    (getUnitIndex(v.elementAt(3)), 3);
-					v3.setElementAt(v, i);
-				    }
-				    */
-				    os = zdw.nextOutputStream("variables",
-							      true, 9);
-				    enc = new XMLEncoder(os);
-				    enc.writeObject(v3);
-				    enc.close();
-				    os.close();
-				    zdw.close();
-				} catch (Exception ee) {
-				    JOptionPane.showMessageDialog
-					(tabpane,ee.getMessage(),
-					 "Setup Error",
-					 JOptionPane.ERROR_MESSAGE);
-				    continue;
-				}
-			    }
-			    break;
-			}
+			saveCallable.call(zfile);
 		    }
 		    if (status == 1|| status == 3) {
 			System.exit(0);
