@@ -974,7 +974,7 @@ public class EPTSWindow {
 			    new StringSelection(writer.toString());
 			cb.setContents(selection, selection);
 		    } catch (IOException ee) {
-			System.err.println("ECMA export to clipboard failed");
+			System.err.println(errorMsg("ECMAExport"));
 			ee.printStackTrace(System.err);
 			System.exit(1);
 		    }
@@ -2439,8 +2439,7 @@ public class EPTSWindow {
 				robot.mouseMove(p.x, p.y);
 			    }
 			} catch (AWTException ee) {
-			    System.err.println
-				("cannot move mouse using keyboard");
+			    System.err.println(errorMsg("mouseMove"));
 			} catch (Exception ee) {
 			    ee.printStackTrace(System.err);
 			}
@@ -2761,10 +2760,6 @@ public class EPTSWindow {
 
 	    boolean pointDragged = false;
 	    public void mouseReleased(MouseEvent e) {
-		if (mouseButton != e.getButton()) {
-		    System.err.println("mouseButton =  " + mouseButton
-				       + ", expecting " + e.getButton());
-		}
 		if (mouseButton == MouseEvent.BUTTON1) {
 		    altReallyPressed = false;
 		    if (altPressed) {

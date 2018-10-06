@@ -1,1 +1,2 @@
-area for $(varname) = $(area)
+$(paths:endPaths)area for $(varname) = $(area)
+$(endPaths)

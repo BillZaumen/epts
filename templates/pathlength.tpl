@@ -1,1 +1,2 @@
-path length for $(varname) = $(pathLength)
+$(paths:endPaths)path length for $(varname) = $(pathLength)
+$(endPaths)

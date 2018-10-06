@@ -563,6 +563,16 @@ operation for a path and is incremented for each control point, spline
 point, or end-of-segment point, along the path, and for a
 final 'close' if there is one.
 .TP
+.B pathItem
+This is an iterative directive listing points/operations along a path.
+The entries have a
+.B type directive associated with them, in addition to some other
+directives.
+.PP
+Within a
+.B pathItem
+directive, the following directives can be used:
+.TP
 .BR type
 This is the type of a control point or operation
 along the path (\fBMOVE_TO\fR,
@@ -614,6 +624,40 @@ and
 with the same meaning as used in  the
 .B location
 directive.
+.TP
+.B hasParameterInfo
+This is an iterative directive with 0 or 1 iterations.It will be
+define when the
+.B type
+directive has the value
+.BR MOVE_TO ,
+.BR SPLINE ,
+.BR SEG_END ,
+or
+.BR CLOSE .
+.PP
+The
+.B hasParameterInfo
+directive defines
+.TP
+.B subpathvar
+This directive will be defined when a path has subpaths.
+.TP
+.B hasSubpath
+This is an iterative directive with 0 or 1 iterations. It will have
+a single iteration when the
+.B subpathvar
+directive is defined.
+.TP
+.B u
+This directive gives the value of the path parameter for a subpath, or the
+path itself if there is no subpath. It will be a real number with
+non-negative integer values ( 0.0, 1.0, 2.0, etc.)
+.TP
+.B s
+This directive gives the value of the distance along a subpath, or the
+path itself if it does not have subpaths, corresponding to the path
+parameter.  The distance for a path parameter of 0.0 is always 0.0.
 .SH PATH-ITERATOR TEMPLATE FORMAT
 These templates describe individual paths.
 The global directives are
@@ -1072,4 +1116,5 @@ via the EPTS help menu.
 \"  LocalWords:  endian unterminated inputfile scriptingLang joptions
 \"  LocalWords:  getDataVector DefaultTableModel JComboBox basicData
 \"  LocalWords:  TemplateSetup pathmap PathMap globalData tdefTable
-\"  LocalWords:  pathLocMap outfile
+\"  LocalWords:  pathLocMap outfile pathItem hasParameterInfo subpath
+\"  LocalWords:  subpathvar subpaths hasSubpath

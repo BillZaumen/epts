@@ -51,13 +51,13 @@ Arguments that are not options can be one of four types of files:
 .IR CFILE .
 This file type represents a session-configuration file or a
 template-configuration file. Its file-name extension is "eptc" for a
-session-configuration file and "eptt" for a template-configuraton
+session-configuration file and "eptt" for a template-configuration
 file. These files are Zip files with an embedded mime type and are
 created by using the
 .B \-\-sessionConfig
 or the
 .B \-\-templateConfig
-options. These option sprovide a GUI for creating the corresponding
+options. These options provide a GUI for creating the corresponding
 files and provides an alternative to using the command-line
 interface.  If a template-configuration file
 .I TCFILE
@@ -277,7 +277,7 @@ standard error might not be visible to the user.
 .TP
 .B \-\-sessionConfig
 This argument is recognized if it is the only argument used or if it
-is preceeded by the
+is preceded by the
 .B \-\-stackTrace
 argument; otherwise an error will be generated. It is intended for use
 by window systems for starting EPTS in a particular mode.  When this
@@ -349,7 +349,7 @@ image file, or a script.p
 .B \-\-templateConfig
 will start a GUI (a dialog box) that will in effect set up the
 command-line options for the user. The user can save the
-configuration in a "eptt" file for later use or can procede to
+configuration in a "eptt" file for later use or can proceed to
 run epts as if the corresponding options had been provided.
 .TP
 .BI \-\- FILE
@@ -953,80 +953,21 @@ when this
 .B \-\-tdef
 is present and into empty text when this
 .B \-\-tdef
-is not present.  A number of variable names are reserved:
-.BR area ,
-.BR atype ,
-.BR circumference ,
+is not present.  A number of directive names are reserved:
 .BR class ,
-.BR dashIncrement ,
-.BR dashPattern ,
-.BR dashPhase ,
-.BR draw ,
-.BR drawColor ,
-.BR fill ,
-.BR fillColor ,
-.BR gcsMode ,
-.BR has0 ,
-.BR has1 ,
-.BR has2 ,
-.BR hasAttributes ,
-.BR hasClass ,
-.BR hasClose ,
-.BR hasCubicTo ,
-.BR hasDashIncrement ,
-.BR hasDashPattern ,
-.BR hasDashPhase ,
-.BR hasDrawColor ,
-.BR hasFillColor ,
-.BR hasGcsMode ,
-.BR hasLineTo ,
-.BR hasMiterLimit ,
-.BR hasMoveTo ,
 .BR hasPackage ,
-.BR hasQuadTo ,
-.BR hasStrokeCap ,
-.BR hasStrokeJoin ,
-.BR hasStrokeWidth ,
-.BR hasWindingRule ,
-.BR hasZorder ,
 .BR height ,
-.BR index ,
 .BR items ,
-.BR location ,
-.BR ltype ,
-.BR method ,
-.BR miterLimit ,
 .BR optSpace ,
-.BR optcomma ,
 .BR package ,
-.BR pathItem ,
-.BR pathLength ,
-.BR pathStatement ,
-.BR pindex ,
+.BR paths ,
 .BR public ,
-.BR segments ,
-.BR strokeCap ,
-.BR strokeJoin ,
-.BR strokeWidth ,
-.BR type ,
-.BR varname ,
-.BR vindex ,
-.BR width ,
-.BR windingRule ,
-.BR x ,
-.BR x0 ,
-.BR x1 ,
-.BR x2 ,
-.BR xp ,
-.BR xy ,
-.BR y ,
-.BR y0 ,
-.BR y1 ,
-.BR y2 ,
-.BR yp ,
-.BR ypr ,
 and
-.BR zorder .
+.BR width .
+ Some of these reserved directives are iterative directives and
+ those may define additional directives which will
+ override global directives during an iteration. Overridden directives
+ will be restored after the iteration ends.
 .TP
 .BI \-\-template: RESOURCE
 This option is a shortcut for the option
@@ -1045,6 +986,7 @@ built-in templates whose URLs start with the protocol
 .BR sresource .
 For table templates, the pathname component of the URLs (separated
 from the protocol by a ":") are
+.BR distances ,
 .BR ECMAScriptLayers ,
 .BR ECMAScriptLayerPaths ,
 .BR EMCAScriptLocations ,
@@ -1217,8 +1159,16 @@ option are used, the template is assumed to be a table template.
 .PP
 The table templates are the following:
 .TP
+.B sresource:distances
+This template will print the distances and corresponding path
+parameters for those points along a path that are spline points or
+points on segment boundaries. The path parameters are integer-valued,
+and for the path parameter 0.0, the corresponding distance is always
+zero.  For paths that have subpaths, the distances and path parameters
+are those appropriate for each subpath.
+.TP
 .B sresource:ECMAScript
-This option will print the
+This template will print the
 information included in the EPTS table. Each path or location is
 represented by an ECMAScript variable. For locations, the value
 assigned to the variable is an object whose properties
@@ -1249,7 +1199,7 @@ option must name a single EPTS path when a
 stroke or color option is provided.
 .TP
 .B sresource:ECMAScriptLayers
-This option will print the information included in the EPTS
+This template will print the information included in the EPTS
 table. Each path is represented by an ECMAScript variable. Location
 entries are ignored.  For each
 .B \-\-tname
@@ -1844,4 +1794,7 @@ file override those in the system configuration file.
 \"  LocalWords:  Runtime Makefiles getRefPointName getXOrigin typeof
 \"  LocalWords:  getYOrigin getXFract RefPointName getYFract fRWhen
 \"  LocalWords:  href CGS initFrames scheduleFrames fIAn fISimulation
-\"  LocalWords:  fIProgramming
+\"  LocalWords:  fIProgramming stackTrace sessionConfig CFILE OFILE
+\"  LocalWords:  templateConfig TCFILE eptc eptt hasFillColor tdef
+\"  LocalWords:  fIDEFNAME DEFVALUE DEFNAME hasCount endCount subpath
+\"  LocalWords:  hasPackage optSpace

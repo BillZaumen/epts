@@ -593,7 +593,14 @@ will include only these two paths in its output file <CODE>path.js</CODE>.
 <P>
 The built-in table templates are the following:
 <UL>
-  <LI><B><CODE>sresource:ECMAScript</CODE></B>.  This option will print the
+  <LI><B><CODE>sresource:distances</CODE></B>. This will print the
+    distances and corresponding path parameters for those points along
+    a path that are spline points or points on segment boundaries. The
+    path parameters are integer-valued, and for the path parameter 0.0,
+    the corresponding distance is always zero.  For paths that have
+    subpaths, the distances and path parameters are those appropriate
+    for each subpath.
+  <LI><B><CODE>sresource:ECMAScript</CODE></B>.  This will print the
     information included in the EPTS table. Each path or location is
     represented by an ECMAScript variable. For locations, the value
     assigned to the variable is an object whose properties
@@ -771,9 +778,6 @@ for these tables, EPTS defines several global directives:
     the simple name of a Java class. Unless documentation for a template
     states otherwise, this is the class name for a single class being
     defined.
-  <LI><B><CODE>hasClass</CODE></B>. This is an empty iterative directive.
-    When present, it will provide a single iteration and indicates that
-    the directive <CODE>class</CODE> has a non-null value.
   <LI><B><CODE>hasPackage</CODE></B>. This is an empty iterative directive.
     When present, it will provide a single iteration and indicates that
     the key <CODE>package</CODE> has a non-null value.
@@ -992,6 +996,25 @@ directives:
     </UL>
     When the type is <CODE>CLOSE</CODE>, the <CODE>xy</CODE> directive
     is not defined.
+  <LI><B><CODE>hasParameterInfo</B>. This is an iterative directive  with
+    0 or 1 iterations. It will have a single iteration when the type
+    is <CODE>MOVE_TO</CODE>, <CODE>SEG_END</CODE>, <CODE>SPLINE</CODE>,
+    or <CODE>CLOSE</CODE>. An iteration defines the following directives:
+    <UL>
+      <LI> <B><CODE>hasSubpathvar</CODE></B>. This is an iterative
+	directive with a 0 or 1 iterations. When it has 1 iteration,
+	the directive <CODE>subpathvar</CODE> will be defined.
+      <LI> <B><CODE>subpathvar</CODE></B>. The name of a subpath,
+	if one exists or a path. The iterative directive
+	<CODE>hasSubpathvar</CODE> can be used to test if this directive
+	is defined.
+      <LI> <B><CODE>s</CODE></B>. The distance from the start of a subpath,
+	of the distance from the start of a path if there are no subpaths,
+	for the current point along a path.
+      <LI> <B><CODE>u</CODE></B>. The value of the path parameter for a
+	the subpath, or the path itself if the path does not have subpaths,
+	for the current point along a path.
+    </UL>
 </UL>
 <P>
 For example, the following template will create a set of statements
@@ -1690,36 +1713,18 @@ The options specific to the EPTS command when templates are used are:
       <CODE>$(hasCount:endCount)count = $(count);$(endCount)</CODE>
     </BLOCKQUOTE>
     being changed into
-    <BLOCKQUOTE><CODE>count = 30</CODE></BLOCKUOTE>
+    <BLOCKQUOTE><CODE>count = 30</CODE></BLOCKQUOTE>
     when this <CODE>--tdef</CODE>
     is present and into empty text when this <CODE>--tdef</CODE> is not
     present. A number of names are reserved:
-    <CODE>area</CODE>, <CODE>atype</CODE>, <CODE>circumference</CODE>,
-    <CODE>class</CODE>, <CODE>dashIncrement</CODE>, <CODE>dashPattern</CODE>,
-    <CODE>dashPhase</CODE>, <CODE>draw</CODE>, <CODE>drawColor</CODE>,
-    <CODE>fill</CODE>, <CODE>fillColor</CODE>, <CODE>gcsMode</CODE>,
-    <CODE>has0</CODE>, <CODE>has1</CODE>, <CODE>has2</CODE>,
-    <CODE>hasAttributes</CODE>, <CODE>hasClass</CODE>, <CODE>hasClose</CODE>,
-    <CODE>hasCubicTo</CODE>, <CODE>hasDashIncrement</CODE>,
-    <CODE>hasDashPattern</CODE>, <CODE>hasDashPhase</CODE>,
-    <CODE>hasDrawColor</CODE>, <CODE>hasFillColor</CODE>,
-    <CODE>hasGcsMode</CODE>, <CODE>hasLineTo</CODE>, <CODE>hasMiterLimit</CODE>,
-    <CODE>hasMoveTo</CODE>, <CODE>hasPackage</CODE>, <CODE>hasQuadTo</CODE>,
-    <CODE>hasStrokeCap</CODE>, <CODE>hasStrokeJoin</CODE>,
-    <CODE>hasStrokeWidth</CODE>, <CODE>hasWindingRule</CODE>,
-    <CODE>hasZorder</CODE>, <CODE>height</CODE>, <CODE>index</CODE>,
-    <CODE>items</CODE>, <CODE>location</CODE>, <CODE>ltype</CODE>,
-    <CODE>method</CODE>, <CODE>miterLimit</CODE>, <CODE>optSpace</CODE>,
-    <CODE>optcomma</CODE>, <CODE>package</CODE>, <CODE>pathItem</CODE>,
-    <CODE>pathLength</CODE>, <CODE>pathStatement</CODE>,
-    <CODE>pindex</CODE>, <CODE>public</CODE>, <CODE>segments</CODE>,
-    <CODE>strokeCap</CODE>, <CODE>strokeJoin</CODE>, <CODE>strokeWidth</CODE>,
-    <CODE>type</CODE>, <CODE>varname</CODE>, <CODE>vindex</CODE>,
-    <CODE>width</CODE>, <CODE>windingRule</CODE>, <CODE>x</CODE>,
-    <CODE>x0</CODE>, <CODE>x1</CODE>, <CODE>x2</CODE>, <CODE>xp</CODE>,
-    <CODE>xy</CODE>, <CODE>y</CODE>, <CODE>y0</CODE>, <CODE>y1</CODE>,
-    <CODE>y2</CODE>, <CODE>yp</CODE>, <CODE>ypr</CODE>,
-    and <CODE>zorder</CODE>.
+    <CODE>class</CODE>, <CODE>hasPackage</CODE>, <CODE>height</CODE>,
+    <CODE>items</CODE>, <CODE>optSpace</CODE>, <CODE>package</CODE>,
+    <CODE>paths</CODE>, <CODE>public</CODE>, and <CODE>width</CODE>.
+    Some of these reserved names refer to iterative directives, and
+    each iterative directive will define additional directives during
+    an iteration. These will override a global directive with the same
+    name during an iteration but will not alter such a global
+    directive.
   <LI><B><CODE>--template:</CODE></B><EM>RESOURCE</EM>.
     This option is a shortcut that behaves like the option
     <CODE>--template sresource:</CODE><EM>RESOURCE</EM>.
@@ -2694,5 +2699,5 @@ The path names for these documents, of course, is system dependent.
  -->
 <!--  LocalWords:  codebases tyically Stacktraces JComboBox DEFNAME
  -->
-<!--  LocalWords:  DEFVALUE PathMap
+<!--  LocalWords:  DEFVALUE PathMap subpath TCOPTIONS TCFILE
  -->

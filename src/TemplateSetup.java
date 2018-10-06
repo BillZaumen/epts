@@ -12,6 +12,7 @@ import javax.swing.event.*;
 import javax.swing.filechooser.*;
 import javax.swing.table.*;
 import javax.swing.text.*;
+import javax.swing.tree.*;
 import javax.xml.parsers.*;
 
 import org.bzdev.graphs.Colors;
@@ -614,10 +615,27 @@ public class TemplateSetup {
 
     static JTable tdefTable = null;
 
+    /*
     private static final Object rdataColNames[] = {
 	localeString("reservedDirective")
     };
+    */
+    private static final String rootName = localeString("reservedDirective");
 
+
+    private static void createTreeNodes(DefaultMutableTreeNode node,
+					Set<String> names,
+					Map<String,Set<String>> map)
+    {
+	for (String name: names) {
+	    DefaultMutableTreeNode next =
+		new DefaultMutableTreeNode(name);
+	    node.add(next);
+	    if (map.containsKey(name)) {
+		createTreeNodes(next, map.get(name), map);
+	    }
+	}
+    }
 
     static void createTDefTable(final JTabbedPane tabpane, JPanel panel) {
 	panel.setLayout(new BorderLayout());
@@ -703,7 +721,6 @@ public class TemplateSetup {
 	compactRows.addActionListener((ae) -> {
 		DefaultTableModel tm = (DefaultTableModel) tdefTable.getModel();
 		int rcount = tm.getRowCount();
-		System.out.println("initial rcount = " + rcount);
 		int i = rcount-1;
 		while (i >= 0) {
 		    Object o0 = tm.getValueAt(i, 0);
@@ -722,9 +739,7 @@ public class TemplateSetup {
 		    }
 		    i--;
 		}
-		System.out.println("new rcount = " + rcount);
 		int target = rcount-1;
-		System.out.println("target = " + target);
 		i = 0;
 		for (int j = 0; j < rcount; j++) {
 		    Object o0 = tm.getValueAt(i, 0);
@@ -742,7 +757,6 @@ public class TemplateSetup {
 			i++;
 		    }
 		}
-		System.out.println("i = " + i);
 		// if we reset the size too soon, Swing gets
 		// confused.
 		final int ii = i;
@@ -757,7 +771,29 @@ public class TemplateSetup {
 	top.add(compactRows);
 	panel.add(top, BorderLayout.PAGE_START);
 
+
 	Set<String> rdataSet = EPTS.getReservedTDefNames();
+	Map<String,Set<String>> map = EPTS.getReservedTDefMap();
+	DefaultMutableTreeNode topnode =
+	    new DefaultMutableTreeNode(localeString("reservedDirective"));
+	createTreeNodes(topnode, rdataSet, map);
+
+	JTree reservedNameTree = new JTree(topnode);
+
+	TreeCellRenderer tcr = reservedNameTree.getCellRenderer();
+	DefaultTreeCellRenderer  dtcr =
+	    (tcr instanceof DefaultTreeCellRenderer)?
+	    (DefaultTreeCellRenderer) tcr: null;
+	String example = localeString("longestRTStr");
+	if (dtcr != null) {
+	    FontMetrics fm = dtcr.getFontMetrics(dtcr.getFont());
+	    twidth = fm.stringWidth(example);
+	} else {
+	    twidth = 12 * example.length();
+	}
+	twidth += twidth/10;
+	// reservedNameTree.setPreferredSize(new Dimension(twidth+10, 275));
+	/*
 	Object[][] rdata = new Object[rdataSet.size()][1];
 	int i = 0;
 	for (String name: rdataSet) {
@@ -773,20 +809,31 @@ public class TemplateSetup {
 	    };
 	reservedTable.setRowSelectionAllowed(false);
 	reservedTable.setColumnSelectionAllowed(false);
+	*/
 
-	JScrollPane rtSP = new JScrollPane(reservedTable);
+	// JScrollPane rtSP = new JScrollPane(reservedTable);
+	JScrollPane rtSP = new JScrollPane(reservedNameTree);
+	/*
 	reservedTable.setFillsViewportHeight(true);
 	twidth = Setup.configColumn(reservedTable, 0,
 				    localeString("longestRTStr"));
-	rtSP.setPreferredSize(new Dimension(twidth+10,275));
+	*/
+	rtSP.setPreferredSize(new Dimension(twidth+50,275));
 	panel.add(rtSP, BorderLayout.LINE_END);
 	
 	JPanel bottom = new JPanel(new FlowLayout());
 	JLabel tdefInstructions = new JLabel(localeString("tdefInstructions"));
 	bottom.add(tdefInstructions);
 	panel.add(bottom, BorderLayout.PAGE_END);
-	reservedTable.setBackground(tdefInstructions.getBackground());
-	
+	// reservedTable.setBackground(tdefInstructions.getBackground());
+	if (dtcr != null) {
+	    Color bcolor = tdefInstructions.getBackground();
+	    dtcr.setBackground(bcolor);
+	    dtcr.setBackgroundNonSelectionColor(bcolor);
+	    dtcr.setBackgroundSelectionColor(bcolor);
+	    dtcr.setBorderSelectionColor(bcolor);
+	    reservedNameTree.setBackground(bcolor);
+	}
     }
 
     static final char openspace = '\u2423';
@@ -1311,7 +1358,6 @@ public class TemplateSetup {
 
     private static boolean createConfigFile(Component panel, String fname) {
 	try {
-	    System.out.println(fname); 
 	    OutputStream os = new FileOutputStream(fname);
 	    ZipDocWriter zos = new ZipDocWriter
 		(os, "application/vnd.bzdev.epts-template-config+zip");
@@ -1446,7 +1492,7 @@ public class TemplateSetup {
 		list.add("--template");
 		list.add(tname);
 	    } else {
-		System.err.println("no template name");
+		System.err.println(errorMsg("noTemplateName"));
 		return null;
 	    }
 	}

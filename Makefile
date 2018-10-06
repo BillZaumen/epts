@@ -109,7 +109,8 @@ ICONS = $(SOURCEICON) $(SOURCE_FILE_ICON) $(SOURCE_CFILE_ICON) \
 JFILES = $(wildcard src/*.java)
 PROPERTIES = src/EPTS.properties
 
-TEMPLATES = templates/ECMAScript.tpl templates/save.tpl \
+TEMPLATES = templates/distances.tpl \
+	templates/ECMAScript.tpl templates/save.tpl \
 	templates/ECMAScriptPaths.tpl templates/ECMAScriptLocations.tpl \
 	templates/ECMAScriptLayers.tpl 	templates/JavaLayers.tpl \
 	templates/JavaPathFactories.tpl templates/JavaLocations.tpl \

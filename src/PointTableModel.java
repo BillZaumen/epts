@@ -1,3 +1,5 @@
+import org.bzdev.geom.BasicSplinePath2D;
+import org.bzdev.geom.BasicSplinePathBuilder;
 import org.bzdev.geom.SplinePathBuilder;
 import org.bzdev.geom.SplinePathBuilder.CPointType;
 import org.bzdev.lang.UnexpectedExceptionError;
@@ -547,9 +549,12 @@ public class PointTableModel implements TableModel {
 	int index = 0;
 	int vindex = 0;
 	int pindex = 0;
+	BasicSplinePathBuilder spb = null;
+	int u = -1;
 	for (PointTMR row: rows) {
 	    index++;
 	    Enum mode = row.getMode();
+	    String varname = null;
 	    if (mode == EPTS.Mode.LOCATION) {
 		vindex++;
 		kmap1 = new TemplateProcessor.KeyMap();
@@ -569,11 +574,14 @@ public class PointTableModel implements TableModel {
 		vindex++;
 		kmap1 = new TemplateProcessor.KeyMap();
 		kmap2 = new TemplateProcessor.KeyMap();
-		kmap1.put("varname", row.getVariableName());
+		varname = row.getVariableName();
+		kmap1.put("varname", varname);
 		kmap1.put("index", ("" + index));
 		kmap1.put("vindex", ("" + vindex));
 		kmap1.put("pathStatement", kmap2);
 		list.add(kmap1);
+		spb = new BasicSplinePathBuilder();
+		u = -1;
 		plist = new TemplateProcessor.KeyMapList();
 		pindex = 0;
 		kmap2.put("pathItem", plist);
@@ -586,6 +594,14 @@ public class PointTableModel implements TableModel {
 			mode = SplinePathBuilder.CPointType.SEG_END;
 		    }
 		}
+		if (mode == SplinePathBuilder.CPointType.CLOSE) {
+		    spb.append(new SplinePathBuilder.CPoint
+			       (SplinePathBuilder.CPointType.CLOSE));
+		} else {
+		    spb.append(new SplinePathBuilder.CPoint
+			       ((SplinePathBuilder.CPointType)mode,
+				row.getX(), row.getY()));
+		}
 		if (kmap3 != null) kmap3.put("optcomma", ",");
 		kmap3 = new TemplateProcessor.KeyMap();
 		kmap3.put("index", ("" + index));
@@ -596,10 +612,29 @@ public class PointTableModel implements TableModel {
 		    kmap3.put("ltype", "CONTROL_POINT");
 		} else if (mode == SplinePathBuilder.CPointType.SPLINE) {
 		    kmap3.put("ltype", "SPLINE_POINT");
+		    TemplateProcessor.KeyMap kmap5 =
+			new TemplateProcessor.KeyMap();
+		    kmap3.put("hasParameterInfo", kmap5);
+		    kmap5.put("u",  (++u) + ".0");
+		    // kmap5.put("subvarname", varname);
 		} else if (mode == SplinePathBuilder.CPointType.CLOSE) {
 		    kmap3.put("ltype", "SEG_CLOSE");
+		    TemplateProcessor.KeyMap kmap5 =
+			new TemplateProcessor.KeyMap();
+		    kmap3.put("hasParameterInfo", kmap5);
+		    kmap5.put("u",  (++u) + ".0");
+		    // kmap5.put("subvarname", varname);
 		} else {
 		    kmap3.put("ltype", mode.toString());
+		    TemplateProcessor.KeyMap kmap5 =
+			new TemplateProcessor.KeyMap();
+		    kmap3.put("hasParameterInfo", kmap5);
+		    if (mode == SplinePathBuilder.CPointType.MOVE_TO) {
+			u = -1;
+			kmap5.put("s", "0.0");
+		    }
+		    kmap5.put("u",  (++u) + ".0");
+		    // kmap5.put("subvarname", varname);
 		}
 		if (tmap != null) {
 		    String val = tmap.get(mode.toString());
@@ -621,6 +656,18 @@ public class PointTableModel implements TableModel {
 		    kmap3.put("xy", kmap4);
 		}
 		plist.add(kmap3);
+	    } else if (mode == EPTS.Mode.PATH_END) {
+		BasicSplinePath2D spath = spb.getPath();
+		int v = -1;
+		for (TemplateProcessor.KeyMap km: plist) {
+		    v++;
+		    double uu = (double)v;
+		    if (uu <= spath.getMaxParameter() + 0.1) {
+			km.put("s",  "" + spath.s(uu));
+		    } else {
+			System.err.println(errorMsg("maxpathparm"));
+		    }
+		}
 	    }
 	}
 	TemplateProcessor.KeyMap map = new TemplateProcessor.KeyMap();
@@ -655,7 +702,8 @@ public class PointTableModel implements TableModel {
 	int index = 0;
 	int vindex = 0;
 	int pindex = 0;
-
+	BasicSplinePathBuilder spb = null;
+	int u = -1;
 	for (EPTS.FilterInfo filter: filters) {
 	    boolean ignore =  true;
 	    boolean addname = true;
@@ -665,6 +713,7 @@ public class PointTableModel implements TableModel {
 	    String draw = filter.draw;
 	    String fill = filter.fill;
 	    String gcsMode = filter.gcsMode;
+	    String subvarname = null;
 	    for (PointTMR row: rows) {
 		index++;
 		Enum mode = row.getMode();
@@ -697,6 +746,10 @@ public class PointTableModel implements TableModel {
 		} else if (mode == EPTS.Mode.PATH_START) {
 		    if (isOurPath(names, row.getVariableName())) {
 			ignore = false;
+			spb = new BasicSplinePathBuilder();
+			u = -1;
+			subvarname = row.getVariableName();
+			if (subvarname.equals(name)) subvarname = null;
 			if (addname) {
 			    vindex++;
 			    kmap1 = new TemplateProcessor.KeyMap();
@@ -778,9 +831,19 @@ public class PointTableModel implements TableModel {
 			    mode = SplinePathBuilder.CPointType.SEG_END;
 			}
 		    }
+		    if (spb != null) {
+			if (mode == SplinePathBuilder.CPointType.CLOSE) {
+			    spb.append(new SplinePathBuilder.CPoint
+				       (SplinePathBuilder.CPointType.CLOSE));
+			} else {
+			    spb.append(new SplinePathBuilder.CPoint
+				       ((SplinePathBuilder.CPointType)mode,
+					row.getX(), row.getY()));
+			}
+		    }
 		    if (kmap3 != null) kmap3.put("optcomma", ",");
 		    kmap3 = new TemplateProcessor.KeyMap();
-		    kmap3.put("index", ("" + index));
+		    // kmap3.put("index", ("" + index));
 		    pindex++;
 		    kmap3.put("pindex", ("" + pindex));
 		    kmap3.put("type", mode.toString());
@@ -788,10 +851,38 @@ public class PointTableModel implements TableModel {
 			kmap3.put("ltype", "CONTROL_POINT");
 		    } else if (mode == SplinePathBuilder.CPointType.SPLINE) {
 			kmap3.put("ltype", "SPLINE_POINT");
+			TemplateProcessor.KeyMap kmap5 =
+			    new TemplateProcessor.KeyMap();
+			kmap3.put("hasParameterInfo", kmap5);
+			kmap5.put("u",  (++u) + ".0");
+			if (subvarname != null) {
+			    kmap5.put("subvarname", subvarname);
+			    kmap5.put("hasSubvarname", emptyMap);
+			}
 		    } else if (mode == SplinePathBuilder.CPointType.CLOSE) {
 			kmap3.put("ltype", "SEG_CLOSE");
+			TemplateProcessor.KeyMap kmap5 =
+			    new TemplateProcessor.KeyMap();
+			kmap3.put("hasParameterInfo", kmap5);
+			kmap5.put("u",  (++u) + ".0");
+			if (subvarname != null) {
+			    kmap5.put("subvarname", subvarname);
+			    kmap5.put("hasSubvarname", emptyMap);
+			}
 		    } else {
 			kmap3.put("ltype", mode.toString());
+			TemplateProcessor.KeyMap kmap5 =
+			    new TemplateProcessor.KeyMap();
+			kmap3.put("hasParameterInfo", kmap5);
+			if (mode == SplinePathBuilder.CPointType.MOVE_TO) {
+			    u = -1;
+			    kmap5.put("s", "0.0");
+			}
+			kmap5.put("u",  (++u) + ".0");
+			if (subvarname != null) {
+			    kmap5.put("subvarname", subvarname);
+			    kmap5.put("hasSubvarname", emptyMap);
+			}
 		    }
 		    if (tmap != null) {
 			String val = tmap.get(mode.toString());
@@ -819,6 +910,21 @@ public class PointTableModel implements TableModel {
 		    plist.add(kmap3);
 		} else if (mode == EPTS.Mode.PATH_END) {
 		    ignore = true;
+		    if (spb != null) {
+			BasicSplinePath2D spath = spb.getPath();
+			int v = -1;
+			for (TemplateProcessor.KeyMap km: plist) {
+			    if (km.get("s") != null) continue;
+			    v++;
+			    double uu = (double)v;
+			    if (uu <= spath.getMaxParameter() + 0.1) {
+				km.put("s",  "" + spath.s(uu));
+			    } else {
+				System.err.println(errorMsg("maxpathparm"));
+			    }
+			}
+			spb = null;
+		    }
 		}
 	    }
 	}

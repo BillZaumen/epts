@@ -488,7 +488,14 @@ public class EPTS {
     static int height = 1024;
 
     static final String reservedTDefNames[] = {
-	"varname",
+	"paths", "width", "height",
+	"hasPackage", "class", "optSpace", "package", "public",
+	"items"
+    };
+
+    /*
+    static final String reservedTDefNames[] = {
+	"varname", "subvarname",
 	"windingRule",  "hasWindingRule",
 	"segments",
 	"type", "ltype", "atype",
@@ -500,6 +507,7 @@ public class EPTS {
 	"vindex", "index", "pindex",
 	"location",
 	"x", "y", "xp", "yp", "ypr", "xy",
+	"hasParameterInfo", "hasSubvarname", "subvarname","u", "s",
 	"items", "pathStatement", "pathItem", "optcomma",
 	"draw", "fill", "hasAttributes", "gcsMode", "hasGcsMode",
 	"drawColor", "hasDrawColor", "fillColor", "hasFillColor",
@@ -511,19 +519,126 @@ public class EPTS {
 	"width", "height", "package", "hasPackage",
 	"class", "hasClass", "optSpace", "public"
     };
+    */
+    static final String pathsRTDN[] = {
+	"varname",
+	"windingRule",
+	"segments",
+	"area",
+	"circumference",
+	"pathLength"
+    };
+
+    static final String segmentsRTDN[] = {
+	"type", "method", "hasClose", "hasCubicTo",
+	"has0", "has1", "has2", "x0", "y0", "x1", "y1",
+	"x2", "y2"
+    };
+
+    static final String itemsRTDN[] = {
+	"varname", "vindex", "index",
+	"location", "pathStatement"
+    };
+
+    static final String locationRTDN[] = {
+	"x", "y", "xp", "yp", "ypr"
+    };
+
+    static final String pathStatementRTDN[] = {
+	"pathItem", "windingRule", "hasWindingRule",
+	"draw", "fill", "hasAttributes",
+	"gcsMode", "hasGCSMode",
+	"drawColor", "hasDrawColor",
+	"fillColor", "hasFillColor",
+	"strokeCap", "hasStrokeCap",
+	"dashIncrement", "hasDashIncrement",
+	"strokeJoin", "hasStrokeJoin",
+	"miterLimit", "hasMiterLimit",
+	"strokeWidth", "hasStrokeWidth",
+	"zorder", "hasZorder",
+    };
+
+    static final String pathItemRTDN[] = {
+	"pindex", "type", "ltype", "atype",
+	"hasParameterInfo", "optcomma",
+	"xy"
+    };
+
+    static final String xyRTDN[] = {
+	"x", "y", "xp", "yp", "ypr"
+    };
+
+    static final String hasParameterInfoRTDN[] = {
+	"subvarname", "hasSubvarname", "u", "s"
+    };
+
     // use a TreeSet because a dialog box has a table of these in
     // alphabetical order.
     static TreeSet<String> reservedTDefSet =
 	new TreeSet<>(/*2*reservedTDefNames.length*/);
 
+    static HashMap<String,TreeSet<String>> reservedTDefMap
+	= new HashMap<>(64);
+
     static {
 	for (String s: reservedTDefNames) {
 	    reservedTDefSet.add(s);
 	}
+	TreeSet<String> tset = new TreeSet<String>();
+	for (String s: pathsRTDN) {
+	    tset.add(s);
+	}
+	reservedTDefMap.put("paths", tset);
+
+	tset = new TreeSet<String>();
+	for (String s: segmentsRTDN) {
+	    tset.add(s);
+	}
+	reservedTDefMap.put("segments", tset);
+
+	tset = new TreeSet<String>();
+	for (String s: itemsRTDN) {
+	    tset.add(s);
+	}
+	reservedTDefMap.put("items", tset);
+
+	tset = new TreeSet<String>();
+	for (String s: locationRTDN) {
+	    tset.add(s);
+	}
+	reservedTDefMap.put("location", tset);
+
+	tset = new TreeSet<String>();
+	for (String s: pathStatementRTDN) {
+	    tset.add(s);
+	}
+	reservedTDefMap.put("pathStatement", tset);
+
+	tset = new TreeSet<String>();
+	for (String s: pathItemRTDN) {
+	    tset.add(s);
+	}
+	reservedTDefMap.put("pathItem", tset);
+
+	tset = new TreeSet<String>();
+	for (String s: xyRTDN) {
+	    tset.add(s);
+	}
+	reservedTDefMap.put("xy", tset);
+
+	tset = new TreeSet<String>();
+	for (String s: hasParameterInfoRTDN) {
+	    tset.add(s);
+	}
+	reservedTDefMap.put("hasParameterInfo", tset);
     }
 
     public static Set<String> getReservedTDefNames() {
 	return Collections.unmodifiableSet(reservedTDefSet);
+    }
+
+    public static Map<String,Set<String>> getReservedTDefMap() {
+	return Collections.unmodifiableMap(reservedTDefMap);
     }
 
     public static final boolean isReservedTdef(String name) {
@@ -580,6 +695,14 @@ public class EPTS {
 	}
     }
 
+    public static class PnameInfo {
+	String name;
+	String[] nameArray;
+	public PnameInfo(String name, String[] nameArray) {
+	    this.name = name;
+	    this.nameArray = nameArray;
+	}
+    }
 
     public static class FilterInfo {
 	String name;
@@ -768,7 +891,7 @@ public class EPTS {
 		    cause = cause.getCause();
 		}
 	    } catch (IOException eio) {
-		System.err.println("unexpected eio");
+		System.err.println(errorMsg("eioOnErr", eio.getMessage()));
 	    } catch (Throwable t) {
 		t.printStackTrace(System.err);
 	    }
@@ -916,7 +1039,6 @@ public class EPTS {
 	}
 	return value;
     }
-
 
     static String parseArgument(String option, String arg, Class<?> clazz) {
 	return parseArgument(option, arg, clazz, null, false, null, false);
@@ -1619,7 +1741,6 @@ public class EPTS {
 		int ind = getAPIndex(argv);
 		if (ind > -1 && ind < 4) {
 		    if (argv.length != argpatterns[ind].length) {
-			System.out.println(argv.length + " " + ind);
 			System.err.println
 			    (localeString("noArgsSessionConfig"));
 			System.exit(1);
@@ -1636,8 +1757,8 @@ public class EPTS {
 		    } else if (argv[argv.length-1].equals("--templateConfig")) {
 			argv = TemplateSetup.getSetupArgs(null, null);
 		    } else {
-			System.err.println("option \"" + argv[argv.length-1]
-					   + "\" not recognized");
+			System.err.println(errorMsg("unrecognizedOption",
+						    argv[argv.length-1]));
 			System.exit(-1);
 		    }
 		    /*
@@ -1684,6 +1805,7 @@ public class EPTS {
 	boolean svg = false;
 	FilterInfo filterInfo = new FilterInfo();
 	ArrayList<FilterInfo> filterInfoList = new ArrayList<>();
+	ArrayList<PnameInfo> pnameInfoList = new ArrayList<>();
 
 	String pkg = null;
 	String clazz = null;
@@ -2093,6 +2215,7 @@ public class EPTS {
 			pnameArray = new String[1];
 			pnameArray[0] = pname;
 		    }
+		    pnameInfoList.add(new PnameInfo(pname, pnameArray));
 		    argsList.add(argv[index-1]);
 		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--flatness")) {
@@ -3029,12 +3152,18 @@ public class EPTS {
 			}
 			TemplateProcessor tp;
 			if (pname != null) {
-			    TemplateProcessor.KeyMap kmap
-				= EPTSWindow.getPathKeyMap(ptmodel, pname,
-							   pnameArray,
-							   flatness, limit,
-							   straight, elevate,
-							   gcs);
+			    TemplateProcessor.KeyMap kmap =
+				new TemplateProcessor.KeyMap();
+			    TemplateProcessor.KeyMapList kmaplist =
+				new TemplateProcessor.KeyMapList();
+			    for (PnameInfo info: pnameInfoList) {
+				kmaplist.add(EPTSWindow.getPathKeyMap
+					     (ptmodel,
+					      info.name, info.nameArray,
+					      flatness, limit, straight,
+					      elevate, gcs));
+			    }
+			    kmap.put("paths", kmaplist);
 			    kmap.put("width", "" + parser.getWidth());
 			    kmap.put("height", "" + parser.getHeight());
 			    addDefinitionsTo(kmap);
@@ -3118,62 +3247,81 @@ public class EPTS {
 			    TemplateProcessor.KeyMap kmap =
 				ptmodel.getKeyMap(map,
 						  (double)parser.getHeight());
-			    if (filterInfo.windingRule != null) {
-				kmap.put("windingRule", filterInfo.windingRule);
-				kmap.put("hasWindingRule", emptyMap);
-			    }
-			    kmap.put("draw", filterInfo.draw);
-			    kmap.put("fill", filterInfo.fill);
+			    // Fix it up by adding the filterInfo data
+			    // that was recorded but not used due to the
+			    // lack of a --tname option.  We replicate
+			    // for each path statement in the list to be
+			    // consistent with the --tname cases.
+			    TemplateProcessor.KeyMapList kmlist =
+				(TemplateProcessor.KeyMapList)
+				kmap.get("items");
+			    for (TemplateProcessor.KeyMap kmi: kmlist) {
+				Object entry = kmi.get("pathStatement");
+				if (entry == null) continue;
+				TemplateProcessor.KeyMap km =
+				    (TemplateProcessor.KeyMap)entry;
 
-			    if (filterInfo.draw.equals("true")
-				|| filterInfo.fill.equals("true")) {
-				kmap.put("hasAttributes", emptyMap);
-			    }
+				if (filterInfo.windingRule != null) {
+				    km.put("windingRule",
+					   filterInfo.windingRule);
+				    km.put("hasWindingRule", emptyMap);
+				}
 
-			    if (filterInfo.gcsMode != null) {
-				kmap.put("gcsMode", filterInfo.gcsMode);
-				kmap.put("hasGcsMode", emptyMap);
-			    }
-			    if (filterInfo.drawColor != null) {
-				kmap.put("drawColor", filterInfo.drawColor);
-				kmap.put("hasDrawColor", emptyMap);
-			    }
-			    if (filterInfo.fillColor != null) {
-				kmap.put("fillColor", filterInfo.fillColor);
-				kmap.put("hasFillColor", emptyMap);
-			    }
-			    if (filterInfo.strokeCap != null) {
-				kmap.put("strokeCap", filterInfo.strokeCap);
-				kmap.put("hasStrokeCap", emptyMap);
-			    }
-			    if (filterInfo.dashIncrement != null) {
-				kmap.put("dashIncrement",
-					 filterInfo.dashIncrement);
-				kmap.put("hasDashIncrement", emptyMap);
-			    }
-			    if (filterInfo.dashPhase != null) {
-				kmap.put("dashPhase", filterInfo.dashPhase);
-				kmap.put("hasDashPhase", emptyMap);
-			    }
-			    if (filterInfo.dashPattern != null) {
-				kmap.put("dashPattern", filterInfo.dashPattern);
-				kmap.put("hasDashPattern", emptyMap);
-			    }
-			    if (filterInfo.strokeJoin != null) {
-				kmap.put("strokeJoin", filterInfo.strokeJoin);
-				kmap.put("hasStrokeJoin", emptyMap);
-			    }
-			    if (filterInfo.miterLimit != null) {
-				kmap.put("miterLimit", filterInfo.miterLimit);
-				kmap.put("hasMiterLimit", emptyMap);
-			    }
-			    if (filterInfo.strokeWidth != null) {
-				kmap.put("strokeWidth", filterInfo.strokeWidth);
-				kmap.put("hasStrokeWidth", emptyMap);
-			    }
-			    if (filterInfo.zorder != null) {
-				kmap.put("zorder", filterInfo.zorder);
-				kmap.put("hasZorder", emptyMap);
+				km.put("draw", filterInfo.draw);
+				km.put("fill", filterInfo.fill);
+
+				if (filterInfo.draw.equals("true")
+				    || filterInfo.fill.equals("true")) {
+				    km.put("hasAttributes", emptyMap);
+				}
+
+				if (filterInfo.gcsMode != null) {
+				    km.put("gcsMode", filterInfo.gcsMode);
+				    km.put("hasGcsMode", emptyMap);
+				}
+				if (filterInfo.drawColor != null) {
+				    km.put("drawColor", filterInfo.drawColor);
+				    km.put("hasDrawColor", emptyMap);
+				}
+				if (filterInfo.fillColor != null) {
+				    km.put("fillColor", filterInfo.fillColor);
+				    km.put("hasFillColor", emptyMap);
+				}
+				if (filterInfo.strokeCap != null) {
+				    km.put("strokeCap", filterInfo.strokeCap);
+				    km.put("hasStrokeCap", emptyMap);
+				}
+				if (filterInfo.dashIncrement != null) {
+				    km.put("dashIncrement",
+					     filterInfo.dashIncrement);
+				    km.put("hasDashIncrement", emptyMap);
+				}
+				if (filterInfo.dashPhase != null) {
+				    km.put("dashPhase", filterInfo.dashPhase);
+				    km.put("hasDashPhase", emptyMap);
+				}
+				if (filterInfo.dashPattern != null) {
+				    km.put("dashPattern",
+					   filterInfo.dashPattern);
+				    km.put("hasDashPattern", emptyMap);
+				}
+				if (filterInfo.strokeJoin != null) {
+				    km.put("strokeJoin", filterInfo.strokeJoin);
+				    km.put("hasStrokeJoin", emptyMap);
+				}
+				if (filterInfo.miterLimit != null) {
+				    km.put("miterLimit", filterInfo.miterLimit);
+				    km.put("hasMiterLimit", emptyMap);
+				}
+				if (filterInfo.strokeWidth != null) {
+				    km.put("strokeWidth",
+					   filterInfo.strokeWidth);
+				    km.put("hasStrokeWidth", emptyMap);
+				}
+				if (filterInfo.zorder != null) {
+				    km.put("zorder", filterInfo.zorder);
+				    km.put("hasZorder", emptyMap);
+				}
 			    }
 			    if (pkg != null) {
 				kmap.put("package", pkg);
@@ -3181,7 +3329,8 @@ public class EPTS {
 			    }
 			    if (clazz != null) {
 				kmap.put("class", clazz);
-				kmap.put("hasClass", emptyMap);
+			    } else {
+				kmap.put("class", "GeneratedByEPTS");
 			    }
 			    if (isPublic) {
 				kmap.put("public", "public");
