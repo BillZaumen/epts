@@ -234,9 +234,15 @@ public class EPTSWindow {
 	    keymap.put("table", km);
 	}
 	TemplateProcessor tp = new TemplateProcessor(keymap);
-	OutputStream os = new FileOutputStream(f);
+	File tf = File.createTempFile("epts-eptc", null, f.getParentFile());
+	OutputStream os = new FileOutputStream(tf);
 	Writer writer = new OutputStreamWriter(os, "UTF-8");
 	tp.processSystemResource("save", "UTF-8", writer);
+	String tfp = tf.getCanonicalPath();
+	String fp = f.getCanonicalPath();
+	if (!tf.renameTo(f)) {
+	    throw new IOException(errorMsg("rename", tfp, fp));
+	};
 	needSave = false;
     }
 

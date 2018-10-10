@@ -410,8 +410,8 @@ public class TemplateSetup {
     static JLabel outFileLabel = null;
     static JTextField outFileTF = null;
     static JButton outFileButton = null;
-    static JButton saveWriteButton = null;
-    static JButton saveExitButton = null;
+    static JButton saveButton = null;
+    static JButton saveAsButton = null;
     static JButton writeButton = null;
     static JButton exitButton = null;
 
@@ -1342,23 +1342,23 @@ public class TemplateSetup {
 
     private static String savedConfigFileName = null;
     
-    private static boolean save(Component panel) {
-	String fname = chooseSavedConfigFile(panel);
+    private static void save(Component panel, boolean saveAs) {
+	String fname = (saveAs || savedConfigFileName == null)?
+	    chooseSavedConfigFile(panel): savedConfigFileName;
 	if (fname != null) {
 	    if (createConfigFile(panel, fname)) {
 		savedConfigFileName = fname;
-		return true;
-	    } else {
-		return false;
 	    }
-	} else {
-	    return false;
 	}
     }
 
     private static boolean createConfigFile(Component panel, String fname) {
 	try {
-	    OutputStream os = new FileOutputStream(fname);
+	    File f = new File(fname);
+	    File tf = File.createTempFile("epts-eptc", null, f.getParentFile());
+	    String fp = f.getCanonicalPath();
+	    String tfp = tf.getCanonicalPath();
+	    OutputStream os = new FileOutputStream(tf);
 	    ZipDocWriter zos = new ZipDocWriter
 		(os, "application/vnd.bzdev.epts-template-config+zip");
 
@@ -1399,6 +1399,9 @@ public class TemplateSetup {
 	    enc.close();
 	    os.close();
 	    zos.close();
+	    if (!tf.renameTo(f)) {
+		throw new IOException(errorMsg("rename", tfp, fp));
+	    }
 	    return true;
 	} catch (Exception e) {
 	    JOptionPane.showMessageDialog
@@ -1726,28 +1729,45 @@ public class TemplateSetup {
 	c.gridwidth = GridBagConstraints.REMAINDER;
 	addComponent(panel, outFileButton, gridbag, c);
 
-	saveWriteButton = new JButton(localeString("SaveAndWrite"));
-	saveWriteButton.addActionListener((ae) -> {
-		if (save(panel)) {
-		    outFile = outFileTF.getText().trim();
-		    results = generate();
-		    dialog.setVisible(false);
-		}
+	saveButton = new JButton(localeString("Save"));
+	saveButton.addActionListener((ae) -> {
+		save(panel, false);
 	    });
 
-	saveExitButton = new JButton(localeString("SaveAndExit"));
-	saveExitButton.addActionListener((ae) -> {
-		if (save(panel)) {
-		    System.exit(0);
-		}
+	saveAsButton = new JButton(localeString("SaveAs"));
+	saveAsButton.addActionListener((ae) -> {
+		save(panel, true);
 	    });
-	writeButton = new JButton(localeString("JustWrite"));
+	writeButton = new JButton(localeString("GenerateOutput"));
 	writeButton.addActionListener((ae) -> {
 		outFile = outFileTF.getText().trim();
 		results = generate();
 		dialog.setVisible(false);
 	    });
-	exitButton = new JButton(localeString("JustExit"));
+	writeButton.setEnabled(false);
+	outFileTF.getDocument().addDocumentListener
+	    (new DocumentListener() {
+		    private void doit() {
+			String text = outFileTF.getText();
+			if (text != null) {
+			    text = text.trim();
+			} else {
+			    text ="";
+			}
+			writeButton.setEnabled(text.length() > 0);
+		    }
+		    public void changedUpdate(DocumentEvent e) {
+			doit();
+		    }
+		    public void insertUpdate(DocumentEvent e) {
+			doit();
+		    }
+		    public void removeUpdate(DocumentEvent e) {
+			doit();
+		    }
+		});
+
+	exitButton = new JButton(localeString("Exit"));
 	exitButton.addActionListener((ae) -> {
 		System.exit(0);
 	    });
@@ -1768,11 +1788,11 @@ public class TemplateSetup {
 	c.gridwidth = 1;
 	addComponent(panel, new JLabel(" "), gridbag, c);
 	c.gridwidth = GridBagConstraints.REMAINDER;
-	addComponent(panel, saveWriteButton, gridbag, c);
+	addComponent(panel, saveButton, gridbag, c);
 	c.gridwidth = 1;
 	addComponent(panel, new JLabel(" "), gridbag, c);
 	c.gridwidth = GridBagConstraints.REMAINDER;
-	addComponent(panel, saveExitButton, gridbag, c);
+	addComponent(panel, saveAsButton, gridbag, c);
 	c.gridwidth = GridBagConstraints.REMAINDER;
 	addComponent(panel, new JLabel(" "), gridbag, c);
 	c.gridwidth = 1;
@@ -2104,7 +2124,9 @@ public class TemplateSetup {
 	    initPathData(parser);
 	    is.close();
 	} catch (Exception e) {
-	    e.printStackTrace();
+	    if (!(e instanceof IOException)) {
+		e.printStackTrace();
+	    }
 	    if (panel == null) {
 		System.err.println(errorMsg("eptsFileExpected"));
 		System.exit(1);
@@ -2711,9 +2733,8 @@ public class TemplateSetup {
 					 localeString("errorTitle"),
 					 JOptionPane.ERROR_MESSAGE);
 				    return;
-				} else if
-					(savedConfigFileName == null) {
-				    save(dialog);
+				} else if (savedConfigFileName == null) {
+				    save(dialog, false);
 				} else {
 				    createConfigFile(dialog,
 						     savedConfigFileName);

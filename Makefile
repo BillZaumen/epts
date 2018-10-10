@@ -127,6 +127,18 @@ RESOURCES = manual/manual.xml \
 	manual/index.html \
 	manual/manual.html \
 	manual/manual.css \
+	manual/desktop.png \
+	manual/inputfiles.png \
+	manual/openfile.png \
+	manual/selectapp.png \
+	manual/configSession1.png \
+	manual/configSession2.png \
+	manual/configSession3.png \
+	manual/configSession4.png \
+	manual/configSession5.png \
+	manual/templateConfig1.png \
+	manual/templateConfig2.png \
+	manual/templateConfig3.png \
 	manual/dialog.png \
 	manual/drawing1.png \
 	manual/drawing2.png \

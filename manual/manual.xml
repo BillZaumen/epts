@@ -4,7 +4,26 @@
   <node title="The EPTS manual" uri="sresource:/manual/manual.html"
 	href="manual.html">
     <node title="Introduction" uri="sresource:/manual/manual.html#intro"
-	href="manual.html#intro"/>
+	  href="manual.html#intro">
+      <node title="Starting EPTS"
+	    uri="sresource:/manual/manual.html#startingEPTS"
+	    href="manual.html#startingEPTS">
+	<node title="Image background"
+	      uri="sresource:/manual/manual.html#imageBackground"
+	      href="manual.html#imageBackground" />
+	<node title="Script background"
+	      uri="sresource:/manual/manual.html#scriptBackground"
+	      href="manual.html#scriptBackground" />
+	<node title="Enhanced background"
+	      uri="sresource:/manual/manual.html#enhancedBackground"
+	      href="manual.html#enhancedBackgroung" />
+	<node title="Configuring templates"
+	      uri="sresource:/manual/manual.html#templateSetup"
+	      href="manual.html#templateSetup" />
+      </node>
+      <node title="Using EPTS" uri="sresource:/manual/manual.html#usingEPTS"
+	    href="manual.html#usingEPTS"/>
+    </node>
     <node title="The menu bar" uri="sresource:/manual/manual.html#menus"
 	href="manual.html#menus">
       <node title="The File menu" uri="sresource:/manual/manual.html#fileMenu"

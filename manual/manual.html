@@ -16,7 +16,11 @@ translate the positions of the points and curves so that the locations
 of the points or control points are expressed in a specific coordinate
 system.  The points and paths can then be written to an output stream
 in a variety of text formats, each specified by a template, for use
-by other programs.
+by other programs. EPTS can also be used to measure the distance
+between two points on an image, with options to measure the distance
+in "image space", where one unit distance is the width or height of a
+pixel, and  in "graph coordinate space", where units appropriate to an
+application are used (these terms are described in more detail below).
 <P>
 While there are many command-line options, mostly used to configure
 templates and scripts, there are some GUI-specific options that are
@@ -40,36 +44,310 @@ file formats as well:
     configuration data for template processing. These files are an
     alternative to providing a long series of command-line options.
 </UL>
+
+<H2><A name="Stuttgart's">Starting EPTS</A></H2>
+
+EPTS has a large number of command-line options, mostly for generating
+output files in various formats. These are provided for cases in which
+EPTS is used by build tools such as <CODE>make</CODE> or <CODE>ant</CODE>.
+Most of these options can by stored in EPTS saved-state,
+session-configuration, and template-configuration files.
+
 When a window system is used, it will tyically be configured to allow
 a number of operations to be performed without using the command-line
-interface. For example, the GNOME desktop file provided with EPTS provides
-the following actions:
+interface. For example, with the GNOME window system, when the user
+double-clicks the EPTS application's icon, EPTS will ask the user to
+select a file: either an EPTS saved-state file, an EPTS
+session-configuration file, an image in a recognized format (JPEG,
+PNG, etc.), or a script file with recognized file extension (by
+default, "js" and "es", although additional scripting languages may be
+configured). When the mouse pointer is over the EPTS icon, and the
+right mouse button is clicked, a list of "actions" that can be
+selected will be shown:
+<BR><BR>
+<CENTER><IMG src="desktop.png"></CENTER>
+<BR>
+These actions behave as follows:
 <UL>
-  <LI><B>(Default Behavior)</B>. When the user double-clicks the EPTS
-    application's icon, EPTS will ask the user to select a file: either
-    an EPTS saved-state file, an EPTS session-configuration file, an
-    image in a recognized format (JPEG, PNG, etc.), or a script file with
-    recognized file extension (by default, "js" and "es", although additional
-    scripting languages may be configured).
   <LI><B>New Window</B> This opens a new EPTS window and is equivalent to
-    the default behavior.
+    the default behavior (double clicking the icon).
   <LI><B>New Window, Stacktraces Enabled</B>. This opens a new EPTS
     window and is equivalent to the default behavior but with stack traces
     enabled, which prints additional information in some cases when
     errors occur.
-  <LI><B>Configure Session</B>. This opens a dialog box that allows the
-    user to configure a new session. The user can optionally save the
-    session configuration. Unless the user cancels the operation, this
-    option effectively sets the appropriate command-line options and uses
-    those.
+  <LI><B>Configure Session</B>. This opens a dialog box that allows
+    the user to configure a new session. The user can optionally save
+    the session configuration in a session-configuration file. Unless
+    the user cancels the operation, this option effectively sets the
+    appropriate command-line options and uses those.
   <LI><B>Configure Session, Stacktraces Enabled</B>. This is equivalent
-    to the Configure Session action, but with stack-traces enabled.
+    to the configure-session action, but with stack-traces enabled.
   <LI><B>Template Processing</B>. This opens a dialog box for setting
-    up template-related options and saving them.
+    up template-related options and saving them in a template-processing
+    file.
   <LI><B>Template Processing with Stacktraces</B>. This is equivalent
-    to the Template Processing action but with stack-traces enabled.
+    to the template-processing action but with stack-traces enabled.
 </UL>
 <P>
+For the case of an image file, or when a saved EPTS file exists (one
+whose extensions are <CODE>eptc</CODE>, <CODE>epts</CODE>, or
+<CODE>eptt</CODE>), a GNOME file manager can be used to start EPTS. For
+example, the following figure shows a file-manager window:
+<BR><BR>
+<CENTER><IMG src="inputfiles.png"></CENTER>
+<BR>
+The procedure for opening these files depends on the file type:
+<UL>
+  <LI> For the EPTS files (the last three in left to right order),
+    EPTS will start by double-clicking one of these files.
+  <LI> For the PNG file, or any other image file recognized by Java,
+    position the mouse over the file and click the right mouse button.
+    A popup-window will appear with various options. Select
+    "Open With Other Application":
+    <BR><BR>
+    <CENTER><IMG src="openfile.png"></CENTER>
+    <BR>
+    Then click this selection. A <CODE>Select Application</CODE> window
+    will appear:
+    <BR><BR>
+    <CENTER><IMG src="selectapp.png"></CENTER>
+    <BR>
+    Move the mouse pointer to select EPTS and click the left mouse
+    button.
+</UL>
+
+
+How EPTS should be started in order to create a new session is task
+dependent.  Several use cases are shown in the following subsections.
+
+<H3><A name="imageBackground">Background images from files</A></H3>
+
+The typical way of setting up EPTS to display a background image is to
+either start EPTS with no arguments (for example, by double-clicking
+the EPTS icon), or following the procedure above to open an image file
+using EPTS. EPTS will then start and display a file-chooser dialog
+requesting an input file if an input file was not provided. After an
+image file is chosen, EPTS will continue by displaying a window
+containing the image.  If no image is selected, EPTS will ask for an
+image size and create a blank image of that size.
+
+In some unusual cases, one might use the <B>Configure Session</B>
+desktop action. This will allow one to request additional code bases
+to support additional image formats. In atypical cases, one might also
+want to change the memory allocated to the Java virtual machine.
+If additional image formats are used frequently, the code bases and
+property definitions needed for these formats can be placed in the
+configuration files used by the <CODE>scrunner</CODE> command.
+When the <B>Configure Session</B> desktop action is used, it will
+display a dialog box. One will typically click on the
+<CODE>Set Input File</CODE> button shown in the <CODE>start</CODE> pane
+(the pane initially selected when the dialog box is displayed), and use
+a file chooser to pick an image file.  Alternatively one can type the
+image-file name, or a URL, into the <CODE>Input File</CODE> field.
+One can also add options supported by the <CODE>java</CODE> command.
+
+<H3><A name="scriptBackground">Background images from scripts</A></H3>
+
+One of the design goals for EPTS is to simply creating animations using
+the BZDev class library's package <CODE>org.bzdev.anim2d</CODE>. Manuals
+describing this software is listed in the
+<A href="#guides">Additional Documentation</A> section below.  To set
+up EPTS for this case, use the <B>Configure Session</B> desktop action:
+<BR><BR>
+<CENTER><IMG src="configSession1.png"></CENTER>
+<BR>
+One may have to select a scripting language if additional languages are
+available, but the default, ECMAScript, is always available and
+is the preferred choice.  The default value for the scripting-language
+variable representing an animation is <CODE>a2d</CODE>, but this can
+be changed if desired.
+
+The next step is to bring up the <CODE>Scripts</CODE> pane using the tab
+on the top of the of the dialog box, and insert names of the files
+contains scripts that should be run in the table that makes up most of
+this pane (these scripts are run in the order shown):
+<BR><BR>
+<CENTER><IMG src="configSession2.png"></CENTER>
+<BR>
+The <CODE>Insert File</CODE> button can be used to display a file
+chooser that will insert the selected file at the selected row in the
+table.  If scripting-language variables are needed, the
+<CODE>Variables</CODE> pane can be used. This allows one to specify
+the name of a variable, its type, its value, and units for the value
+(units are used when the value is a real number). Some scripts can be
+configured by a user, and allow the user to define various values to
+control their appearance (for example, to set line thicknesses). Once
+done, the final step is to optionally save the configuration and then
+push the <CODE>Continue</CODE> button.  EPTS will then close the
+dialog box and open a window with the image the script created.
+
+Regardless of what else is done (such as creating paths), one should
+configure graph-coordinate space.  The procedure is as follows:
+<OL>
+  <LI> Type <B><CODE>ALT-I</CODE></B> (do not use the shift key) to measure
+    a distance in units of points between two points whose "real world"
+    distance is known. The distance will be automatically copied to the
+    system clipboard.
+  <LI> Open the <CODE>File</CODE> menu item <CODE>Configure GCS</CODE>
+    (or type the sequence <B><CODE>ALT-F</CODE></B> followed by
+    <B><CODE>C</CODE></B>)  to open a dialog box for configuring
+    graph coordinate space.
+  <LI> Copy the measured distance in the the <CODE>User-Space Distance</CODE>
+    text field.
+  <LI> Set the GCS distance field to the known "real-world" distance and,
+    if necessary, supply units.  The value will be converted to meters.
+  <LI> Close the dialog box by pushing the <CODE>OK</CODE> button.
+</OL>
+After completing this step and optionally creating some paths, a
+saved-state file should be created using the <CODE>Save</CODE> or
+<CODE>Save As</CODE> menu items in the <CODE>File</CODE> menu.
+Saved-state files must have the file-name extension <CODE>epts</CODE>.
+<P>
+To restart a saved sessions, run EPTS with the saved file as its
+argument or double-click on the saved-state file's icon in a file-manager
+window.
+
+<H3><A name="enhancedBackground">Enhancing a background</A></H3>
+
+Scripts can also be used to enhance a background image, whether
+created using an image file or by running other scripts. The first
+step is to create a session-configuration file (e.g., by using the
+<B>Configure Session</B> action). In this case, the input file will
+be a saved-state file with the file-name extension <CODE>epts</CODE>
+(e.g., test.epts):
+<BR><BR>
+<CENTER><IMG src="configSession3.png"></CENTER>
+<BR>
+When the input file name has an <CODE>epts</CODE>
+extension, the <CODE>Scripts</CODE> pane will be enabled and one can
+use this pane to add scripts.  The button <CODE>Insert Built-in</CODE>
+will allow one to use predefined scripts:
+<BR><BR>
+<CENTER><IMG src="configSession4.png"></CENTER>
+<BR>
+One of these will overlay
+a rectangular coordinate grid. While there are defaults, one can set
+scripting-language variables to control the grid's appearance. These
+are set using the <CODE>Variables</CODE> pane:
+<BR><BR>
+<CENTER><IMG src="configSession5.png"></CENTER>
+<BR>
+In this example, the Cartesian-coordinate script
+<CODE>sresource:grid</CODE> uses a variable named <CODE>spacing</CODE>
+to set the grid spacing. The type of the value is <CODE>Read</CODE>,
+which provides some syntax checking for the value.  When the value
+represents a distance, the BZDev animation package and some related
+class libraries use SI units, with distance measured in meters.  One
+can specify other units, <CODE>feet</CODE> in this example, and the
+value will automatically be converted to meters before it is used.
+<P>
+The session-configuration should be saved if the configuration will be
+used later. Such saved files must have the
+extension <CODE>eptc</CODE>.  To restart EPTS with a saved session
+configuration, run EPTS with the session-configuration file as its
+argument or double-click on the session-configuration file's icon in a
+file-manager window.
+
+<H3><A name="templateSetup">Configuring templates</A></H3>
+
+EPTS uses templates to export data in various formats.  Templates
+exist for creating SVG files, for listing paths' control points in
+formats that can be used by the scripting-language API for the
+BZDev animation package, and for providing useful information about
+paths such as path lengths and the area enclosed by closed paths.
+Templates are describe in detail in the section
+<A href="#templates">Templates</A>, and that section can be summarized
+as follows:
+<UL>
+  <LI> Templates contain text, ordinary directives (called simply
+    directives), and iterative directives.  If a directive is used by
+    not defined, its value defaults to an empty string.
+  <LI> A directive is a name with an associated value.
+  <LI> An iterative directive is a name with an associated list. Each
+    item in the list defines its own directives. An iterative directive
+    will bracket a region of a template, and that region will be repeated
+    using one set of directives for each element in the list.
+</UL>
+There are three types of templates: table templates, path-iteration
+templates and an SVG template (which is a special case).
+<P>
+One can configure templates by using the EPTS <B>Template Processing</B>
+desktop action. This will open a dialog box containing six panes, only
+the first of which will be enabled:
+<BR><BR>
+<CENTER><IMG src="templateConfig1.png"></CENTER>
+<BR>
+These panes are used as follows.
+<UL>
+  <LI> The <B><CODE>Start</CODE></B> pane. One should first choose the
+    type of template out of the choices <CODE>SVG</CODE>,
+    <CODE>Table Template</CODE>, and <CODE>PI Template</CODE> (for
+    path-iterator template). One then can choose an appropriate template
+    (as long as the <CODE>Choose Built-in Template</CODE> checkbox is
+    checked, the <CODE>Choose</CODE> button next to the
+    <CODE>Template File or URL</CODE> text field will show templates of the
+    appropriate type). Neither this text field nor the checkbox are enabled
+    for SVG templates.  One must also provide a saved-state file. The
+    <CODE>Map File</CODE> text field is used only for table templates
+    that use an <CODE>atype</CODE> directive (none of the built-in
+    templates use this directive). Once this data is entered, pushing
+    the <CODE>Accept Template Options</CODE> button will enable the
+    appropriate panes.
+  <LI> The <B><CODE>Template Defs</CODE></B> pane. This pane is enabled
+    when the template is not a built-in template and allows one to define
+    additional directives that a user-provided template may need. The
+    table provided by this pane has three columns:
+    <UL>
+      <LI><B><CODE>Test Directive</CODE></B>. This is an iterative
+	directive with only one iteration and does not override or temporarily
+	add any	directives. Text inside the iteration will appear once. It
+	is a conditional statement that is in effect when the directive's
+	value is not an empty string. The directive may, however, include
+	whitespace.
+      <LI><B><CODE>Directive</CODE></B>. This defines a directive's name.
+      <LI><B><CODE>Value</CODE></B>. This defines a directive's value.
+    </UL>
+  <LI> The <B><CODE>Add Paths</CODE></B> pane. This pane initially displays
+    the paths defined by the saved state.  One can add new paths that
+    are concatenations of these initially displayed paths.  When a new
+    path is added, its list of subpaths will be empty. clicking on a
+    row in the subpath table will provide a menu with the names of the
+    subpaths that may be added:
+    <BR><BR>
+    <CENTER><IMG src="templateConfig2.png"></CENTER>
+    <BR>
+  <LI> The <B><CODE>Global Parameters</CODE></B> pane. The use of this
+    pane is optional and the fields it displays are dependent on the
+    template type. It allows one to set a few directives or options.
+  <LI> The <B><CODE></CODE>Configure</B> pane. This pane displays the
+    paths defined in the saved-state file and any paths added using
+    the <CODE>Add Paths</CODE> pane.  There is a checkbox next to each
+    path and that checkbox should be selected for the paths that will
+    be included in the output.  For table templates and the SVG template,
+    when a path is selected, various parameters for that path will be
+    displayed. For example,
+    <BR><BR>
+    <CENTER><IMG src="templateConfig3.png"></CENTER>
+    <BR>
+    The <CODE>Stroke Width</CODE> parameter and the
+    <CODE>Stoke in GCS units</CODE> checkbox will be used when
+    the <CODE>DrawColor</CODE> checkbox is selected and will be
+    ignored if this checkbox is not selected.  Similarly, the remaining
+    parameters will be used when the <CODE>Fill Color</CODE> checkbox
+    is selected and will be ignored when this checkbox is not
+    selected.
+  <LI> The <B><CODE>Output</CODE></B> pane. This option allows one to
+    choose an output file.  There are also buttons for saving the
+    template configuration (the configuration file's file-name
+    extension must be <CODE>eptt</CODE>) and for generating output.
+    If the file name is "-", the output will appear on standard output.
+    This is an inappropriate choice when EPTS is started using a window
+    system as there is no terminal available to display the output. It is
+    useful if EPTS is started from the command line.
+</UL>
+
+<H2><A name="usingEPTS">Using EPTS</A></H2>
+
 Because EPTS is designed to support a specific set of tasks, there are
 a large number of <A href="#shortcuts">keyboard shortcuts</A>.  It
 also uses a template processor that makes it relatively easy to
@@ -2699,5 +2977,13 @@ The path names for these documents, of course, is system dependent.
  -->
 <!--  LocalWords:  codebases tyically Stacktraces JComboBox DEFNAME
  -->
-<!--  LocalWords:  DEFVALUE PathMap subpath TCOPTIONS TCFILE
+<!--  LocalWords:  DEFVALUE PathMap subpath TCOPTIONS TCFILE openfile
+ -->
+<!--  LocalWords:  inputfiles selectapp imageBackground configSession
+ -->
+<!--  LocalWords:  scriptBackground enhancedBackground templateSetup
+ -->
+<!--  LocalWords:  templateConfig usingEPTS gcsconfigElement
+ -->
+<!--  LocalWords:  configFormat
  -->

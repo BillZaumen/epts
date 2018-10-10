@@ -14,7 +14,7 @@ StartupNotify=true
 Actions=stacktrace;config;tracedconfig;tconfig;tracedtconfig
 
 [Desktop Action stacktrace]
-Name = New Window, Stacktraces Enabled
+Name = New Window with Stacktraces
 Exec=epts --gui --stackTrace
 
 [Desktop Action config]
@@ -22,7 +22,7 @@ Name = Configure Session
 Exec=epts --sessionConfig
 
 [Desktop Action tracedconfig]
-Name = Configure Session, Stacktraces Enabled
+Name = Configure Session with Stacktraces
 Exec=epts --stackTrace --sessionConfig
 
 [Desktop Action tconfig]

@@ -19,6 +19,8 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.filechooser.*;
 import javax.swing.table.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
 import javax.swing.text.EditorKit;
 import org.bzdev.lang.CallableArgs;
 import org.bzdev.scripting.Scripting;
@@ -124,6 +126,92 @@ public class Setup {
     private static JPanel varEditor;
     private static JComboBox<String> unitComboBox;
 
+    static Object[] booleanOptions = {"true", "false"};
+
+
+    private static InputVerifier valueInputVerifier = null;
+
+    private static void adjustVarTable(int lastRowIndex, JTable varTable) {
+	CellEditor ce = varTable.getCellEditor();
+	if (ce != null) {
+	    ce.stopCellEditing();
+	}
+	String var = (String)
+	    varTable.getValueAt(lastRowIndex, 0);
+	if (var == null) var = "";
+	String val = (String)varTable.getValueAt(lastRowIndex, 1);
+	if (val == null) val = "";
+	int typeInd = findIndex(typeStrings, val);
+	val = (String)varTable.getValueAt(lastRowIndex, 3);
+	if (val == null) val = "";
+	int unitInd = findIndex(unitStrings, val);
+	val = (String) varTable.getValueAt(lastRowIndex, 2);
+	if (val == null) val = "";
+	if (badVTRow(var,typeInd,val,unitInd)) {
+	    varTextField.setText(var);
+	    typeComboBox.setSelectedIndex(typeInd);
+	    valueTextField.setText(val);
+	    unitComboBox.setSelectedIndex(unitInd);
+	    JComponent rootpane = varTable.getRootPane();
+	    for (;;) {
+		int status = JOptionPane.showConfirmDialog
+		    (rootpane, varEditor, "EPTS Variable Editor",
+		     JOptionPane.OK_CANCEL_OPTION,
+		     JOptionPane.PLAIN_MESSAGE);
+		if (status == JOptionPane.OK_OPTION) {
+		    // modify row
+		    varTable.setValueAt(varTextField.getText(),
+					lastRowIndex, 0);
+		    int ind = typeComboBox.getSelectedIndex();
+		    varTable.setValueAt(typeStrings[ind], lastRowIndex, 1);
+		    varTable.setValueAt(valueTextField.getText(),
+					lastRowIndex, 2);
+		    ind = unitComboBox.getSelectedIndex();
+		    varTable.setValueAt(unitStrings[ind], lastRowIndex, 3);
+		    break;
+		}
+	    }
+	    if (tabpane.isEnabledAt(3)) {
+		tabpane.setSelectedIndex(3);
+	    }
+	}
+    }
+
+    private static boolean badVTRow(String var, int typeInd,
+				    String val, int unitInd)
+    {
+	switch(typeInd) {
+	case 0:
+	    return false;
+	case 1:
+	    if (unitInd != 0) return true;
+	    if (val.equalsIgnoreCase("true") || val.equalsIgnoreCase("false")) {
+		return false;
+	    } else {
+		return true;
+	    }
+	case 2:
+	    try {
+		new Long(val);
+		return false;
+	    } catch (Exception e) {
+		return true;
+	    }
+	case 3:
+	    try {
+		new Double(val);
+		return false;
+	    } catch (Exception e) {
+		return true;
+	    }
+	case 4:
+	    if (unitInd != 0) return true;
+	    return false;
+	default:
+	    return true;
+	}
+    }
+
     private static JPanel createVarEditor(final JTable table) {
 	JPanel panel = new JPanel();
 	GridBagLayout gridbag = new GridBagLayout();
@@ -133,11 +221,117 @@ public class Setup {
 	JLabel typeLabel = new JLabel(localeString("variableType"));
 	typeComboBox = new JComboBox<String>(typeStrings);
 	typeComboBox.setEditable(false);
-	JLabel valueLabel = new JLabel("variableValue");
+	JLabel valueLabel = new JLabel(localeString("variableValue"));
 	valueTextField = new JTextField(40);
 	JLabel unitLabel = new JLabel(localeString("variableUnits"));
 	unitComboBox = new JComboBox<String>(unitStrings);
 	unitComboBox.setEditable(false);
+	valueInputVerifier = new InputVerifier() {
+		public boolean verify(JComponent input) {
+		    String s = valueTextField.getText();
+		    if (s == null) s = "";
+		    s = s.trim();
+		    switch(typeComboBox.getSelectedIndex()) {
+		    case 0: // Not Used
+			break;
+		    case 1: // boolean
+			if (!s.equalsIgnoreCase("true") &&
+			    !s.equalsIgnoreCase("false")) {
+			    s = (String)JOptionPane.showInputDialog
+				(input, localeString("chooseBooleanValue"),
+				 localeString("chooseValueTitle"),
+				 JOptionPane.ERROR_MESSAGE,
+				 null,
+				 booleanOptions,
+				 "true");
+			    valueTextField.setText(s);
+			    return true;
+			}
+			break;
+		    case 2: // integer
+			while (true) {
+			    try {
+				new Long(s);
+				return true;
+			    } catch (Exception e) {
+				s = (String)JOptionPane.showInputDialog
+				    (input, localeString("chooseIntegerValue"),
+				     localeString("chooseValueTitle"),
+				     JOptionPane.ERROR_MESSAGE,
+				     null, null, s);
+			    valueTextField.setText(s);
+			    }
+			}
+		    case 3:	// real
+			unitComboBox.setEnabled(true);
+			while (true) {
+			    try {
+				new Double(s);
+				return true;
+			    } catch (Exception e) {
+				s = (String)JOptionPane.showInputDialog
+				    (input, localeString("chooseRealValue"),
+				     localeString("chooseValueTitle"),
+				     JOptionPane.ERROR_MESSAGE,
+				     null, null, s);
+				valueTextField.setText(s);
+			    }
+			}
+		    case 4: // string
+			break;
+		    default:
+			break;
+		    }
+		    return true;
+		}
+	    };
+	valueTextField.setInputVerifier(valueInputVerifier);
+
+	typeComboBox.addActionListener((ae) -> {
+		String s = valueTextField.getText();
+		if (s == null) s = "";
+		s = s.trim();
+		switch(typeComboBox.getSelectedIndex()) {
+		case 0: // Not Used
+		    break;
+		case 1: // boolean
+		    unitComboBox.setSelectedIndex(0);
+		    unitComboBox.setEnabled(false);
+		    if (!s.equalsIgnoreCase("true") &&
+			!s.equalsIgnoreCase("false")) {
+			valueTextField.setText("");
+		    }
+		    break;
+		case 2: // integer
+		    unitComboBox.setSelectedIndex(0);
+		    unitComboBox.setEnabled(false);
+		    if (s.length() > 0) {
+			try {
+			    new Long(s);
+			} catch (Exception e) {
+			    valueTextField.setText("");
+			}
+		    }
+		    break;
+		case 3:	// real
+		    unitComboBox.setEnabled(true);
+		    if (s.length() > 0) {
+			try {
+			    new Double(s);
+			} catch (Exception e) {
+			    valueTextField.setText("");
+			}
+		    }
+		    break;
+		case 4: // string
+		    unitComboBox.setSelectedIndex(0);
+		    unitComboBox.setEnabled(false);
+		    break;
+		default:
+		    break;
+		}
+	    });
+
 
 	GridBagConstraints c = new GridBagConstraints();
 	c.insets = new Insets(4, 8, 4, 8);
@@ -203,15 +397,24 @@ public class Setup {
 		FileNameExtensionFilter afilter =
 		    new FileNameExtensionFilter
 		    (localeString("AllBasicFTypes"), allExt);
-		fc.addChoosableFileFilter(afilter);
-		fc.addChoosableFileFilter(filter);
-		fc.addChoosableFileFilter(ifilter);
+		if(tmlCanEnable) {
+		    fc.addChoosableFileFilter(filter);
+		    fc.setFileFilter(filter);
+		} else {
+		    fc.addChoosableFileFilter(afilter);
+		    fc.addChoosableFileFilter(filter);
+		    fc.addChoosableFileFilter(ifilter);
+		    fc.setFileFilter(afilter);
+		}
 		int status = fc.showOpenDialog(pane);
 		if (status == JFileChooser.APPROVE_OPTION) {
 		    try {
 			String path = fc.getSelectedFile().getAbsolutePath();
 			tf.setText(path);
 			usesImageFile = EPTS.isImagePath(path);
+			if (usesImageFile) {
+			    tabpane.setEnabledAt(2, false);
+			}
 		    } catch (Exception eio) {
 			eio.printStackTrace(System.err);
 		    }
@@ -294,7 +497,7 @@ public class Setup {
 				table.setValueAt(fc.getSelectedFile()
 						 .getAbsolutePath(), index, 0);
 				index++;
-				if (index >= table.getColumnCount()) {
+				if (index >= table.getRowCount()) {
 				    DefaultTableModel tm =
 					(DefaultTableModel)table.getModel();
 				    tm.setRowCount(index+8);
@@ -639,16 +842,20 @@ public class Setup {
     }
 
     static Object[] options = {
-	localeString("SaveAccept"),
-	localeString("SaveOnly"),
+	localeString("Save"),
+	localeString("SaveAs"),
 	localeString("Accept"),
-	localeString("Cancel")
+	localeString("Exit")
     };
     private static JButton[] buttons = new JButton[options.length];
     private static ActionListener[] buttonActionListeners =
 	new ActionListener[options.length];
 
     private static boolean dialogButtonPushed = false;
+
+    // set in getSetupArgs so it has access to various objects
+    // defined within the scope of that method.
+    private static CallableArgs<File> saveCallable = null;
 
     private static JPanel createButtons(final JTable javaOptionTable,
 					final JTable codebaseTable,
@@ -677,9 +884,28 @@ public class Setup {
 		    if (ce != null) {
 			ce.stopCellEditing();
 		    }		    
+		    if (status != 3 && varTable.getSelectedRowCount() > 0) {
+			int[] rows = varTable.getSelectedRows();
+			for (int j: rows) {
+			    adjustVarTable(j, varTable);
+			}
+		    }
 		    status = index;
 		    Window w = SwingUtilities.windowForComponent(panel);
-		    if (w instanceof JDialog) {
+		    if (status != 3) {
+			if (usesImageFile && tmlCanEnable) {
+			    JOptionPane.showMessageDialog
+				(tabpane, errorMsg("imageFileWithScript"),
+				 localeString("SetupError"),
+				 JOptionPane.ERROR_MESSAGE);
+			    return;
+			}
+		    }
+		    if (status == 0) {
+			saveCallable.call(savedStateFile);
+		    } else if (status == 1) {
+			saveCallable.call((File)null);
+		    } else if (w instanceof JDialog) {
 			JDialog d = (JDialog)w;
 			dialogButtonPushed = true;
 			d.setVisible(false);
@@ -690,7 +916,7 @@ public class Setup {
 	    panel.add(b);
 	    buttons[i] = b;
 	    buttonActionListeners[i] = al;
-	    if (i < 2) b.setEnabled(false);
+	    if (i < 3) b.setEnabled(false);
 	}
 	return panel;
     }
@@ -700,23 +926,86 @@ public class Setup {
 	if (disabled) {
 	    buttons[0].setEnabled(true);
 	    buttons[1].setEnabled(true);
+	    buttons[2].setEnabled(true);
 	}
 	disabled = false;
     }
 
+    private static void disableButtons() {
+	if (!disabled) {
+	    buttons[0].setEnabled(false);
+	    buttons[1].setEnabled(false);
+	    buttons[2].setEnabled(false);
+	}
+	disabled = true;
+    }
+
+    private static TableModel codebaseModel = null;
+    private static TableModel scriptModel = null;
+    private static TableModel varModel = null;
+
+    private static boolean tmlCanEnable = false;
+    private static boolean dlCanEnable = false;
+
+
+    private static JTabbedPane tabpane = null;
+
     private static TableModelListener tml = (e) -> {
-	enableButtons();
+	TableModel source  = (TableModel) e.getSource();
+	tmlCanEnable = false;
+	for (int i = 0; i < source.getRowCount(); i++) {
+	    String s = (String)source.getValueAt(i, 0);
+	    if (s == null) continue;
+	    if (s.trim().length() > 0) {
+		tmlCanEnable = true;
+		break;
+	    }
+	}
+	if (tmlCanEnable || dlCanEnable) {
+	    enableButtons();
+	} else {
+	    disableButtons();
+	}
     };
 
+
     private static DocumentListener dl = new DocumentListener() {
+	    private void doit(DocumentEvent e) {
+		Document doc = e.getDocument();
+		try {
+		    String text = doc.getText(0, doc.getLength());
+		    if (text == null) text = "";
+		    text = text.trim();
+		    int tlen = text.trim().length();
+		    dlCanEnable = (tlen > 0);
+		    if (tmlCanEnable || dlCanEnable) {
+			enableButtons();
+		    } else {
+			disableButtons();
+		    }
+		    if (dlCanEnable) {
+			usesImageFile = EPTS.isImagePath(text);
+			if (usesImageFile && !tmlCanEnable) {
+			    tabpane.setEnabledAt(2, false);
+			} else {
+			    tabpane.setEnabledAt(2, true);
+			}
+		    } else {
+			tabpane.setEnabledAt(2, true);
+		    }
+		} catch (BadLocationException be) {
+		    be.printStackTrace(System.err);
+		}
+	    }
+
 	    public void changedUpdate(DocumentEvent e) {
-		enableButtons();
+		doit(e);
 	    }
 	    public void insertUpdate(DocumentEvent e) {
-		enableButtons();
+		doit(e);
 	    }
 	    public void removeUpdate(DocumentEvent e) {
-		enableButtons();
+		doit(e);
 	    }
 	};
 
@@ -762,11 +1051,14 @@ public class Setup {
 	}
     }
 
+    static private File savedStateFile = null;
+
     public static String[] getSetupArgs(ZipDocFile zf, File zfile) {
 	try {
 	    results = null;
+	    savedStateFile = zfile;
 	    SwingUtilities.invokeAndWait(() -> {
-		    JTabbedPane tabpane = new JTabbedPane();
+		    tabpane = new JTabbedPane();
 		    JPanel basicPanel = new JPanel();
 		    basicPanel.setLayout(new BorderLayout());
 		    JLabel inputFileLabel =
@@ -793,6 +1085,9 @@ public class Setup {
 		    if (zf != null) {
 			inputFileTF.setText(getZDFString(zf, "inputfile"));
 			usesImageFile = EPTS.isImagePath(inputFileTF.getText());
+			if (inputFileTF.getText().trim().length() > 0) {
+			    dlCanEnable = true;
+			}
 			animTF.setText(getZDFString(zf, "animation"));
 			String lang = getZDFString(zf, "scriptingLang");
 			if (lang.equals(DEFAULT_LANG)) {
@@ -854,7 +1149,7 @@ public class Setup {
 		    Object colnames[] = {
 			localeString("codebaseHeader")
 		    };
-		    TableModel codebaseModel = (zf != null)?
+		    codebaseModel = (zf != null)?
 			getZDFTM(zf, "codebase", colnames):
 			new DefaultTableModel(colnames, 32) {
 			    public Class<?> getColumnClass(int col) {
@@ -877,7 +1172,7 @@ public class Setup {
 		    Object colnames2[] = {
 			localeString("scriptHeader")
 		    };
-		    TableModel scriptModel = (zf != null)?
+		    scriptModel = (zf != null)?
 			getZDFTM(zf, "scripts", colnames2):
 			new DefaultTableModel(colnames2, 32) {
 			    public Class<?> getColumnClass(int col) {
@@ -886,6 +1181,16 @@ public class Setup {
 			};
 		    JTable scriptTable = new JTable();
 		    scriptTable.setModel(scriptModel);
+
+		    int stlen = scriptModel.getRowCount();
+		    for (int i = 0; i < stlen; i++) {
+			String s = (String)scriptModel.getValueAt(i, 0);
+			if (s == null) continue;
+			if (s.trim().length() > 0) {
+			    tmlCanEnable = true;
+			    break;
+			}
+		    }
 
 		    JScrollPane scriptScrollPane =
 			new JScrollPane(scriptTable);
@@ -905,7 +1210,7 @@ public class Setup {
 			localeString("Value"),
 			localeString("Units")
 		    };
-		    TableModel varModel = (zf != null)?
+		    varModel = (zf != null)?
 			getZDFTM(zf, "variables", colnames3):
 			new DefaultTableModel(colnames3, 32) {
 			    public Class<?> getColumnClass(int col) {
@@ -939,14 +1244,53 @@ public class Setup {
 		    addControls(varPanel, varTable,
 				ControlType.VALUE);
 		    varEditor = createVarEditor(varTable);
+		    varTable.getSelectionModel()
+			.addListSelectionListener(new ListSelectionListener() {
+				int lastRowIndex = -1;
+				public void valueChanged(ListSelectionEvent e) {
+				    if (varTable.getSelectedRowCount() != 1) {
+					return;
+				    }
+				    int index = varTable.getSelectedRow();
+				    if (lastRowIndex > -1) {
+					adjustVarTable(lastRowIndex, varTable);
+				    }
+				    lastRowIndex = index;
+				    System.out.println("lastRowIndex = "
+						       + lastRowIndex);
+				}
+			    });
 		    tabpane.addTab(localeString("Variables"), varPanel);
 		    // tabpane.setPreferredSize(new Dimension(700, 500));
 		    inputFileTF.getDocument().addDocumentListener(dl);
 		    animTF.getDocument().addDocumentListener(dl);
-		    codebaseModel.addTableModelListener(tml);
+		    // codebaseModel.addTableModelListener(tml);
 		    scriptModel.addTableModelListener(tml);
-		    varModel.addTableModelListener(tml);
+		    // varModel.addTableModelListener(tml);
 		    
+		    tabpane.addChangeListener((ce) -> {
+			    CellEditor tce = javaOptionTable.getCellEditor();
+			    if (tce != null) {
+				tce.stopCellEditing();
+			    }
+			    tce = codebaseTable.getCellEditor();
+			    if (tce != null) {
+				tce.stopCellEditing();
+			    }
+			    tce = scriptTable.getCellEditor();
+			    if (tce != null) {
+				tce.stopCellEditing();
+			    }
+			    tce = varTable.getCellEditor();
+			    if (tce != null) {
+				tce.stopCellEditing();
+			    }
+			    if (varTable.getSelectedRowCount() > 0) {
+				for (int i: varTable.getSelectedRows()) {
+				    adjustVarTable(i, varTable);
+				}
+			    }
+			});
 		    JPanel topPanel = new JPanel();
 		    topPanel.setLayout(new BorderLayout());
 		    topPanel.add(tabpane, "Center");
@@ -956,15 +1300,27 @@ public class Setup {
 					       varTable),
 				 "South");
 
-		     CallableArgs<File> saveCallable=new CallableArgs<File>() {
+		    if (zf != null) {
+			if (tmlCanEnable || dlCanEnable) {
+			    enableButtons();
+			} else {
+			    disableButtons();
+			}
+		    }
+
+		    saveCallable=new CallableArgs<File>() {
 			     public void call(File... zfiles) {
-				 File zfile = zfiles[0];
+				 File zfile =
+				 (zfiles == null|| zfiles.length == 0)? null:
+				 zfiles[0];
 				 String cd = System.getProperty("user.dir");
 				 JFileChooser saveChooser =
 				 new JFileChooser(cd);
 				 FileNameExtensionFilter fne =
 				 new FileNameExtensionFilter
 				 ("EPTS Saved Setup", "eptc");
+				 saveChooser.setAcceptAllFileFilterUsed(false);
+				 saveChooser.addChoosableFileFilter(fne);
 				 for(;;) {
 				     int retval = (zfile != null)?
 					 JFileChooser.APPROVE_OPTION:
@@ -980,13 +1336,23 @@ public class Setup {
 						     (tabpane,
 						      errorMsg("eptc",
 							       f.getName()),
-						      "Setup Error",
+						      localeString
+						      ("SetupError"),
 						      JOptionPane
 						      .ERROR_MESSAGE);
 						 continue;
 					     }
+					     if (zfile == null) {
+						 savedStateFile =
+						     f.getCanonicalFile();
+					     }
+					     File parent = f.getParentFile();
+					     File tf = File.createTempFile
+						 ("epts-eptc", null, parent);
+					     String fp = f.getCanonicalPath();
+					     String tfp = tf.getCanonicalPath();
 					     OutputStream fos =
-						 new FileOutputStream(f);
+						 new FileOutputStream(tf);
 					     ZipDocWriter zdw = new
 						 ZipDocWriter
 						 (fos,
@@ -1063,10 +1429,17 @@ public class Setup {
 					     enc.close();
 					     os.close();
 					     zdw.close();
+					     if (!tf.renameTo(f)) {
+						 throw new
+						     IOException
+						     (errorMsg("rename",
+							       tfp, fp));
+
+					     }
 					 } catch (Exception ee) {
 					     JOptionPane.showMessageDialog
 						 (tabpane,ee.getMessage(),
-						  "Setup Error",
+						  localeString("SetupError"),
 						  JOptionPane.ERROR_MESSAGE);
 					     continue;
 					 }
@@ -1075,6 +1448,7 @@ public class Setup {
 				 }
 			     }
 			 };
+
 
 		    Action quitAction = new AbstractAction() {
 			    public void actionPerformed(ActionEvent e) {
@@ -1087,7 +1461,7 @@ public class Setup {
 
 		    Action saveAction = new AbstractAction() {
 			    public void actionPerformed(ActionEvent e) {
-				saveCallable.call(zfile);
+				saveCallable.call(savedStateFile);
 			    }
 			};
 		    tabpane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
@@ -1121,7 +1495,7 @@ public class Setup {
 			*/
 			dialogButtonPushed = false;
 			dialog.setVisible(true);
-			if (status == 0 || status == 2) {
+			if (status == 2) {
 			    CellEditor ce = javaOptionTable.getCellEditor();
 			    if (ce != null) {
 				ce.stopCellEditing();
@@ -1270,10 +1644,12 @@ public class Setup {
 			    break;
 			}
 		    }
+		    /*
 		    if (status == 0 || status == 1) {
-			saveCallable.call(zfile);
+			saveCallable.call(savedStateFile);
 		    }
-		    if (status == 1|| status == 3) {
+		    */
+		    if (status == 3) {
 			System.exit(0);
 		    }
 		});
