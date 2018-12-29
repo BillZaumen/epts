@@ -19,13 +19,15 @@ release:
 		exit 1 ;\
 	fi
 
+
 minor:
 	@cd $(JROOT) ;\
 	x="`git log -1 --pretty=oneline HEAD`";\
 	y="`git log -1 --pretty=oneline master`";\
-	if git diff --quiet HEAD ;\
+	git diff --quiet HEAD -- MINOR ; \
+	if [ $$? != 0 ]  ;\
 	then \
-		echo cannot update minor number - no changes ;\
+		echo cannot update minor number - already changed ;\
 	elif [ "$$x" = "$$y" ] ;\
 	then \
 		x="`git show master:MAJOR`" ;\
@@ -45,6 +47,10 @@ major:
 	@cd $(JROOT) ;\
 	x="`git log -1 --pretty=oneline HEAD`";\
 	y="`git log -1 --pretty=oneline master`";\
+	git diff --quiet HEAD -- MAJOR ; \
+	if [ $$? != 0 ] ;\
+	then \
+		echo cannot update major number - already changed ;\
 	if [ "$$x" = "$$y" ] ;\
 	then \
 		m="$$(echo `git show master:MAJOR`)";\

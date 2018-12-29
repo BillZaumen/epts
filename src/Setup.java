@@ -64,10 +64,10 @@ public class Setup {
 	int n = typeStrings.length;
 	for (int i = 0; i < n; i++) {
 	    if (typeStrings[i].equals(val)) {
-		return new Integer(i);
+		return Integer.valueOf(i);
 	    }
 	}
-	return new Integer(-1);
+	return Integer.valueOf(-1);
     }
 
     private static final String unitStrings[] = {
@@ -89,10 +89,10 @@ public class Setup {
 	int n = unitStrings.length;
 	for (int i = 0; i < n; i++) {
 	    if (unitStrings[i].equals(val)) {
-		return new Integer(i);
+		return Integer.valueOf(i);
 	    }
 	}
-	return new Integer(-1);
+	return Integer.valueOf(-1);
     }
 
 
@@ -192,14 +192,14 @@ public class Setup {
 	    }
 	case 2:
 	    try {
-		new Long(val);
+		Long.parseLong(val);
 		return false;
 	    } catch (Exception e) {
 		return true;
 	    }
 	case 3:
 	    try {
-		new Double(val);
+		Double.parseDouble(val);
 		return false;
 	    } catch (Exception e) {
 		return true;
@@ -251,7 +251,7 @@ public class Setup {
 		    case 2: // integer
 			while (true) {
 			    try {
-				new Long(s);
+				Long.parseLong(s);
 				return true;
 			    } catch (Exception e) {
 				s = (String)JOptionPane.showInputDialog
@@ -266,7 +266,7 @@ public class Setup {
 			unitComboBox.setEnabled(true);
 			while (true) {
 			    try {
-				new Double(s);
+				Double.parseDouble(s);
 				return true;
 			    } catch (Exception e) {
 				s = (String)JOptionPane.showInputDialog
@@ -307,7 +307,7 @@ public class Setup {
 		    unitComboBox.setEnabled(false);
 		    if (s.length() > 0) {
 			try {
-			    new Long(s);
+			    Long.parseLong(s);
 			} catch (Exception e) {
 			    valueTextField.setText("");
 			}
@@ -317,7 +317,7 @@ public class Setup {
 		    unitComboBox.setEnabled(true);
 		    if (s.length() > 0) {
 			try {
-			    new Double(s);
+			    Double.parseDouble(s);
 			} catch (Exception e) {
 			    valueTextField.setText("");
 			}

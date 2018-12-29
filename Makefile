@@ -97,8 +97,14 @@ EXTDIR_SED =  $(shell echo $(EXTDIR) | sed  s/\\//\\\\\\\\\\//g)
 BZDEVDIR = $(DESTDIR)$(SYS_BZDEVDIR)
 BZDEVDIR_SED = $(shell echo $(SYS_BZDEVDIR) | sed  s/\\//\\\\\\\\\\//g)
 
-EXTLIBS=$(EXTDIR)/libbzdev.jar
+EXTLIB1 = $(EXTDIR)/libbzdev-base.jar
+EXTLIB2 = $(EXTDIR)/libbzdev-obnaming.jar
+EXTLIB3 = $(EXTDIR)/libbzdev-desktop.jar
+EXTLIB4 = $(EXTDIR)/libbzdev-devqsim.jar
+EXTLIB5 = $(EXTDIR)/libbzdev-anim2d.jar
+EXTLIB6 = $(EXTDIR)/libbzdev-ejws.jar
 
+EXTLIBS = $(EXTLIB1):$(EXTLIB2):$(EXTLIB3):$(EXTLIB4):$(EXTLIB5):$(EXTLIB6)
 
 MANS = $(JROOT_MANDIR)/man1/epts.1.gz $(JROOT_MANDIR)/man5/epts.5.gz
 

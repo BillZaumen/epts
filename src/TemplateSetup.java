@@ -108,7 +108,7 @@ public class TemplateSetup {
 		    VTextField tf = (VTextField)c;
 		    String text = tf.getText();
 		    try {
-			double val = new Double(text);
+			double val = Double.parseDouble(text);
 			if (val < 0.0) return false;
 			return true;
 		    } catch (Exception e) {
@@ -125,7 +125,7 @@ public class TemplateSetup {
 		    VTextField tf = (VTextField)c;
 		    String text = tf.getText();
 		    try {
-			int val = new Integer(text);
+			int val = Integer.parseInt(text);
 			return true;
 		    } catch (Exception e) {
 			return false;
@@ -141,7 +141,7 @@ public class TemplateSetup {
 		    VTextField tf = (VTextField)c;
 		    String text = tf.getText();
 		    try {
-			long val = new Long(text);
+			long val = Long.parseLong(text);
 			return true;
 		    } catch (Exception e) {
 			return false;
@@ -611,7 +611,7 @@ public class TemplateSetup {
 	return 0L;
     }
 
-    static Vector tdefVector = null;
+    static Vector<? extends Vector> tdefVector = null;
 
     static JTable tdefTable = null;
 
@@ -1644,7 +1644,7 @@ public class TemplateSetup {
 		dec = new XMLDecoder(is);
 		result = dec.readObject();
 		if (result instanceof Vector) {
-		    tdefVector = (Vector)result;
+		    tdefVector = (Vector<? extends Vector>)result;
 		    Vector v1 = (Vector)tdefVector.get(0);
 		}
 		dec.close();
@@ -2672,7 +2672,7 @@ public class TemplateSetup {
 					PathLocInfo pathLocInfo
 					    = pathLocMap.get(s);
 					Vector<Object> row = new Vector<>(2);
-					row.add(new Boolean
+					row.add(Boolean.valueOf
 						(pathLocInfo.active));
 					row.add(s);
 					DefaultTableModel tm =

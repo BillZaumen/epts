@@ -53,6 +53,7 @@ import org.bzdev.scripting.Scripting;
 import org.bzdev.swing.ErrorMessage;
 import org.bzdev.swing.SimpleConsole;
 import org.bzdev.swing.WholeNumbTextField;
+import org.bzdev.util.CopyUtilities;
 import org.bzdev.util.SafeFormatter;
 import org.bzdev.util.TemplateProcessor;
 
@@ -61,6 +62,8 @@ public class EPTS {
     public enum Mode {
 	LOCATION, PATH_START, PATH_END
     }
+
+    static final String pathSeparator = System.getProperty("path.separator");
 
     // resource bundle for messages used by exceptions and errors
     static ResourceBundle exbundle = ResourceBundle.getBundle("EPTS");
@@ -171,6 +174,60 @@ public class EPTS {
 	    }
 	}
     }
+
+    static void extendCodebase(String codebase)  {
+	try {
+	    extendCodebase(codebase, System.err);
+	} catch (Exception e) {
+	    System.exit(1);
+	}
+    }
+    static void extendCodebase(String codebase, Appendable err)
+	throws Exception
+    {
+	try {
+	    URL[] urls = URLPathParser.getURLs(null, codebase,
+					       ourCodebaseDir,
+					       err);
+	    for (URL url: urls) {
+		String fname;
+		if (url.getProtocol().equals("file")) {
+		    File f = new File(url.toURI());
+		    if (!f.canRead()) {
+			throw new IOException
+			    (errorMsg("noFile", url.toString()));
+		    } else if (!f.isDirectory() && !f.isFile()) {
+			throw new IOException
+			    (errorMsg("noFile", url.toString()));
+		    }
+		    fname = f.getCanonicalPath();
+		} else {
+		    File tmp = File.createTempFile("scrunner", "jar");
+		    tmp.deleteOnExit();
+		    OutputStream os = new FileOutputStream(tmp);
+		    InputStream is = url.openConnection().getInputStream();
+		    CopyUtilities.copyStream(is, os);
+		    os.close();
+		    is.close();
+		    fname = tmp.getCanonicalPath();
+		}
+		if (!sbcpAppended.contains(codebase)) {
+		    if (sbcp.length() > 0) {
+			sbcp.append(pathSeparator);
+		    }
+		    sbcp.append(fname);
+		    sbcpAppended.add(codebase);
+		}
+	    }
+	    // URLClassLoaderOps.addURLs(urls);
+	} catch (Exception e) {
+	    err.append
+		(errorMsg("codebaseError", codebase, e.getMessage()) + "\n");
+	    // System.exit(1);
+	    throw e;
+	}
+    }
+    
 
     private static void readConfigFiles(String languageName, String fileName) {
 	File file = new File (fileName);
@@ -362,12 +419,16 @@ public class EPTS {
 				} else {
 				    url = (new File(line)).toURI().toURL();
 				}
+				// -- need to think about how to do this.
+				extendCodebase(url.toString());
+				/*
 				URLClassLoaderOps.addURL(url);
 				if (!sbcpAppended.contains(line)) {
 				    sbcp.append(File.pathSeparator);
 				    sbcp.append(line);
 				    sbcpAppended.add(line);
 				}
+				*/
 			    } catch (Exception e) {
 				int lno = reader.getLineNumber();
 				String msg =
@@ -1383,10 +1444,12 @@ public class EPTS {
 	    }
 	}
 	String classLoader = defs.getProperty("java.system.class.loader");
+	/*
 	if (classLoader == null) {
 	    jargsList.add(0, "-Djava.system.class.loader="
 			  + "org.bzdev.lang.DMClassLoader");
 	}
+	*/
 	jargsList.add(0, "-Depts.fdrUsed="+(fdrUsed? "true": "false"));
 	jargsList.add(0, "-Depts.alreadyforked=true");
 	jargsList.add(0, javacmd);
@@ -2703,7 +2766,10 @@ public class EPTS {
 		    URL[] urls = URLPathParser.getURLs(null, cp,
 						       ourCodebaseDir,
 						       System.err);
-		    URLClassLoaderOps.addURLs(urls);
+		    // Make sure this occurs only after we restarted,
+		    // so the codebase is not needed as we'll put everything
+		    // on the class path or module path
+		    // URLClassLoaderOps.addURLs(urls);
 		} catch (MalformedURLException e) {
 		    System.err.append(errorMsg("codebaseError", cp) + "\n");
 		    System.exit(1);
@@ -3022,7 +3088,8 @@ public class EPTS {
 				System.exit(1);
 			    }
 			    if (name.startsWith(".../")) {
-				URLClassLoaderOps.addURLs(urls);
+				extendCodebase(name);
+				// URLClassLoaderOps.addURLs(urls);
 			    } else {
 				String title = errorMsg("acceptTitle");
 				String msg = errorMsg("acceptURL", name);
@@ -3033,7 +3100,8 @@ public class EPTS {
 						       .YES_NO_OPTION,
 						       JOptionPane
 						       .QUESTION_MESSAGE)) {
-				    URLClassLoaderOps.addURLs(urls);
+				    extendCodebase(name);
+				    // URLClassLoaderOps.addURLs(urls);
 				}
 			    }
 			}

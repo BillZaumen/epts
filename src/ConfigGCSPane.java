@@ -141,7 +141,7 @@ public class ConfigGCSPane extends JPanel {
 		JTextField tf = (VTextField)input;
 		String string = tf.getText();
 		try {
-		    double value = new Double(string);
+		    double value = Double.parseDouble(string);
 		    if (value > 0.0) {
 			return true;
 		    } else {
@@ -158,7 +158,7 @@ public class ConfigGCSPane extends JPanel {
 		JTextField tf = (VTextField)input;
 		String string = tf.getText();
 		try {
-		    double value = new Double(string);
+		    double value = Double.parseDouble(string);
 		    return true;
 		} catch (Exception e) {
 		    return false;
