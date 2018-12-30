@@ -1739,6 +1739,30 @@ public class EPTS {
 	return result;
     }
 
+    // This is used so we can find a codebase before we fork.
+    private static EPTSParser createParsedParser(String filename) {
+	try {
+	    EPTSParser parser = new EPTSParser();
+	    if (filename.startsWith("file:")) {
+		filename = (new File(new URI(filename))).getCanonicalPath();
+	    } else if (maybeURL(filename)) {
+		displayError(errorMsg("urlForSavedState", filename));
+		System.exit(1);
+	    }
+	    File parent  = new File(filename).getParentFile();
+	    if (parent != null) {
+		System.setProperty("user.dir",
+				   parent.getCanonicalPath());
+	    }
+	    parser.setXMLFilename(filename);
+	    parser.parse(new FileInputStream(filename));
+	    return parser;
+	} catch (Exception e) {
+	    displayError(e.getMessage());
+	    System.exit(1);
+	}
+	return null;
+    }
 
     private static boolean needInitialConfig = true;
 
@@ -1955,6 +1979,7 @@ public class EPTS {
 		    if (!alreadyForked) {
 			argsList.add(argv[index]);
 		    }
+		    extendCodebase(argv[index]);
 		    for (String cb: URLPathParser.split(argv[index])) {
 			if (!codebaseSet.contains(cb)) {
 			    codebase.add(argv[index]);
@@ -2727,6 +2752,20 @@ public class EPTS {
 	    }
 	}
 
+	EPTSParser parser = null;
+	if (imageMode == false && scriptMode == false
+	    && targetList.size() >= 1) {
+	    String filename = targetList.get(0);
+	    if (filename.endsWith(".epts")) {
+		    parser = createParsedParser(filename);
+	    } else {
+		displayError(errorMsg("eptsFileExpected"));
+		System.exit(1);
+	    }
+	}
+
+
+
 	// fork if a different JVM executable was requested, if we
 	// have some arguments that must be passed to the JVM.
 	boolean mustFork = (jargsList.size() > 0 || javacmd != JAVACMD);
@@ -2760,6 +2799,10 @@ public class EPTS {
 	    e.printStackTrace(System.err);
 	}
 
+
+	/*
+	// not needed as we now call extendCodebase when the codebases are
+	// read.
 	if (codebase.size() > 0) {
 	    for (String cp: codebase) {
 		try {
@@ -2776,7 +2819,7 @@ public class EPTS {
 		}
 	    }
 	}
-
+	*/
 	if (webserverOnly) {
 	    EPTSWindow.setPort(port);
 	    return;
@@ -3047,10 +3090,17 @@ public class EPTS {
 			   null, null, null, null);
 	    //			   languageName, a2dName, null);
 	} else if (targetList.size() >= 1) {
-	    EPTSParser parser = new EPTSParser();
+	    // EPTSParser parser = new EPTSParser();
 	    String filename = targetList.get(0);
 	    if (filename.endsWith(".epts")) {
 		try {
+		    if (parser == null) {
+			// parser is initialized after tests that replicates
+			// the ones that got us to this branch.
+			throw new UnexpectedExceptionError();
+		    }
+		    // parser = createParsedParser(filename);
+		    /*
 		    if (filename.startsWith("file:")) {
 			filename =
 			    (new File(new URI(filename))).getCanonicalPath();
@@ -3066,6 +3116,7 @@ public class EPTS {
 		    }
 		    parser.setXMLFilename(filename);
 		    parser.parse(new FileInputStream(filename));
+		    */
 		    if (outName == null) {
 			EPTSWindow.setPort(port);
 			for (String name: parser.getCodebase()) {
