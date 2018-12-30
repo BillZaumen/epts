@@ -2757,7 +2757,49 @@ public class EPTS {
 	    && targetList.size() >= 1) {
 	    String filename = targetList.get(0);
 	    if (filename.endsWith(".epts")) {
-		    parser = createParsedParser(filename);
+		parser = createParsedParser(filename);
+		if (outName == null && !alreadyForked) {
+		    // we only run the scripts if there is no
+		    // output file as the output file simply
+		    // formats the tables.
+		    for (String name: parser.getCodebase()) {
+			StringBuilder sb = new StringBuilder();
+			URL[] urls = null;
+			try {
+			    urls = URLPathParser.getURLs(null, name,
+							 ourCodebaseDir,
+							 sb);
+			} catch (Exception urle) {
+			    if (sb.length() != 0) {
+				displayError(sb.toString());
+				System.exit(1);
+			    }
+			}
+			if (urls.length != 1) {
+			    String title = errorMsg("errorTitle");
+			    String msg = errorMsg("multipleURLs");
+			    ErrorMessage.display(null, title, msg);
+			    System.exit(1);
+			}
+			if (name.startsWith(".../")) {
+			    extendCodebase(name);
+			    // URLClassLoaderOps.addURLs(urls);
+			} else {
+			    String title = errorMsg("acceptTitle");
+			    String msg = errorMsg("acceptURL", name);
+			    if (JOptionPane.OK_OPTION ==
+				JOptionPane
+				.showConfirmDialog(null, msg, title,
+						   JOptionPane
+						   .YES_NO_OPTION,
+						   JOptionPane
+						   .QUESTION_MESSAGE)) {
+				extendCodebase(name);
+				// URLClassLoaderOps.addURLs(urls);
+			    }
+			}
+		    }
+		}
 	    } else {
 		displayError(errorMsg("eptsFileExpected"));
 		System.exit(1);
@@ -3119,43 +3161,6 @@ public class EPTS {
 		    */
 		    if (outName == null) {
 			EPTSWindow.setPort(port);
-			for (String name: parser.getCodebase()) {
-			    StringBuilder sb = new StringBuilder();
-			    URL[] urls = null;
-			    try {
-				urls = URLPathParser.getURLs(null, name,
-							     ourCodebaseDir,
-							     sb);
-			    } catch (Exception urle) {
-				if (sb.length() != 0) {
-				    displayError(sb.toString());
-				    System.exit(1);
-				}
-			    }
-			    if (urls.length != 1) {
-				String title = errorMsg("errorTitle");
-				String msg = errorMsg("multipleURLs");
-				ErrorMessage.display(null, title, msg);
-				System.exit(1);
-			    }
-			    if (name.startsWith(".../")) {
-				extendCodebase(name);
-				// URLClassLoaderOps.addURLs(urls);
-			    } else {
-				String title = errorMsg("acceptTitle");
-				String msg = errorMsg("acceptURL", name);
-				if (JOptionPane.OK_OPTION ==
-				    JOptionPane
-				    .showConfirmDialog(null, msg, title,
-						       JOptionPane
-						       .YES_NO_OPTION,
-						       JOptionPane
-						       .QUESTION_MESSAGE)) {
-				    extendCodebase(name);
-				    // URLClassLoaderOps.addURLs(urls);
-				}
-			    }
-			}
 			if (parser.hasScripts()) {
 			    List<NameValuePair> pbindings
 				= parser.getBindings();

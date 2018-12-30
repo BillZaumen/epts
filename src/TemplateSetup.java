@@ -1644,7 +1644,10 @@ public class TemplateSetup {
 		dec = new XMLDecoder(is);
 		result = dec.readObject();
 		if (result instanceof Vector) {
-		    tdefVector = (Vector<? extends Vector>)result;
+		    @SuppressWarnings("unchecked")
+		    Vector<? extends Vector> tmp =
+			(Vector<? extends Vector>)result;
+		    tdefVector = tmp;
 		    Vector v1 = (Vector)tdefVector.get(0);
 		}
 		dec.close();
