@@ -112,8 +112,11 @@ MANS = $(JROOT_MANDIR)/man1/epts.1.gz $(JROOT_MANDIR)/man5/epts.5.gz
 ICONS = $(SOURCEICON) $(SOURCE_FILE_ICON) $(SOURCE_CFILE_ICON) \
 	$(SOURCE_TCFILE_ICON)
 
-JFILES = $(wildcard src/*.java)
-PROPERTIES = src/EPTS.properties
+EPTS_DIR = mods/org.bzdev.epts
+EPTS_JDIR = $(EPTS_DIR)/org/bzdev/epts
+
+JFILES = $(wildcard src/org.bzdev.epts/org/bzdev/epts/*.java)
+PROPERTIES = src/org.bzdev.epts/org/bzdev/epts/EPTS.properties
 
 TEMPLATES = templates/distances.tpl \
 	templates/ECMAScript.tpl templates/save.tpl \
@@ -186,32 +189,34 @@ include MajorMinor.mk
 $(CLASSES):
 	(cd $(JROOT); mkdir classes)
 
+
 # The action for this rule removes all the epts-*.jar files
 # because the old ones would otherwise still be there and end up
 # being installed.
 #
 $(JROOT_JARDIR)/epts-$(VERSION).jar: $(FILES) $(TEMPLATES) $(CRLF_TEMPLATES)\
 	$(RESOURCES) $(BLDPOLICY) $(SCRIPTS)
-	mkdir -p $(CLASSES)
+	mkdir -p $(EPTS_JDIR)
 	javac -Xlint:unchecked -Xlint:deprecation \
-		-d $(CLASSES) -classpath $(CLASSES):$(EXTLIBS) \
-		-sourcepath src $(JFILES)
-	cp $(PROPERTIES) $(CLASSES)
+		-d mods/org.bzdev.epts -p $(EXTLIBS) \
+		src/org.bzdev.epts/module-info.java $(JFILES)
+	cp $(PROPERTIES) $(EPTS_JDIR)
 	for i in $(ICON_WIDTHS) 512 ; do \
-		inkscape -w $$i -e $(CLASSES)/eptsicon$${i}.png \
+		inkscape -w $$i -e $(EPTS_JDIR)/eptsicon$${i}.png \
 		icons/epts.svg ; \
 	done
 	mkdir -p $(JROOT_JARDIR)
 	rm -f $(JROOT_JARDIR)/epts-*.jar
 	for i in $(TEMPLATES) ; do tname=`basename $$i .tpl`; \
-		cp $$i $(CLASSES)/$$tname; done
+		cp $$i $(EPTS_JDIR)/$$tname; done
 	for i in $(CRLF_TEMPLATES) ; do tname=`basename $$i .tpl`; \
 		cat $$i | sed -e 's/.*/\0\r/' > $(CLASSES)/$$tname; done
 	for i in $(SCRIPTS) ; do sname=`basename $$i .js` ; \
-		cp $$i $(CLASSES)/$$sname; done
-	mkdir -p $(CLASSES)/manual
-	for i in $(RESOURCES) ; do cp $$i $(CLASSES)/$$i ; done
-	jar cfm $(JROOT_JARDIR)/epts.jar epts.mf -C $(CLASSES) .
+		cp $$i $(EPTS_JDIR)/$$sname; done
+	mkdir -p $(EPTS_JDIR)/manual
+	for i in $(RESOURCES) ; do cp $$i $(EPTS_JDIR)/$$i ; done
+	jar cfe $(JROOT_JARDIR)/epts.jar org.bzdev.epts.EPTS \
+		-C $(EPTS_DIR) .
 
 
 $(JROOT_BIN)/epts: epts.sh MAJOR MINOR \

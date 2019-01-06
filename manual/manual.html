@@ -233,7 +233,7 @@ are set using the <CODE>Variables</CODE> pane:
 <CENTER><IMG src="configSession5.png"></CENTER>
 <BR>
 In this example, the Cartesian-coordinate script
-<CODE>sresource:grid</CODE> uses a variable named <CODE>spacing</CODE>
+<CODE>resource:grid</CODE> uses a variable named <CODE>spacing</CODE>
 to set the grid spacing. The type of the value is <CODE>Read</CODE>,
 which provides some syntax checking for the value.  When the value
 represents a distance, the BZDev animation package and some related
@@ -826,7 +826,7 @@ Templates allow output files to be produced in a variety of formats.
 A template is specified by using the <CODE>--template</CODE>
 command-line option.  The value is either a URI or a file name.
 There are a number of built-in templates that are accessible by
-using a URI whose scheme is <CODE>sresource</CODE>. These fit
+using a URI whose scheme is <CODE>resource</CODE>. These fit
 into two categories: table templates and path-iterator templates.
 Table templates represent paths as a series of points whose types
 are <CODE>MOVE_TO</CODE>, <CODE>CONTROL</CODE>, <CODE>SEG_END</CODE>,
@@ -847,7 +847,7 @@ is "<CODE>-</CODE>", the output will be sent to standard output.
 <H2><A name="builtins">Built-in templates</A></H2>
 
 The built-in templates can be accessed via URLs whose protocol field
-is <CODE>sresource</CODE>. For convenience there is a shortcut: if
+is <CODE>resource</CODE>. For convenience there is a shortcut: if
 the templates option includes a colon followed by a template name,
 a built-in template with that name will be used. For  example,
 <BLOCKQUOTE><PRE><CODE>
@@ -855,7 +855,7 @@ a built-in template with that name will be used. For  example,
 </CODE></PRE></BLOCKQUOTE>
 and
 <BLOCKQUOTE><PRE><CODE>
-      epts -o paths.js --template sresource:ECMAScriptPaths saved.epts
+      epts -o paths.js --template resource:ECMAScriptPaths saved.epts
 </CODE></PRE></BLOCKQUOTE>
 are equivalent. Table templates by default will produce entries for all
 paths and locations. To restrict the paths or to use them in some
@@ -871,14 +871,14 @@ will include only these two paths in its output file <CODE>path.js</CODE>.
 <P>
 The built-in table templates are the following:
 <UL>
-  <LI><B><CODE>sresource:distances</CODE></B>. This will print the
+  <LI><B><CODE>resource:distances</CODE></B>. This will print the
     distances and corresponding path parameters for those points along
     a path that are spline points or points on segment boundaries. The
     path parameters are integer-valued, and for the path parameter 0.0,
     the corresponding distance is always zero.  For paths that have
     subpaths, the distances and path parameters are those appropriate
     for each subpath.
-  <LI><B><CODE>sresource:ECMAScript</CODE></B>.  This will print the
+  <LI><B><CODE>resource:ECMAScript</CODE></B>.  This will print the
     information included in the EPTS table. Each path or location is
     represented by an ECMAScript variable. For locations, the value
     assigned to the variable is an object whose properties
@@ -903,7 +903,7 @@ The built-in table templates are the following:
     <CODE>AnimationPath2DFactory</CODE> the corresponding
     <CODE>--tname</CODE> option must name a single EPTS path when a
     stroke or color option is provided.
-  <LI><B><CODE>sresource:ECMAScriptLayers</CODE></B>.  This option
+  <LI><B><CODE>resource:ECMAScriptLayers</CODE></B>.  This option
     will print the information included in the EPTS table. Each path
     is represented by an ECMAScript variable. Location entries are
     ignored.  For the paths specified by <CODE>--tname</CODE> options,
@@ -916,16 +916,16 @@ The built-in table templates are the following:
     represents a single path or the concatenation of multiple paths.
     When a <CODE>--tname</CODE> option is used, a <CODE>--winding-rule</CODE>
     option may be used, as can color or stroke options.
-  <LI><B><CODE>sresource:EMCAScriptLocations</CODE></B>.
+  <LI><B><CODE>resource:EMCAScriptLocations</CODE></B>.
     This template provides the same ECMAScript statements that the
-    <CODE>sresource:ECMAScript</CODE> template produces, but only
+    <CODE>resource:ECMAScript</CODE> template produces, but only
     locations are included, not paths. For the locations specified by
     the <CODE>--tname</CODE> options, or all locations if there are
     no <CODE>--tname</CODE> options, the value assigned to each
     variable will be an object specifying a location.
-  <LI><B><CODE>sresource:ECMAScriptPaths</CODE></B>.
+  <LI><B><CODE>resource:ECMAScriptPaths</CODE></B>.
     This template provides the same ECMAScript statements that the
-    <CODE>sresource:ECMAScript</CODE> template produces, but only
+    <CODE>resource:ECMAScript</CODE> template produces, but only
     paths are included, not locations. For the paths specified
     by <CODE>--tname</CODE> options, or all paths if there are
     no <CODE>--tname</CODE> options, the value assigned to each
@@ -933,14 +933,14 @@ The built-in table templates are the following:
     configure a path using
     <CODE>org.bzdev.anim2d.AnimationPath2DFactory</CODE> or
     <CODE>org.bzdev.geom.BasicSplinePathBuilder</CODE>.
-  <LI><B><CODE>sresource:JavaLocations</CODE></B>.  This template
+  <LI><B><CODE>resource:JavaLocations</CODE></B>.  This template
     provides a Java class containing fields that are instances of
     the Java class <CODE>java.awt.geom.Path2D</CODE> with each field
     named by the name provided in a <CODE>--tname</CODE> option. If
     there are no <CODE>--tname</CODE> options, the field names are
     the names of all the locations defined in the EPTS table.  Multiple
     <CODE>--tname</CODE> options are allowed.
-  <LI><B><CODE>sresource:JavaPathBuilders</CODE></B>.  This template
+  <LI><B><CODE>resource:JavaPathBuilders</CODE></B>.  This template
     provides a Java class containing fields that are instances of the
     Java class
     <CODE>org.bzdev.geom.SplinePathBuilder</CODE> with each field
@@ -952,7 +952,7 @@ The built-in table templates are the following:
     <CODE>--tname</CODE> option will configure a winding rule for
     the corresponding spline-path builder, but any stroke or color
     options will be ignored.
-  <LI><B><CODE>sresource:JavaPathFactories</CODE></B>.
+  <LI><B><CODE>resource:JavaPathFactories</CODE></B>.
     This template provides a Java class containing fields that are
     instances of the Java interface
     <CODE>org.bzdev.obnaming.NamedObjectFactory.IndexedSetter</CODE>
@@ -969,28 +969,28 @@ The built-in table templates are the following:
 <P>
 The built-in path-iterator templates are
 <UL>
-  <LI><B><CODE>sresource:area</CODE></B>. This template requires the use of
+  <LI><B><CODE>resource:area</CODE></B>. This template requires the use of
     a <CODE>--pname</CODE> option to specify a path name, or to create a
     new path that is the concatenation of several existing paths.  It
     provides the area enclosed by the path; "NaN" if the path contains
     any open segments. If the command was run with the
     <CODE>--gcs</CODE> option, the units are graph-coordinate-space
     units; otherwise they are user-space units.
-  <LI><B><CODE>sresource:circumference</CODE></B>. This template requires
+  <LI><B><CODE>resource:circumference</CODE></B>. This template requires
     the use of a <CODE>--pname</CODE> option to specify a path name, or
     to create a new path that is the concatenation of several existing
     paths.  It provides the circumference the path; "NaN" if the path
     contains any open segments. If the command was run with the
     <CODE>--gcs</CODE> option, the units are graph-coordinate-space
     units; otherwise they are user-space units.
-  <LI><B><CODE>sresource:pathlength</CODE></B>. This template requires
+  <LI><B><CODE>resource:pathlength</CODE></B>. This template requires
     the use of a <CODE>--pname</CODE> option to specify a path name, or
     to create a new path that is the concatenation of several existing
     paths.  It provides the length of the path (the sum of the lengths
     of all its segments). If the command was run with the
     <CODE>--gcs</CODE> option, the units are graph-coordinate-space
     units; otherwise they are user-space units.
-  <LI><B><CODE>sresource:SegmentsCSV</CODE></B>.
+  <LI><B><CODE>resource:SegmentsCSV</CODE></B>.
     This template requires the use of a
     <CODE>--pname</CODE> option to specify a path name, or to create a
     new path that is the concatenation of several existing paths.  The
@@ -1533,7 +1533,7 @@ behavior depends on the file format for the first argument:
     option must be used to set the scripting language. The additional
     scripts will not be kept if the state is saved. Instead, they
     may be provided to enhance the current image. For example, the
-    script <CODE>sresource:grid.js</CODE> will overlay an image with
+    script <CODE>resource:grid.js</CODE> will overlay an image with
     a rectangular grid of lines. If the animation the script provides
     is not stored in a variable named <CODE>a2d</CODE>, the
     <CODE>--animation</CODE> option will also be needed.
@@ -1546,7 +1546,7 @@ behavior depends on the file format for the first argument:
       <CODE>epts image.png</CODE><BR>
       <EM><A href="#config">Configure GCS</A></EM><BR>
       <EM><A href="#save">Save the session</A> as </EM><CODE>saved.epts</CODE><BR>
-      <CODE>epts --double spacing=10m saved.epts sresource:grid.js</CODE><BR>
+      <CODE>epts --double spacing=10m saved.epts resource:grid.js</CODE><BR>
     </BLOCKQUOTE>
   <LI> if the argument is a file containing a script and the file's
     extension matches one used for that scripting language, the script
@@ -1678,7 +1678,7 @@ as a distance that will be converted to meters.  The suffixes are
 </UL>
 For example,
 <BLOCKQUOTE><PRE><CODE>
-      epts --double spacing=10ft  saved.epts sresource:grid.js
+      epts --double spacing=10ft  saved.epts resource:grid.js
 </PRE></CODE></BLOCKQUOTE>
 will show a script-generated image specified by saved.epts with
 its points and paths, and with a grid whose lines are spaced at 10-foot
@@ -1810,7 +1810,7 @@ The options specific to the EPTS command when templates are used are:
     This may not be the current working directory while EPTS is
     running as the current working directory may be changed when an
     EPTS file (one with a .epts extension) is processed.  If
-    <EM>MAPFILE</EM> starts with the string "sresource:",
+    <EM>MAPFILE</EM> starts with the string "resource:",
     "file:", "http:", "https:", or "ftp", then <EM>MAPFILE</EM> is
     assumed to be a URL pointing to the object to read.
   <LI><B><CODE>-o</CODE></B> <B><EM>OUTFILE</EM></B>.  This option
@@ -2005,26 +2005,26 @@ The options specific to the EPTS command when templates are used are:
     directive.
   <LI><B><CODE>--template:</CODE></B><EM>RESOURCE</EM>.
     This option is a shortcut that behaves like the option
-    <CODE>--template sresource:</CODE><EM>RESOURCE</EM>.
+    <CODE>--template resource:</CODE><EM>RESOURCE</EM>.
   <LI><B><CODE>--template</CODE></B> <B><EM>TFILE</EM></B>. This
     option may not be used with the <CODE>--svg</CODE> option,
     but as with the <CODE>--svg</CODE> option, the <CODE>-o</CODE>
     option is required.
-    When <EM>TFILE</EM> starts with the string "sresource:", "file:",
+    When <EM>TFILE</EM> starts with the string "resource:", "file:",
     "http:", "https:", or "ftp", <EM>TFILE</EM> is assumed to be a
     URL. Otherwise is is assumed to be the name of a file.  The syntax
     of a template is describe in the section of this manual entitled
     "<A href="#templates">Templates</A>". For the
-    <CODE>sresource</CODE> protocol, the template is embedded in the
+    <CODE>resource</CODE> protocol, the template is embedded in the
     EPTS application.  and these are described above in the section
     describing <A href="#builtins">built-in templates</A>. The supported
-    table templates are <CODE>sresource:ECMAScriptLayers</CODE>,
-    <CODE>sresource:ECMAScriptLocations</CODE>,
-    <CODE>sresource:ECMAScriptPaths</CODE>, and
-    <CODE>sresource:ECMAScript</CODE>. These must be used without
+    table templates are <CODE>resource:ECMAScriptLayers</CODE>,
+    <CODE>resource:ECMAScriptLocations</CODE>,
+    <CODE>resource:ECMAScriptPaths</CODE>, and
+    <CODE>resource:ECMAScript</CODE>. These must be used without
     the <CODE>--pname</CODE> option. Supported path-iterator templates
-    are <CODE>sresource:area</CODE>, <CODE>sresource:circumference</CODE>,
-    <CODE>sresource:pathlength</CODE>, and <CODE>sresource:SegmentsCSV</CODE>.
+    are <CODE>resource:area</CODE>, <CODE>resource:circumference</CODE>,
+    <CODE>resource:pathlength</CODE>, and <CODE>resource:SegmentsCSV</CODE>.
     These must be used with the <CODE>--pname</CODE> option.
   <LI><B><CODE>--tname</CODE></B> <B><EM>TNAME</EM></B>. This option's
     argument <EM>TNAME</EM> provides the name of a variable that names
@@ -2064,9 +2064,23 @@ The options specific to the EPTS command when templates are used are:
 There are a set of command-line options that are the same as those
 provided by the scrunner command. These are
 <UL>
+  <LI><B><CODE>--add-modules</CODE></B> <B><EM>SPEC</EM></B>. This
+    option's argument is a comma-separate list of module names.
+    Multiple instances of this option can be used as well. The list
+    must not contain whitespace. It is used primarily in cases in which
+    the only use of a module occurs in scripts. It is not necessary when
+    a module provides a factory as that is explicitly indicated in the
+    module definition.
+  <LI><B><CODE>--classpathCodebase</CODE></B> <B><EM>SPEC</EM></B>. This
+    option's argument is treated the same of the argument for the
+    <CODE>--codebase</CODE> option below, but adds code bases to the
+    class path instead of the module path. This option is provided for
+    cases in which a JAR file cannot be used on the module path.
   <LI><B><CODE>--codebase</CODE></B> <B><EM>SPEC</EM></B>.  This
     option allows additional code bases to be available to the
-    JVM. Any number of <CODE>--codebase</CODE> options may be
+    JVM and places these on the module path. As a result, each codebase
+    must be a modular JAR file.
+    Any number of <CODE>--codebase</CODE> options may be
     provided, and each option can contain multiple code bases with the
     character '|' used as a separator. As a special case, if there are
     n '|' characters in a row, they will be placed by floor(n/2) '|'
@@ -2113,7 +2127,7 @@ provided by the scrunner command. These are
   <LI><B><CODE>epts saved.epts</CODE></B>
     <BR>
     Start EPTS, restoring its state to one saved in a previous session.
-  <LI><B><CODE>epts saved.epts sresource:grid.js</CODE></B>
+  <LI><B><CODE>epts saved.epts resource:grid.js</CODE></B>
     <BR>
     Start EPTS, restoring its state to one saved in a previous session
     and use a script to overlay a grid on top of the image. Points and
@@ -2251,12 +2265,12 @@ options.
 
 <H1><A name="scripts">Built-in scripts</A></H1>
 
-There are two built-in scripts accessible using the <CODE>sresource</CODE>
+There are two built-in scripts accessible using the <CODE>resource</CODE>
 protocol:
 <UL>
-  <LI><B><CODE>sresource:grid.js</CODE></B> overlays a rectilinear grid
+  <LI><B><CODE>resource:grid.js</CODE></B> overlays a rectilinear grid
     as a representation of a Cartesian coordinates.
-  <LI><B><CODE>sresource:polar.js</CODE></B> overlays a polar grid as a
+  <LI><B><CODE>resource:polar.js</CODE></B> overlays a polar grid as a
     representation of polar coordinates.
 </UL>
 While there is a default behavior in both cases, the grids can be tuned
@@ -2300,7 +2314,7 @@ be created by them.
 
 <H2><A name="cartesian">Cartesian-grid script</A></H2>
 
-The script <CODE>sresource:grid.js</CODE> will overlay an image with a
+The script <CODE>resource:grid.js</CODE> will overlay an image with a
 Cartesian (rectilinear) grid consisting of parallel, evenly spaced
 lines in both the X and Y directions.  The variables that configure
 Cartesian grids are the following:
@@ -2367,7 +2381,7 @@ Cartesian grids are the following:
 
 <H2><A name="polar">Polar-grid script</A></H2>
 
-The script <CODE>sresource:polar.js</CODE> will overlay an image with
+The script <CODE>resource:polar.js</CODE> will overlay an image with
 a polar grid. These grids consist of a set of evenly spaced circles
 centered at a common origin, and radial lines with the same angular
 spacing, excluding areas near the origin where some lines may be
@@ -2455,25 +2469,28 @@ starts with the following lines:
 <BLOCKQUOTE><PRE><CODE>
     &lt;?xml version="1.1" encoding="UTF-8"?&gt;
     &lt;!DOCTYPE images PUBLIC "-//BZDev//EPTS-1.0//EN"
-              "sresource:epts-1.0.dtd"&gt;
+              "resource:org/bzdev/epts/epts-1.0.dtd"&gt;
     &lt;epts xmlns="http://bzdev.org/DTD/epts-1.0"&gt;
 </CODE></PRE></BLOCKQUOTE>
 and ends with the line
 <BLOCKQUOTE><PRE><CODE>
     &lt;/epts&gt;
 </CODE></PRE></BLOCKQUOTE>
-The <CODE>sresource</CODE> protocol is one that is recognized by the
+The <CODE>resource</CODE> protocol is one that is recognized by the
 EPTS program and allows it to read the file <CODE>epts-1.0.dtd</CODE>
 from the program's JAR file.  The <CODE>epts</CODE> element contains a
 sequence of elements:
 <OL>
   <LI> An <B><CODE>image</CODE></B> element.
   <LI> An optional <B><CODE>codebase</CODE></B> element.
+  <LI> An optional <B><CODE>modules</CODE></B> element.
+  <LI> An optional <B><CODE>classpath</CODE></B> element.
   <LI> An optional <B><CODE>scripting</CODE></B> element.
-  <LI> A <B><CODE>targetList</CODE></B> element.
+  <LI> An optional <B><CODE>targetList</CODE></B> element.
   <LI> A <B><CODE>gcsconfig</CODE></B> element.
   <LI> A <B><CODE>table</CODE></B> element.
 </OL>
+These elements are listed in the order in which they must appear.
 
 <H2><A name="imageElement">The image element</A></H2>
 
@@ -2499,6 +2516,22 @@ elements. Its attributes are
 <H2><A name="codebaseElement">The codebase element</A></H2>
 
 The <CODE>codebase</CODE> element does not have any attributes.
+Instead, it contains a sequence of <CODE>path</CODE> elements, which
+also do not have any attributes.  The contents of a path element
+is text (XML PCDATA) providing a URI indicating where an image or
+script can be found. Relative URIs will be resolved against the
+URI for the current working directory.
+
+<H2><A name="modulesElement"> The modules element</A></H2>
+
+The <CODE>modules</CODE>element doesnot have any attributes.
+Instead, it contains a sequence of <CODE>module</CODE>elements.
+The contents of a <CODE>module</CODE> elemnt is text (XML PCDATA)
+providing the name of a module.
+
+<H2><A name="classpathElement"> The classpath element</A></H2>
+
+The <CODE>classpath</CODE> element does not have any attributes.
 Instead, it contains a sequence of <CODE>path</CODE> elements, which
 also do not have any attributes.  The contents of a path element
 is text (XML PCDATA) providing a URI indicating where an image or
@@ -2555,7 +2588,7 @@ The protocol portion of the URL can contain the following:
     GET request).
   <LI><B><CODE>ftp</CODE></B> (a resource obtained via FTP).
   <LI><B><CODE>jar</CODE></B> (an resource in a JAR file).
-  <LI><B><CODE>sresource</CODE></B> (a resource in the application's
+  <LI><B><CODE>resource</CODE></B> (a resource in the application's
   code base).
 </UL>
 The one used is followed by a colon.
@@ -2697,7 +2730,17 @@ using the Java method <CODE>java.beans.XMLEncoder</CODE>:
   <LI> The ZIP-file entry <CODE>codebase</CODE> contains an XML-encoded
     object that is equal to the value returned by the
     <CODE>getDataVector</CODE> method of <CODE>DefaultTableModel</CODE>
-    for a table containing additional codebases.
+    for a table containing additional codebases that will be placed on
+    the module path.
+  <LI> The ZIP-file entry <CODE>modules</CODE> contains an XML-encoded
+    object that is equal to the value returned by the
+    <CODE>getDataVector</CODE> method of <CODE>DefaultTableModel</CODE>
+    for a table containing the names of additional modules.
+  <LI> The ZIP-file entry <CODE>classpath</CODE> contains an XML-encoded
+    object that is equal to the value returned by the
+    <CODE>getDataVector</CODE> method of <CODE>DefaultTableModel</CODE>
+    for a table containing additional codebases that will be placed on
+    the class path.
   <LI> The ZIP-file entry <CODE>scripts</CODE> contains an XML-encoded
     object that is equal to the value returned by the
     <CODE>getDataVector</CODE> method of <CODE>DefaultTableModel</CODE>
@@ -2941,7 +2984,7 @@ The path names for these documents, of course, is system dependent.
  -->
 <!--  LocalWords:  overlayed scrollbars whitespace varname Makefile
  -->
-<!--  LocalWords:  pathSegment EPTS's epts MAPFILE UTF sresource http
+<!--  LocalWords:  pathSegment EPTS's epts MAPFILE UTF http
  -->
 <!--  LocalWords:  https TFILE OUTFILE Scrunner scrunner JVM LNAME js
  -->

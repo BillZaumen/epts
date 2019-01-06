@@ -94,6 +94,35 @@ After the
 element and any optional
 .B codebase
 element, there is an an optional
+.B modules
+element. This element does not have any attributes. Its contents are
+a sequence of 0 or more
+.B module
+elements, which also has no attributes. The contents of a
+.B module
+element is a module name.
+.PP
+After the
+.B image
+element and any optional
+.B codebase
+and
+.B modules
+elements, there is an an optional
+.B classpath
+element. This element does not have any attributes. Its contents are
+a sequence of
+.B path
+elements as described above.
+.PP
+After the
+.B image
+element and any optional
+.BR codebase ,
+.BR modules ,
+and
+.B classPath
+elements, there is an an optional
 .B scripting
 element, whose attributes are
 .B language
@@ -109,7 +138,7 @@ element provides the name of a scripting-language variable that will
 be bound to an instance of
 .BR org.bzdev.anim2d.Animation2D .
 .PP
-The next element, which is mandatory, is the
+The next element, which is also optional, is the
 .B targetList
 element and it does not have any attributes, using a sequence of
 .B argument

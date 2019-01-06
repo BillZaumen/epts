@@ -1,3 +1,5 @@
+package org.bzdev.epts;
+
 import org.bzdev.imageio.ImageMimeInfo;
 
 /*

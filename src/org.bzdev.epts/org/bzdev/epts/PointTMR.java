@@ -1,3 +1,5 @@
+package org.bzdev.epts;
+
 /**
  * Class representing a table row.
  */

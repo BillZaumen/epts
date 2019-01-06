@@ -1,3 +1,5 @@
+package org.bzdev.epts;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics2D;
@@ -8,6 +10,7 @@ import java.io.IOException;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,9 +31,9 @@ import org.xml.sax.*;
 public class EPTSParser {
 
     static final String PUBLICID = "-//BZDev//EPTS-1.0//EN";
-    static final String SYSTEMID = "sresource:epts-1.0.dtd";
+    static final String SYSTEMID = "resource:org/bzdev/epts/epts-1.0.dtd";
     static final String NAMESPACE = "http://bzdev.org/DTD/epts-1.0";
-    static final String OUR_SYSTEMID = "sresource:epts-1.0.dtd";
+    static final String OUR_SYSTEMID = "resource:org/bzdev/epts/epts-1.0.dtd";
 
     static String errorMsg(String key, Object... args) {
 	return EPTS.errorMsg(key, args);
@@ -65,6 +68,8 @@ public class EPTSParser {
     PointTMR[] rows = null;
     
     LinkedList<String>codebase = new LinkedList<>();
+    LinkedList<String>classpath = new LinkedList<>();
+    LinkedList<String>modules = new LinkedList<>();
 
     public boolean hasScripts() {return scriptSeen;}
     public int getWidth() {return width;}
@@ -132,6 +137,15 @@ public class EPTSParser {
     public List<String> getCodebase() {
 	return Collections.unmodifiableList(codebase);
     }
+
+    public List<String> getClasspath() {
+	return Collections.unmodifiableList(classpath);
+    }
+
+    public List<String> getModules() {
+	return Collections.unmodifiableList(modules);
+    }
+
 
     public PointTMR[] getRows() {return rows;}
 
@@ -233,7 +247,11 @@ public class EPTSParser {
         public void setDocumentLocator(Locator locator) {
             this.locator = locator;
         }
- 
+	boolean processingCodebase = false;
+	boolean processingModules = false;
+	boolean processingClasspath = false;
+
+
 	boolean mimeTypePISeen = false;
 
 
@@ -253,6 +271,9 @@ public class EPTSParser {
 	    rowList.clear();
 	    processingXML = false;
 	    processingTable = false;
+	    processingCodebase = false;
+	    processingModules = false;
+	    processingClasspath = false;
 	}
 
         public void startElement(String uri, String localName,
@@ -320,6 +341,7 @@ public class EPTSParser {
 		text.setLength(0);
 	    } else if (qName.equals("codebase")) {
 		codebase.clear();
+		processingCodebase = true;
 	    } else if (qName.equals("gcsconfig")) {
 		try {
 		    unitIndex = Integer.parseInt(attr.getValue("unitIndex"));
@@ -439,6 +461,12 @@ public class EPTSParser {
         {
 	    if (qName.equals("epts")) {
 		processingXML = false;
+	    } else if (qName.equals("codebase")) {
+		processingCodebase = false;
+	    } else if (qName.equals("modules")) {
+		processingModules = false;
+	    } else if (qName.equals("classpath")) {
+		processingClasspath = false;
 	    } else if (qName.equals("binding")) {
 		String value = text.toString();
 		switch(btype) {
@@ -481,10 +509,20 @@ public class EPTSParser {
 		    }
 		}
 	    } else if (qName.equals("argument")) {
-	    argList.add(text.toString());
+		argList.add(text.toString());
 		text.setLength(0);
 	    } else if (qName.equals("path")) {
-		codebase.add(text.toString());
+		if (processingCodebase) {
+		    codebase.add(text.toString());
+		}
+		if (processingClasspath) {
+		    classpath.add(text.toString());
+		}
+		text.setLength(0);
+	    } else if (qName.equals("module")) {
+		if (processingModules) {
+		    modules.add(text.toString());
+		}
 		text.setLength(0);
 	    } else if (qName.equals("table")) {
 		processingTable = false;
@@ -557,18 +595,18 @@ public class EPTSParser {
 	    } else {
 		throw new SAXException(errorMsg("missingPublicID"));
 	    }
-            if (systemID.matches("sresource:.*")) {
+            if (systemID.matches("resource:.*")) {
                 // our DTD is built into the applications JAR file.
                 String resource = systemID.substring(10);
                 try {
                     if (resource.endsWith(".dtd")) {
-                        InputStream stream =
-                            ClassLoader.getSystemResourceAsStream(resource);
-                            if (stream == null) {
-                                throw new IOException(errorMsg("ioError"));
-                            } else {
-                                return new InputSource(stream);
-                            }
+			// open URL
+                        InputStream stream = (new URL(systemID)).openStream();
+			if (stream == null) {
+			    throw new IOException(errorMsg("ioError"));
+			} else {
+			    return new InputSource(stream);
+			}
                     } else {
 			throw new Exception
 			    (errorMsg("illegalSystemID", resource));

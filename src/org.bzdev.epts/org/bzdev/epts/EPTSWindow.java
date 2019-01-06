@@ -1,3 +1,5 @@
+package org.bzdev.epts;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
@@ -93,6 +95,8 @@ public class EPTSWindow {
     boolean shouldSaveScripts = false;
 
     List<String> savedStateCodebase = null;
+    List<String> savedStateClasspath = null;
+    List<String> savedStateModules = null;
 
     public void save(File f) throws IOException {
 	TemplateProcessor.KeyMap keymap = new TemplateProcessor.KeyMap();
@@ -176,6 +180,41 @@ public class EPTSWindow {
 		pmaplist.add(pmap);
 	    }
 	}
+	List<String>classpath = savedStateClasspath != null?
+	    savedStateClasspath: EPTS.getClasspath();
+	if (classpath.size() > 0) {
+	    TemplateProcessor.KeyMap cbmap = new TemplateProcessor.KeyMap();
+	    TemplateProcessor.KeyMapList pmaplist =
+		new TemplateProcessor.KeyMapList();
+	    keymap.put("hasClasspath", cbmap);
+	    cbmap.put("classpathlist", pmaplist);
+	    int offset = EPTS.ourCodebaseDir.length();
+	    for (String path: codebase) {
+		if (path.startsWith(EPTS.ourCodebaseDir)) {
+		    path = "..." + path.substring(offset);
+		}
+		TemplateProcessor.KeyMap pmap =  new TemplateProcessor.KeyMap();
+		pmap.put("path", path);
+		pmaplist.add(pmap);
+	    }
+	}
+	List<String>modules = savedStateModules != null?
+	    savedStateModules: EPTS.getAddedModules();
+	System.out.println("modules.size() = " + modules.size());
+	if (modules.size() > 0) {
+	    TemplateProcessor.KeyMap cbmap = new TemplateProcessor.KeyMap();
+	    TemplateProcessor.KeyMapList pmaplist =
+		new TemplateProcessor.KeyMapList();
+	    keymap.put("hasAddedModules", cbmap);
+	    cbmap.put("moduleslist", pmaplist);
+	    int offset = EPTS.ourCodebaseDir.length();
+	    for (String module: modules) {
+		TemplateProcessor.KeyMap pmap =  new TemplateProcessor.KeyMap();
+		pmap.put("module", module);
+		pmaplist.add(pmap);
+	    }
+	}
+
 
 	if (shouldSaveScripts && targetList != null) {
 	    for (String arg: targetList) {
@@ -237,7 +276,7 @@ public class EPTSWindow {
 	File tf = File.createTempFile("epts-eptc", null, f.getParentFile());
 	OutputStream os = new FileOutputStream(tf);
 	Writer writer = new OutputStreamWriter(os, "UTF-8");
-	tp.processSystemResource("save", "UTF-8", writer);
+	tp.processSystemResource("org/bzdev/epts/save", "UTF-8", writer);
 	String tfp = tf.getCanonicalPath();
 	String fp = f.getCanonicalPath();
 	if (!tf.renameTo(f)) {
@@ -324,7 +363,7 @@ public class EPTSWindow {
 	    fileMenu.add(menuItem);
 	    manualFrame.setJMenuBar(menubar);
 	    URL url = ClassLoader.getSystemClassLoader()
-		.getResource("manual/manual.xml");
+		.getResource("org/bzdev/epts/manual/manual.xml");
 	    if (url != null) {
 		try {
 		    manualPane.setToc(url, true, false);
@@ -360,7 +399,7 @@ public class EPTSWindow {
     private void printManual() {
 	try {
 	    URL url = ClassLoader.getSystemClassLoader()
-		.getResource("manual/manual.html");
+		.getResource("org/bzdev/epts/manual/manual.html");
 	    if (url != null) {
 		JEditorPane pane = new JEditorPane();
 		pane.setPage(url);
@@ -370,9 +409,9 @@ public class EPTSWindow {
 		    StyleSheet stylesheet = hkit.getStyleSheet();
 		    StyleSheet oursheet = new StyleSheet();
 		    StringBuilder sb = new StringBuilder(512);
-		    CopyUtilities.copyResource("manual/manual.css",
-					       sb,
-					       Charset.forName("UTF-8"));
+		    CopyUtilities.copyResource
+			("org/bzdev/epts/manual/manual.css", sb,
+			 Charset.forName("UTF-8"));
 		    oursheet.addRule(sb.toString());
 		    stylesheet.addStyleSheet(oursheet);
 		}
@@ -391,7 +430,7 @@ public class EPTSWindow {
 	if (ews == null) {
 	    ews = new EmbeddedWebServer(port, 48, 2, false);
 	    if (port == 0) port = ews.getPort();
-	    ews.add("/", ResourceWebMap.class, "manual/",
+	    ews.add("/", ResourceWebMap.class, "org/bzdev/epts/manual/",
 		    null, true, false, true);
 	    WebMap wmap = ews.getWebMap("/");
 	    if (wmap != null) {
@@ -973,7 +1012,7 @@ public class EPTSWindow {
 			TemplateProcessor tp =
 			    new TemplateProcessor(ptmodel.getKeyMap((double)
 								    height));
-			tp.processSystemResource("ECMAScript",
+			tp.processSystemResource("org/bzdev/epts/ECMAScript",
 						 "UTF-8", writer);
 			Clipboard cb = panel.getToolkit().getSystemClipboard();
 			StringSelection selection =
@@ -3525,6 +3564,8 @@ public class EPTSWindow {
 	savedFile = inputFile;
 	if (parser != null) {
 	    savedStateCodebase = parser.getCodebase();
+	    savedStateModules = parser.getModules();
+	    savedStateClasspath = parser.getClasspath();
 	}
 	if (parser.imageURIExists()) {
 	    URI uri = parser.getImageURI();
@@ -3631,6 +3672,8 @@ public class EPTSWindow {
 	}
 	if (parser != null) {
 	    savedStateCodebase = parser.getCodebase();
+	    savedStateModules = parser.getModules();
+	    savedStateClasspath = parser.getClasspath();
 	}
 	SwingUtilities.invokeLater(new Runnable() {
 		public void run() {

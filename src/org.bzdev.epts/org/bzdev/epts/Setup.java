@@ -1,3 +1,5 @@
+package org.bzdev.epts;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.XMLEncoder;
@@ -38,7 +40,7 @@ public class Setup {
     }
 
  static enum ControlType {
-	JARFILE, SCRIPTFILE, VALUE,
+	JARFILE, SCRIPTFILE, VALUE, MODULE_NAME
     }
     static final String blankRow1[] = {""};
     static final String blankRow4[] = {"", "", "", ""};
@@ -541,7 +543,7 @@ public class Setup {
 		    });
 		ourPanel.add(builtinButton);
 	    }
-	} else {
+	} else if (type == ControlType.VALUE) {
 	    JButton varButton =
 		new JButton(localeString("modSelectedRowButton"));
 	    varButton.addActionListener((e) -> {
@@ -649,8 +651,6 @@ public class Setup {
 		}
 	    });
 	ourPanel.add(compactButton);
-
-
 	pane.add(ourPanel, "North");
     }
 
@@ -780,7 +780,7 @@ public class Setup {
 	    is.close();
 	    return result;
 	} catch (Exception e) {
-	    System.err.println(e.getMessage());
+	    System.err.println(errorMsg("eptcfmt", name, e.getMessage()));
 	    System.exit(1);
 	}
 	return null;
@@ -795,7 +795,7 @@ public class Setup {
 	    is.close();
 	    return result;
 	} catch (Exception e) {
-	    System.err.println(e.getMessage());
+	    System.err.println(errorMsg("eptcfmt", name, e.getMessage()));
 	    System.exit(1);
 	    return (-1);
 	}
@@ -835,7 +835,7 @@ public class Setup {
 	    is.close();
 	    return result;
 	} catch (Exception e) {
-	    System.err.println(e.getMessage());
+	    System.err.println(errorMsg("eptcfmt", name, e.getMessage()));
 	    System.exit(1);
 	}
 	return null;
@@ -859,6 +859,8 @@ public class Setup {
 
     private static JPanel createButtons(final JTable javaOptionTable,
 					final JTable codebaseTable,
+					final JTable modulesTable,
+					final JTable classpathTable,
 					final JTable scriptTable,
 					final JTable varTable)
     {
@@ -873,6 +875,14 @@ public class Setup {
 			ce.stopCellEditing();
 		    }
 		    ce = codebaseTable.getCellEditor();
+		    if (ce != null) {
+			ce.stopCellEditing();
+		    }
+		    ce = modulesTable.getCellEditor();
+		    if (ce != null) {
+			ce.stopCellEditing();
+		    }
+		    ce = classpathTable.getCellEditor();
 		    if (ce != null) {
 			ce.stopCellEditing();
 		    }
@@ -941,6 +951,8 @@ public class Setup {
     }
 
     private static TableModel codebaseModel = null;
+    private static TableModel modulesModel = null;
+    private static TableModel classpathModel = null;
     private static TableModel scriptModel = null;
     private static TableModel varModel = null;
 
@@ -1167,6 +1179,53 @@ public class Setup {
 				ControlType.JARFILE);
 		    tabpane.addTab(localeString("Codebase"), codebasePanel);
 
+		    JPanel modulesPanel = new JPanel();
+		    modulesPanel.setLayout(new BorderLayout());
+
+		    Object modulesColnames[] = {
+			localeString("modulesHeader")
+		    };
+		    modulesModel = (zf != null)?
+			getZDFTM(zf, "modules", modulesColnames):
+			new DefaultTableModel(modulesColnames, 32) {
+			    public Class<?> getColumnClass(int col) {
+				return String.class;
+			    }
+			};
+		    JTable modulesTable = new JTable();
+		    modulesTable.setModel(modulesModel);
+		    JScrollPane modulesScrollPane =
+			new JScrollPane(modulesTable);
+		    modulesTable.setFillsViewportHeight(true);
+		    configTable(modulesTable);
+		    modulesPanel.add(modulesScrollPane);
+		    addControls(modulesPanel, modulesTable,
+				ControlType.MODULE_NAME);
+		    tabpane.addTab(localeString("Modules"), modulesPanel);
+		    JPanel classpathPanel = new JPanel();
+		    classpathPanel.setLayout(new BorderLayout());
+
+		    Object cpcolnames[] = {
+			localeString("classpathHeader")
+		    };
+		    classpathModel = (zf != null)?
+			getZDFTM(zf, "classpath", cpcolnames):
+			new DefaultTableModel(cpcolnames, 32) {
+			    public Class<?> getColumnClass(int col) {
+				return String.class;
+			    }
+			};
+		    JTable classpathTable = new JTable();
+		    classpathTable.setModel(classpathModel);
+		    JScrollPane classpathScrollPane =
+			new JScrollPane(classpathTable);
+		    classpathTable.setFillsViewportHeight(true);
+		    configTable(classpathTable);
+		    classpathPanel.add(classpathScrollPane);
+		    addControls(classpathPanel, classpathTable,
+				ControlType.JARFILE);
+		    tabpane.addTab(localeString("Classpath"), classpathPanel);
+
 		    JPanel scriptPanel = new JPanel();
 		    scriptPanel.setLayout(new BorderLayout());
 		    Object colnames2[] = {
@@ -1277,6 +1336,14 @@ public class Setup {
 			    if (tce != null) {
 				tce.stopCellEditing();
 			    }
+			    tce = modulesTable.getCellEditor();
+			    if (tce != null) {
+				tce.stopCellEditing();
+			    }
+			    tce = classpathTable.getCellEditor();
+			    if (tce != null) {
+				tce.stopCellEditing();
+			    }
 			    tce = scriptTable.getCellEditor();
 			    if (tce != null) {
 				tce.stopCellEditing();
@@ -1296,6 +1363,8 @@ public class Setup {
 		    topPanel.add(tabpane, "Center");
 		    topPanel.add(createButtons(javaOptionTable,
 					       codebaseTable,
+					       modulesTable,
+					       classpathTable,
 					       scriptTable,
 					       varTable),
 				 "South");
@@ -1405,6 +1474,26 @@ public class Setup {
 					     enc.writeObject(v1);
 					     enc.close();
 					     os.close();
+					     os  = zdw.nextOutputStream
+						 ("modules", true, 9);
+					     enc = new XMLEncoder(os);
+					     Vector v1a =
+						 ((DefaultTableModel)
+						  modulesTable.getModel())
+						 .getDataVector();
+					     enc.writeObject(v1a);
+					     enc.close();
+					     os.close();
+					     os = zdw.nextOutputStream
+						 ("classpath", true, 9);
+					     enc = new XMLEncoder(os);
+					     Vector v1b =
+						 ((DefaultTableModel)
+						  classpathTable.getModel())
+						 .getDataVector();
+					     enc.writeObject(v1b);
+					     enc.close();
+					     os.close();
 					     Vector v2 =
 						 ((DefaultTableModel)
 						  scriptTable.getModel())
@@ -1504,6 +1593,14 @@ public class Setup {
 			    if (ce != null) {
 				ce.stopCellEditing();
 			    }
+			    ce = modulesTable.getCellEditor();
+			    if (ce != null) {
+				ce.stopCellEditing();
+			    }
+			    ce = classpathTable.getCellEditor();
+			    if (ce != null) {
+				ce.stopCellEditing();
+			    }
 			    ce = scriptTable.getCellEditor();
 			    if (ce != null) {
 				ce.stopCellEditing();
@@ -1549,6 +1646,40 @@ public class Setup {
 					}
 				    }
 				}
+				len = modulesTable.getRowCount();
+				if (len > 0) {
+				    StringBuilder sb = new StringBuilder();
+				    boolean rest = false;
+				    for (int i = 0; i < len; i++) {
+					String s = (String)
+					    modulesTable.getValueAt(i, 0);
+					if (s != null) {
+					    s = s.trim();
+					    if (s.length() > 0) {
+						if (rest) sb.append(",");
+						rest = true;
+						sb.append(s);
+					    }
+					}
+				    }
+				    if (sb.length() > 0) {
+					arglist.add("--add-modules");
+					arglist.add(sb.toString());
+				    }
+				}
+				len = classpathTable.getRowCount();
+				for (int i = 0; i < len; i++) {
+				    String s = (String)
+					classpathTable.getValueAt(i, 0);
+				    if (s != null) {
+					s = s.trim();
+					if (s.length() > 0) {
+					    arglist.add("--classpathCodebase");
+					    arglist.add(s);
+					}
+				    }
+				}
+
 				if (usesImageFile == false) {
 				    String text = animTF.getText();
 				    if (text == null) text = "a2d";

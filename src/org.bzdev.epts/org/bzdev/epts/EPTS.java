@@ -1,3 +1,5 @@
+package org.bzdev.epts;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
@@ -66,7 +68,8 @@ public class EPTS {
     static final String pathSeparator = System.getProperty("path.separator");
 
     // resource bundle for messages used by exceptions and errors
-    static ResourceBundle exbundle = ResourceBundle.getBundle("EPTS");
+    static ResourceBundle exbundle =
+	ResourceBundle.getBundle("org.bzdev.epts.EPTS");
 
     static String errorMsg(String key, Object... args) {
 	return (new SafeFormatter()).format(exbundle.getString(key), args)
@@ -149,15 +152,38 @@ public class EPTS {
     private static LinkedList<String> codebase = new LinkedList<>();
     private static HashSet<String>codebaseSet = new HashSet<>();
 
+    private static LinkedList<String> classpath = new LinkedList<>();
+    private static HashSet<String>classpathSet = new HashSet<>();
+
+    private static LinkedList<String> addedModules = new LinkedList<>();
+
+
     public static List<String> getCodebase() {
 	return Collections.unmodifiableList(codebase);
     }
 
+    public static List<String> getClasspath() {
+	return Collections.unmodifiableList(classpath);
+    }
+
+    public static List<String> getAddedModules() {
+	System.out.println("in getAddedModules(), size = "
+			   + addedModules.size());
+	return Collections.unmodifiableList(addedModules);
+    }
+
+    private static StringBuilder sbmp = new StringBuilder();
+    private static StringBuilder sbmod = new StringBuilder();
+    private static Set<String>modSet = new HashSet<>();
+    private static Map<String,Boolean> urlMap = new HashMap<>();
+
     private static StringBuilder sbcp = new StringBuilder();
+    /*
     static {
 	sbcp.append(ourCodebase);
     }
-    static HashSet<String> sbcpAppended = new HashSet<>();
+    */
+    // static HashSet<String> sbcpAppended = new HashSet<>();
 
     static boolean guiMode = false;
 
@@ -175,14 +201,20 @@ public class EPTS {
 	}
     }
 
-    static void extendCodebase(String codebase)  {
+    static void extendCodebase(String codebase) {
+	extendCodebase(codebase, true);
+    }
+
+
+    static void extendCodebase(String codebase, boolean modulePath)  {
 	try {
-	    extendCodebase(codebase, System.err);
+	    extendCodebase(codebase, System.err, modulePath);
 	} catch (Exception e) {
 	    System.exit(1);
 	}
     }
-    static void extendCodebase(String codebase, Appendable err)
+    static void extendCodebase(String codebase, Appendable err,
+			       boolean modulePath)
 	throws Exception
     {
 	try {
@@ -201,7 +233,24 @@ public class EPTS {
 			    (errorMsg("noFile", url.toString()));
 		    }
 		    fname = f.getCanonicalPath();
+		    url = f.getCanonicalFile().toURI().toURL();
+		    if (urlMap.containsKey(url.toString())) {
+			if (urlMap.get(url.toString()) != modulePath) {
+			    String msg = errorMsg("doubleUse", url.toString());
+			    System.err.println(msg);
+			    System.exit(1);
+			}
+			continue;
+		    }
 		} else {
+		    if (urlMap.containsKey(url.toString())) {
+			if (urlMap.get(url.toString()) != modulePath) {
+			    String msg = errorMsg("doubleUse", url.toString());
+			    System.err.println(msg);
+			    System.exit(1);
+			}
+			continue;
+		    }
 		    File tmp = File.createTempFile("scrunner", "jar");
 		    tmp.deleteOnExit();
 		    OutputStream os = new FileOutputStream(tmp);
@@ -211,6 +260,19 @@ public class EPTS {
 		    is.close();
 		    fname = tmp.getCanonicalPath();
 		}
+		urlMap.put(url.toString(), modulePath);
+		if (modulePath) {
+		    if (sbmp.length() > 0) {
+			sbmp.append(pathSeparator);
+		    }
+		    sbmp.append(fname);
+		} else {
+		    if (sbcp.length() > 0) {
+			sbcp.append(pathSeparator);
+		    }
+		    sbcp.append(fname);
+		}
+		/*
 		if (!sbcpAppended.contains(codebase)) {
 		    if (sbcp.length() > 0) {
 			sbcp.append(pathSeparator);
@@ -218,6 +280,7 @@ public class EPTS {
 		    sbcp.append(fname);
 		    sbcpAppended.add(codebase);
 		}
+		*/
 	    }
 	    // URLClassLoaderOps.addURLs(urls);
 	} catch (Exception e) {
@@ -228,6 +291,10 @@ public class EPTS {
 	}
     }
     
+    private static boolean classpathExtended = false;
+
+    private static String MODULE_NAME_RE =
+	"^([\\p{L}_$][\\p{L}\\p{N}_$]*)([.][\\p{L}_$][\\p{L}\\p{N}_$]*)*$";
 
     private static void readConfigFiles(String languageName, String fileName) {
 	File file = new File (fileName);
@@ -252,6 +319,7 @@ public class EPTS {
 		boolean langsearch = true;
 		boolean langsection = false;
 		boolean error = false;
+		boolean modulePath = false;
 		for (String line = reader.readLine(); line != null;
 		     line = reader.readLine()) {
 		    line = line.trim();
@@ -267,6 +335,18 @@ public class EPTS {
 			continue;
 		    } else if (line.equals("%classpath.components")) {
 			mode = 2;
+			langsearch = true;
+			langsection = false;
+			modulePath = false;
+			continue;
+		    } else if (line.equals("%modulepath.components")) {
+			mode = 2;
+			langsearch = true;
+			langsection = false;
+			modulePath = true;
+			continue;
+		    } else if (line.equals("%modules")) {
+			mode = 3;
 			langsearch = true;
 			langsection = false;
 			continue;
@@ -297,12 +377,12 @@ public class EPTS {
 			    String language = line.substring(5).trim();
 			    
 			    if (languageName == null) {
-				mode = 3;
+				mode = 0;
 				langsection = false;
 			    } else if (languageName.equals(language)) {
 				langsection = true;
 			    } else  {
-				if (langsection) mode = 3;
+				if (langsection) mode = 0;
 				langsection = false;
 			    }
 			    langsearch = false;
@@ -377,12 +457,12 @@ public class EPTS {
 			    String language = line.substring(5).trim();
 			    
 			    if (languageName == null) {
-				mode = 3;
+				mode = 0;
 				langsection = false;
 			    } else if (languageName.equals(language)) {
 				langsection = true;
 			    } else  {
-				if (langsection) mode = 3;
+				if (langsection) mode = 0;
 				langsection = false;
 			    }
 			    langsearch = false;
@@ -419,8 +499,9 @@ public class EPTS {
 				} else {
 				    url = (new File(line)).toURI().toURL();
 				}
-				// -- need to think about how to do this.
-				extendCodebase(url.toString());
+				extendCodebase(url.toString(), System.err,
+					       modulePath);
+				classpathExtended = true;
 				/*
 				URLClassLoaderOps.addURL(url);
 				if (!sbcpAppended.contains(line)) {
@@ -437,6 +518,44 @@ public class EPTS {
 				System.exit(1);
 			    }
 			}
+			break;
+		    case 3: // modules (for use with Java's --add-modules)
+			if (line.startsWith("%lang")) {
+			    String language = line.substring(5).trim();
+			    if (languageName == null) {
+				mode = 0 /*3*/;
+				langsection = false;
+			    } else if (languageName.equals(language)) {
+				langsection = true;
+			    } else  {
+				if (langsection) mode = 0 /*3*/;
+				langsection = false;
+			    }
+			    langsearch = false;
+			    continue;
+			} else if (line.startsWith("%")) {
+			    int lno = reader.getLineNumber();
+			    String msg =
+				errorMsg("endExpected", fileName, lno);
+			    System.err.println(msg);
+			    error = true;
+			    continue;
+			} else if (!line.matches(MODULE_NAME_RE)) {
+			    int lno = reader.getLineNumber();
+			    String msg =
+				errorMsg("badModuleName", fileName, lno, line);
+			    System.err.println("msg");
+			    error = true;
+			    continue;
+			}
+			if (modSet.contains(line) == false) {
+			    if (sbmod.length() > 0) {
+				sbmod.append(",");
+			    }
+			    sbmod.append(line);
+			    modSet.add(line);
+			}
+			break;
 		    }
 		}
 	    } catch (Exception e) {
@@ -1424,12 +1543,47 @@ public class EPTS {
 	}
     }
 
+    static void ifork(String argv[]) {
+	// used to restart after config files read.
+	LinkedList<String>alist = new LinkedList<>();
+	alist.add("java");
+	alist.add("-Dorg.bzdev.epts.ifork=true");
+	for (String key: defs.stringPropertyNames()) {
+	    alist.add("-D" + key + "=" + defs.getProperty(key));
+	}
+	alist.add("-p");
+	alist.add(sbmp.toString());
+	if (sbmod.length() > 0) {
+	    alist.add("--add-modules");
+	    alist.add(sbmod.toString());
+	}
+	if (sbcp.length() > 0) {
+	    alist.add("-classpath");
+	    alist.add(sbcp.toString());
+	}
+	alist.add("-m");
+	alist.add("org.bzdev.epts");
+	for (String arg: argv) {
+	    alist.add(arg);
+	}
+	ProcessBuilder pb = new ProcessBuilder(alist);
+	pb.inheritIO();
+	try {
+	    Process process = pb.start();
+	    System.exit(process.waitFor());
+	} catch (Exception e) {
+	    displayError(errorMsg("scException", e.getMessage()));
+	    System.exit(1);
+	}
+    }
+
     static void fork(ArrayList<String>jargsList, ArrayList<String> argsList,
 		     String policyFile, boolean dryrun)
     {
-	jargsList.add("EPTS");
-	jargsList.add(0, sbcp.toString());
-	jargsList.add(0, "-classpath");
+	jargsList.add("-m");
+	jargsList.add ("org.bzdev.epts");
+	// jargsList.add(0, sbcp.toString());
+	// jargsList.add(0, "-classpath");
 	if (policyFile == null) {
 	    try {
 		File pf = new File(EPTS.class.getProtectionDomain()
@@ -1443,13 +1597,27 @@ public class EPTS {
 		System.exit(1);
 	    }
 	}
-	String classLoader = defs.getProperty("java.system.class.loader");
 	/*
+	String classLoader = defs.getProperty("java.system.class.loader");
 	if (classLoader == null) {
 	    jargsList.add(0, "-Djava.system.class.loader="
 			  + "org.bzdev.lang.DMClassLoader");
 	}
 	*/
+
+	if (sbmp.length() > 0) {
+	    jargsList.add(0, sbmp.toString());
+	    jargsList.add(0, "-p");
+	}
+	if (sbmod.length() > 0) {
+	    jargsList.add(0, sbmod.toString());
+	    jargsList.add(0, "--add-modules");
+	}
+	if (sbcp.length() > 0) {
+	    jargsList.add(0, sbcp.toString());
+	    jargsList.add(0, "-classpath");
+	}
+
 	jargsList.add(0, "-Depts.fdrUsed="+(fdrUsed? "true": "false"));
 	jargsList.add(0, "-Depts.alreadyforked=true");
 	jargsList.add(0, javacmd);
@@ -1620,6 +1788,10 @@ public class EPTS {
 		    }
 		    if (needInitialConfig) {
 			readConfigFiles(null);
+			if (System.getProperty("org.bzdev.epts.ifork") == null
+			    && classpathExtended) {
+			    ifork(argv);
+			}
 			needInitialConfig = false;
 		    }
 		    argv = Setup.getSetupArgs(zdf, new File(arg));
@@ -1638,6 +1810,10 @@ public class EPTS {
 		    }
 		    if (needInitialConfig) {
 			readConfigFiles(null);
+			if (System.getProperty("org.bzdev.epts.ifork") == null
+			    && classpathExtended) {
+			    ifork(argv);
+			}
 			needInitialConfig = false;
 		    }
 		    argv = TemplateSetup.getSetupArgs(zdf, new File(arg));
@@ -1767,7 +1943,26 @@ public class EPTS {
     private static boolean needInitialConfig = true;
 
     static void init(String argv[]) throws Exception {
+
 	final File cdir = new File(System.getProperty("user.dir"));
+
+	String initialClassPath = System.getProperty("java.class.path");
+
+	if (initialClassPath != null) {
+	    String[] ccomps = initialClassPath.split(pathSeparator);
+	    for (String comp: ccomps) {
+		extendCodebase(comp, false);
+	    }
+	    // sbcp.append(initialClassPath);
+	}
+	String initialModulePath = System.getProperty("jdk.module.path");
+	if (initialModulePath != null) {
+	    String[] mcomps = initialModulePath.split(pathSeparator);
+	    for (String comp: mcomps) {
+		extendCodebase(comp, true);
+	    }
+	}
+
 
 	String alreadyForkedString = System.getProperty("epts.alreadyforked");
 	boolean alreadyForked = (alreadyForkedString != null)
@@ -1837,6 +2032,10 @@ public class EPTS {
 		    }
 		    if (needInitialConfig) {
 			readConfigFiles(null);
+			if (System.getProperty("org.bzdev.epts.ifork") == null
+			    && classpathExtended) {
+			    ifork(argv);
+			}
 			needInitialConfig = false;
 		    }
 		    if (argv[argv.length-1].equals("--sessionConfig")) {
@@ -1965,6 +2164,53 @@ public class EPTS {
 		} else if (argv[index].equals("--public")) {
 		    isPublic = true;
 		    argsList.add(argv[index]);
+		} else if (argv[index].equals("-p")
+		       || argv[index].equals("--module-path")) {
+		    if (!alreadyForked) {
+			argsList.add(argv[index]);
+		    }
+		    index++;
+		    if (index == argv.length) {
+			displayError
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    if (!alreadyForked) {
+			argsList.add(argv[index]);
+		    }
+		    String[] mcomps = argv[index].trim().split(pathSeparator);
+		    for (String mcomp: mcomps) {
+			extendCodebase(mcomp, true);
+			codebase.add(mcomp);
+			codebaseSet.add(mcomp);
+		    }
+		} else if (argv[index].equals("--add-modules")) {
+		    if (!alreadyForked) {
+			argsList.add(argv[index]);
+		    }
+		    index++;
+		    if (index == argv.length) {
+			displayError
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    if (!alreadyForked) {
+			argsList.add(argv[index]);
+		    }
+		    String[] modules = argv[index].trim().split(",");
+		    for (String mod: modules) {
+			if (modSet.contains(argv[index]) == false) {
+			    if (sbmod.length() > 0) {
+				sbmod.append(",");
+			    }
+			    System.out.println("adding module " + mod);
+			    sbmod.append(mod);
+			    addedModules.add(mod);
+			    System.out.println("addedModules.size() = "
+					       + addedModules.size());
+			    modSet.add(mod);
+			}
+		    }
 		} else if (argv[index].equals("--codebase")) {
 		    hasCodebase = true;
 		    if (!alreadyForked) {
@@ -1979,11 +2225,31 @@ public class EPTS {
 		    if (!alreadyForked) {
 			argsList.add(argv[index]);
 		    }
-		    extendCodebase(argv[index]);
+		    extendCodebase(argv[index], true);
 		    for (String cb: URLPathParser.split(argv[index])) {
 			if (!codebaseSet.contains(cb)) {
 			    codebase.add(argv[index]);
 			    codebaseSet.add(argv[index]);
+			}
+		    }
+		} else if (argv[index].equals("--classpathCodebase")) {
+		    if (!alreadyForked) {
+			argsList.add(argv[index]);
+		    }
+		    index++;
+		    if (index == argv.length) {
+			displayError
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    if (!alreadyForked) {
+			argsList.add(argv[index]);
+		    }
+		    extendCodebase(argv[index], false);
+		    for (String cb: URLPathParser.split(argv[index])) {
+			if (!classpathSet.contains(cb)) {
+			    classpath.add(argv[index]);
+			    classpathSet.add(argv[index]);
 			}
 		    }
 		} else if (argv[index].equals("--animation")) {
@@ -2095,7 +2361,7 @@ public class EPTS {
 		    svg = true;
 		    limit = 0;
 		    flatness = 0.0;
-		    templateURL = new URL("sresource:SVG");
+		    templateURL = new URL("resource:org/bzdev/epts/SVG");
 		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--stroke-color")) {
 		    index++;
@@ -2250,7 +2516,11 @@ public class EPTS {
 		    }
 		    try {
 			String mname = argv[index];
-			if (mname.startsWith("sresource:")
+			if  (mname.startsWith("resource:")) {
+			    mname = mname.replaceFirst
+				("resource:", "resource:org/bzdev/epts/");
+			}
+			if (mname.startsWith("resource:")
 			    || mname.startsWith("file:")
 			    || mname.startsWith("http:")
 			    || mname.startsWith("https:")
@@ -2381,7 +2651,11 @@ public class EPTS {
 			System.exit(1);
 		    }
 		    String tname = argv[index];
-		    if (tname.startsWith("sresource:")
+			if  (tname.startsWith("resource:")) {
+			    tname = tname.replaceFirst
+				("resource:", "resource:org/bzdev/epts/");
+			}
+		    if (tname.startsWith("resource:")
 			|| tname.startsWith("file:")
 			|| tname.startsWith("http:")
 			|| tname.startsWith("https:")
@@ -2394,7 +2668,7 @@ public class EPTS {
 		    argsList.add(argv[index]);
 		} else if (argv[index].startsWith("--template:")) {
 		    String resource = argv[index].substring(11);
-		    String tname = "resource:" + resource;
+		    String tname = "resource:org/bzdev/epts/" + resource;
 		    templateURL = new URL(tname);
 		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--tdef")) {
@@ -2724,6 +2998,10 @@ public class EPTS {
 	    // scripting languages to be recognized.
 	    if (needInitialConfig) {
 		readConfigFiles(null);
+		if (System.getProperty("org.bzdev.epts.ifork") == null
+		    && classpathExtended) {
+		    ifork(argv);
+		}
 		needInitialConfig = false;
 	    }
 	    if (!Scripting.supportsLanguage(languageName)) {
@@ -2782,7 +3060,7 @@ public class EPTS {
 			    System.exit(1);
 			}
 			if (name.startsWith(".../")) {
-			    extendCodebase(name);
+			    extendCodebase(name, true);
 			    // URLClassLoaderOps.addURLs(urls);
 			} else {
 			    String title = errorMsg("acceptTitle");
@@ -2794,7 +3072,7 @@ public class EPTS {
 						   .YES_NO_OPTION,
 						   JOptionPane
 						   .QUESTION_MESSAGE)) {
-				extendCodebase(name);
+				extendCodebase(name,true);
 				// URLClassLoaderOps.addURLs(urls);
 			    }
 			}
@@ -3486,6 +3764,8 @@ public class EPTS {
 
     public static void main(String argv[]) {
 	try {
+	    String url  = (new File(ourCodebase)).toURI().toURL().toString();
+	   System.setProperty("org.bzdev.protocols.resource.path", url);
 	    org.bzdev.protocols.Handlers.enable();
 	    init(argv);
 	} catch (Exception e) {

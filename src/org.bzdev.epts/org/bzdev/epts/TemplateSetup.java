@@ -1,3 +1,5 @@
+package org.bzdev.epts;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.XMLEncoder;
@@ -235,15 +237,15 @@ public class TemplateSetup {
 	"JavaPathBuilders", "JavaPathFactories"
     };
     
-    private static final String SRESOURCE_PROTO = "sresource:";
-    private static final int SRESOURCE_PROTO_LEN = SRESOURCE_PROTO.length();
+    private static final String RESOURCE_PROTO = "resource:";
+    private static final int RESOURCE_PROTO_LEN = RESOURCE_PROTO.length();
 
     private static boolean mayUseClassOrPackage(String template) {
-	if (template.length() < SRESOURCE_PROTO_LEN) return true;
-	if  (!template.startsWith(SRESOURCE_PROTO)) {
+	if (template.length() < RESOURCE_PROTO_LEN) return true;
+	if  (!template.startsWith(RESOURCE_PROTO)) {
 	    return true;
 	}
-	template = template.substring(SRESOURCE_PROTO_LEN);
+	template = template.substring(RESOURCE_PROTO_LEN);
 	for (String s: templatesWithClassOrPackage) {
 	    if (s.equals(template)) {
 		return true;
@@ -314,14 +316,14 @@ public class TemplateSetup {
 		     localeString("chooseTemplateTitle"),
 		     JOptionPane.PLAIN_MESSAGE,
 		     null, chooseTemplateOptions1, chooseTemplateOptions1[3]);
-		return "sresource:" + result1;
+		return "resource:" + result1;
 	    case PIT:
 		String result2 = (String)JOptionPane.showInputDialog
 		    (pane, localeString("chooseTemplateMsg"),
 		     localeString("chooseTemplateTitle"),
 		     JOptionPane.PLAIN_MESSAGE,
 		     null, chooseTemplateOptions2, chooseTemplateOptions2[2]);
-		return "sresource:" + result2;
+		return "resource:" + result2;
 	    default:
 		return null;
 	    }
@@ -2064,7 +2066,7 @@ public class TemplateSetup {
 	    case TT:
 		if (tabpane != null) {
 		    tabpane.setEnabledAt(1, !templateTF.getText()
-					 .startsWith(SRESOURCE_PROTO));
+					 .startsWith(RESOURCE_PROTO));
 		    if (mayUseClassOrPackage(templateTF.getText())) {
 			tabpane.setEnabledAt(3, true);
 		    } else {
@@ -2079,7 +2081,7 @@ public class TemplateSetup {
 	    case PIT:
 		if (tabpane != null) {
 		    tabpane.setEnabledAt(1, !templateTF.getText()
-					 .startsWith(SRESOURCE_PROTO));
+					 .startsWith(RESOURCE_PROTO));
 		    tabpane.setEnabledAt(3, true);
 		}
 		globalCL.show(globalPanel, "pi");
@@ -2236,7 +2238,7 @@ public class TemplateSetup {
 			    }
 			    boolean enable = (index > -1);
 			    String tplate = templateTF.getText().trim();
-			    if (tplate.startsWith("sresource:")) {
+			    if (tplate.startsWith("resource:")) {
 				if (!templateMatch(tplate, index)) {
 				    tplate = "";
 				    templateTF.setText(tplate);
@@ -2270,7 +2272,7 @@ public class TemplateSetup {
 			    if (enable) {
 				String ttext = templateTF.getText().trim();
 				enable = (ttext.length() != 0 &&
-					  !ttext.startsWith("sresource:"));
+					  !ttext.startsWith("resource:"));
 			    }
 			    mapLabel.setEnabled(enable);
 			    mapTF.setEnabled(enable);
@@ -2388,7 +2390,7 @@ public class TemplateSetup {
 			    if (enable) {
 				String ttext = templateTF.getText().trim();
 				enable = (ttext.length() != 0 &&
-					  !ttext.startsWith("sresource:"));
+					  !ttext.startsWith("resource:"));
 			    }
 			    mapLabel.setEnabled(enable);
 			    mapTF.setEnabled(enable);
@@ -2414,14 +2416,14 @@ public class TemplateSetup {
 				    mapLabel.setEnabled(false);
 				    mapTF.setEnabled(false);
 				    mapButton.setEnabled(false);
-				} else if (text.startsWith(SRESOURCE_PROTO)) {
+				} else if (text.startsWith(RESOURCE_PROTO)) {
 				    if (templateTimer.isRunning()) {
 					templateTimer.stop();
 				    }
 				    mapLabel.setEnabled(false);
 				    mapTF.setEnabled(false);
 				    mapButton.setEnabled(false);
-				} else if (SRESOURCE_PROTO.startsWith(text)) {
+				} else if (RESOURCE_PROTO.startsWith(text)) {
 				    // wait 2 seconds and if there are
 				    // no more characters typed, then
 				    // enable the map components.
@@ -2456,7 +2458,7 @@ public class TemplateSetup {
 			    if (name != null) {
 				templateTF.setText(name);
 				if (templateType == TType.TT &&
-				    !name.startsWith("sresource:")) {
+				    !name.startsWith("resource:")) {
 				    mapLabel.setEnabled(true);
 				    mapTF.setEnabled(true);
 				    mapButton.setEnabled(true);
@@ -2838,7 +2840,6 @@ public class TemplateSetup {
 		    }
 		}
 	    }
-
 	    public void endDocument() {
 		locations.sort(null);
 		paths.sort(null);

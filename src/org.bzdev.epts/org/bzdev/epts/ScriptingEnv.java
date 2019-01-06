@@ -1,3 +1,5 @@
+package org.bzdev.epts;
+
 import org.bzdev.anim2d.*;
 import org.bzdev.lang.UnexpectedExceptionError;
 import org.bzdev.graphs.Graph;
@@ -260,7 +262,7 @@ public class ScriptingEnv {
 	// modified by another script.
 	scripting.putScriptObject("scripting", scripting);
 	scripting.putScriptObject("epts", epts);
-	if (fileName.startsWith("sresource:")
+	if (fileName.startsWith("resource:")
 	    && a2dName != null
 	    && !a2dName.equals("a2d")
 	    && scripting.containsScriptObject(a2dName)) {

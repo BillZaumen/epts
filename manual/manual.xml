@@ -1,129 +1,147 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="manual.xsl"?>
 <toc>
-  <node title="The EPTS manual" uri="sresource:/manual/manual.html"
+  <node title="The EPTS manual"
+	uri="resource:org/bzdev/epts/manual/manual.html"
 	href="manual.html">
-    <node title="Introduction" uri="sresource:/manual/manual.html#intro"
+    <node title="Introduction"
+	  uri="resource:org/bzdev/epts/manual/manual.html#intro"
 	  href="manual.html#intro">
       <node title="Starting EPTS"
-	    uri="sresource:/manual/manual.html#startingEPTS"
+	    uri="resource:org/bzdev/epts/manual/manual.html#startingEPTS"
 	    href="manual.html#startingEPTS">
 	<node title="Image background"
-	      uri="sresource:/manual/manual.html#imageBackground"
+	      uri="resource:org/bzdev/epts/manual/manual.html#imageBackground"
 	      href="manual.html#imageBackground" />
 	<node title="Script background"
-	      uri="sresource:/manual/manual.html#scriptBackground"
+	      uri="resource:org/bzdev/epts/manual/manual.html#scriptBackground"
 	      href="manual.html#scriptBackground" />
 	<node title="Enhanced background"
-	      uri="sresource:/manual/manual.html#enhancedBackground"
-	      href="manual.html#enhancedBackgroung" />
+	  uri="resource:org/bzdev/epts/manual/manual.html#enhancedBackground"
+	  href="manual.html#enhancedBackgroung" />
 	<node title="Configuring templates"
-	      uri="sresource:/manual/manual.html#templateSetup"
+	      uri="resource:org/bzdev/epts/manual/manual.html#templateSetup"
 	      href="manual.html#templateSetup" />
       </node>
-      <node title="Using EPTS" uri="sresource:/manual/manual.html#usingEPTS"
+      <node title="Using EPTS"
+	    uri="resource:org/bzdev/epts/manual/manual.html#usingEPTS"
 	    href="manual.html#usingEPTS"/>
     </node>
-    <node title="The menu bar" uri="sresource:/manual/manual.html#menus"
+    <node title="The menu bar"
+	  uri="resource:org/bzdev/epts/manual/manual.html#menus"
 	href="manual.html#menus">
-      <node title="The File menu" uri="sresource:/manual/manual.html#fileMenu"
-	href="manual.html#fileMenu"/>
-      <node title="The Edit menu" uri="sresource:/manual/manual.html#editMenu"
-	href="manual.html#editMenu"/>
-      <node title="The Zoom menu" uri="sresource:/manual/manual.html#zoomMenu"
-	href="manual.html#zoomMenu"/>
+      <node title="The File menu"
+	    uri="resource:org/bzdev/epts/manual/manual.html#fileMenu"
+	    href="manual.html#fileMenu"/>
+      <node title="The Edit menu"
+	    uri="resource:org/bzdev/epts/manual/manual.html#editMenu"
+	    href="manual.html#editMenu"/>
+      <node title="The Zoom menu"
+	    uri="resource:org/bzdev/epts/manual/manual.html#zoomMenu"
+	    href="manual.html#zoomMenu"/>
       <node title="The Measure-Distance menu"
-	    uri="sresource:/manual/manual.html#measureMenu"
-	href="manual.html#measureMenu"/>
+	    uri="resource:org/bzdev/epts/manual/manual.html#measureMenu"
+	    href="manual.html#measureMenu"/>
       <node title="The Tools menu"
-	    uri="sresource:/manual/manual.html#toolsMenu"
-	href="manual.html#toolsMenu"/>
+	    uri="resource:org/bzdev/epts/manual/manual.html#toolsMenu"
+	    href="manual.html#toolsMenu"/>
       <node title="The Help menu"
-	    uri="sresource:/manual/manual.html#helpMenu"
-	href="manual.html#helpMenu"/>
+	    uri="resource:org/bzdev/epts/manual/manual.html#helpMenu"
+	    href="manual.html#helpMenu"/>
     </node>
-    <node title="Using the mouse" uri="sresource:/manual/manual.html#mouse"
-	href="manual.html#mouse">
-      <node title="Popup menus" uri="sresource:/manual/manual.html#popup"
-	href="manual.html#popup"/>
+    <node title="Using the mouse"
+	  uri="resource:org/bzdev/epts/manual/manual.html#mouse"
+	  href="manual.html#mouse">
+      <node title="Popup menus"
+	    uri="resource:org/bzdev/epts/manual/manual.html#popup"
+	    href="manual.html#popup"/>
     </node>
     <node title="Keyboard shortcuts"
-	  uri="sresource:/manual/manual.html#shortcuts"
-	href="manual.html#shortcuts"/>
-    <node title="Templates" uri="sresource:/manual/manual.html#templates"
+	  uri="resource:org/bzdev/epts/manual/manual.html#shortcuts"
+	  href="manual.html#shortcuts"/>
+    <node title="Templates"
+	  uri="resource:org/bzdev/epts/manual/manual.html#templates"
 	  href="manual.html#templates" >
       <node title="Built-in Templates"
-	    uri="sresource:/manual/manual.html#builtins"
+	    uri="resource:org/bzdev/epts/manual/manual.html#builtins"
 	    href="manual.html#builtins"/>
       <node title="Template Syntax"
-	    uri="sresource:/manual/manual.html#templateSyntax"
+	    uri="resource:org/bzdev/epts/manual/manual.html#templateSyntax"
 	    href="manual.html#templateSyntax"/>
       <node title="Table Templates"
-	    uri="sresource:/manual/manual.html#tbltemplates"
+	    uri="resource:org/bzdev/epts/manual/manual.html#tbltemplates"
 	    href="manual.html#tbltemplates"/>
       <node title="Path-Iterator Templates"
-	    uri="sresource:/manual/manual.html#pitemplates"
+	    uri="resource:org/bzdev/epts/manual/manual.html#pitemplates"
 	    href="manual.html#pitemplates"/>
     </node>
-    <node title="The CLI" uri="sresource:/manual/manual.html#cli"
+    <node title="The CLI" uri="resource:org/bzdev/epts/manual/manual.html#cli"
 	  href="manual.html#cli">
-      <node title="Units" uri="sresource:/manual/manual.html#units"
+      <node title="Units"
+	    uri="resource:org/bzdev/epts/manual/manual.html#units"
 	    href="manual.html#units"/>
       <node title="Scripting Options"
-	    uri="sresource:/manual/manual.html#scriptOptions"
+	    uri="resource:org/bzdev/epts/manual/manual.html#scriptOptions"
 	    href="manual.html#scriptOptions"/>
       <node title="Template Options"
-	    uri="sresource:/manual/manual.html#templateOptions"
+	    uri="resource:org/bzdev/epts/manual/manual.html#templateOptions"
 	    href="manual.html#templateOptions"/>
       <node title="Scrunner Options"
-	    uri="sresource:/manual/manual.html#scrunner"
+	    uri="resource:org/bzdev/epts/manual/manual.html#scrunner"
 	    href="manual.html#scrunner"/>
       <node title="CLI Examples"
-	    uri="sresource:/manual/manual.html#examples"
+	    uri="resource:org/bzdev/epts/manual/manual.html#examples"
 	    href="manual.html#examples"/>
     </node>
-    <node title="Scripting" uri="sresource:manual/manual.html#scripting"
+    <node title="Scripting"
+	  uri="resource:org/bzdev/epts/manual/manual.html#scripting"
 	  href="manual.html#scripting"/>
     <node title="Built-in Scripts"
-	  uri="sresource:manual/manual.html#scripts"
+	  uri="resource:org/bzdev/epts/manual/manual.html#scripts"
 	  href="manual.html#scripts">
       <node title="Cartesian-Grid Script"
-	    uri="sresource:manual/manual.html#cartesian"
+	    uri="resource:org/bzdev/epts/manual/manual.html#cartesian"
 	    href="manual.html#cartesian"/>
       <node title="Polar-Grid Script"
-	    uri="sresource:manual/manual.html#polar"
+	    uri="resource:org/bzdev/epts/manual/manual.html#polar"
 	    href="manual.html#polar"/>
     </node>
     <node title="Saved-file format"
-	  uri="sresource:manual/manual.html#savedFormat"
+	  uri="resource:org/bzdev/epts/manual/manual.html#savedFormat"
 	  href="manual.html#savedFormat">
       <node title="The image element"
-	    uri="sresource:manual/manual.html#imageElement"
+	    uri="resource:org/bzdev/epts/manual/manual.html#imageElement"
 	    href="manual.html#imageElement"/>
       <node title="The codebase element"
-	    uri="sresource:manual/manual.html#codebaseElement"
+	    uri="resource:org/bzdev/epts/manual/manual.html#codebaseElement"
 	    href="manual.html#codebaseElement"/>
+      <node title="The modules element"
+	    uri="resource:org/bzdev/epts/manual/manual.html#modulesElement"
+	    href="manual.html#modulesElement"/>
+      <node title="The classpath element"
+	    uri="resource:org/bzdev/epts/manual/manual.html#classpathElement"
+	    href="manual.html#classpathElement"/>
       <node title="The scripting element"
-	    uri="sresource:manual/manual.html#scriptingElement"
+	    uri="resource:org/bzdev/epts/manual/manual.html#scriptingElement"
 	    href="manual.html#scriptingElement"/>
       <node title="The targetList element"
-	    uri="sresource:manual/manual.html#targetListElement"
+	    uri="resource:org/bzdev/epts/manual/manual.html#targetListElement"
 	    href="manual.html#targetListElement"/>
       <node title="The gcsconfig element"
-	    uri="sresource:manual/manual.html#gcsconfigElement"
+	    uri="resource:org/bzdev/epts/manual/manual.html#gcsconfigElement"
 	    href="manual.html#gcsconfigElement"/>
       <node title="The table element"
-	    uri="sresource:manual/manual.html#tableElement"
+	    uri="resource:org/bzdev/epts/manual/manual.html#tableElement"
 	    href="manual.html#tableElement"/>
     </node>
     <node title="Saved-configuration format"
-	  uri="sresource:manual/manual.html#configFormat"
+	  uri="resource:org/bzdev/epts/manual/manual.html#configFormat"
 	  href="manual.html#configFormat"/>
     <node title="Template-processing format"
-	  uri="sresource:manual/manual.html#templateConfig"
+	  uri="resource:org/bzdev/epts/manual/manual.html#templateConfig"
 	  href="manual.html#templateConfig"/>
     <node title="AdditionalDocumentation"
-	  uri="sresource:manual/manual.html#guides"
+	  uri="resource:org/bzdev/epts/manual/manual.html#guides"
 	  href="manual.html#guides"/>
   </node>
 </toc>

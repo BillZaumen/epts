@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!ELEMENT epts (image, codebase?, scripting?, targetList?, gcsconfig, table)>
+<!ELEMENT epts (image, codebase?, modules?, classpath?,
+	  scripting?, targetList?, gcsconfig, table)>
 <!ATTLIST epts
 	  xmlns CDATA #FIXED "http://bzdev.org/DTD/epts-1.0">
 
@@ -12,7 +13,13 @@
 
 <!ELEMENT codebase (path*)>
 
+<!ELEMENT classpath (path*)>
+
 <!ELEMENT path (#PCDATA)>
+
+<!ELEMENT modules (module*)>
+
+<!ELEMENT module (#PCDATA)>
 
 <!ELEMENT scripting (binding*)>
 <!ATTLIST scripting

@@ -1,2 +1,2 @@
 #!/bin/sh
-java -jar BZDEVDIR/epts.jar "$@"
+java -p BZDEVDIR -m org.bzdev.epts "$@"
