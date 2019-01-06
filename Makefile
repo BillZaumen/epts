@@ -16,9 +16,6 @@ JROOT := $(shell while [ ! -d src -a `pwd` != / ] ; do cd .. ; done ; pwd)
 
 include VersionVars.mk
 
-
-CLASSES = $(JROOT)/classes
-
 APPS_DIR = apps
 MIMETYPES_DIR = mimetypes
 
@@ -162,7 +159,7 @@ RESOURCES = manual/manual.xml \
 
 FILES = $(JFILES) $(PROPERTIES)
 
-PROGRAM = $(JROOT_BIN)/epts $(JROOT_JARDIR)/epts-$(VERSION).jar 
+PROGRAM = $(JROOT_BIN)/epts $(JROOT_JARDIR)/epts.jar 
 ALL = $(PROGRAM) epts.desktop $(MANS) $(JROOT_BIN)/epts
 
 # program: $(JROOT_BIN)/epts $(JROOT_JARDIR)/epts-$(VERSION).jar 
@@ -186,15 +183,13 @@ all: $(ALL)
 
 include MajorMinor.mk
 
-$(CLASSES):
-	(cd $(JROOT); mkdir classes)
 
 
 # The action for this rule removes all the epts-*.jar files
 # because the old ones would otherwise still be there and end up
 # being installed.
 #
-$(JROOT_JARDIR)/epts-$(VERSION).jar: $(FILES) $(TEMPLATES) $(CRLF_TEMPLATES)\
+$(JROOT_JARDIR)/epts.jar: $(FILES) $(TEMPLATES) $(CRLF_TEMPLATES)\
 	$(RESOURCES) $(BLDPOLICY) $(SCRIPTS)
 	mkdir -p $(EPTS_JDIR)
 	javac -Xlint:unchecked -Xlint:deprecation \
@@ -210,7 +205,7 @@ $(JROOT_JARDIR)/epts-$(VERSION).jar: $(FILES) $(TEMPLATES) $(CRLF_TEMPLATES)\
 	for i in $(TEMPLATES) ; do tname=`basename $$i .tpl`; \
 		cp $$i $(EPTS_JDIR)/$$tname; done
 	for i in $(CRLF_TEMPLATES) ; do tname=`basename $$i .tpl`; \
-		cat $$i | sed -e 's/.*/\0\r/' > $(CLASSES)/$$tname; done
+		cat $$i | sed -e 's/.*/\0\r/' > $(EPTS_JDIR)/$$tname; done
 	for i in $(SCRIPTS) ; do sname=`basename $$i .js` ; \
 		cp $$i $(EPTS_JDIR)/$$sname; done
 	mkdir -p $(EPTS_JDIR)/manual
@@ -220,7 +215,7 @@ $(JROOT_JARDIR)/epts-$(VERSION).jar: $(FILES) $(TEMPLATES) $(CRLF_TEMPLATES)\
 
 
 $(JROOT_BIN)/epts: epts.sh MAJOR MINOR \
-		$(JROOT_JARDIR)/epts-$(VERSION).jar
+		$(JROOT_JARDIR)/epts.jar
 	(cd $(JROOT); mkdir -p $(JROOT_BIN))
 	sed s/BZDEVDIR/$(BZDEVDIR_SED)/g epts.sh > $(JROOT_BIN)/epts
 	chmod u+x $(JROOT_BIN)/epts
@@ -240,7 +235,8 @@ $(JROOT_MANDIR)/man5/epts.5.gz: epts.5
 
 
 clean:
-	rm -f $(CLASSES)/epts/* $(JROOT_JARDIR)/epts-$(VERSION).jar \
+	rm -fr mods
+	rm -f $(JROOT_JARDIR)/epts.jar \
 	$(JROOT_MANDIR)/man1/* \
 	$(JROOT_MANDIR)/man5/* \
 	$(JROOT_BIN)/epts \
