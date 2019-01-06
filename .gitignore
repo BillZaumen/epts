@@ -1,8 +1,9 @@
 *~
 jar/
-classes/
+mods/
 tests/classes/
 bin/
 man/
-*.epts
+t*.epts
 *.eptc
+*.eptt
