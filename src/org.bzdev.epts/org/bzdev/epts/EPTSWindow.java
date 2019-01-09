@@ -148,6 +148,9 @@ public class EPTSWindow {
 		    } else if (value.getClass().equals(String.class)) {
 			type = "String";
 			svalue = WebEncoder.htmlEncode((String)value);
+		    } else if (value.getClass().equals(Boolean.class)) {
+			type = "Boolean";
+			svalue = value.toString();
 		    } else {
 			throw new UnexpectedExceptionError();
 		    }

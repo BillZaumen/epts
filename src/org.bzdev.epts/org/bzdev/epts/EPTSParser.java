@@ -234,7 +234,8 @@ public class EPTSParser {
     static enum BType {
 	INTEGER,
 	DOUBLE,
-	STRING
+	STRING,
+	BOOLEAN
     }
 
     class OurDefaultHandler extends DefaultHandler {
@@ -324,7 +325,9 @@ public class EPTSParser {
 	    } else if (qName.equals("binding")) {
 		name = attr.getValue("name");
 		String tname = attr.getValue("type");
-		if (tname.equals("int")) {
+		if (tname.equals("boolean")) {
+		    btype = BType.BOOLEAN;
+		} else if (tname.equals("int")) {
 		    btype = BType.INTEGER;
 		} else if (tname.equals("double")) {
 		    btype = BType.DOUBLE;
@@ -470,6 +473,12 @@ public class EPTSParser {
 	    } else if (qName.equals("binding")) {
 		String value = text.toString();
 		switch(btype) {
+		case BOOLEAN:
+		    {
+			Boolean bval = Boolean.parseBoolean(value);
+			bindings.add(new EPTS.NameValuePair(name, bval));
+		    }
+		    break;
 		case INTEGER:
 		    try {
 			Integer ival = Integer.parseInt(value);

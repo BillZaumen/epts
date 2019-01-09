@@ -29,7 +29,7 @@
 <!ELEMENT binding (#PCDATA)>
 <!ATTLIST binding
 	  name CDATA #REQUIRED
-	  type (int|double|String) #REQUIRED>
+	  type (int|double|String|boolean) #REQUIRED>
 
 <!ELEMENT targetList (argument*)>
 
