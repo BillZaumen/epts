@@ -1098,7 +1098,8 @@ public class EPTS {
 			URL url = new URL(cdir.toURI().toURL(), filename);
 			is = url.openStream();
 		    } else {
-			is = new FileInputStream(filename);
+			File f = new File(cdir, filename);
+			is = new FileInputStream(f);
 		    }
 		    Reader r = new InputStreamReader(is, "UTF-8");
 		    r = new BufferedReader(r);
