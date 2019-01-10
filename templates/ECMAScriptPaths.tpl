@@ -1,4 +1,4 @@
-$(items:endItems)$(pathStatement:endPathStatement)var $(varname) = [$(hasAttributes:endAttributes){visible: "$(draw)"$(hasWindingRule:endWR),
+$(items:endItems)$(pathStatement:endPathStatement)var $(varname) = [{visible: "$(draw)"$(hasAttributes:endAttributes)$(hasWindingRule:endWR),
      windingRule: "$(windingRule)"$(endWR)$(hasGcsMode:endGcsMode),
      "stroke.gcsMode": $(gcsMode)$(endGcsMode)$(hasDrawColor:endDrawColor),
      "color.css": "$(drawColor)"$(endDrawColor)$(hasStrokeCap:endStrokeCap),
@@ -9,8 +9,8 @@ $(items:endItems)$(pathStatement:endPathStatement)var $(varname) = [$(hasAttribu
      "stroke.join": "$(strokeJoin)"$(endStrokeJoin)$(hasMiterLimit:endMiterLimit),
      "stroke.miterLimit": $(miterLimit)$(endMiterLimit)$(hasStrokeWidth:endStrokeWidth),
      "stroke.width": $(strokeWidth)$(endStrokeWidth)$(hasZorder:endZorder),
-     zorder: $(zorder)$(endZorder)},
-$(endAttributes)  {withPrefix: "cpoint", withIndex: [$(pathItem:endPathItem)
+     zorder: $(zorder)$(endZorder)$(endAttributes)},
+  {withPrefix: "cpoint", withIndex: [$(pathItem:endPathItem)
     {type: "$(type)"$(xy:endXY), x: $(x), y: $(y)$(endXY)}$(optcomma)$(endPathItem)
     ]}];
 $(endPathStatement)$(endItems)
