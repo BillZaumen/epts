@@ -1,4 +1,4 @@
-$(items:endItems)$(pathStatement:endPathStatement)var $(varname) = $(hasAttributes:endAttributes)[{visible: "$(draw)"$(hasWindingRule:endWR),
+$(items:endItems)$(pathStatement:endPathStatement)var $(varname) = [$(hasAttributes:endAttributes){visible: "$(draw)"$(hasWindingRule:endWR),
      windingRule: "$(windingRule)"$(endWR)$(hasGcsMode:endGcsMode),
      "stroke.gcsMode": $(gcsMode)$(endGcsMode)$(hasDrawColor:endDrawColor),
      "color.css": "$(drawColor)"$(endDrawColor)$(hasStrokeCap:endStrokeCap),
@@ -10,7 +10,7 @@ $(items:endItems)$(pathStatement:endPathStatement)var $(varname) = $(hasAttribut
      "stroke.miterLimit": $(miterLimit)$(endMiterLimit)$(hasStrokeWidth:endStrokeWidth),
      "stroke.width": $(strokeWidth)$(endStrokeWidth)$(hasZorder:endZorder),
      zorder: $(zorder)$(endZorder)},
-  {withPrefix: "cpoint", withIndex: $(endAttributes)[$(pathItem:endPathItem)
+$(endAttributes)  {withPrefix: "cpoint", withIndex: [$(pathItem:endPathItem)
     {type: "$(type)"$(xy:endXY), x: $(x), y: $(y)$(endXY)}$(optcomma)$(endPathItem)
-    ];
+    ]}];
 $(endPathStatement)$(endItems)

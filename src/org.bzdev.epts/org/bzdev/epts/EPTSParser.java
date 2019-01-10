@@ -252,6 +252,8 @@ public class EPTSParser {
 	boolean processingModules = false;
 	boolean processingClasspath = false;
 
+	File base;
+
 
 	boolean mimeTypePISeen = false;
 
@@ -264,6 +266,7 @@ public class EPTSParser {
 
 
 	public void startDocument() {
+	    base = new File(System.getProperty("user.dir"));
 	    locator = null;
 	    errorSeen = false;
 	    publicIDSeen = false;
@@ -518,7 +521,17 @@ public class EPTSParser {
 		    }
 		}
 	    } else if (qName.equals("argument")) {
-		argList.add(text.toString());
+		String nm = text.toString();
+		if (EPTS.maybeURL(nm)) {
+		    argList.add(nm);
+		} else {
+		    try {
+			File af = new File(base, nm).getCanonicalFile();
+			argList.add(af.toString());
+		    } catch (IOException eio) {
+			argList.add(nm);
+		    }
+		}
 		text.setLength(0);
 	    } else if (qName.equals("path")) {
 		if (processingCodebase) {

@@ -1098,7 +1098,8 @@ public class EPTS {
 			URL url = new URL(cdir.toURI().toURL(), filename);
 			is = url.openStream();
 		    } else {
-			File f = new File(cdir, filename);
+			File f = new File(filename);
+			f = f.isAbsolute()? f: new File(cdir, filename);
 			is = new FileInputStream(f);
 		    }
 		    Reader r = new InputStreamReader(is, "UTF-8");
@@ -1115,7 +1116,10 @@ public class EPTS {
 			URL url = new URL(cdir.toURI().toURL(), filename);
 			is = url.openStream();
 		    } else {
-			File ifile = new File(cdir, filename);
+			File tmp = new File(filename);
+
+			File ifile = (tmp.isAbsolute())? tmp:
+			    new File(cdir, filename);
 			ifile = ifile.getCanonicalFile();
 			is = new FileInputStream(ifile);
 		    }
