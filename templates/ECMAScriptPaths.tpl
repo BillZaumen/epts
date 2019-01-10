@@ -1,5 +1,5 @@
 $(items:endItems)$(pathStatement:endPathStatement)var $(varname) = $(hasAttributes:endAttributes)[{visible: "$(draw)"$(hasWindingRule:endWR),
-     windingRule: "$(windingRule)"$(endWR)"$(hasGcsMode:endGcsMode),
+     windingRule: "$(windingRule)"$(endWR)$(hasGcsMode:endGcsMode),
      "stroke.gcsMode": $(gcsMode)$(endGcsMode)$(hasDrawColor:endDrawColor),
      "color.css": "$(drawColor)"$(endDrawColor)$(hasStrokeCap:endStrokeCap),
      "stroke.cap": "$(strokeCap)"$(endStrokeCap)$(hasDashIncrement:endDashIncrement),
