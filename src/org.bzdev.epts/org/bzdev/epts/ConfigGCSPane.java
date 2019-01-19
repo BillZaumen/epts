@@ -66,6 +66,32 @@ public class ConfigGCSPane extends JPanel {
 	new RealValuedFunction() {public double valueAt(double x) {
 	    return MKS.miles(x);}}
     };
+
+    static final RealValuedFunction inverseConvert[] = {
+	new RealValuedFunction() {public double valueAt(double x) {return x;}},
+
+	new RealValuedFunction() {public double valueAt(double x) {
+	    return x/MKS.nm(1.0);}},
+	new RealValuedFunction() {public double valueAt(double x) {
+	    return x/MKS.um(1.0);}},
+	new RealValuedFunction() {public double valueAt(double x) {
+	    return x/MKS.mm(1.0);}},
+	new RealValuedFunction() {public double valueAt(double x) {
+	    return x/MKS.cm(1.0);}},
+	new RealValuedFunction() {public double valueAt(double x) {
+	    return (x);}},
+	new RealValuedFunction() {public double valueAt(double x) {
+	    return x/MKS.km(1.0);}},
+	new RealValuedFunction() {public double valueAt(double x) {
+	    return x/MKS.inches(1.0);}},
+	new RealValuedFunction() {public double valueAt(double x) {
+	    return x/MKS.feet(1.0);}},
+	new RealValuedFunction() {public double valueAt(double x) {
+	    return x/MKS.yards(1.0);}},
+	new RealValuedFunction() {public double valueAt(double x) {
+	    return x/MKS.miles(1.0);}}
+    };
+
     static RefPointName[] refpoints = RefPointName.values();
     static Vector<String> refpointStrings = new Vector<>();
 

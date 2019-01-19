@@ -20,6 +20,7 @@ import java.nio.charset.Charset;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Formatter;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -61,8 +62,15 @@ import org.bzdev.swing.VTextField;
 import org.bzdev.swing.text.CharDocFilter;
 
 class VectorPane extends JPanel {
-    static int lindex = 0;
-    static int aindex = 0;
+    static int lindexSaved = 0;
+    static int aindexSaved = 0;
+    int lindex = lindexSaved;
+    int aindex = aindexSaved;
+
+    void saveIndices() {
+	lindexSaved = lindex;
+	aindexSaved = aindex;
+    }
 
     static String errorMsg(String key, Object... args) {
 	return EPTS.errorMsg(key, args);
@@ -145,6 +153,7 @@ class VectorPane extends JPanel {
 	cdf.setAllowedChars("09eeEE..,,++--");
 	JLabel ll = new JLabel(localeString("Length"));
 	JLabel al = new JLabel(localeString("Angle"));
+
 	ltf = new VTextField("", 10) {
 		@Override
 		protected void onAccepted() {
@@ -235,8 +244,16 @@ class VectorPane extends JPanel {
 }
 
 class LocPane extends JPanel {
-    static int xindex = 0;
-    static int yindex = 0;
+    static int xindexSaved = 0;
+    static int yindexSaved = 0;
+    int xindex = xindexSaved;
+    int yindex = yindexSaved;
+
+    void saveIndices() {
+	xindexSaved = xindex;
+	yindexSaved = yindex;
+    }
+
 
     static String errorMsg(String key, Object... args) {
 	return EPTS.errorMsg(key, args);
@@ -285,6 +302,17 @@ class LocPane extends JPanel {
 
     public double getYCoord() {
 	return ConfigGCSPane.convert[yindex].valueAt(ycoord);
+    }
+
+    public void setXCoord(double x) {
+	xcoord = ConfigGCSPane.inverseConvert[xindex].valueAt(x);
+	Formatter f = new Formatter();
+	xtf.setText(f.format("%10.6g",xcoord).toString().trim());
+    }
+    public void setYCoord(double y) {
+	ycoord = ConfigGCSPane.inverseConvert[yindex].valueAt(y);
+	Formatter f = new Formatter();
+	ytf.setText(f.format("%10.6g",ycoord).toString().trim());
     }
 
     boolean noPrevErrors = true;
@@ -375,7 +403,7 @@ class LocPane extends JPanel {
 	gridbag.setConstraints(yunits, c);
 	add(yunits);
 	xunits.setSelectedIndex(xindex);
-	yunits.setSelectedIndex(xindex);
+	yunits.setSelectedIndex(yindex);
 	xunits.addActionListener((ae) -> {
 		xindex = xunits.getSelectedIndex();
 	    });
@@ -395,8 +423,16 @@ class ArcPane extends JPanel {
 	return EPTS.localeString(key);
     }
 
-    static int lindex = 0;
-    static int aindex = 0;
+    static int lindexSaved = 0;
+    static int aindexSaved = 0;
+    int lindex = lindexSaved;
+    int aindex = aindexSaved;
+
+    void saveIndices() {
+	lindexSaved = lindex;
+	aindexSaved = aindex;
+    }
+
 
     static Vector<String> nv = new Vector<>(10);
     static {
@@ -1877,8 +1913,8 @@ public class EPTSWindow {
 		    if (selectedRow != -1) {
 			PointTMR row = ptmodel.getRow(selectedRow);
 			if (row != null) {
-			    lpane.xtf.setText("" + row.getX());
-			    lpane.ytf.setText("" + row.getY());
+			    lpane.setXCoord(row.getX());
+			    lpane.setYCoord(row.getY());
 			}
 		    }
 		    lpane.addAncestorListener(new AncestorListener() {
@@ -1896,6 +1932,7 @@ public class EPTSWindow {
 			 JOptionPane.OK_CANCEL_OPTION,
 			 JOptionPane.QUESTION_MESSAGE);
 		    if (status == 0) {
+			lpane.saveIndices();
 			double x = lpane.getXCoord();
 			double y = lpane.getYCoord();
 			double xp = (x - xrefpoint) / scaleFactor;
@@ -1971,17 +2008,12 @@ public class EPTSWindow {
 			 JOptionPane.OK_CANCEL_OPTION,
 			 JOptionPane.QUESTION_MESSAGE);
 		    if (status == 0) {
+			vpane.saveIndices();
 			double length = vpane.getLength();
 			double angle = vpane.getAngle();
-			System.out.println("length = " + length);
-			System.out.println("angle = " + Math.toDegrees(angle)
-					   + " degrees");
 			PointTMR row = ptmodel.getLastRow();
-			System.out.format("old: (%g, %g)\n",
-					  row.getX() , row.getY());
 			double x = row.getX() + length * Math.cos(angle);
 			double y = row.getY() + length * Math.sin(angle);
-			System.out.format("new: (%g, %g)\n", x, y);
 			/*
 			if (x < graph.getXLower() || x > graph.getXUpper()
 			    || y < graph.getYLower() || y > graph.getYUpper()) {
@@ -2040,14 +2072,12 @@ public class EPTSWindow {
 			 JOptionPane.OK_CANCEL_OPTION,
 			 JOptionPane.QUESTION_MESSAGE);
 		    if (status == 0) {
+			apane.saveIndices();
 			double radius = apane.getRadius();
 			if (radius == 0.0) return;
 			double angle = apane.getAngle();
 			double maxdelta = apane.getMaxDelta();
 			boolean ccw = apane.isCounterClockwise();
-			System.out.println("radius = " + radius);
-			System.out.println("angle = " + Math.toDegrees(angle)
-					   + " degrees");
 			int lastind = ptmodel.getRowCount()-1;
 			int prevind = lastind - 1;
 			PointTMR row2 = ptmodel.getRow(lastind);
