@@ -19,9 +19,11 @@ import java.net.URI;
 import java.nio.charset.Charset;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.Vector;
 import javax.imageio.ImageIO;
 import javax.script.ScriptException;
 import javax.swing.*;
@@ -32,11 +34,14 @@ import javax.swing.table.*;
 import javax.swing.text.EditorKit;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
+import javax.swing.text.AbstractDocument;
 
 import org.bzdev.ejws.*;
 import org.bzdev.ejws.maps.*;
 import org.bzdev.geom.FlatteningPathIterator2D;
 import org.bzdev.geom.Path2DInfo;
+import org.bzdev.geom.Paths2D;
+import org.bzdev.geom.SplinePath2D;
 import org.bzdev.geom.SplinePathBuilder;
 import org.bzdev.geom.SplinePathBuilder.CPointType;
 import org.bzdev.graphs.Graph;
@@ -52,6 +57,540 @@ import org.bzdev.util.TemplateProcessor.KeyMapList;
 import org.bzdev.swing.ErrorMessage;
 import org.bzdev.swing.HtmlWithTocPane;
 import org.bzdev.swing.PortTextField;
+import org.bzdev.swing.VTextField;
+import org.bzdev.swing.text.CharDocFilter;
+
+class VectorPane extends JPanel {
+    static int lindex = 0;
+    static int aindex = 0;
+
+    static String errorMsg(String key, Object... args) {
+	return EPTS.errorMsg(key, args);
+    }
+
+    static String localeString(String key) {
+	return EPTS.localeString(key);
+    }
+
+    VTextField ltf;		// length text field
+    VTextField atf;		// angle text field
+    JComboBox<String> lunits = new JComboBox<>(ConfigGCSPane.units);
+    static Vector<String> av = new Vector<>(2);
+    static {
+	av.add("Degrees");
+	av.add("Radians");
+    }
+    JComboBox<String> aunits = new JComboBox<>(av);
+
+    boolean firstTime = true;
+    CharDocFilter cdf = new CharDocFilter();
+    InputVerifier ltfiv = new InputVerifier() {
+	    public boolean verify(JComponent input) {
+		JTextField tf = (VTextField)input;
+		String string = tf.getText();
+		if (string == null) string = "";
+		string = string.trim();
+		try {
+		    if (string.length() == 0) {
+			if (firstTime) {
+			    firstTime = false;
+			    return false;
+			} else {
+			    return true;
+			}
+		    }
+		    double value = Double.parseDouble(string);
+		    if (value >= 0.0) {
+			return true;
+		    } else {
+			return false;
+		    }
+		} catch (Exception e) {
+		    return false;
+		}
+	    }
+	};
+
+    InputVerifier atfiv = new InputVerifier() {
+	    public boolean verify(JComponent input) {
+		JTextField tf = (VTextField)input;
+		String string = tf.getText();
+		if (string == null) string = "";
+		string = string.trim();
+		try {
+		    if (string.length() == 0) return true;
+		    double value = Double.parseDouble(string);
+		    return true;
+		} catch (Exception e) {
+		    return false;
+		}
+	    }
+	};
+
+    double length = 0.0;
+    double angle = 0.0;
+
+    public double getLength() {
+	return ConfigGCSPane.convert[lindex].valueAt(length);
+    }
+
+    public double getAngle() {
+	return (aindex == 0)? Math.toRadians(angle): angle;
+    }
+
+    boolean noPrevErrors = true;
+
+    public VectorPane() {
+	super();
+	cdf.setAllowedChars("09eeEE..,,++--");
+	JLabel ll = new JLabel(localeString("Length"));
+	JLabel al = new JLabel(localeString("Angle"));
+	ltf = new VTextField("", 10) {
+		@Override
+		protected void onAccepted() {
+		    String text = getText();
+		    if (text == null || text.length() == 0) {
+			length = 0.0;
+		    } else {
+			length = Double.valueOf(text);
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    if (noPrevErrors) {
+			// Hack to control focus.
+			// When this panel first comes visible,
+			// it requests the focus but the container
+			// it is in does the same thing a bit later.
+			// A VTextField will notice the focus loss and
+			// check the validity of its value. We return
+			// false so that the keyboard focus will be
+			// requested again.
+			noPrevErrors = false;
+			String text = getText();
+			if (text == null || text.trim().length() == 0) {
+			    return false;
+			}
+		    }
+		    JOptionPane.showMessageDialog
+			(this, "Must enter a positive real number",
+			 "Error", JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+	((AbstractDocument)ltf.getDocument()).setDocumentFilter(cdf);
+	ltf.setInputVerifier(ltfiv);
+	atf = new VTextField("", 10) {
+		@Override
+		protected void onAccepted() {
+		    String text = getText();
+		    if (text == null || text.length() == 0) {
+			angle = 0.0;
+		    } else {
+			angle = Double.valueOf(text);
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    JOptionPane.showMessageDialog
+			(this, "Must enter a real number",
+			 "Error", JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+	((AbstractDocument)atf.getDocument()).setDocumentFilter(cdf);
+	atf.setInputVerifier(atfiv);
+	GridBagLayout gridbag = new GridBagLayout();
+	GridBagConstraints c = new GridBagConstraints();
+	setLayout(gridbag);
+	c.insets = new Insets(5, 5, 5, 5);
+	c.ipadx = 5;
+	c.ipady = 5;
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = 1;
+	gridbag.setConstraints(ll, c);
+	add(ll);
+	gridbag.setConstraints(ltf, c);
+	add(ltf);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(lunits, c);
+	add(lunits);
+	c.gridwidth = 1;
+	gridbag.setConstraints(al, c);
+	add(al);
+	gridbag.setConstraints(atf, c);
+	add(atf);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(aunits, c);
+	add(aunits);
+	lunits.setSelectedIndex(lindex);
+	aunits.setSelectedIndex(aindex);
+	lunits.addActionListener((le) -> {
+		lindex = lunits.getSelectedIndex();
+	    });
+	aunits.addActionListener((ae) -> {
+		aindex = aunits.getSelectedIndex();
+	    });
+    }
+}
+
+class LocPane extends JPanel {
+    static int xindex = 0;
+    static int yindex = 0;
+
+    static String errorMsg(String key, Object... args) {
+	return EPTS.errorMsg(key, args);
+    }
+
+    static String localeString(String key) {
+	return EPTS.localeString(key);
+    }
+
+    VTextField xtf;		// X text field
+    VTextField ytf;		// Y text field
+    JComboBox<String> xunits = new JComboBox<>(ConfigGCSPane.units);
+    JComboBox<String> yunits = new JComboBox<>(ConfigGCSPane.units);
+
+    boolean firstTime = true;
+    CharDocFilter cdf = new CharDocFilter();
+    InputVerifier tfiv = new InputVerifier() {
+	    public boolean verify(JComponent input) {
+		JTextField tf = (VTextField)input;
+		String string = tf.getText();
+		if (string == null) string = "";
+		string = string.trim();
+		try {
+		    if (string.length() == 0) {
+			if (firstTime) {
+			    firstTime = false;
+			    return false;
+			} else {
+			    return true;
+			}
+		    }
+		    double value = Double.parseDouble(string);
+		    return true;
+		} catch (Exception e) {
+		    return false;
+		}
+	    }
+	};
+
+    double xcoord = 0.0;
+    double ycoord = 0.0;
+
+    public double getXCoord() {
+	return ConfigGCSPane.convert[xindex].valueAt(xcoord);
+    }
+
+    public double getYCoord() {
+	return ConfigGCSPane.convert[yindex].valueAt(ycoord);
+    }
+
+    boolean noPrevErrors = true;
+
+    public LocPane() {
+	super();
+	boolean firstTime = true;
+	cdf.setAllowedChars("09eeEE..,,++--");
+	JLabel xl = new JLabel(localeString("X"));
+	JLabel yl = new JLabel(localeString("Y"));
+	xtf = new VTextField("", 10) {
+		@Override
+		protected void onAccepted() {
+		    String text = getText();
+		    text = text.trim();
+		    if (text == null || text.length() == 0) {
+			xcoord = 0.0;
+		    } else {
+			xcoord = Double.valueOf(text);
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    if (noPrevErrors) {
+			// Hack to control focus.
+			// When this panel first comes visible,
+			// it requests the focus but the container
+			// it is in does the same thing a bit later.
+			// A VTextField will notice the focus loss and
+			// check the validity of its value. We return
+			// false so that the keyboard focus will be
+			// requested again.
+			noPrevErrors = false;
+			String text = getText();
+			if (text == null || text.trim().length() == 0) {
+			    return false;
+			}
+		    }
+		    JOptionPane.showMessageDialog
+			(this, "Must enter a real number",
+			 "Error", JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+	((AbstractDocument)xtf.getDocument()).setDocumentFilter(cdf);
+	xtf.setInputVerifier(tfiv);
+	ytf = new VTextField("", 10) {
+		@Override
+		protected void onAccepted() {
+		    String text = getText();
+		    if (text == null || text.length() == 0) {
+			ycoord = 0.0;
+		    } else {
+			ycoord = Double.valueOf(text);
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    JOptionPane.showMessageDialog
+			(this, "Must enter a real number",
+			 "Error", JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+	((AbstractDocument)ytf.getDocument()).setDocumentFilter(cdf);
+	ytf.setInputVerifier(tfiv);
+	GridBagLayout gridbag = new GridBagLayout();
+	GridBagConstraints c = new GridBagConstraints();
+	setLayout(gridbag);
+	c.insets = new Insets(5, 5, 5, 5);
+	c.ipadx = 5;
+	c.ipady = 5;
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = 1;
+	gridbag.setConstraints(xl, c);
+	add(xl);
+	gridbag.setConstraints(xtf, c);
+	add(xtf);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(xunits, c);
+	add(xunits);
+	c.gridwidth = 1;
+	gridbag.setConstraints(yl, c);
+	add(yl);
+	gridbag.setConstraints(ytf, c);
+	add(ytf);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(yunits, c);
+	add(yunits);
+	xunits.setSelectedIndex(xindex);
+	yunits.setSelectedIndex(xindex);
+	xunits.addActionListener((ae) -> {
+		xindex = xunits.getSelectedIndex();
+	    });
+	yunits.addActionListener((ae) -> {
+		yindex = yunits.getSelectedIndex();
+	    });
+    }
+}
+
+class ArcPane extends JPanel {
+
+    static String errorMsg(String key, Object... args) {
+	return EPTS.errorMsg(key, args);
+    }
+
+    static String localeString(String key) {
+	return EPTS.localeString(key);
+    }
+
+    static int lindex = 0;
+    static int aindex = 0;
+
+    static Vector<String> nv = new Vector<>(10);
+    static {
+	nv.add("1");
+	nv.add("2");
+	nv.add("3");
+	nv.add("4");
+    }
+
+    JCheckBox ccwCheckBox = new JCheckBox(localeString("Counterclockwise"));
+    JComboBox<String> nsegComboBox = new JComboBox<>(nv);
+
+    VTextField rtf;		// radius text field
+    VTextField atf;		// angle text field
+    JComboBox<String> lunits = new JComboBox<>(ConfigGCSPane.units);
+    static Vector<String> av = new Vector<>(2);
+    static {
+	av.add("Degrees");
+	av.add("Radians");
+    }
+    JComboBox<String> aunits = new JComboBox<>(av);
+
+    boolean firstTime = true;
+    CharDocFilter cdf = new CharDocFilter();
+    InputVerifier rtfiv = new InputVerifier() {
+	    public boolean verify(JComponent input) {
+		JTextField tf = (VTextField)input;
+		String string = tf.getText();
+		if (string == null) string="";
+		string = string.trim();
+		try {
+		    if (string.length() == 0) {
+			if (firstTime) {
+			    firstTime = false;
+			    return false;
+			} else {
+			    return true;
+			}
+		    }
+		    double value = Double.parseDouble(string);
+		    if (value >= 0.0) {
+			return true;
+		    } else {
+			return false;
+		    }
+		} catch (Exception e) {
+		    return false;
+		}
+	    }
+	};
+    InputVerifier atfiv = new InputVerifier() {
+	    public boolean verify(JComponent input) {
+		JTextField tf = (VTextField)input;
+		String string = tf.getText();
+		try {
+		    if (string.length() == 0) return true;
+		    double value = Double.parseDouble(string);
+		    return true;
+		} catch (Exception e) {
+		    return false;
+		}
+	    }
+	};
+
+    double radius = 0.0;
+    double angle = 0.0;
+
+    public double getRadius() {
+	return ConfigGCSPane.convert[lindex].valueAt(radius);
+    }
+
+    public double getAngle() {
+	return (aindex == 0)? Math.toRadians(angle): angle;
+    }
+
+    public boolean isCounterClockwise() {
+	return ccwCheckBox.isSelected();
+    }
+
+    public double getMaxDelta() {
+	int divisor = 1 << nsegComboBox.getSelectedIndex();
+	return (Math.PI/2.0)/(divisor);
+    }
+
+    boolean noPrevErrors = true;
+
+    public ArcPane() {
+	super();
+	cdf.setAllowedChars("09eeEE..,,++--");
+	JLabel ll = new JLabel(localeString("Radius"));
+	JLabel al = new JLabel(localeString("Angle"));
+	JLabel nsl = new JLabel(localeString("NSegs"));
+	rtf = new VTextField("", 10) {
+		@Override
+		protected void onAccepted() {
+		    String text = getText();
+		    if (text == null || text.length() == 0) {
+			radius = 0.0;
+		    } else {
+			radius = Double.valueOf(text);
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    if (noPrevErrors) {
+			// Hack to control focus.
+			// When this panel first comes visible,
+			// it requests the focus but the container
+			// it is in does the same thing a bit later.
+			// A VTextField will notice the focus loss and
+			// check the validity of its value. We return
+			// false so that the keyboard focus will be
+			// requested again.
+			noPrevErrors = false;
+			String text = getText();
+			if (text == null || text.trim().length() == 0) {
+			    return false;
+			}
+		    }
+		    JOptionPane.showMessageDialog
+			(this, "Must enter a positive real number",
+			 "Error", JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+	((AbstractDocument)rtf.getDocument()).setDocumentFilter(cdf);
+	rtf.setInputVerifier(rtfiv);
+	atf = new VTextField("", 10) {
+		@Override
+		protected void onAccepted() {
+		    String text = getText();
+		    if (text == null || text.length() == 0) {
+			angle = 0.0;
+		    } else {
+			angle = Double.valueOf(text);
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    JOptionPane.showMessageDialog
+			(this, "Must enter a real number",
+			 "Error", JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+	((AbstractDocument)atf.getDocument()).setDocumentFilter(cdf);
+	atf.setInputVerifier(atfiv);
+	GridBagLayout gridbag = new GridBagLayout();
+	GridBagConstraints c = new GridBagConstraints();
+	setLayout(gridbag);
+	c.insets = new Insets(5, 5, 5, 5);
+	c.ipadx = 5;
+	c.ipady = 5;
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = 1;
+	gridbag.setConstraints(ll, c);
+	add(ll);
+	gridbag.setConstraints(rtf, c);
+	add(rtf);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(lunits, c);
+	add(lunits);
+	c.gridwidth = 1;
+	gridbag.setConstraints(al, c);
+	add(al);
+	gridbag.setConstraints(atf, c);
+	add(atf);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(aunits, c);
+	add(aunits);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(ccwCheckBox, c);
+	add(ccwCheckBox);
+	ccwCheckBox.setSelected(true);
+	c.gridwidth = 1;
+	gridbag.setConstraints(nsl, c);
+	add(nsl);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(nsegComboBox, c);
+	add(nsegComboBox);
+
+	nsegComboBox.setSelectedIndex(0);
+	lunits.setSelectedIndex(lindex);
+	aunits.setSelectedIndex(aindex);
+	lunits.addActionListener((le) -> {
+		lindex = lunits.getSelectedIndex();
+	    });
+	aunits.addActionListener((ae) -> {
+		aindex = aunits.getSelectedIndex();
+	    });
+    }
+}
+
+
 
 public class EPTSWindow {
 
@@ -327,12 +866,12 @@ public class EPTSWindow {
 	column.setPreferredWidth(w3);
 
 	tableFrame = new JFrame();
+	tableFrame.setIconImages(EPTS.getIconList());
 	tableFrame.setPreferredSize(new Dimension(800,600));
 	JScrollPane tableScrollPane = new JScrollPane(ptable);
 	tableScrollPane.setOpaque(true);
 	ptable.setFillsViewportHeight(true);
 	tableFrame.setContentPane(tableScrollPane);
-	tableFrame.setIconImages(iconList);
   	tableFrame.pack();
     }
 
@@ -342,6 +881,8 @@ public class EPTSWindow {
     private void showManual() {
 	if (manualFrame == null) {
 	    manualFrame = new JFrame("Manual");
+	    manualFrame.setIconImages(EPTS.getIconList());
+
 	    Container pane = manualFrame.getContentPane();
 	    manualPane = new HtmlWithTocPane();
 	    manualFrame.setSize(920, 700);
@@ -724,6 +1265,12 @@ public class EPTSWindow {
     JMenuItem portMenuItem = null;
     PortTextField portTextField = null;
     JMenuItem webMenuItem = null;
+
+    static final String OK_CANCEL[] = {
+	localeString("OK"),
+	localeString("Cancel")
+    };
+
     private void setMenus(JFrame frame, double w, double h) {
 	JMenuBar menubar = new JMenuBar();
 	JMenuItem menuItem;
@@ -1288,6 +1835,11 @@ public class EPTSWindow {
 				resetState();
 				setModeline(localeString("LoopComplete"));
 
+			    } else {
+				JRadioButtonMenuItem rbmi =
+				    (JRadioButtonMenuItem)
+				    TransitionTable.getMenuItem(pstate);
+				rbmi.setSelected(true);
 			    }
 			} else if (state instanceof EPTS.Mode) {
 			    EPTS.Mode mstate = (EPTS.Mode) state;
@@ -1316,6 +1868,332 @@ public class EPTSWindow {
 		    }
 		});
 	}
+	toolMenu.addSeparator();
+	toolMenu.add(new JLabel(localeString("bezierOps")));
+	menuItem = TransitionTable.getLocMenuItem();
+	menuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    final LocPane lpane = new LocPane();
+		    if (selectedRow != -1) {
+			PointTMR row = ptmodel.getRow(selectedRow);
+			if (row != null) {
+			    lpane.xtf.setText("" + row.getX());
+			    lpane.ytf.setText("" + row.getY());
+			}
+		    }
+		    lpane.addAncestorListener(new AncestorListener() {
+			    @Override
+			    public void ancestorAdded(AncestorEvent e) {
+				lpane.xtf.requestFocusInWindow();
+			    }
+			    @Override
+			    public void ancestorMoved(AncestorEvent e) {}
+			    @Override
+			    public void ancestorRemoved(AncestorEvent e) {}
+			});
+		    int status = JOptionPane.showConfirmDialog
+			(frame, lpane, "Add Vector-Specified Line Segment",
+			 JOptionPane.OK_CANCEL_OPTION,
+			 JOptionPane.QUESTION_MESSAGE);
+		    if (status == 0) {
+			double x = lpane.getXCoord();
+			double y = lpane.getYCoord();
+			double xp = (x - xrefpoint) / scaleFactor;
+			double yp = (y - yrefpoint) / scaleFactor;
+			yp = height - yp;
+			if (xp < 0.0 || xp > width || yp < 0.0 || yp > height) {
+			    JOptionPane.showMessageDialog
+				(frame, "New point out of range",
+				 "Error", JOptionPane.ERROR_MESSAGE);
+			    return;
+			}
+			if (locState) {
+			    if (selectedRow != -1) {
+				ptmodel.changeCoords(selectedRow,
+						     x, y, xp, yp, true);
+			    } else {
+				ptmodel.addRow(varname, EPTS.Mode.LOCATION,
+					       x, y, xp, yp);
+			    }
+			    locState = false;
+			    setModeline("");
+			    TransitionTable.getLocMenuItem().setEnabled(false);
+			    resetState();
+			} else {
+			    if (selectedRow != -1) {
+				ptmodel.changeCoords(selectedRow,
+						     x, y, xp, yp, true);
+				selectedRow = -1;
+			    } else {
+				ptmodel.addRow("", nextState, x, y, xp, yp);
+			    }
+			    if (nextState != null) {
+				ttable.nextState(nextState);
+				JRadioButtonMenuItem rbmi =
+				    (JRadioButtonMenuItem)
+				    TransitionTable.getMenuItem(nextState);
+				rbmi.setSelected(true);
+			    } else {
+				resetState();
+				TransitionTable.getLocMenuItem()
+				    .setEnabled(false);
+			    }
+			}
+			JViewport vp = scrollPane.getViewport();
+			int vpw = vp.getWidth();
+			int vph = vp.getHeight();
+			int ipx = (int)(Math.round(xp - vpw/2));
+			int ipy = (int)(Math.round(yp - vph/2));
+			if (ipx < 0) ipx = 0;
+			if (ipy < 0) ipy = 0;
+			vp.setViewPosition(new Point(ipx, ipy));
+			scrollPane.repaint();
+		    }
+		}
+	    });
+	toolMenu.add(menuItem);
+	menuItem = TransitionTable.getVectorMenuItem();
+	menuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    final VectorPane vpane = new VectorPane();
+		    vpane.addAncestorListener(new AncestorListener() {
+			    @Override
+			    public void ancestorAdded(AncestorEvent e) {
+				vpane.ltf.requestFocusInWindow();
+			    }
+			    @Override
+			    public void ancestorMoved(AncestorEvent e) {}
+			    @Override
+			    public void ancestorRemoved(AncestorEvent e) {}
+			});
+		    int status = JOptionPane.showConfirmDialog
+			(frame, vpane, "Add Vector-Specified Line Segment",
+			 JOptionPane.OK_CANCEL_OPTION,
+			 JOptionPane.QUESTION_MESSAGE);
+		    if (status == 0) {
+			double length = vpane.getLength();
+			double angle = vpane.getAngle();
+			System.out.println("length = " + length);
+			System.out.println("angle = " + Math.toDegrees(angle)
+					   + " degrees");
+			PointTMR row = ptmodel.getLastRow();
+			System.out.format("old: (%g, %g)\n",
+					  row.getX() , row.getY());
+			double x = row.getX() + length * Math.cos(angle);
+			double y = row.getY() + length * Math.sin(angle);
+			System.out.format("new: (%g, %g)\n", x, y);
+			/*
+			if (x < graph.getXLower() || x > graph.getXUpper()
+			    || y < graph.getYLower() || y > graph.getYUpper()) {
+			    // point out of range.
+			    JOptionPane.showMessageDialog
+				(frame, "New point out of range",
+				 "Error", JOptionPane.ERROR_MESSAGE);
+			    return;
+			}
+			*/
+			double xp = (x - xrefpoint) / scaleFactor;
+			double yp = (y - yrefpoint) / scaleFactor;
+			yp = height - yp;
+			if (xp < 0.0 || xp > width || yp < 0.0 || yp > height) {
+			    JOptionPane.showMessageDialog
+				(frame, "New point out of range",
+				 "Error", JOptionPane.ERROR_MESSAGE);
+			    return;
+			}
+			ptmodel.addRow("", SplinePathBuilder.CPointType.SEG_END,
+				       x, y, xp, yp);
+			ttable.nextState(SplinePathBuilder.CPointType.SEG_END);
+			JRadioButtonMenuItem rbmi = (JRadioButtonMenuItem)
+			    TransitionTable.getMenuItem
+			    (SplinePathBuilder.CPointType.SEG_END);
+			rbmi.setSelected(true);
+			JViewport vp = scrollPane.getViewport();
+			int vpw = vp.getWidth();
+			int vph = vp.getHeight();
+			int ipx = (int)(Math.round(xp - vpw/2));
+			int ipy = (int)(Math.round(yp - vph/2));
+			if (ipx < 0) ipx = 0;
+			if (ipy < 0) ipy = 0;
+			vp.setViewPosition(new Point(ipx, ipy));
+			scrollPane.repaint();
+		    }
+		}
+	    });
+	toolMenu.add(menuItem);
+	menuItem = TransitionTable.getArcMenuItem();
+	menuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    final ArcPane apane = new ArcPane();
+		    apane.addAncestorListener(new AncestorListener() {
+			    @Override
+			    public void ancestorAdded(AncestorEvent e) {
+				apane.rtf.requestFocusInWindow();
+			    }
+			    @Override
+			    public void ancestorMoved(AncestorEvent e) {}
+			    @Override
+			    public void ancestorRemoved(AncestorEvent e) {}
+			});
+		    int status = JOptionPane.showConfirmDialog
+			(frame, apane, "Add an Arc",
+			 JOptionPane.OK_CANCEL_OPTION,
+			 JOptionPane.QUESTION_MESSAGE);
+		    if (status == 0) {
+			double radius = apane.getRadius();
+			if (radius == 0.0) return;
+			double angle = apane.getAngle();
+			double maxdelta = apane.getMaxDelta();
+			boolean ccw = apane.isCounterClockwise();
+			System.out.println("radius = " + radius);
+			System.out.println("angle = " + Math.toDegrees(angle)
+					   + " degrees");
+			int lastind = ptmodel.getRowCount()-1;
+			int prevind = lastind - 1;
+			PointTMR row2 = ptmodel.getRow(lastind);
+			PointTMR row1 = ptmodel.getRow(prevind);
+			Enum<?> mode = row1.getMode();
+			if (mode instanceof SplinePathBuilder.CPointType) {
+			    SplinePathBuilder.CPointType type =
+				(SplinePathBuilder.CPointType) mode;
+			    SplinePath2D segment = new SplinePath2D();
+			    switch(type) {
+			    case MOVE_TO:
+			    case SEG_END:
+			    case CONTROL:
+				segment.moveTo(row1.getX(), row1.getY());
+				segment.lineTo(row2.getX(), row2.getY());
+				break;
+			    case SPLINE:
+				SplinePathBuilder sb = new SplinePathBuilder();
+				LinkedList<SplinePathBuilder.CPoint> cpoints =
+				    new LinkedList<>();
+				cpoints.add(new SplinePathBuilder.CPoint
+					    ((SplinePathBuilder.CPointType)
+					     row2.getMode(),
+					     row2.getX(), row2.getY()));
+				prevind = lastind;
+				do {
+				    prevind--;
+				    row1 = ptmodel.getRow(prevind);
+				    mode = row1.getMode();
+				    cpoints.add(new SplinePathBuilder.CPoint
+						((SplinePathBuilder.CPointType)
+						 mode,
+						 row1.getX(), row1.getY()));
+				} while (mode ==
+					 SplinePathBuilder.CPointType.SPLINE);
+				Collections.reverse(cpoints);
+				sb.initPath();
+				sb.append(cpoints);
+				segment = sb.getPath();
+				break;
+			    default:
+				throw new Error("bad case: " + type);
+			    }
+			    Path2D arc = Paths2D.createArc(segment, radius,
+							   ccw, angle,
+							   maxdelta);
+			    PathIterator pi = arc.getPathIterator(null);
+			    double[] coords = new double[6];
+			    int ptype = pi.currentSegment(coords);
+			    if (ptype != PathIterator.SEG_MOVETO) {
+				throw new Error();
+			    }
+			    pi.next(); // first is a MOVE_TO segment
+			    double x, y, xp, yp;
+			    do {
+				ptype = pi.currentSegment(coords);
+				if (ptype != PathIterator.SEG_CUBICTO) {
+				    throw new Error();
+				}
+				x = coords[0];
+				y = coords[1];
+				xp = (x - xrefpoint) / scaleFactor;
+				yp = (y - yrefpoint) / scaleFactor;
+				yp = height - yp;
+				if (xp < 0.0 || xp > width
+				    || yp < 0.0 || yp > height) {
+				    JOptionPane.showMessageDialog
+					(frame, "New point out of range",
+					 "Error", JOptionPane.ERROR_MESSAGE);
+				    return;
+				}
+				x = coords[2];
+				y = coords[3];
+				xp = (x - xrefpoint) / scaleFactor;
+				yp = (y - yrefpoint) / scaleFactor;
+				yp = height - yp;
+				if (xp < 0.0 || xp > width
+				    || yp < 0.0 || yp > height) {
+				    JOptionPane.showMessageDialog
+					(frame, "New point out of range",
+					 "Error", JOptionPane.ERROR_MESSAGE);
+				    return;
+				}
+				x = coords[4];
+				y = coords[5];
+				xp = (x - xrefpoint) / scaleFactor;
+				yp = (y - yrefpoint) / scaleFactor;
+				yp = height - yp;
+				if (xp < 0.0 || xp > width
+				    || yp < 0.0 || yp > height) {
+				    JOptionPane.showMessageDialog
+					(frame, "New point out of range",
+					 "Error", JOptionPane.ERROR_MESSAGE);
+				    return;
+				}
+				// Now repeat but set the row instead of
+				// testing the values.
+				x = coords[0];
+				y = coords[1];
+				xp = (x - xrefpoint) / scaleFactor;
+				yp = (y - yrefpoint) / scaleFactor;
+				yp = height - yp;
+				ptmodel.addRow("",
+					       SplinePathBuilder.CPointType
+					       .CONTROL,
+					       x, y, xp, yp);
+				x = coords[2];
+				y = coords[3];
+				xp = (x - xrefpoint) / scaleFactor;
+				yp = (y - yrefpoint) / scaleFactor;
+				yp = height - yp;
+				ptmodel.addRow("",
+					       SplinePathBuilder.CPointType
+					       .CONTROL,
+					       x, y, xp, yp);
+				x = coords[4];
+				y = coords[5];
+				xp = (x - xrefpoint) / scaleFactor;
+				yp = (y - yrefpoint) / scaleFactor;
+				yp = height - yp;
+				ptmodel.addRow("",
+					       SplinePathBuilder.CPointType
+					       .SEG_END,
+					       x, y, xp, yp);
+				pi.next();
+			    } while (!pi.isDone());
+			    ttable.nextState
+				(SplinePathBuilder.CPointType.SEG_END);
+			    JRadioButtonMenuItem rbmi = (JRadioButtonMenuItem)
+				TransitionTable.getMenuItem
+				(SplinePathBuilder.CPointType.SEG_END);
+			    rbmi.setSelected(true);
+			    JViewport vp = scrollPane.getViewport();
+			    int vpw = vp.getWidth();
+			    int vph = vp.getHeight();
+			    int ipx = (int)(Math.round(xp - vpw/2));
+			    int ipy = (int)(Math.round(yp - vph/2));
+			    if (ipx < 0) ipx = 0;
+			    if (ipy < 0) ipy = 0;
+			    vp.setViewPosition(new Point(ipx, ipy));
+			    scrollPane.repaint();
+			}
+		    }
+		}
+	    });
+	toolMenu.add(menuItem);
 
 	JMenu helpMenu = new JMenu(localeString("Help"));
 	helpMenu.setMnemonic(KeyEvent.VK_H);
@@ -1831,7 +2709,10 @@ public class EPTSWindow {
 	       && ptmodel.getRowMode(endIndex) != EPTS.Mode.PATH_END) {
 	    endIndex++;
 	}
-	if (endIndex == n) return;
+	if (endIndex == n) {
+	    selectedRow = -1;
+	    return;
+	}
 	if (endIndex != n-1) {
 	    int startIndex = selectedRow;
 	    while (startIndex > 0 &&
@@ -1863,6 +2744,7 @@ public class EPTSWindow {
 		ttable = new TransitionTable();
 	    }
 	    ttable.setState(ptmodel, endIndex);
+	    TransitionTable.getLocMenuItem().setEnabled(true);
 	} else {
 	    endIndex = ptmodel.getRowCount()-1;
 	    ptmodel.deleteRow(endIndex--);
@@ -1878,6 +2760,7 @@ public class EPTSWindow {
 		ttable = new TransitionTable();
 	    }
 	    ttable.setState(ptmodel, endIndex);
+	    TransitionTable.getLocMenuItem().setEnabled(true);
 	}
 	if (nextState != null) {
 	    saveMenuItem.setEnabled(false);
@@ -2516,6 +3399,7 @@ public class EPTSWindow {
 		savedCursorPath = null;
 	    }
 	    nextState = null;
+	    TransitionTable.getLocMenuItem().setEnabled(false);
 	    saveMenuItem.setEnabled(true);
 	    saveAsMenuItem.setEnabled(true);
 	    ttable = null;
@@ -2544,6 +3428,7 @@ public class EPTSWindow {
     public void createLocation() {
 	resetState();
 	setModeline(localeString("LeftClickCreate"));
+	TransitionTable.getLocMenuItem().setEnabled(true);
 	distState = 0; 
 	locState = true;
 	savedCursorDist = panel.getCursor();
@@ -2586,6 +3471,7 @@ public class EPTSWindow {
 	ttable = new TransitionTable();
 	setModeline(SplinePathBuilder.CPointType.MOVE_TO);
 	nextState = SplinePathBuilder.CPointType.MOVE_TO;
+	TransitionTable.getLocMenuItem().setEnabled(true);
 	addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	saveMenuItem.setEnabled(false);
 	saveAsMenuItem.setEnabled(false);
@@ -2751,6 +3637,7 @@ public class EPTSWindow {
 			    setModeline(String.format
 					(localeString("SelectedPoint"),
 					 selectedRow, vn, row.getMode()));
+			    TransitionTable.getLocMenuItem().setEnabled(true);
 			    
 			} else {
 			    setModeline("");
@@ -2798,6 +3685,10 @@ public class EPTSWindow {
 			    // this is done in case we select a point,
 			    // intend to click a location between points to
 			    // deselected, but inadvertently drag the mouse.
+			    if (selectedRow != -1 && nextState == null) {
+				TransitionTable
+				    .getLocMenuItem().setEnabled(false);
+			    }
 			    selectedRow = -1;
 			    setModeline("");
 			}
@@ -2818,6 +3709,9 @@ public class EPTSWindow {
 		    }
 		    if (pointDragged && selectedRow != -1) {
 			ptmodel.fireRowChanged(selectedRow);
+		    }
+		    if (selectedRow != -1 && nextState == null) {
+			TransitionTable.getLocMenuItem().setEnabled(false);
 		    }
 		    selectedRow = -1;
 		    // selectedRowClick = false;
@@ -3307,68 +4201,6 @@ public class EPTSWindow {
 	g2d.draw(pb.getPath());
     }
 
-    static java.util.List<Image> iconList = new LinkedList<Image>();
-    static {
-	try {
-	    iconList.add((new
-			  ImageIcon((ClassLoader.getSystemClassLoader()
-				     .getResource("eptsicon16.png")
-				     ))).getImage());
-	    iconList.add((new
-			  ImageIcon((ClassLoader.getSystemClassLoader()
-				     .getResource("eptsicon20.png")
-				     ))).getImage());
-	    iconList.add((new
-			  ImageIcon((ClassLoader.getSystemClassLoader()
-				     .getResource("eptsicon22.png")
-				     ))).getImage());
-	    iconList.add((new
-			  ImageIcon((ClassLoader.getSystemClassLoader()
-				     .getResource("eptsicon24.png")
-				     ))).getImage());
-	    iconList.add((new
-			  ImageIcon((ClassLoader.getSystemClassLoader()
-				     .getResource("eptsicon32.png")
-				     ))).getImage());
-	    iconList.add((new
-			  ImageIcon((ClassLoader.getSystemClassLoader()
-				     .getResource("eptsicon36.png")
-				     ))).getImage());
-	    iconList.add((new
-			  ImageIcon((ClassLoader.getSystemClassLoader()
-				     .getResource("eptsicon48.png")
-				     ))).getImage());
-	    iconList.add((new
-			  ImageIcon((ClassLoader.getSystemClassLoader()
-				     .getResource("eptsicon64.png")
-				     ))).getImage());
-	    iconList.add((new
-			  ImageIcon((ClassLoader.getSystemClassLoader()
-				     .getResource("eptsicon72.png")
-				     ))).getImage());
-	    iconList.add((new
-			  ImageIcon((ClassLoader.getSystemClassLoader()
-				     .getResource("eptsicon96.png")
-				     ))).getImage());
-	    iconList.add((new
-			  ImageIcon((ClassLoader.getSystemClassLoader()
-				     .getResource("eptsicon128.png")
-				     ))).getImage());
-	    iconList.add((new
-			  ImageIcon((ClassLoader.getSystemClassLoader()
-				     .getResource("eptsicon192.png")
-				     ))).getImage());
-	    iconList.add((new
-			  ImageIcon((ClassLoader.getSystemClassLoader()
-				     .getResource("eptsicon256.png")
-				     ))).getImage());
-	    iconList.add((new
-			  ImageIcon((ClassLoader.getSystemClassLoader()
-				     .getResource("eptsicon512.png")
-				     ))).getImage());
-	} catch(Exception e) {
-	}
-    }
 
     public static void setPort(int port) {
 	EPTSWindow.port = port;
@@ -3538,7 +4370,7 @@ public class EPTSWindow {
 				    });
 			    }
 			});
-		    frame.setIconImages(iconList);
+		    frame.setIconImages(EPTS.getIconList());
 		    configGCSPane = new ConfigGCSPane();
 		    frame.setVisible(true);
 		}

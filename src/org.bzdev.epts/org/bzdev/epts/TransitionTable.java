@@ -31,6 +31,7 @@ public class TransitionTable {
     static String errorMsg(String key, Object... args) {
 	return EPTS.errorMsg(key, args);
     }
+
     static String localeString(String key) {
 	return EPTS.localeString(key);
     }
@@ -51,6 +52,28 @@ public class TransitionTable {
     static HashMap<Enum,JMenuItem> menuItemMap = new HashMap<>();
     static HashMap<Enum,String> accelMap = new HashMap<>();
     private static ButtonGroup bg = new ButtonGroup();
+
+    private static JMenuItem vectorMenuItem =
+	new JMenuItem(localeString("Vector"));
+    private static JMenuItem arcMenuItem = new JMenuItem(localeString("Arc"));
+    private static JMenuItem locMenuItem = new JMenuItem(localeString("Loc"));
+
+    static {
+	vectorMenuItem.setEnabled(false);
+	vectorMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, 0));
+	arcMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, 0));
+	arcMenuItem.setEnabled(false);
+	locMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, 0));
+	locMenuItem.setEnabled(false);
+    }
+
+    static JMenuItem getMenuItem(Enum state) {
+	return menuItemMap.get(state);
+    }
+
+    static JMenuItem getVectorMenuItem() {return vectorMenuItem;}
+    static JMenuItem getArcMenuItem() {return arcMenuItem;}
+    static JMenuItem getLocMenuItem() {return locMenuItem;}
 
     private static void createMenuItem(Enum state, String label, int keycode,
 				       boolean enabled, boolean selected)
@@ -148,6 +171,9 @@ public class TransitionTable {
 	    item.setEnabled(state == currentState);
 	    item.setSelected(false);
 	}
+	vectorMenuItem.setEnabled(false);
+	arcMenuItem.setEnabled(false);
+	locMenuItem.setEnabled(false);
     }
 
     public Enum getCurrentState() {return currentState;}
@@ -173,6 +199,8 @@ public class TransitionTable {
 	successiveCount = 0;
 	passedSE = false;
 	currentState = mode;
+	vectorMenuItem.setEnabled(false);
+	arcMenuItem.setEnabled(false);
 	boolean result = false;
 	for (int i = start+1 ; i <= index; i++) {
 	    result = nextState(ptmodel.getRow(i).getMode());
@@ -191,6 +219,8 @@ public class TransitionTable {
 		throw new IllegalArgumentException(errorMsg("successivePath"));
 	    }
 	    currentState = EPTS.Mode.PATH_END;
+	    vectorMenuItem.setEnabled(false);
+	    arcMenuItem.setEnabled(false);
 	    for (Enum state: menuItemMap.keySet()) {
 		JMenuItem item = menuItemMap.get(state);
 		item.setEnabled(false);
@@ -286,6 +316,21 @@ public class TransitionTable {
 		item.setEnabled(true);
 	    }
 	    currentState = newState;
+	    if (currentState == SplinePathBuilder.CPointType.MOVE_TO) {
+		vectorMenuItem.setEnabled(true);
+		arcMenuItem.setEnabled(false);
+	    } else if (currentState == SplinePathBuilder.CPointType.SEG_END) {
+		vectorMenuItem.setEnabled(true);
+		arcMenuItem.setEnabled(true);
+	    } else {
+		vectorMenuItem.setEnabled(false);
+		arcMenuItem.setEnabled(false);
+	    }
+	    if (currentState != EPTS.Mode.PATH_END) {
+		locMenuItem.setEnabled(true);
+	    } else {
+		locMenuItem.setEnabled(false);
+	    }
 	    return result; 
 	}
     }

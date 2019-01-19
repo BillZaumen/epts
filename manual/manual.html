@@ -607,7 +607,7 @@ displayed in textual form. This menu contains the following items:
 	Like spline points, the end-of-segment points are shown as
 	black circles with white borders.
     </UL>
-  <LI>Options for ending a path.
+  <LI>Two menu items provide Options for ending a path:
     <UL>
       <LI><B><CODE>Loop</CODE></B>. The path will be closed by connecting the
 	last point entered to the first point on the path.  A loop
@@ -617,8 +617,63 @@ displayed in textual form. This menu contains the following items:
       <LI><B><CODE>Path Ended</CODE></B>. This option ends the current path
 	without closing it.
     </UL>
-    Menu items that are not applicable are disabled.
+  <LI>Three Menu items provide explicit coordinates by opening a dialog
+    box with fields containing various coordinates, lengths, and angles:
+    <UL>
+      <LI><B><CODE>Set X-Y Coordinates (GCS)</CODE></B>. This menu item
+	will open a dialog box that will ask for the X and Y
+	coordinates of a point specified in GCS units:
+	<BR><BR>
+	<CENTER><IMG src="LocationDialog.png"></CENTER>
+	<BR>
+	It is equivalent to positioning the mouse at that point and
+	clicking the left-mouse button when the cross-hair cursor is
+	displayed.  Both coordinate fields have an adjacent pull-down
+	menu that allows units to be specified.
+      <LI><B><CODE>Add Vector</CODE></B>. This menu item will open a
+	dialog box that will ask for a length and an angle:
+	<BR><BR>
+	<CENTER><IMG src="AddVector.png"></CENTER>
+	<BR>
+	The angle is measured counterclockwise with 0 corresponding to
+	the direction of the positive X axis. A straight-line segment
+	will be added from the current point (the last point entered
+	along the curve) to a point whose distance from the current
+	point is given by the <B><CODE>length</CODE></B> field and
+	whose direction is given by the <B><CODE>Angle</CODE></B>
+	field. Both fields have adjacent pull-down menus that allow
+	units to be specified (distance units for the
+	<B><CODE>length</CODE></B> field and angular units
+	(degrees or radians) for the <B><CODE>Angle</CODE></B> field.
+      <LI><B><CODE>Add Arc</CODE></B>. This menu item will open a
+	dialog box that will ask for a radius, angle, angle direction,
+	and arc-accuracy level:
+	<BR><BR>
+	<CENTER><IMG src="AddArc.png"></CENTER>
+	<BR>
+	The <B><CODE>Radius</CODE></B> field
+	provides the radius of the arc in GCS units.
+	The <B><CODE>Angle</CODE></B> field provides the angular
+	extent of the arc, with positive value indicating that the
+	arc's tangent at the current point is parallel to the tangent
+	vector at the current point and a negative value indicating
+	that the arc's tangent at the current point is anti-parallel to
+	the the tangent vector at the current point.
+	The <B><CODE>Counterclockwise</CODE></B> checkbox indicates
+	whether the arc, when the angle is positive, turns clockwise
+	or counterclockwise in graph coordinate space (counterclockwise
+	is defined as turning from the positive X axis towards the positive
+	Y axis). This checkbox determines the position of the circle
+	containing the arc regardless of the sign of the angle. Finally,
+	a pull-down menu indicates the accuracy of the arc.  A circular
+	arc is approximated by a sequence of cubic B&eacute;zier curves
+	and the arc accuracy sets the maximum angular extent of each.
+	When the arc accuracy is set to 1 (the default), the maximum
+	angular extent for a cubic B&eacute;zier curve segment is 90
+	degrees. Increasing the arc accuracy by 1 halves this angle.
+    </UL>
 </UL>
+Menu items that are not applicable are disabled.
 
 <H2><A name ="helpMenu">The Help menu</A></H2>
 The <CODE>Help</CODE> menu provides several ways of viewing a
@@ -798,10 +853,12 @@ a path or creating an isolated point at a specific location:
     move to up.
   <LI> Down-Arrow. When this key is clicked, a cross-hair cursor will
     move to down.
-  <LI> S. When the S key is pressed (without a modifier key, regardless
-    of whether the caps-lock key is in use), the next point will be
-    a spline point. If a spline point is not allowed, the keystroke
-    will be ignored.
+  <LI> A. When the A key is pressed (without a modifier key, regardless
+    of whether the caps-lock key is in use), if a curve is being
+    created and the current point is the end of a segment, a dialog box
+    creating a circular arc will appear. This is equivalent to selecting
+    the <B><CODE>Add Arc</CODE></B> menu item from the
+    <B><CODE>Tools</CODE></B> menu.
   <LI> C. When the C key is pressed (without a modifier key, regardless
     of whether the caps-lock key is in use), the next point will be a
     control point.  If a control point is not allowed, the keystroke
@@ -814,6 +871,23 @@ a path or creating an isolated point at a specific location:
     ended in a loop. This option will be ignored if the last point is
     a control point or if the last point is a spline point and there is
     an end-of-segment point that is already part of the path.
+  <LI> P. When the P key is pressed (without a modifier key, regardless
+    of whether the caps-lock key is in use), a dialog box will appear
+    that allows one to enter GCS coordinates for a point.  The behavior
+    is identical to clicking the left mouse button when the cross-hair
+    cursor appears over the corresponding point. This key is ignored when
+    not creating a location or a point on a B&eacute;zier curve.
+  <LI> S. When the S key is pressed (without a modifier key, regardless
+    of whether the caps-lock key is in use), the next point will be
+    a spline point. If a spline point is not allowed, the keystroke
+    will be ignored.
+  <LI> V. When the V key is pressed (without a modifier key, regardless
+    of whether the caps-lock key is in use), if a curve is being
+    created and the current point is not a control point or spline
+    point, a dialog box specifying a vector to the end of the next
+    segment will appear. This is equivalent to selecting
+    the <B><CODE>Add Vector</CODE></B> menu item from the
+    <B><CODE>Tools</CODE></B> menu.
   <LI> Z. When the Z key is pressed (without a modifier key, regardless
     of whether the caps-lock key is in use), the current path will remain
     open and will be ended.  The type of the last point will be changed to
@@ -2524,9 +2598,9 @@ URI for the current working directory.
 
 <H2><A name="modulesElement"> The modules element</A></H2>
 
-The <CODE>modules</CODE>element doesnot have any attributes.
+The <CODE>modules</CODE>element does not have any attributes.
 Instead, it contains a sequence of <CODE>module</CODE>elements.
-The contents of a <CODE>module</CODE> elemnt is text (XML PCDATA)
+The contents of a <CODE>module</CODE> element is text (XML PCDATA)
 providing the name of a module.
 
 <H2><A name="classpathElement"> The classpath element</A></H2>

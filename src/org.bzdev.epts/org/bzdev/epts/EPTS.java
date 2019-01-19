@@ -118,6 +118,7 @@ public class EPTS {
     }
     static final String ourCodebaseDir = ourCodebaseDir2;
 
+
     private static Properties defs = new Properties();
     private static boolean propertyNotAllowed(String name) {
 	if (System.getProperty(name) != null) return true;
@@ -130,7 +131,6 @@ public class EPTS {
 	return false;
     }
     private static String languageName = null;
-
     private static String getExtension(String pathname) throws Exception {
 	File file = new File(pathname);
 	if (!file.isFile()) {
@@ -3767,12 +3767,46 @@ public class EPTS {
 	}
     }
 
+    private static List<Image> iconList = new LinkedList<Image>();
+
+    public static List<Image> getIconList() {return iconList;}
+
+    private static String[] iconNames = {
+	"eptsicon16.png",
+	"eptsicon20.png",
+	"eptsicon22.png",
+	"eptsicon24.png",
+	"eptsicon32.png",
+	"eptsicon36.png",
+	"eptsicon48.png",
+	"eptsicon64.png",
+	"eptsicon72.png",
+	"eptsicon96.png",
+	"eptsicon128.png",
+	"eptsicon192.png",
+	"eptsicon256.png",
+	"eptsicon512.png"
+    };
+
+    static {
+	try {
+	    for (String iconName: iconNames) {
+		iconList.add(new
+			     ImageIcon((EPTS.class.getResource(iconName)))
+			     .getImage());
+	    }
+	} catch (Exception e) {
+	    System.err.println("could not initilize icons");
+	}
+    }
+
+
     public static void main(String argv[]) {
 	try {
 	    String url  = (new File(ourCodebase)).toURI().toURL().toString();
 	   System.setProperty("org.bzdev.protocols.resource.path", url);
-	    org.bzdev.protocols.Handlers.enable();
-	    init(argv);
+	   org.bzdev.protocols.Handlers.enable();
+	   init(argv);
 	} catch (Exception e) {
 	    ErrorMessage.display(e);
 	    if (stackTrace) {
