@@ -21,4 +21,3 @@ trans3:
 	javac -d classes \
 	-classpath ../jar/epts.jar:/usr/share/java/libbzdev.jar *.java 
 	$(JAVA) TTest3
-

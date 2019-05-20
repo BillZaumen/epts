@@ -914,6 +914,7 @@ public class EPTS {
     {
 	double dashIncr = Double.parseDouble(dashIncrement);
 	float[] array = BasicStrokeParm.getDashArray(dashPattern, dashIncr);
+	if (array == null) return null;
 	StringBuilder sb = new StringBuilder();
 	for (int i = 0; i < array.length; i++) {
 	    if (i > 0) sb.append(",");
@@ -3608,8 +3609,10 @@ public class EPTS {
 				    String dashArray =
 					getDashArray(info.dashPattern,
 						     info.dashIncrement);
-				    kmap.put("dashArray", dashArray);
-				    kmap.put("hasDashArray", emptyMap);
+				    if (dashArray != null) {
+					kmap.put("dashArray", dashArray);
+					kmap.put("hasDashArray", emptyMap);
+				    }
 				}
 				if (info.strokeJoin != null) {
 				    kmap.put("strokeJoin",
