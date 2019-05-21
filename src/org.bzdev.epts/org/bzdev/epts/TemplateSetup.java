@@ -1567,6 +1567,10 @@ public class TemplateSetup {
 			list.add("--fill-color");
 			list.add(colorString(pli.fillColor));
 		    }
+		    if (pli.draw || pli.fill) {
+			list.add("--zorder");
+			list.add("" + pli.zorder);
+		    }
 		    list.add("--winding-rule");
 		    list.add(windingRules[pli.windingRuleInd]);
 		}

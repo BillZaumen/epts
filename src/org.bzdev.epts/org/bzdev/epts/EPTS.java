@@ -25,6 +25,7 @@ import java.nio.file.Paths;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -906,6 +907,8 @@ public class EPTS {
 	String miterLimit;
 	String strokeWidth;
 	String zorder;
+	// Value of zorder as a long integer
+	long zo = Long.MIN_VALUE;
 	public FilterInfo() {}
     }
 
@@ -2507,7 +2510,7 @@ public class EPTS {
 			parseArgument(argv[index-1],argv[index],
 				      Long.class,
 				      null, false , null, false);
-
+		    filterInfo.zo = Long.parseLong(argv[index]);
 		    argsList.add(argv[index-1]);
 		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--web")) {
@@ -3558,6 +3561,20 @@ public class EPTS {
 			for (PointTMR row: parser.getRows()) {
 			    ptmodel.addRow(row);
 			}
+			filterInfoList.sort
+			    (new Comparator<FilterInfo>() {
+				    public int compare(FilterInfo o1,
+						       FilterInfo o2)
+				    {
+					if (o1.zo < o2.zo) {
+					    return -1;
+					} else if (o1.zo == o2.zo) {
+					    return 0;
+					} else {
+					    return 1;
+					}
+				    }
+				});
 			TemplateProcessor tp;
 			if (pname != null) {
 			    TemplateProcessor.KeyMap kmap =
