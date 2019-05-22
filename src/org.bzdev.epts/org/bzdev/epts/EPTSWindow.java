@@ -683,7 +683,7 @@ public class EPTSWindow {
 	if (imageFileNameSeen) {
 	    // TemplateProcessor.KeyMap map = new TemplateProcessor.KeyMap();
 	    keymap.put("hasImageURI", new TemplateProcessor.KeyMap());
-	    System.out.println("hasImageURI set");
+	    // System.out.println("hasImageURI set");
 	    if (imageURI != null) {
 		// we use relative URLs if the image file is in a
 		// subdirectory of the directory containing the saved
@@ -778,7 +778,7 @@ public class EPTSWindow {
 	}
 	List<String>modules = savedStateModules != null?
 	    savedStateModules: EPTS.getAddedModules();
-	System.out.println("modules.size() = " + modules.size());
+	// System.out.println("modules.size() = " + modules.size());
 	if (modules.size() > 0) {
 	    TemplateProcessor.KeyMap cbmap = new TemplateProcessor.KeyMap();
 	    TemplateProcessor.KeyMapList pmaplist =
@@ -4471,6 +4471,7 @@ public class EPTSWindow {
 		image = bi;
 	    }
 	    */
+	    imageURI = uri;
 	    init(image, (uri != null), null);
 	    // now restore state.
 	    SwingUtilities.invokeLater(new Runnable() {

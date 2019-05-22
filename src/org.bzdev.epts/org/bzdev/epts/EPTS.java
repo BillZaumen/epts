@@ -2212,11 +2212,13 @@ public class EPTS {
 			    if (sbmod.length() > 0) {
 				sbmod.append(",");
 			    }
-			    System.out.println("adding module " + mod);
+			    // System.out.println("adding module " + mod);
 			    sbmod.append(mod);
 			    addedModules.add(mod);
+			    /*
 			    System.out.println("addedModules.size() = "
 					       + addedModules.size());
+			    */
 			    modSet.add(mod);
 			}
 		    }
