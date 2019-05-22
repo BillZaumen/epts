@@ -1110,7 +1110,7 @@ public class EPTSWindow {
 	if (lastrow != null) {
 	    Enum  lrmode = lastrow.getMode();
 	    if (lrmode  instanceof SplinePathBuilder.CPointType) {
-	    // End the current partial path but do not remove it.
+		// End the current partial path but do not remove it.
 		if (lrmode == SplinePathBuilder.CPointType.CONTROL
 		    || lrmode == SplinePathBuilder.CPointType.SPLINE) {
 		    ptmodel.setLastRowMode
@@ -1118,8 +1118,28 @@ public class EPTSWindow {
 		    ttable.nextState(EPTS.Mode.PATH_END);
 		    ptmodel.addRow("", EPTS.Mode.PATH_END,
 				   0.0, 0.0, 0.0, 0.0);
+		    setModeline("Path Complete");
+		} else if (lrmode == SplinePathBuilder.CPointType.MOVE_TO) {
+		    ptmodel.deleteRow(ptmodel.getRowCount()-1);
+		    lastrow = ptmodel.getLastRow();
+		    if (lastrow != null) {
+			lrmode = lastrow.getMode();
+			if (lrmode == EPTS.Mode.PATH_START) {
+			    ptmodel.deleteRow(ptmodel.getRowCount()-1);
+			}
+		    }
+		    setModeline("Partial Path Deleted");
+		} else 	if (lrmode == SplinePathBuilder.CPointType.SEG_END) {
+		    ttable.nextState(EPTS.Mode.PATH_END);
+		    ptmodel.addRow("", EPTS.Mode.PATH_END,
+				   0.0, 0.0, 0.0, 0.0);
+		    setModeline("Path Complete");
 		}
-		setModeline("Path Complete");
+		resetState();
+		panel.repaint();
+	    } else if (lrmode == EPTS.Mode.PATH_START) {
+		ptmodel.deleteRow(ptmodel.getRowCount()-1);
+		setModeline("Partial Path Deleted");
 		resetState();
 		panel.repaint();
 	    }
