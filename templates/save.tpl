@@ -30,5 +30,10 @@ $(items:endItems)$(location:endLocation)       <row varname="$(varname)" type="L
 $(endLocation)$(pathStatement:endPathStatement)       <row varname="$(varname)" type="PATH_START"/>
 $(pathItem:endPathItem)       <row type="$(type)"$(xy:endXY) x="$(x)" y="$(y)" xp="$(xp)" yp="$(yp)"$(endXY)/>
 $(endPathItem)       <row type="PATH_END"/>
-$(endPathStatement)$(endItems)  </table>$(endTable)
-</epts>
+$(endPathStatement)$(endItems)  </table>$(endTable)$(hasFilterItems:endHasFilterItems)
+  <filters>$(filterItems:endFilterItems)
+      <filter name="$(filterName)" mode="$(filterMode)">$(filterRows:endFilterRows)
+         <filterRow varname="$(filterVarname)" mode="$(filterRowMode)"/>$(endFilterRows)
+      </filter>$(endFilterItems)
+  </filters>
+$(endHasFilterItems)</epts>

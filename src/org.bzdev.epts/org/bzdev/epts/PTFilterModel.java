@@ -9,6 +9,9 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
+import org.bzdev.util.TemplateProcessor;
+
+
 public class PTFilterModel implements TableModel {
 
     static String errorMsg(String key, Object... args) {
@@ -138,5 +141,16 @@ public class PTFilterModel implements TableModel {
 	} else {
 	    throw new IllegalStateException(errorMsg("notEditable"));
 	}
+    }
+
+    public TemplateProcessor.KeyMapList getKeyMapList() {
+	TemplateProcessor.KeyMapList list = new TemplateProcessor.KeyMapList();
+	for (PointTFMRow row: rows) {
+	    TemplateProcessor.KeyMap map = new TemplateProcessor.KeyMap();
+	    map.put("filterVarname", row.getVariableName());
+	    map.put("filterRowMode", row.getMode().name());
+	    list.add(map);
+	}
+	return list;
     }
 }

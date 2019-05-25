@@ -673,6 +673,9 @@ public class EPTSWindow {
     List<String> savedStateClasspath = null;
     List<String> savedStateModules = null;
 
+    private static final TemplateProcessor.KeyMap emptyMap =
+	new TemplateProcessor.KeyMap();
+
     public void save(File f) throws IOException {
 	TemplateProcessor.KeyMap keymap = new TemplateProcessor.KeyMap();
 	configGCSPane.saveState();
@@ -850,6 +853,11 @@ public class EPTSWindow {
 	if (km != null && km.size() > 0) {
 	    keymap.put("table", km);
 	}
+	if (ptfilters != null && ptfilters.size() > 0) {
+	    keymap.put("hasFilterItems", emptyMap);
+	    keymap.put("filterItems", ptfilters.getKeyMapList());
+	}
+
 	TemplateProcessor tp = new TemplateProcessor(keymap);
 	File tf = File.createTempFile("epts-eptc", null, f.getParentFile());
 	OutputStream os = new FileOutputStream(tf);
@@ -1326,6 +1334,8 @@ public class EPTSWindow {
 	localeString("OK"),
 	localeString("Cancel")
     };
+
+    PTFilters ptfilters = null;
 
     private void setMenus(JFrame frame, double w, double h) {
 	JMenuBar menubar = new JMenuBar();
@@ -2248,7 +2258,7 @@ public class EPTSWindow {
 	final JMenu filterMenu = new JMenu(localeString("Filters"));
 	filterMenu.setMnemonic(KeyEvent.VK_L);
 	menubar.add(filterMenu);
-	final PTFilters ptfilters = new PTFilters(frame, filterMenu, ptmodel);
+	ptfilters = new PTFilters(frame, filterMenu, ptmodel);
 	menuItem = new JMenuItem(localeString("newFilter"), KeyEvent.VK_N);
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {

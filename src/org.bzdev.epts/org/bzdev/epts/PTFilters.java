@@ -6,8 +6,10 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 
+import org.bzdev.util.TemplateProcessor;
 
 public class PTFilters {
     static String localeString(String key) {
@@ -26,12 +28,32 @@ public class PTFilters {
 
     TreeMap<String,PTFilter> map = new TreeMap<>();
 
+    public int size() {
+	return map.size();
+    }
+
     public PTFilter getFilter(String name) {return map.get(name);}
 
     public void clear() {
 	for (PointTMR row: ptmodel.getRows()) {
 	    row.setFilterMode(PointTMR.FilterMode.SELECTABLE);
 	}
+    }
+
+    public TemplateProcessor.KeyMapList getKeyMapList() {
+	TemplateProcessor.KeyMapList list = new TemplateProcessor.KeyMapList();
+	for (Map.Entry<String,PTFilter> entry: map.entrySet()) {
+	    TemplateProcessor.KeyMap filterMap = new TemplateProcessor.KeyMap();
+	    String filterName = entry.getKey();
+	    PTFilter filter = entry.getValue();
+	    filterMap.put("filterName", filterName);
+	    filterMap.put("filterMode", filter.getMode().name());
+	    System.out.println("... filterName = "+filterMap.get("filterName"));
+	    System.out.println("... filterMode = "+filterMap.get("filterMode"));
+	    filterMap.put("filterRows", filter.getModel().getKeyMapList());
+	    list.add(filterMap);
+	}
+	return list;
     }
 
     public static class Entry {

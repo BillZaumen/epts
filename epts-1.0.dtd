@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!ELEMENT epts (image, codebase?, modules?, classpath?,
-	  scripting?, targetList?, gcsconfig, table)>
+	  scripting?, targetList?, gcsconfig, table, filters?)>
 <!ATTLIST epts
 	  xmlns CDATA #FIXED "http://bzdev.org/DTD/epts-1.0">
 
@@ -54,3 +54,15 @@
 	  y CDATA #IMPLIED
 	  xp CDATA #IMPLIED
 	  yp CDATA #IMPLIED>
+
+<!ELEMENT filters (filter*)>
+
+<!ELEMENT filter (filterRow*)>
+<!ATTLIST filter
+	  name CDATA #REQUIRED
+	  mode (DEFAULT|SELECTABLE|DRAWABLE|INVISIBLE) #REQUIRED>
+
+<!ELEMENT filterRow EMPTY>
+<!ATTLIST filterRow
+	  varname CDATA #REQUIRED
+	  mode (DEFAULT|SELECTABLE|DRAWABLE|INVISIBLE) #REQUIRED>
