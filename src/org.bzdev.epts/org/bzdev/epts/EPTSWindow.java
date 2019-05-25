@@ -2245,6 +2245,49 @@ public class EPTSWindow {
 	    });
 	toolMenu.add(menuItem);
 
+	final JMenu filterMenu = new JMenu(localeString("Filters"));
+	filterMenu.setMnemonic(KeyEvent.VK_L);
+	menubar.add(filterMenu);
+	final PTFilters ptfilters = new PTFilters(frame, filterMenu, ptmodel);
+	menuItem = new JMenuItem(localeString("newFilter"), KeyEvent.VK_N);
+	menuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    // create a new menu item.
+		    // get the name
+		    String name = null;
+		    boolean loop = true;
+		    do {
+			name = (String)JOptionPane.showInputDialog
+			    (frame, localeString("newFilterName"),
+			     localeString("newFilterNameTitle"),
+			     JOptionPane.PLAIN_MESSAGE);
+			if (name == null) return;
+			name = name.trim();
+			if (name.length() == 0) return;
+			if (ptfilters.getFilter(name) == null) {
+			    loop = false;
+			} else {
+			    JOptionPane.showMessageDialog
+				(frame, "Filter name in use",
+				 "Error", JOptionPane.ERROR_MESSAGE);
+			}
+		    } while (loop);
+		    ptfilters.addFilter(name, e, panel);
+		    panel.repaint();
+		}
+	    });
+	filterMenu.add(menuItem);
+	menuItem = new JMenuItem(localeString("clearFilter"), KeyEvent.VK_C);
+	menuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    ptfilters.clear();
+		    filterMenu.setText(localeString("Filters"));
+		    panel.repaint();
+		}
+	    });
+	filterMenu.add(menuItem);
+	filterMenu.addSeparator();
+
 	JMenu helpMenu = new JMenu(localeString("Help"));
 	helpMenu.setMnemonic(KeyEvent.VK_H);
 	menubar.add(helpMenu);
@@ -4126,6 +4169,10 @@ public class EPTSWindow {
 	SplinePathBuilder pb = new SplinePathBuilder();
 	pb.initPath();
 	for (PointTMR row: ptmodel.getRows()) {
+	    if (!row.isDrawable()) {
+		index++;
+		continue;
+	    }
 	    double x = zoom*row.getXP();
 	    double y = zoom*row.getYP();
 	    Enum mode = row.getMode();
@@ -4133,16 +4180,19 @@ public class EPTSWindow {
 		EPTS.Mode emode = (EPTS.Mode)mode;
 		switch(emode) {
 		case LOCATION:
-		    g2d2.draw(new Ellipse2D.Double
-			     (x-radius, y-radius, radius2, radius2));
-		    g2d.fill(new Ellipse2D.Double
-			     (x-radius, y-radius, radius2, radius2));
-		    if (index == selectedRow) {
+		    if (row.isSelectable()) {
 			g2d2.draw(new Ellipse2D.Double
-				 (x-llradius, y-llradius,
-				  llradius2, llradius2));
-			g2d.draw(new Ellipse2D.Double
-				 (x-lradius, y-lradius, lradius2, lradius2));
+				  (x-radius, y-radius, radius2, radius2));
+			g2d.fill(new Ellipse2D.Double
+				 (x-radius, y-radius, radius2, radius2));
+			if (index == selectedRow) {
+			    g2d2.draw(new Ellipse2D.Double
+				      (x-llradius, y-llradius,
+				       llradius2, llradius2));
+			    g2d.draw(new Ellipse2D.Double
+				     (x-lradius, y-lradius,
+				      lradius2, lradius2));
+			}
 		    }
 		    break;
 		case PATH_START:
@@ -4156,32 +4206,38 @@ public class EPTSWindow {
 		    (SplinePathBuilder.CPointType) mode;
 		switch(smode) {
 		case MOVE_TO:
-		    g2d2.draw(new Ellipse2D.Double
-			     (x-radius, y-radius, radius2, radius2));
-		    g2d.fill(new Ellipse2D.Double
-			     (x-radius, y-radius, radius2, radius2));
-		    if (index == selectedRow) {
+		    if (row.isSelectable()) {
 			g2d2.draw(new Ellipse2D.Double
-				 (x-llradius, y-llradius,
-				  llradius2, llradius2));
-			g2d.draw(new Ellipse2D.Double
-				 (x-lradius, y-lradius, lradius2, lradius2));
+				  (x-radius, y-radius, radius2, radius2));
+			g2d.fill(new Ellipse2D.Double
+				 (x-radius, y-radius, radius2, radius2));
+			if (index == selectedRow) {
+			    g2d2.draw(new Ellipse2D.Double
+				      (x-llradius, y-llradius,
+				       llradius2, llradius2));
+			    g2d.draw(new Ellipse2D.Double
+				     (x-lradius, y-lradius,
+				      lradius2, lradius2));
+			}
 		    }
 		    pb.append(new SplinePathBuilder.CPoint(smode, x, y));
 		    prevx = x;
 		    prevy = y;
 		    break;
 		case SPLINE:
-		    g2d2.draw(new Ellipse2D.Double
-			     (x-radius, y-radius, radius2, radius2));
-		    g2d.fill(new Ellipse2D.Double
-			     (x-radius, y-radius, radius2, radius2));
-		    if (index == selectedRow) {
+		    if (row.isSelectable()) {
 			g2d2.draw(new Ellipse2D.Double
-				 (x-llradius, y-llradius,
-				  llradius2, llradius2));
-			g2d.draw(new Ellipse2D.Double
-				 (x-lradius, y-lradius, lradius2, lradius2));
+				  (x-radius, y-radius, radius2, radius2));
+			g2d.fill(new Ellipse2D.Double
+				 (x-radius, y-radius, radius2, radius2));
+			if (index == selectedRow) {
+			    g2d2.draw(new Ellipse2D.Double
+				      (x-llradius, y-llradius,
+				       llradius2, llradius2));
+			    g2d.draw(new Ellipse2D.Double
+				     (x-lradius, y-lradius,
+				      lradius2, lradius2));
+			}
 		    }
 		    if (index == nrows-1) {
 			pb.append(new SplinePathBuilder.CPoint
@@ -4194,16 +4250,19 @@ public class EPTSWindow {
 		    prevy = y;
 		    break;
 		case SEG_END:
-		    g2d2.draw(new Ellipse2D.Double
-			     (x-radius, y-radius, radius2, radius2));
-		    g2d.fill(new Ellipse2D.Double
-			     (x-radius, y-radius, radius2, radius2));
-		    if (index == selectedRow) {
+		    if (row.isSelectable()) {
 			g2d2.draw(new Ellipse2D.Double
-				 (x-llradius, y-llradius,
-				  llradius2, llradius2));
-			g2d.draw(new Ellipse2D.Double
-				 (x-lradius, y-lradius, lradius2, lradius2));
+				  (x-radius, y-radius, radius2, radius2));
+			g2d.fill(new Ellipse2D.Double
+				 (x-radius, y-radius, radius2, radius2));
+			if (index == selectedRow) {
+			    g2d2.draw(new Ellipse2D.Double
+				      (x-llradius, y-llradius,
+				       llradius2, llradius2));
+			    g2d.draw(new Ellipse2D.Double
+				     (x-lradius, y-lradius,
+				      lradius2, lradius2));
+			}
 		    }
 		    if (lastMode == SplinePathBuilder.CPointType.CONTROL) {
 			g2d2.draw(new Line2D.Double(prevx, prevy, x, y));
@@ -4214,15 +4273,17 @@ public class EPTSWindow {
 		    prevy = y;
 		    break;
 		case CONTROL:
-		    g2d2.draw(new Rectangle.Double
-			     (x-radius, y-radius, radius2, radius2));
-		    g2d.fill(new Rectangle2D.Double(x-hw, y-hw, w, w));
-		    if (index == selectedRow) {
-			g2d2.draw(new Rectangle2D.Double
-				 (x-llradius, y-llradius,
-				  llradius2, llradius2));
-			g2d.draw(new Rectangle2D.Double
-				 (x-lhw, y-lhw, lw, lw));
+		    if (row.isSelectable()) {
+			g2d2.draw(new Rectangle.Double
+				  (x-radius, y-radius, radius2, radius2));
+			g2d.fill(new Rectangle2D.Double(x-hw, y-hw, w, w));
+			if (index == selectedRow) {
+			    g2d2.draw(new Rectangle2D.Double
+				      (x-llradius, y-llradius,
+				       llradius2, llradius2));
+			    g2d.draw(new Rectangle2D.Double
+				     (x-lhw, y-lhw, lw, lw));
+			}
 		    }
 		    if (lastMode == SplinePathBuilder.CPointType.SEG_END
 			|| lastMode == SplinePathBuilder.CPointType.MOVE_TO) {

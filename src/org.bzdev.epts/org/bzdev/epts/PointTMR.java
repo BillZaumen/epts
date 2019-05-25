@@ -9,12 +9,62 @@ public class PointTMR {
 	return EPTS.localeString(key);
     }
 
+
+    public enum FilterMode {
+	/**
+	 * Use a filter-specified default
+	 */
+	DEFAULT,
+	/**
+	 * Points on a row's path can be selected and drawn.
+	 */
+	SELECTABLE,
+	/**
+	 * Points on a row's path can be drawn but not selected.
+	 */
+	DRAWABLE,
+	/**
+	 * The path is invisible, which implies it is not drawable and
+	 * not selectable.
+	 */
+	INVISIBLE;
+
+	public String toString() {return localeString(name());}
+    }
+
+
     String varname;
     Enum<?> mode;
     double x;
     double y;
     double xp;
     double yp;
+
+    private boolean selectable = true;
+    private boolean drawable = true;
+
+    public boolean isSelectable() {return selectable;}
+    public boolean isDrawable() {return drawable;}
+
+    public void setFilterMode(FilterMode mode) {
+	if (mode == null) mode = FilterMode.SELECTABLE;
+	switch (mode) {
+	case DEFAULT:
+	    break;
+	case SELECTABLE:
+	    selectable = true;
+	    drawable = true;
+	    break;
+	case DRAWABLE:
+	    selectable = false;
+	    drawable = true;
+	    break;
+	case INVISIBLE:
+	    selectable = false;
+	    drawable = false;
+	    break;
+	}
+    }
 
     public PointTMR(String varname, Enum mode, double x, double y,
 		    double xp, double yp) {

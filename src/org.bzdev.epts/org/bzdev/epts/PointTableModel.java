@@ -53,6 +53,12 @@ public class PointTableModel implements TableModel {
 	return Collections.unmodifiableSet(pnames);
     }
 
+    public void stopFiltering() {
+	for (PointTMR row: rows) {
+	    row.setFilterMode(PointTMR.FilterMode.SELECTABLE);
+	}
+    }
+
     public int findStart(String varname) {
 	varname = varname.trim();
 	if (names.contains(varname)) {
@@ -445,8 +451,14 @@ public class PointTableModel implements TableModel {
     public int findRowXPYP(double xp, double yp, double zoom) {
 	int i = 0;
 	double limit = 7.0/zoom;
+	// compare square of distances to avoid having to
+	// compute a square root
 	limit *= limit;
 	for (PointTMR row: rows) {
+	    if (!row.isSelectable()) {
+		i++;
+		continue;
+	    }
 	    double d = Point2D.distanceSq(xp, yp, row.getXP(), row.getYP());
 	    if (d < limit) {
 		return i;
