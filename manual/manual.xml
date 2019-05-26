@@ -45,6 +45,9 @@
       <node title="The Tools menu"
 	    uri="resource:org/bzdev/epts/manual/manual.html#toolsMenu"
 	    href="manual.html#toolsMenu"/>
+      <node title="The Filters menu"
+	    uri="resource:org/bzdev/epts/manual/manual.html#filtersMenu"
+	    href="manual.html#filtersMenu"/>
       <node title="The Help menu"
 	    uri="resource:org/bzdev/epts/manual/manual.html#helpMenu"
 	    href="manual.html#helpMenu"/>
@@ -133,6 +136,9 @@
       <node title="The table element"
 	    uri="resource:org/bzdev/epts/manual/manual.html#tableElement"
 	    href="manual.html#tableElement"/>
+      <node title="The filters element"
+	    uri="resource:org/bzdev/epts/manual/manual.html#filtersElement"
+	    href="manual.html#filtersElement"/>
     </node>
     <node title="Saved-configuration format"
 	  uri="resource:org/bzdev/epts/manual/manual.html#configFormat"

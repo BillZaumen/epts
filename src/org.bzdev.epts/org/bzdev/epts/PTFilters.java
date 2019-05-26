@@ -5,6 +5,7 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -56,17 +57,25 @@ public class PTFilters {
 	return list;
     }
 
+
     public static class Entry {
 	public String name;
 	public PointTMR.FilterMode mode;
     }
+
+    public static class TopEntry {
+	public String name;
+	public PointTMR.FilterMode mode;
+	ArrayList<Entry> entries;
+    }
+
 
     // to restore a filter from a saved-state file
     public boolean addFilter(String name, final JPanel panel,
 			     PointTMR.FilterMode defaultMode,
 			     List<Entry> entries) {
 	if (map.containsKey(name)) return false;
-	final PTFilter filter = new PTFilter(name, ptmodel);
+	final PTFilter filter = new PTFilter(name, ptmodel, false);
 	map.put(name, filter);
 	filter.setMode(defaultMode);
 	PTFilterModel model = filter.getModel();

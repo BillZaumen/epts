@@ -4513,6 +4513,15 @@ public class EPTSWindow {
 	acceptConfigParms();
     }
 
+    private void setupFilters(EPTSParser parser) {
+	List<PTFilters.TopEntry> flist = parser.getFilterList();
+	if (flist == null) return;
+	for (PTFilters.TopEntry tentry: flist) {
+	    ptfilters.addFilter(tentry.name, panel, tentry.mode,
+				tentry.entries);
+	}
+    }
+
 
     public EPTSWindow(final EPTSParser parser, File inputFile)
 	throws IllegalStateException, IOException, InterruptedException
@@ -4522,73 +4531,38 @@ public class EPTSWindow {
 	    savedStateCodebase = parser.getCodebase();
 	    savedStateModules = parser.getModules();
 	    savedStateClasspath = parser.getClasspath();
-	}
-	if (parser.imageURIExists()) {
-	    URI uri = parser.getImageURI();
-	    Image image = parser.getImage();
-	    /*
-	    if (uri != null)  {
-		if (!uri.isAbsolute()) {
-		    File cdir =
-			new File(System.getProperty("user.dir"));
-		    uri = cdir.toURI().resolve(uri);
-		}
-		try {
-		    image = ImageIO.read(uri.toURL());
-		    imageURI = uri;
-		} catch (IOException e) {
-		    throw new
-			IOException(errorMsg("loadImageError", uri.toString()));
-		}
-		if (parser.getWidth() != image.getWidth(null)) {
-		    throw new IllegalStateException
-			("save-state width not equal to image width");
-		}
-		if (parser.getHeight() != image.getHeight(null)) {
-		    throw new IllegalStateException
-			("save-state height not equal to image height");
-		}
-	    } else {
-		// No image URL, so width and height were from
-		// a buffered image and we just create it.
-		int width = parser.getWidth();
-		int height = parser.getHeight();
-		BufferedImage bi = new
-		    BufferedImage(width,height,BufferedImage.TYPE_INT_ARGB_PRE);
-		Graphics2D g2d = bi.createGraphics();
-		g2d.setBackground(Color.WHITE);
-		g2d.clearRect(0, 0, width, height);
-		g2d.dispose();
-		image = bi;
-	    }
-	    */
-	    imageURI = uri;
-	    init(image, (uri != null), null);
-	    // now restore state.
-	    SwingUtilities.invokeLater(new Runnable() {
-		    public void run() {
-			/*
-			configGCSPane.savedUnitIndex
-			    = parser.getUnitIndex();
-			configGCSPane.savedRefPointIndex
-			    = parser.getRefPointIndex();
-			configGCSPane.savedUsDistString =
-			    parser.getUserSpaceDistance();
-			configGCSPane.savedGcsDistString =
-			    parser.getGcsDistance();
-			configGCSPane.savedXString = parser.getXRefpoint();
-			configGCSPane.savedYString = parser.getYRefpoint();
-			configGCSPane.restoreState();
-			acceptConfigParms();
-			*/
-			setupGCSConfigPane(parser);
-			for (PointTMR row: parser.getRows()) {
-			    ptmodel.addRow(row);
+	    if (parser.imageURIExists()) {
+		URI uri = parser.getImageURI();
+		Image image = parser.getImage();
+		imageURI = uri;
+		init(image, (uri != null), null);
+		// now restore state.
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+			    /*
+			      configGCSPane.savedUnitIndex
+			      = parser.getUnitIndex();
+			      configGCSPane.savedRefPointIndex
+			      = parser.getRefPointIndex();
+			      configGCSPane.savedUsDistString =
+			      parser.getUserSpaceDistance();
+			      configGCSPane.savedGcsDistString =
+			      parser.getGcsDistance();
+			      configGCSPane.savedXString = parser.getXRefpoint();
+			      configGCSPane.savedYString = parser.getYRefpoint();
+			      configGCSPane.restoreState();
+			      acceptConfigParms();
+			    */
+			    setupGCSConfigPane(parser);
+			    for (PointTMR row: parser.getRows()) {
+				ptmodel.addRow(row);
+			    }
+			    addToPathMenuItem.setEnabled
+				(ptmodel.pathVariableNameCount() > 0);
+			    setupFilters(parser);
 			}
-			addToPathMenuItem.setEnabled
-			    (ptmodel.pathVariableNameCount() > 0);
-		    }
-		});
+		    });
+	    }
 	}
     }
 
@@ -4654,6 +4628,9 @@ public class EPTSWindow {
 			}
 			addToPathMenuItem.setEnabled
 			    (ptmodel.pathVariableNameCount() > 0);
+		    }
+		    if (parser != null) {
+			setupFilters(parser);
 		    }
 		}
 	    });

@@ -121,7 +121,7 @@ element and any optional
 .BR codebase ,
 .BR modules ,
 and
-.B classPath
+.B classpath
 elements, there is an an optional
 .B scripting
 element, whose attributes are
@@ -247,7 +247,7 @@ is
 or
 .BR PATH_START ,
 in which case
-.I NAME
+..I NAME
 should be a variable name acceptable for use in a programming language
 (e.g., Java or ECMAScript). For the type
 .BR LOCATION ,
@@ -264,6 +264,71 @@ must be the coordinates of a corresponding point in graph-coordinate-space
 units, and XP and YP must be the corresponding coordinates in image-space
 units, measured from the lower-left corner of the image so that X values
 go from left to right and Y values go from bottom to top.
+.PP
+The table element is followed by a
+.B filters
+element, which contains a possibly empty sequence of
+.B filter
+elements:
+.IP
+.B
+<filters>
+.br
+\ \ <filter name="\fINAME\fB" mode="\fIMODE\fB">
+.br
+\ \ \ \ <filterRow varname="\fIVNAME\fB" mode="\fIMODE\fB"/>
+.br
+\ \ \ \ ...
+.br
+\ \ </filter>
+.br
+</filters>\fR
+.br
+.PP
+where
+.I NAME
+is the name of a path,
+.I MODE
+is either
+.BR DEFAULT ,
+.BR SELECTABLE ,
+.BR DRAWABLE ,
+or
+.BR INVISIBLE ,
+and
+.I VNAME
+is the name of a location or path.
+.PP
+For a
+.B filter
+element, the mode
+.B DEFAULT
+indicates no change for locations and paths,
+.B SELECTABLE
+indicates that locations and paths will be displayed with their
+control points,
+.B DRAWABLE
+indicates that paths will be displayed without their control points (
+so that the control points cannot be selected), and
+.B INVISIBLE
+indicates that paths and locations are not shown.
+.PP
+For a
+.B filterRow
+element, the
+.B mode
+value
+.B DEFAULT
+indicates no change whether the corresponding location or path is
+visible, or selectable,
+.B SELECTABLE
+indicates that the corresponding location or path will be displayed showing
+control points,
+.B DRAWABLE
+indicates that the corresponding path will be displayed without its
+control points (so that the control points cannot be selected), and
+.B INVISIBLE
+indicates that the corresponding location or path will not be displayed.
 .PP
 Finally, the file ends by closing the
 .B epts
@@ -1146,4 +1211,5 @@ via the EPTS help menu.
 \"  LocalWords:  getDataVector DefaultTableModel JComboBox basicData
 \"  LocalWords:  TemplateSetup pathmap PathMap globalData tdefTable
 \"  LocalWords:  pathLocMap outfile pathItem hasParameterInfo subpath
-\"  LocalWords:  subpathvar subpaths hasSubpath
+\"  LocalWords:  subpathvar subpaths hasSubpath classpath SELECTABLE
+\"  LocalWords:  DRAWABLE filterRow selectable fIMODE fIVNAME VNAME

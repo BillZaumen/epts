@@ -1943,6 +1943,8 @@ public class EPTS {
 	    parser.parse(new FileInputStream(filename));
 	    return parser;
 	} catch (Exception e) {
+	    String msg = e.getMessage();
+	    if (msg == null) msg = e.getClass().toString();
 	    displayError(e.getMessage());
 	    System.exit(1);
 	}

@@ -23,7 +23,8 @@ import javax.swing.JComponent;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
-public class PointTableModel implements TableModel {
+public class
+ PointTableModel implements TableModel {
 
     static String errorMsg(String key, Object... args) {
 	return EPTS.errorMsg(key, args);

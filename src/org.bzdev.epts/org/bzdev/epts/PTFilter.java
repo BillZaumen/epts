@@ -27,9 +27,13 @@ public class PTFilter {
     PointTMR.FilterMode defaultMode  = PointTMR.FilterMode.INVISIBLE;
 
     public PTFilter(String name, PointTableModel ptmodel) {
+	this(name, ptmodel, true);
+    }
+
+    public PTFilter(String name, PointTableModel ptmodel, boolean fillRows) {
 	this.name = name;
 	this.ptmodel = ptmodel;
-	fmodel = new PTFilterModel(ptmodel);
+	fmodel = new PTFilterModel(ptmodel, fillRows);
     }
 
     public void setMode(PointTMR.FilterMode mode) {

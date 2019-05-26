@@ -238,6 +238,12 @@ public class EPTSParser {
 	BOOLEAN
     }
 
+    ArrayList<PTFilters.TopEntry> filterList = new ArrayList<>();
+    public List<PTFilters.TopEntry> getFilterList() {
+	if (filterList == null) return null;
+	return Collections.unmodifiableList(filterList);
+    }
+
     class OurDefaultHandler extends DefaultHandler {
 
 	boolean processingXML = false;
@@ -259,6 +265,8 @@ public class EPTSParser {
 
 
 	ArrayList<PointTMR> rowList = new ArrayList<>();
+
+	PTFilters.TopEntry newFilterEntry = null;
 
 	String name = null;
 
@@ -457,6 +465,27 @@ public class EPTSParser {
 			PointTMR(varname, mode, x, y, xp, yp);
 		    rowList.add(row);
 		}
+	    } else if ((qName.equals("filters"))) {
+		filterList.clear();
+	    } else if (qName.equals("filter")) {
+		String filterName = attr.getValue("name");
+		PointTMR.FilterMode filterMode =
+		    Enum.valueOf(PointTMR.FilterMode.class,
+				 attr.getValue("mode"));
+		newFilterEntry = new PTFilters.TopEntry();
+		newFilterEntry.name = filterName;
+		newFilterEntry.mode = filterMode;
+		newFilterEntry.entries = new ArrayList<PTFilters.Entry>();
+		filterList.add(newFilterEntry);
+	    } else if (qName.equals("filterRow")) {
+		String varName = attr.getValue("varname");
+		PointTMR.FilterMode fmode
+		    = Enum.valueOf(PointTMR.FilterMode.class,
+				   attr.getValue("mode"));
+		PTFilters.Entry fentry = new PTFilters.Entry();
+		fentry.name = varName;
+		fentry.mode = fmode;
+		newFilterEntry.entries.add(fentry);
 	    }
 	}
 

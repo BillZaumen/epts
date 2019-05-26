@@ -675,6 +675,52 @@ displayed in textual form. This menu contains the following items:
 </UL>
 Menu items that are not applicable are disabled.
 
+<H2><A name = "filtersMenu">The Filters menu</A></H2>
+The <CODE>Filter</CODE> menu lets the user define filters that, when
+applied, will configure which paths and locations are displayed.
+Two menu items are always present:
+<UL>
+  <LI><B><CODE>New Filter</CODE></B>. This option creates new filters.
+    Each filter has a name that will appear in the Filter menu below
+    the first two menu items.
+   <LI><B><CODE>Clear</CODE></B>. This option turns filtering off.
+</UL>
+<P>
+When a new filter is created or when an existing filter's menu item is
+clicked, a dialog box will appear that allows the filter to be configured.
+Both the filter as a whole and individual paths and locations provide a
+mode that determines how entries are filtered.  The choices for a mode
+are the following:
+<UL>
+  <LI><B><CODE>Default</CODE></B>. No changes are made for a path or location
+  <LI><B><CODE>Selectable</CODE></B>. A path or location is marked as
+    selectable. When drawn, both paths and control points are drawn.
+  <LI><B><CODE>Drawable</CODE></B>. Paths are drawn but control points are
+    not drawn.
+  <LI><B><CODE>Invisible</CODE></B>. The path or location is not drawn.
+</UL>
+After a filter is configured, there are three choices:
+<UL>
+  <LI><B><CODE>Apply</CODE></B>. The filter will be applied.
+  <LI><B><CODE>Save Only</CODE></B>. The filter will be saved but not applied.
+  <LI><B><CODE>Delete</CODE></B>. The filter will be deleted, thus removing
+    it from the Filter menu.
+</UL>
+<P>
+When a filter is applied, the mode for the filter as whole will first be
+applied to each path and location. Then the modes for individual paths are
+applied. Typically, most of the modes for individual paths and locations will
+be set to <CODE>Default</CODE>, so that the filter's overall mode will be
+used, and a few will be set to different values.
+The modes are initially set to <CODE>Default</CODE> for individual
+paths and locations. A filter's overall mode is initially set
+to <CODE>Invisible</CODE>.
+<P>
+When a filter has been applied, the menu title will change from
+<B><CODE>Filters</CODE></B> to <B><CODE>*Filters*</CODE></B>. Clearing
+the filters will restore the title to <B><CODE>Filters</CODE></B> and
+make all paths and locations selectable.
+
 <H2><A name ="helpMenu">The Help menu</A></H2>
 The <CODE>Help</CODE> menu provides several ways of viewing a
 manual. This menu contains the following items:
@@ -2563,6 +2609,7 @@ sequence of elements:
   <LI> An optional <B><CODE>targetList</CODE></B> element.
   <LI> A <B><CODE>gcsconfig</CODE></B> element.
   <LI> A <B><CODE>table</CODE></B> element.
+  <LI> An optional <B><CODE>filters</CODE></B> element
 </OL>
 These elements are listed in the order in which they must appear.
 
@@ -2772,6 +2819,46 @@ with the following attributes
   <LI><B><CODE>yp</CODE></B>. The value of this attribute is the Y
     coordinate in user-space units, measured from the lower-left corner
     of the image, with positive values pointing up.
+</UL>
+
+<H2><A name="filtersElement">The filters element</A></H2>
+
+The filters element does not have any attributes and just contains
+a possibly empty sequence of filter elements.  Each filter element
+in turn contains a sequence of filterRow elements.  A filter element
+has two attributes:
+<UL>
+  <LI> <B><CODE>name</CODE></B>. The value is a text string containing the
+    name of the corresponding filter.
+  <LI> <B><CODE>mode</CODE></B>. The value is one of the following:
+    <UL>
+      <LI> <B><CODE>DEFAULT</CODE></B>. Do nothing.
+      <LI> <B><CODE>SELECTABLE</CODE></B>. Locations and paths are
+	selectable: they will be drawn and their control points will be
+	shown
+      <LI> <B><CODE>DRAWABLE</CODE></B>. Paths will be drawn but their
+	control points will not be shown.
+      <LI> <B><CODE>INVISIBLE</CODE></B>. Paths and locations will not be
+	drawn.
+    </UL>
+</UL>
+Finally a filterRow element does not contain any other elements. Instead,
+it has two attributes:
+<UL>
+  <LI> <B><CODE>varname</CODE></B>. The value is a text string containing
+    the name of a path or location.
+  <LI> <B><CODE>mode</CODE></B>. The mode for the corresponding path or
+    location:
+    <UL>
+      <LI> <B><CODE>DEFAULT</CODE></B>. Do nothing.
+      <LI> <B><CODE>SELECTABLE</CODE></B>. The corresponding path or location
+	is selectable: it will be drawn and its control points will be
+	shown.
+      <LI> <B><CODE>DRAWABLE</CODE></B>. The corresponding path will
+	be drawn but itys control points will not be shown.
+      <LI> <B><CODE>INVISIBLE</CODE></B>. The corresponding path or
+	location will not be drawn.
+    </UL>
 </UL>
 
 <H1><A name="configFormat">The saved-configuration-file format</A></H1>

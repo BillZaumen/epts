@@ -27,11 +27,17 @@ public class PTFilterModel implements TableModel {
     PointTableModel ptmodel;
 
     public PTFilterModel(PointTableModel ptmodel) {
+	this(ptmodel, true);
+    }
+
+    public PTFilterModel(PointTableModel ptmodel, boolean fillRows) {
 	this.ptmodel = ptmodel;
-	for (String name: ptmodel.getVariableNames()) {
-	    PointTFMRow row = new PointTFMRow(name);
-	    rows.add(row);
-	    map.put(name, row);
+	if (fillRows) {
+	    for (String name: ptmodel.getVariableNames()) {
+		PointTFMRow row = new PointTFMRow(name);
+		rows.add(row);
+		map.put(name, row);
+	    }
 	}
     }
 
@@ -41,6 +47,7 @@ public class PTFilterModel implements TableModel {
 
     public void add(PointTFMRow row) {
 	rows.add(row);
+	map.put(row.getName(), row);
     }
 
     public List<PointTFMRow> getRows() {
