@@ -1825,7 +1825,7 @@ public class EPTS {
 			}
 			needInitialConfig = false;
 		    }
-		    argv = TemplateSetup.getSetupArgs(zdf, new File(arg));
+		    argv = TemplateSetup.getSetupArgs(zdf, new File(arg), null);
 		    zdf.close();
 		}
 	    }  catch (Exception e) {
@@ -1953,6 +1953,10 @@ public class EPTS {
 
     private static boolean needInitialConfig = true;
 
+    // Need these two for createTemplateMenuItem in EPTSWindow
+    static String initialModulePath = null;
+    static String EPTSmodule = null;
+
     static void init(String argv[]) throws Exception {
 
 	final File cdir = new File(System.getProperty("user.dir"));
@@ -1966,7 +1970,7 @@ public class EPTS {
 	    }
 	    // sbcp.append(initialClassPath);
 	}
-	String initialModulePath = System.getProperty("jdk.module.path");
+	initialModulePath = System.getProperty("jdk.module.path");
 	if (initialModulePath != null) {
 	    String[] mcomps = initialModulePath.split(pathSeparator);
 	    for (String comp: mcomps) {
@@ -1974,6 +1978,7 @@ public class EPTS {
 	    }
 	}
 
+	EPTSmodule = System.getProperty("jdk.module.main");
 
 	String alreadyForkedString = System.getProperty("epts.alreadyforked");
 	boolean alreadyForked = (alreadyForkedString != null)
@@ -2034,9 +2039,12 @@ public class EPTS {
 		int ind = getAPIndex(argv);
 		if (ind > -1 && ind < 4) {
 		    if (argv.length != argpatterns[ind].length) {
-			System.err.println
-			    (localeString("noArgsSessionConfig"));
-			System.exit(1);
+			if (argv.length > 1 &&
+			    !argv[argv.length-2].equals("--templateConfig")) {
+			    System.err.println
+				(localeString("noArgsSessionConfig"));
+			    System.exit(1);
+			}
 		    }
 		    if (argv[0].equals("--stackTrace")) {
 			stackTrace = true;
@@ -2052,7 +2060,21 @@ public class EPTS {
 		    if (argv[argv.length-1].equals("--sessionConfig")) {
 			argv = Setup.getSetupArgs(null, null);
 		    } else if (argv[argv.length-1].equals("--templateConfig")) {
-			argv = TemplateSetup.getSetupArgs(null, null);
+			argv = TemplateSetup.getSetupArgs(null, null, null);
+		    } else if (argv.length > 1
+			       && argv[argv.length-2].equals("--templateConfig")
+			       && (argv[argv.length-1].endsWith(".epts")
+				   || argv[argv.length-1].endsWith(".EPTS"))) {
+			String eptsName = argv[argv.length-1];
+			File eptsf = new File(eptsName);
+			if (eptsf.isFile() && eptsf.canRead()) {
+			    eptsName = eptsf.getCanonicalPath();
+			    argv = TemplateSetup.getSetupArgs(null, null,
+							      eptsName);
+			} else {
+			    System.err.println(errorMsg("nosuchFile",eptsName));
+			    System.exit(1);
+			}
 		    } else {
 			System.err.println(errorMsg("unrecognizedOption",
 						    argv[argv.length-1]));
@@ -3338,7 +3360,7 @@ public class EPTS {
 				 localeString("widthHeightTitle"),
 				 JOptionPane.OK_CANCEL_OPTION,
 				 JOptionPane.QUESTION_MESSAGE);
-			    width = htf.getValue();
+			    width = wtf.getValue();
 			    height = htf.getValue();
 			    if (status != JOptionPane.OK_OPTION) {
 				System.exit(0);

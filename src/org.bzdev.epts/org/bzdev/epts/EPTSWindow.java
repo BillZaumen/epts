@@ -1250,6 +1250,7 @@ public class EPTSWindow {
 		savedFile.renameTo(backup);
 		tmp.renameTo(savedFile);
 	    }
+	    createTemplateMenuItem.setEnabled(true);
 	} catch (Exception ee) {
 	    JOptionPane.showMessageDialog(frame,
 					  errorMsg("saveFailed",
@@ -1329,6 +1330,7 @@ public class EPTSWindow {
     JMenuItem portMenuItem = null;
     PortTextField portTextField = null;
     JMenuItem webMenuItem = null;
+    JMenuItem createTemplateMenuItem = null;
 
     static final String OK_CANCEL[] = {
 	localeString("OK"),
@@ -1336,6 +1338,7 @@ public class EPTSWindow {
     };
 
     PTFilters ptfilters = null;
+
 
     private void setMenus(JFrame frame, double w, double h) {
 	JMenuBar menubar = new JMenuBar();
@@ -1495,6 +1498,31 @@ public class EPTSWindow {
 		}
 	    });
 	fileMenu.add(menuItem);
+
+
+	menuItem = new JMenuItem(localeString("createTemplate"), KeyEvent.VK_T);
+	menuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    try {
+			if (savedFile != null) {
+			    new ProcessBuilder("java", "-p",
+					       EPTS.initialModulePath,
+					       "-m",
+					       EPTS.EPTSmodule,
+					       "--templateConfig",
+					       savedFile.getCanonicalPath())
+				.start();
+			}
+		    } catch (Exception ex) {
+			JOptionPane.showMessageDialog
+			    (frame, errorMsg("TPfailed", ex.getMessage()),
+			 "Error", JOptionPane.ERROR_MESSAGE);
+		    }
+		}
+	    });
+	menuItem.setEnabled(false);
+	fileMenu.add(menuItem);
+	createTemplateMenuItem = menuItem;
 
 	JMenu editMenu = new JMenu(localeString("Edit"));
 	editMenu.setMnemonic(KeyEvent.VK_E);
@@ -4462,6 +4490,9 @@ public class EPTSWindow {
 			// graphics context
 			frame.setPreferredSize(new Dimension(700, 700));
 			setMenus(frame, 700.0, 700.0);
+		    }
+		    if (savedFile != null) {
+			createTemplateMenuItem.setEnabled(true);
 		    }
 		    frame.addKeyListener(kba);
 		    panel.addMouseListener(mia);

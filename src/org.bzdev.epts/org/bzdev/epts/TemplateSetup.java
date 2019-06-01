@@ -939,7 +939,7 @@ public class TemplateSetup {
 	fillColorButton = new JButton(localeString("ChooseColor"));
 	fillColorButton.addActionListener((ae) -> {
 		currentPLI.fillColor
-		    = ColorChooser.showDialog(currentPLI.drawColor);
+		    = ColorChooser.showDialog(currentPLI.fillColor);
 		fillColorExample.setBackground(currentPLI.fillColor);
 	    });
 	capLabel = new JLabel(localeString("PathCap"));
@@ -2169,7 +2169,8 @@ public class TemplateSetup {
 	| InputEvent.ALT_DOWN_MASK | InputEvent.ALT_GRAPH_DOWN_MASK;
 
 
-    public static String[] getSetupArgs(ZipDocFile zf, File zfile)
+    public static String[] getSetupArgs(ZipDocFile zf, File zfile,
+					String eptsFile)
     {
 	try {
 	    results = null;
@@ -2615,6 +2616,8 @@ public class TemplateSetup {
 			    // could not restore state
 			    System.exit(1);
 			}
+		    } else if (eptsFile != null) {
+			savedStateTF.setText(eptsFile);
 		    }
 
 		    tabpane.add(localeString("Basic"), basicPanel);
