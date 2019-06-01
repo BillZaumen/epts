@@ -1725,12 +1725,14 @@ public class TemplateSetup {
 		    mayNeedSave = true;
 		}
 	    });
+	/*
 	outFileTF.addKeyListener(new KeyAdapter() {
 		@Override
 		public void keyReleased(KeyEvent ke) {
 		    mayNeedSave = true;
 		}
 	    });
+	*/
 	GridBagLayout gridbag = new GridBagLayout();
 	GridBagConstraints c = new GridBagConstraints();
 	c.insets = new Insets(4, 8, 4, 8);
@@ -1777,6 +1779,7 @@ public class TemplateSetup {
 	writeButton.setEnabled(false);
 	outFileTF.getDocument().addDocumentListener
 	    (new DocumentListener() {
+		    String lastText = null;
 		    private void doit() {
 			String text = outFileTF.getText();
 			if (text != null) {
@@ -1784,6 +1787,10 @@ public class TemplateSetup {
 			} else {
 			    text ="";
 			}
+			if (lastText != null && !lastText.equals(text)) {
+			    mayNeedSave = true;
+			}
+			lastText = text;
 			writeButton.setEnabled(text.length() > 0);
 		    }
 		    public void changedUpdate(DocumentEvent e) {
@@ -1799,6 +1806,19 @@ public class TemplateSetup {
 
 	exitButton = new JButton(localeString("Exit"));
 	exitButton.addActionListener((ae) -> {
+		if (mayNeedSave) {
+		    switch(JOptionPane
+			   .showConfirmDialog(dialog,
+					      localeString("needSave"),
+					      localeString("saveFirst"),
+					      JOptionPane.YES_NO_OPTION)) {
+		    case JOptionPane.YES_OPTION:
+			save(panel, false);
+			break;
+		    default:
+			break;
+		    }
+		}
 		System.exit(0);
 	    });
 
@@ -2746,6 +2766,20 @@ public class TemplateSetup {
 		    dialog.addWindowListener(new WindowAdapter() {
 			    public void windowClosing(WindowEvent we) {
 				if (dialogButtonPushed == false) {
+				    if (mayNeedSave) {
+					switch(JOptionPane
+					       .showConfirmDialog
+					       (dialog,
+						localeString("needSave"),
+						localeString("saveFirst"),
+						JOptionPane.YES_NO_OPTION)) {
+					case JOptionPane.YES_OPTION:
+					    save(dialog, false);
+					    break;
+					default:
+					    break;
+					}
+				    }
 				    System.exit(0);
 				}
 			    }

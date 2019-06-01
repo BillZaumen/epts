@@ -186,6 +186,9 @@ all: $(ALL)
 
 include MajorMinor.mk
 
+org:
+	ln -s src/org.bzdev.epts/org org
+
 
 
 # The action for this rule removes all the epts-*.jar files
