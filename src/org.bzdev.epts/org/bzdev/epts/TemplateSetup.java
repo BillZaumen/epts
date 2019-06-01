@@ -1343,6 +1343,7 @@ public class TemplateSetup {
     }
 
     private static String savedConfigFileName = null;
+    private static boolean mayNeedSave = false;
     
     private static void save(Component panel, boolean saveAs) {
 	String fname = (saveAs || savedConfigFileName == null)?
@@ -1352,6 +1353,7 @@ public class TemplateSetup {
 		savedConfigFileName = fname;
 	    }
 	}
+	mayNeedSave = false;
     }
 
     private static boolean createConfigFile(Component panel, String fname) {
@@ -1712,7 +1714,6 @@ public class TemplateSetup {
     }
 
 
-
     static void createFinishPane(final JDialog dialog, final JPanel panel) {
 	outFileLabel = new JLabel(localeString("outFile"));
 	outFileTF = new JTextField(32);
@@ -1721,6 +1722,13 @@ public class TemplateSetup {
 		String name = chooseFile(panel);
 		if (name != null) {
 		    outFileTF.setText(name);
+		    mayNeedSave = true;
+		}
+	    });
+	outFileTF.addKeyListener(new KeyAdapter() {
+		@Override
+		public void keyReleased(KeyEvent ke) {
+		    mayNeedSave = true;
 		}
 	    });
 	GridBagLayout gridbag = new GridBagLayout();
@@ -1749,6 +1757,19 @@ public class TemplateSetup {
 	    });
 	writeButton = new JButton(localeString("GenerateOutput"));
 	writeButton.addActionListener((ae) -> {
+		if (mayNeedSave) {
+		    switch(JOptionPane
+			   .showConfirmDialog(dialog,
+					      localeString("needSave"),
+					      localeString("saveFirst"),
+					      JOptionPane.YES_NO_OPTION)) {
+		    case JOptionPane.YES_OPTION:
+			save(panel, false);
+			break;
+		    default:
+			break;
+		    }
+		}
 		outFile = outFileTF.getText().trim();
 		results = generate();
 		dialog.setVisible(false);
@@ -2345,6 +2366,7 @@ public class TemplateSetup {
 				templateType = TType.PIT;
 				break;
 			    }
+			    mayNeedSave = true;
 			    doEnables(tabpane);
 			    setupAllowedSubpaths();
 			    // templateTypeCB.setEnabled(false);
@@ -2404,6 +2426,7 @@ public class TemplateSetup {
 			    tabpane.setEnabledAt(2, false);
 			    tabpane.setEnabledAt(3, false);
 			    tabpane.setEnabledAt(4, false);
+			    mayNeedSave = true;
 			});
 
 		    templateLabel =
@@ -2639,6 +2662,9 @@ public class TemplateSetup {
 				tdefce.stopCellEditing();
 			    }
 			    int index = tabpane.getSelectedIndex();
+			    if (index > 0 && index < 5) {
+				mayNeedSave = true;
+			    }
 			    if (index == 4) {
 				// populate table
 				HashSet<String> hset =
