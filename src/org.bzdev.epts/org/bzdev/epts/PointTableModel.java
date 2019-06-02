@@ -92,7 +92,8 @@ public class
 	int n = rows.size();
 	if (start == -1 ||  start >= n) return -1;
 	for (int i = start; i < n; i++) {
-	    if (getRowMode(i) == EPTS.Mode.PATH_END) {
+	    Enum mode = getRowMode(i);
+	    if (mode == EPTS.Mode.PATH_END || mode == EPTS.Mode.LOCATION) {
 		return i;
 	    }
 	}

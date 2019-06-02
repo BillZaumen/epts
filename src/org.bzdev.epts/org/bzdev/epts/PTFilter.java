@@ -36,6 +36,12 @@ public class PTFilter {
 	fmodel = new PTFilterModel(ptmodel, fillRows);
     }
 
+    public void merge() {
+	// to update the model just before the component is
+	// displayed.
+	fmodel.merge();
+    }
+
     public void setMode(PointTMR.FilterMode mode) {
 	defaultMode = mode;
     }

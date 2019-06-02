@@ -1646,6 +1646,59 @@ public class EPTSWindow {
 	    });
 	editMenu.add(menuItem);
 
+	menuItem = new JMenuItem(localeString("DeleteBezier"), KeyEvent.VK_D);
+	menuItem.setAccelerator(KeyStroke.getKeyStroke
+				(KeyEvent.VK_X, InputEvent.ALT_DOWN_MASK));
+	addToPathMenuItem = menuItem;
+	menuItem.setEnabled(false);
+	menuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    // select a path.
+		    int index = -1;
+		    if (selectedRow == -1) {
+			Set<String> vnameSet = ptmodel.getVariableNames();
+			if (vnameSet.isEmpty()) return;
+			String[] vnames =
+			    vnameSet.toArray(new String[vnameSet.size()]);
+			String vname;
+			if (vnames.length == 1) {
+			    vname = vnames[0];
+			} else {
+			    vname = (String)JOptionPane.showInputDialog
+				(frame, localeString("SelectPathExtend"),
+				 localeString("SelectPath"),
+				 JOptionPane.PLAIN_MESSAGE, null,
+				 vnames, vnames[0]);
+			}
+			if (vname == null || vname.length() == 0) return;
+			index = ptmodel.findStart(vname);
+		    } else {
+			index = ptmodel.findStart(selectedRow);
+			if (JOptionPane.OK_OPTION !=
+			    JOptionPane.showConfirmDialog
+			    (frame, String.format(localeString("confirmDel"),
+						  ptmodel.getRow(index)
+						  .getVariableName()),
+			     localeString("confirmDelCPL"),
+			     JOptionPane.OK_CANCEL_OPTION,
+			     JOptionPane.QUESTION_MESSAGE)) {
+			    return;
+			}
+		    }
+		    int istart = ptmodel.findStart(index);
+		    int iend = ptmodel.findEnd(index);
+		    if (iend == -1) {
+			// we reached the end of a path that had not been
+			// completed.
+			iend = ptmodel.getRowCount() - 1;
+		    }
+		    iend += 1;
+		    ptmodel.deleteRows(istart, iend);
+		    panel.repaint();
+		}
+	    });
+	editMenu.add(menuItem);
+
 	menuItem = new JMenuItem(localeString("CopyTableECMAScript"),
 				 KeyEvent.VK_E);
 	menuItem.addActionListener(new ActionListener() {

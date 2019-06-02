@@ -87,6 +87,7 @@ public class PTFilters {
 
 	final JMenuItem item = new JMenuItem(name);
 	final ActionListener listener = (e) -> {
+	    filter.merge();	// in case paths/locations have changed
 	    filter.editFilter(frame, (eApply) -> {
 		    filter.apply();
 		    panel.repaint();
@@ -117,6 +118,7 @@ public class PTFilters {
 	map.put(name, filter);
 	final JMenuItem item = new JMenuItem(name);
 	final ActionListener listener = (e) -> {
+	    filter.merge();	// in case paths/locations have changed
 	    filter.editFilter(frame, (eApply) -> {
 		    filter.apply();
 		    panel.repaint();

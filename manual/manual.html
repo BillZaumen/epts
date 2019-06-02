@@ -474,10 +474,18 @@ The <code>Edit</code> menu contains the following items:
 <UL>
   <LI><B><CODE>Undo point insertion</CODE></B>. This essentially removes
     the last row (two rows for a closed path) from the table. If
-    a previous path is extended via the <CODE>Tools</CODE> menu's
+    a previous path is extended via the <CODE>Edit</CODE> menu's
     <CODE>Add to B&eacute;zier Path</CODE> item, that path will be
     moved to the end of the table. While creating a path, this option
     undoes the last change.
+  <LI><B><CODE>Add to B&eacute;zier Path</CODE></B>. This option will
+    extend a Bezier path.  If one of a path's nodes has been selected,
+    that path will be extended. Otherwise a dialog box will allow one to
+    select the desired path.
+  <LI><B><CODE>Delete a Location / B&eacute;zier Path</CODE></B>. This
+    option will delete a location or path. If a location or one of a path's
+    nodes has been selected, that location or path will be deleted. Otherwise
+    a dialog box will allow one to select the desired location or path.
   <LI><B><CODE>Copy table as ECMAScript</CODE></B>. This option copies the
     table to the clipboard after formatting it as a series of
     ECMA script statements.
@@ -870,6 +878,7 @@ Some saved-state shortcuts apply regardless of the current mode:
   <LI> Control-Up-Arrow. Move the vertical scroll bar up.
   <LI> Control-Down-Arrow. Move the vertical scroll bar down.
   <LI> Alt-A. Append points to a B&eacute;zier path.
+  <LI> Alt-X. Delete a location or B&eacute;zier path.
   <LI> Alt-D. This toggles whether
     <A href="#dragImage">drag-image mode</A> is in effect, and can
     be used when a window system provides shortcuts that use the

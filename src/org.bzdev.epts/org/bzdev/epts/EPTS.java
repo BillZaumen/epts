@@ -1803,7 +1803,15 @@ public class EPTS {
 			}
 			needInitialConfig = false;
 		    }
-		    argv = Setup.getSetupArgs(zdf, new File(arg));
+		    
+		    File argf = new File(arg);
+		    File argfp = argf.getParentFile();
+		    if (argfp != null) {
+			System.setProperty("user.dir",
+					   argfp.getCanonicalPath());
+		    }
+		    argv = Setup.getSetupArgs(zdf, argf);
+		    System.setProperty("user.dir", initialcwd);
 		    zdf.close();
 		}
 		if (ext != null && ext.equals("eptt")) {
@@ -1825,7 +1833,14 @@ public class EPTS {
 			}
 			needInitialConfig = false;
 		    }
-		    argv = TemplateSetup.getSetupArgs(zdf, new File(arg), null);
+		    File argf = new File(arg);
+		    File argfp = argf.getParentFile();
+		    if (argfp != null) {
+			System.setProperty("user.dir",
+					   argfp.getCanonicalPath());
+		    }
+		    argv = TemplateSetup.getSetupArgs(zdf, argf, null);
+		    System.setProperty("user.dir", initialcwd);
 		    zdf.close();
 		}
 	    }  catch (Exception e) {
@@ -2346,7 +2361,7 @@ public class EPTS {
 				    image = iparser.getImage();
 				    custom = iparser.usesCustom();
 				    if (parent != null) {
-					System.setProperty("userdir",
+					System.setProperty("user.dir",
 							   initialcwd);
 				    }
 				} else {
@@ -3022,7 +3037,6 @@ public class EPTS {
 	    displayError(errorMsg("targetLength0"));
 	    System.exit(1);
 	}
-
 	// We use a scripting language only if there is a script to
 	// process.
 	if (scriptMode == false) languageName = null;

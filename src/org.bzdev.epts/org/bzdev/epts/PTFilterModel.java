@@ -41,6 +41,23 @@ public class PTFilterModel implements TableModel {
 	}
     }
 
+    public void merge() {
+	ArrayList<PointTFMRow> rows2 = new ArrayList<>();
+	HashMap<String,PointTFMRow> map2 = new HashMap<>();
+	for (String name: ptmodel.getVariableNames()) {
+		PointTFMRow row = new PointTFMRow(name);
+		PointTFMRow oldrow = map.get(name);
+		if (oldrow != null) {
+		    row.setMode(oldrow.getMode());
+		}
+		rows2.add(row);
+		map2.put(name, row);
+	}
+	rows = rows2;
+	map = map2;
+    }
+
+
     Vector<TableModelListener> listeners = new Vector<>();
     ArrayList<PointTFMRow> rows = new ArrayList<>();
     HashMap<String,PointTFMRow> map = new HashMap<>();

@@ -334,7 +334,17 @@ public class TemplateSetup {
 	    if (status == JFileChooser.APPROVE_OPTION) {
 		File f = fc.getSelectedFile().getAbsoluteFile();
 		File parent = f.getParentFile();
-		if (parent != null) cdir = parent;
+		if (parent != null) {
+		    cdir = parent;
+		    try {
+			System.setProperty("user.dir",
+					   parent.getCanonicalPath());
+		    } catch (Exception se) {
+			// just in case a security manager is
+			// installed - if we can't change the working
+			// directory, the program will still function.
+		    }
+		}
 	       return f.getAbsolutePath();
 	    } else {
 		return null;
@@ -354,7 +364,17 @@ public class TemplateSetup {
 	if (status == JFileChooser.APPROVE_OPTION) {
 	    File f = fc.getSelectedFile().getAbsoluteFile();
 	    File parent = f.getParentFile();
-	    if (parent != null) cdir = parent;
+	    if (parent != null) {
+		cdir = parent;
+		try {
+		    System.setProperty("user.dir",
+				       parent.getCanonicalPath());
+		} catch (Exception se) {
+		    // just in case a security manager is
+		    // installed - if we can't change the working
+		    // directory, the program will still function.
+		}
+	    }
 	    return f.getAbsolutePath();
 	} else {
 	    return null;
@@ -376,7 +396,17 @@ public class TemplateSetup {
 	if (status == JFileChooser.APPROVE_OPTION) {
 	    File f = fc.getSelectedFile().getAbsoluteFile();
 	    File parent = f.getParentFile();
-	    if (parent != null) cdir = parent;
+	    if (parent != null) {
+		cdir = parent;
+		try {
+		    System.setProperty("user.dir",
+				       parent.getCanonicalPath());
+		} catch (Exception se) {
+		    // just in case a security manager is
+		    // installed - if we can't change the working
+		    // directory, the program will still function.
+		}
+	    }
 	    return f.getAbsolutePath();
 	} else {
 	    return null;
@@ -389,7 +419,17 @@ public class TemplateSetup {
 	if (status == JFileChooser.APPROVE_OPTION) {
 	    File f = fc.getSelectedFile().getAbsoluteFile();
 	    File parent = f.getParentFile();
-	    if (parent != null) cdir = parent;
+	    if (parent != null) {
+		cdir = parent;
+		try {
+		    System.setProperty("user.dir",
+				       parent.getCanonicalPath());
+		} catch (Exception se) {
+		    // just in case a security manager is
+		    // installed - if we can't change the working
+		    // directory, the program will still function.
+		}
+	    }
 	    return f.getAbsolutePath();
 	} else {
 	    return null;
@@ -2660,6 +2700,19 @@ public class TemplateSetup {
 			    System.exit(1);
 			}
 		    } else if (eptsFile != null) {
+			File eptsf = new File(eptsFile);
+			File parent = eptsf.getParentFile();
+			if (parent != null) {
+			    cdir = parent;
+			    try {
+				System.setProperty("user.dir",
+						   parent.getCanonicalPath());
+			    } catch (Exception se) {
+				// just in case a security manager is
+				// installed - if we can't change the working
+				// directory, the program will still function.
+			    }
+			}
 			savedStateTF.setText(eptsFile);
 		    }
 
