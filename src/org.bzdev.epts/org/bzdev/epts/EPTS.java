@@ -2083,6 +2083,11 @@ public class EPTS {
 			String eptsName = argv[argv.length-1];
 			File eptsf = new File(eptsName);
 			if (eptsf.isFile() && eptsf.canRead()) {
+			    File eptsfp = eptsf.getParentFile();
+			    if (eptsfp != null) {
+				System.setProperty("user.dir",
+						   eptsfp.getCanonicalPath());
+			    }
 			    eptsName = eptsf.getCanonicalPath();
 			    argv = TemplateSetup.getSetupArgs(null, null,
 							      eptsName);

@@ -7,6 +7,7 @@ import java.beans.XMLDecoder;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.*;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import javax.swing.*;
@@ -267,6 +268,9 @@ public class TemplateSetup {
     }
 
     static File cdir = new File(System.getProperty("user.dir"));
+    // base directory for relative file names.
+
+    static Path base = null;
 
     private static String chooseTemplateOptions1[] = {
 	"ECMAScriptLayers",
@@ -406,6 +410,15 @@ public class TemplateSetup {
 		    // installed - if we can't change the working
 		    // directory, the program will still function.
 		}
+	    }
+	    File fparent = f.getParentFile();
+	    if (fparent != null) {
+		try {
+		    Path nbase =fparent.getCanonicalFile().toPath();
+		    if (!nbase.equals(base)) {
+			base = nbase;
+		    }
+		} catch (Exception exception) {}
 	    }
 	    return f.getAbsolutePath();
 	} else {
@@ -1405,10 +1418,24 @@ public class TemplateSetup {
 	    OutputStream os = new FileOutputStream(tf);
 	    ZipDocWriter zos = new ZipDocWriter
 		(os, "application/vnd.bzdev.epts-template-config+zip");
-
+	    // fix up basicData.savedState so we use relative path.
+	    Path path = new File(basicData.savedState.trim()).toPath();
+	    if (path.isAbsolute()) {
+		path = base.relativize(path);
+	    }
+	    String saveString1 = basicData.savedState;
+	    basicData.savedState = path.toString();
+	    path = new File(basicData.mapName.trim()).toPath();
+	    if (path.isAbsolute()) {
+		path = base.relativize(path);
+	    }
+	    String saveString2 = basicData.mapName;
+	    basicData.mapName = path.toString();
 	    os = zos.nextOutputStream("basicData", true, 9);
 	    XMLEncoder enc = new XMLEncoder(os);
 	    enc.writeObject(basicData);
+	    basicData.savedState = saveString1;
+	    basicData.mapName = saveString2;
 	    enc.close();
 	    os.close();
 	    os = zos.nextOutputStream("pathmap", true, 9);
@@ -1448,6 +1475,7 @@ public class TemplateSetup {
 	    }
 	    return true;
 	} catch (Exception e) {
+	    e.printStackTrace();
 	    JOptionPane.showMessageDialog
 		(panel, errorMsg("saveFailed", fname, e.getMessage()),
 		 localeString("errorTitle"),
@@ -1489,11 +1517,28 @@ public class TemplateSetup {
 	    list.add("--stackTrace");
 	}
 	list.add("-o");
-	list.add(outFile);
+	String ofn = outFile;
+	try {
+	    Path path1 = new File(outFile).toPath();
+	    if (!path1.isAbsolute()) {
+		path1 = base.resolve(path1);
+	    }
+	    ofn = path1.toString();
+	} catch (Exception exception) {
+	}
+	list.add(ofn);
 	if (basicData.mapName != null) {
 	    String name = basicData.mapName.trim();
 	    if (name.length() > 0) {
 		list.add("--map");
+		try {
+		    Path path2 = new File(name).toPath();
+		    if (!path2.isAbsolute()) {
+			path2 = base.resolve(path2);
+		    }
+		    name = path2.toString();
+		} catch (Exception exception) {
+		}
 		list.add(name);
 	    }
 	}
@@ -1642,10 +1687,16 @@ public class TemplateSetup {
 
 	list.add("--");
 	if (basicData.savedState != null) {
-	    basicData.savedState = basicData.savedState.trim();
-	    list.add(basicData.savedState);
+	    String path = basicData.savedState.trim();
+	    try {
+		basicData.savedState = path;
+		path = base.resolve(path).toFile()
+		    .getCanonicalPath();
+	    } catch (Exception e) {}
+	    list.add(path);
 	}
 	String[] results = new String[list.size()];
+
 	return list.toArray(results);
     }
 
@@ -1738,7 +1789,7 @@ public class TemplateSetup {
 		String outfile = (String) result;
 		if (outfile != null && outfile.length() > 0) {
 		    if (setComponents) {
-			outFileTF.setText(outfile);
+			outFileTF.setText(outfile.trim());
 		    }
 		}
 		if (outFile == null) {
@@ -2208,7 +2259,8 @@ public class TemplateSetup {
 		    return;
 		}
 	    }
-	    InputStream is = new FileInputStream(fname);
+	    Path fp = (new File(fname)).toPath();
+	    InputStream is = new FileInputStream(base.resolve(fp).toString());
 	    Parser parser = new Parser();
 	    parser.parse(is);
 	    initPathData(parser);
@@ -2254,6 +2306,7 @@ public class TemplateSetup {
 					String eptsFile)
     {
 	try {
+	    base = cdir.getCanonicalFile().toPath();
 	    results = null;
 	    SwingUtilities.invokeAndWait(() -> {
 		    JDialog dialog = new JDialog();
