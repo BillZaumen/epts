@@ -1811,7 +1811,7 @@ public class EPTS {
 					   argfp.getCanonicalPath());
 		    }
 		    argv = Setup.getSetupArgs(zdf, argf);
-		    System.setProperty("user.dir", initialcwd);
+		    // System.setProperty("user.dir", initialcwd);
 		    zdf.close();
 		}
 		if (ext != null && ext.equals("eptt")) {
@@ -1840,7 +1840,7 @@ public class EPTS {
 					   argfp.getCanonicalPath());
 		    }
 		    argv = TemplateSetup.getSetupArgs(zdf, argf, null);
-		    System.setProperty("user.dir", initialcwd);
+		    // System.setProperty("user.dir", initialcwd);
 		    zdf.close();
 		}
 	    }  catch (Exception e) {

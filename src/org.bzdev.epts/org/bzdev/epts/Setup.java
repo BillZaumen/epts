@@ -1315,8 +1315,6 @@ public class Setup {
 					adjustVarTable(lastRowIndex, varTable);
 				    }
 				    lastRowIndex = index;
-				    System.out.println("lastRowIndex = "
-						       + lastRowIndex);
 				}
 			    });
 		    tabpane.addTab(localeString("Variables"), varPanel);
