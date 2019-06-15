@@ -1510,6 +1510,12 @@ public class EPTS {
 			} else {
 			    ifile = new File(imageArg);
 			}
+			File parent = ifile.getParentFile();
+			if (parent != null) {
+			    System.setProperty
+				("user.dir",
+				 parent.getCanonicalPath());
+			}
 			imageURI = ifile.getCanonicalFile().toURI();
 			image = ImageIO.read(ifile);
 		    }
@@ -2370,6 +2376,12 @@ public class EPTS {
 							   initialcwd);
 				    }
 				} else {
+				    File parent = ifile.getParentFile();
+				    if (parent != null) {
+					System.setProperty
+					    ("user.dir",
+					     parent.getCanonicalPath());
+				    }
 				    imageURI = ifile.getCanonicalFile().toURI();
 				    image = ImageIO.read(ifile);
 				}

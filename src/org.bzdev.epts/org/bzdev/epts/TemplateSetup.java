@@ -1402,6 +1402,9 @@ public class TemplateSetup {
 	String fname = (saveAs || savedConfigFileName == null)?
 	    chooseSavedConfigFile(panel): savedConfigFileName;
 	if (fname != null) {
+	    if (!fname.endsWith(".eptt") && !fname.endsWith(".EPTT")) {
+		fname = fname + ".eptt";
+	    }
 	    if (createConfigFile(panel, fname)) {
 		savedConfigFileName = fname;
 	    }
@@ -1811,6 +1814,16 @@ public class TemplateSetup {
 	outFileButton = new JButton(localeString("outFileButton"));
 	outFileButton.addActionListener((ae) -> {
 		String name = chooseFile(panel);
+		if (name.endsWith(".epts") || name.endsWith(".EPTS")
+		    || name.endsWith(".eptt") || name.endsWith(".EPTT")
+		    || name.endsWith(".eptc") || name.endsWith(".EPTC")) {
+		    // an output file name should not match an EPTS file
+		    JOptionPane.showMessageDialog
+			(panel,errorMsg("noEPTSFileExt", name),
+			 localeString("errorTitle"),
+			 JOptionPane.ERROR_MESSAGE);
+		    return;
+		}
 		if (name != null) {
 		    outFileTF.setText(name);
 		    mayNeedSave = true;
@@ -1864,6 +1877,17 @@ public class TemplateSetup {
 		    }
 		}
 		outFile = outFileTF.getText().trim();
+		if (outFile.endsWith(".epts") || outFile.endsWith(".EPTS")
+		    || outFile.endsWith(".eptt") || outFile.endsWith(".EPTT")
+		    || outFile.endsWith(".eptc") || outFile.endsWith(".EPTC")) {
+		    // an output file name should not match an EPTS file
+		    JOptionPane.showMessageDialog
+			(dialog,errorMsg("noEPTSFileExt", outFile),
+			 localeString("errorTitle"),
+			 JOptionPane.ERROR_MESSAGE);
+		    outFile = null;
+		    return;
+		}
 		results = generate();
 		dialog.setVisible(false);
 	    });
