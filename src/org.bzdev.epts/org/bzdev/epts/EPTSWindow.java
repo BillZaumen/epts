@@ -1211,8 +1211,9 @@ public class EPTSWindow {
 
     JMenuItem saveMenuItem;
     JMenuItem saveAsMenuItem;
-    JMenuItem addToPathMenuItem; // for Tools menu.
-    JMenuItem deletePathMenuItem; // for Tools menu.
+    JMenuItem addToPathMenuItem; // for Edit menu.
+    JMenuItem deletePathMenuItem; // for Edit menu.
+    JMenuItem makeCurrentMenuItem; // for Edit menu
     File savedFile = null;
 
     private void doSave(boolean mode) {
@@ -1700,6 +1701,43 @@ public class EPTSWindow {
 		    panel.repaint();
 		}
 	    });
+	editMenu.add(menuItem);
+
+	menuItem = new JMenuItem(localeString("MakeCurrent"),
+				 KeyEvent.VK_S);
+	menuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    int index = -1;
+		    if (selectedRow == -1) {
+			Set<String> vnameSet = ptmodel.getVariableNames();
+			if (vnameSet.isEmpty()) return;
+			String vname = null;
+			String[] vnames =
+			    vnameSet.toArray(new String[vnameSet.size()]);
+			if (vnames.length == 1) {
+			    vname = vnames[0];
+			} else {
+			    vname = (String)JOptionPane.showInputDialog
+				(frame, localeString("SelectPathLoc"),
+				 localeString("SelectPathLocTitle"),
+				 JOptionPane.PLAIN_MESSAGE, null, vnames,
+				 vnames[0]);
+			}
+			if (vname == null || vname.length() == 0) return;
+			index = ptmodel.findStart(vname);
+		    } else {
+			index = ptmodel.findStart(selectedRow);
+		    }
+		    if (index != -1) {
+			int offset = ptmodel.moveToEnd(index);
+			if (selectedRow > -1) {
+			    selectedRow += offset;
+			}
+		    }
+		}
+	    });
+	makeCurrentMenuItem = menuItem;
+	menuItem.setEnabled(false);
 	editMenu.add(menuItem);
 
 	menuItem = new JMenuItem(localeString("CopyTableECMAScript"),
@@ -3304,6 +3342,9 @@ public class EPTSWindow {
 			    savedCursorDist = null;
 			}
 			locState = false;
+			if (ptmodel.getRowCount() > 0) {
+			    makeCurrentMenuItem.setEnabled(true);
+			}
 		    } else if (distState != 0) {
 			Point p = panel.getMousePosition();
 			if (p != null) {
@@ -3595,6 +3636,9 @@ public class EPTSWindow {
 
 	locState = false;
 	distState = 0;
+	if (ptmodel.getRowCount() > 0) {
+	    makeCurrentMenuItem.setEnabled(true);
+	}
     }
 
 
@@ -3604,8 +3648,10 @@ public class EPTSWindow {
     public void measureDistance(boolean gcs) {
 	resetState();
 	distInGCS = gcs;
+	makeCurrentMenuItem.setEnabled(false);
 	setModeline(localeString("LeftClickFirstPoint"));
 	distState = 2;
+	makeCurrentMenuItem.setEnabled(false);
 	locState = false;
 	savedCursorDist = panel.getCursor();
 	panel.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
@@ -3615,6 +3661,7 @@ public class EPTSWindow {
 
     public void createLocation() {
 	resetState();
+	makeCurrentMenuItem.setEnabled(false);
 	setModeline(localeString("LeftClickCreate"));
 	TransitionTable.getLocMenuItem().setEnabled(true);
 	distState = 0; 
@@ -3649,6 +3696,7 @@ public class EPTSWindow {
 	    return;
 	}
 	// nextState = SplinePathBuilder.CPointType.MOVE_TO;
+	makeCurrentMenuItem.setEnabled(false);
 	ptmodel.addRow(varname, EPTS.Mode.PATH_START, 0.0, 0.0, 0.0, 0.0);
 	savedCursorPath = panel.getCursor();
 	panel.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
@@ -3754,6 +3802,9 @@ public class EPTSWindow {
 			    savedCursorDist = null;
 			}
 			locState = false;
+			if (ptmodel.getRowCount() > 0) {
+			    makeCurrentMenuItem.setEnabled(true);
+			}
 			panel.repaint();
 		    } else if (distState == 2) {
 			// g2d.setXORMode(Color.BLACK);

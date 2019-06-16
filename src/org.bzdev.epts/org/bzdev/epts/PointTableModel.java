@@ -307,6 +307,54 @@ public class
 	fireTableChanged(fromIndex, toIndex-1, Mode.DELETED);
     }
 
+    // index must point to a location or the start of a path
+    // That entry will be moved to the end of the table and the
+    // other entries shifted.
+    public int moveToEnd(int index) {
+	int cnt = 0;
+	int sz = rows.size();
+	Enum<?> mode = rows.get(cnt+index).getMode();
+	Enum<?> endMode = (sz == 0)? null: getLastRow().getMode();
+	if (endMode == null || (endMode != EPTS.Mode.LOCATION
+				&& endMode != EPTS.Mode.PATH_END)) {
+	    // safety check - we should not do anything if a path is
+	    // currently being edited. We should not be able to get
+	    // here unless a menu item is being enabled at the wrong time.
+	    System.err.println("called moveToEnd while editing a path?");
+	    return 0;
+	}
+	if (mode == EPTS.Mode.LOCATION) {
+	    cnt++;
+	} else {
+	    if (mode != EPTS.Mode.PATH_START) return 0;
+	    cnt++;
+	    while (cnt+index < sz) {
+		mode = rows.get(cnt+index).getMode();
+		boolean done = false;
+		if (mode == EPTS.Mode.LOCATION) {
+		    // should not occur.
+		    System.err.println("PointTableModel.moveToEnd: "
+				       + " unexpected EPTS.Mode.LOCATION");
+		    return 0;
+		} else if (mode == EPTS.Mode.PATH_END) {
+		    cnt++;
+		    break;
+		} else {
+		    cnt++;
+		}
+	    }
+	}
+	ArrayList<PointTMR> tmp = new ArrayList<>(cnt);
+	for (int i = 0; i < cnt; i++) {
+	    tmp.add(rows.get(index));
+	    rows.remove(index);
+	}
+	rows.addAll(tmp);
+	fireTableChanged(index, sz, Mode.MODIFIED);
+	return cnt;
+    }
+
+
     @Override
     public Class<?> getColumnClass(int columnIndex) {
 	switch (columnIndex) {
@@ -956,5 +1004,4 @@ public class
 	map.put("items", list);
 	return map;
     }
-
 }
