@@ -456,6 +456,7 @@ public class
 	// compare square of distances to avoid having to
 	// compute a square root
 	limit *= limit;
+	int result = -1;
 	for (PointTMR row: rows) {
 	    if (!row.isSelectable()) {
 		i++;
@@ -463,11 +464,18 @@ public class
 	    }
 	    double d = Point2D.distanceSq(xp, yp, row.getXP(), row.getYP());
 	    if (d < limit) {
-		return i;
+		// We previously returned the first match. Returning
+		// the last match is better because the last path or
+		// point edited will be at the end of the list. Users
+		// will frequently create a path and then try to edit
+		// their newly created points in order to fix up any
+		// errors.
+		result = i;
+		// return i;
 	    }
 	    i++;
 	}
-	return -1;
+	return result;
     }
 
     /**

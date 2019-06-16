@@ -1153,6 +1153,7 @@ public class EPTSWindow {
 	    }
 	}
 	addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
+	deletePathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
     }
 
     private boolean cleanupPartialPath(boolean force) {
@@ -1204,12 +1205,14 @@ public class EPTSWindow {
 	    lastrow = ptmodel.getLastRow();
 	}
 	addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
+	deletePathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	return true;
     }
 
     JMenuItem saveMenuItem;
     JMenuItem saveAsMenuItem;
     JMenuItem addToPathMenuItem; // for Tools menu.
+    JMenuItem deletePathMenuItem; // for Tools menu.
     File savedFile = null;
 
     private void doSave(boolean mode) {
@@ -1649,7 +1652,7 @@ public class EPTSWindow {
 	menuItem = new JMenuItem(localeString("DeleteBezier"), KeyEvent.VK_D);
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_X, InputEvent.ALT_DOWN_MASK));
-	addToPathMenuItem = menuItem;
+	deletePathMenuItem = menuItem;
 	menuItem.setEnabled(false);
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
@@ -2691,6 +2694,7 @@ public class EPTSWindow {
 		ptmodel.deleteRow(prevRowInd);
 	    }
 	    addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
+	    deletePathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	    selectedRow = -1;
 	    setModeline("");
 	}
@@ -3657,6 +3661,7 @@ public class EPTSWindow {
 	nextState = SplinePathBuilder.CPointType.MOVE_TO;
 	TransitionTable.getLocMenuItem().setEnabled(true);
 	addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
+	deletePathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	saveMenuItem.setEnabled(false);
 	saveAsMenuItem.setEnabled(false);
     }
@@ -4643,6 +4648,8 @@ public class EPTSWindow {
 			    }
 			    addToPathMenuItem.setEnabled
 				(ptmodel.pathVariableNameCount() > 0);
+			    deletePathMenuItem.setEnabled
+				(ptmodel.pathVariableNameCount() > 0);
 			    setupFilters(parser);
 			}
 		    });
@@ -4711,6 +4718,8 @@ public class EPTSWindow {
 			    ptmodel.addRow(row);
 			}
 			addToPathMenuItem.setEnabled
+			    (ptmodel.pathVariableNameCount() > 0);
+			deletePathMenuItem.setEnabled
 			    (ptmodel.pathVariableNameCount() > 0);
 		    }
 		    if (parser != null) {
