@@ -2332,7 +2332,8 @@ public class TemplateSetup {
 		}
 	    }
 	    Path fp = (new File(fname)).toPath();
-	    InputStream is = new FileInputStream(base.resolve(fp).toString());
+	    InputStream is = (base == null)? new FileInputStream(fp.toString()):
+		new FileInputStream(base.resolve(fp).toString());
 	    Parser parser = new Parser();
 	    parser.parse(is);
 	    initPathData(parser);

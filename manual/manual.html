@@ -986,11 +986,17 @@ the path as a sequence of <CODE>SEG_CLOSE</CODE>,
 with 0 to 3 control points. The names for each type are the same as
 the names of the corresponding <CODE>java.awt.geom.PathIterator</CODE>
 constants.
-
-To use a template, one must also specify an output file, which is done
-with the <CODE>-o</CODE> command-line option.  EPTS will not provide a GUI
-when templates are used. If the argument to the <CODE>-o</CODE> option
-is "<CODE>-</CODE>", the output will be sent to standard output.
+<P>
+To use a template, one must also specify an output file, which may be
+done with the <CODE>-o</CODE> command-line option.  EPTS will not
+provide a GUI when templates are used with the <CODE>-o</CODE>
+command-line option.  If the argument to the <CODE>-o</CODE> option is
+"<CODE>-</CODE>", the output will be sent to standard output.  If the
+<CODE>-o</CODE> is not provided and the argument file is an <B>eptt</B> file,
+a GUI will be started to allow the <B>eptt</B> file to be edited. If the
+<CODE>-o</CODE> is provided with an <B>eptt</B> file, the template options
+will be recovered from the <B>eptt</B> and the file specified as the
+argument to the <CODE>-o</CODE> option will be used as the output file.
 
 <H2><A name="builtins">Built-in templates</A></H2>
 
