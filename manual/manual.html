@@ -321,7 +321,8 @@ These panes are used as follows.
     template type. It allows one to set a few directives or options.
   <LI> The <B><CODE></CODE>Configure</B> pane. This pane displays the
     paths defined in the saved-state file and any paths added using
-    the <CODE>Add Paths</CODE> pane.  There is a checkbox next to each
+    the <CODE>Add Paths</CODE> pane (the names of these paths are shown
+    using a bold font).  There is a checkbox next to each
     path and that checkbox should be selected for the paths that will
     be included in the output.  For table templates and the SVG template,
     when a path is selected, various parameters for that path will be
@@ -965,6 +966,11 @@ a path or creating an isolated point at a specific location:
 <H1><A name="templates">Templates</A></H1>
 
 Templates allow output files to be produced in a variety of formats.
+Because setting up a template is rather complex, one will typically
+use the GUI-based interface described in the
+<A href="#templateSetup">configuring templates</A> section. The
+following describes the command-line interface.
+
 A template is specified by using the <CODE>--template</CODE>
 command-line option.  The value is either a URI or a file name.
 There are a number of built-in templates that are accessible by

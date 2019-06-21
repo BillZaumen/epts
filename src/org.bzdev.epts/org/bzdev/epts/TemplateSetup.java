@@ -891,6 +891,51 @@ public class TemplateSetup {
 	}
     }
 
+    // Want compound paths shown in bold to distinguish them from
+    // simple paths.
+    static class PathLocRenderer extends DefaultTableCellRenderer {
+	PathMap pm;
+	Font orig;
+	Font cached;
+	public PathLocRenderer(PathMap pm) {
+	    super();
+	    this.pm = pm;
+	}
+	@Override
+	public Component getTableCellRendererComponent(JTable table,
+						       Object object,
+						       boolean isSelected,
+						       boolean hasFocus,
+						       int row, int column)
+	{
+	    Set<String>boldSet = pm.keySet();
+	    Component c = super.getTableCellRendererComponent(table, object,
+							      isSelected,
+							      hasFocus,
+							      row, column);
+	    if (c instanceof JLabel) {
+		JLabel label = (JLabel) c;
+		if (orig == null) {
+		    Font f = label.getFont();
+		    orig = f;
+		    cached = f.deriveFont(Font.BOLD);
+		}
+		if(object instanceof String) {
+		    String s = (String) object;
+		    if (boldSet.contains(s)) {
+			System.out.println("saw " + s);
+			label.setFont(cached);
+		    } else {
+			label.setFont(orig);
+		    }
+		} else {
+		    label.setFont(orig);
+		}
+	    }
+	    return c;
+	}
+    }
+
     static final char openspace = '\u2423';
 
     static void createConfigTable(JPanel panel) {
@@ -945,6 +990,9 @@ public class TemplateSetup {
 	pathLocTable.getSelectionModel().setSelectionMode
 	    (ListSelectionModel.SINGLE_SELECTION);
 	pathLocTable.getColumnModel().getColumn(0).setPreferredWidth(15);
+	pathLocTable.setDefaultRenderer(String.class,
+					new PathLocRenderer(pathmap));
+
 	int twidth = 15;
 	// twidth = Setup.configColumn(subpathTable, 0," ");
 	twidth += Setup.configColumn(pathLocTable, 1,
