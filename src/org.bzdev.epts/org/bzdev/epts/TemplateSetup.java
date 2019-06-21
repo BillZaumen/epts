@@ -923,7 +923,6 @@ public class TemplateSetup {
 		if(object instanceof String) {
 		    String s = (String) object;
 		    if (boldSet.contains(s)) {
-			System.out.println("saw " + s);
 			label.setFont(cached);
 		    } else {
 			label.setFont(orig);
@@ -1809,6 +1808,11 @@ public class TemplateSetup {
 	    result = dec.readObject();
 	    if (result instanceof PathMap) {
 		pathmap = (PathMap) result;
+		if (pathLocTable != null) {
+		    pathLocTable.setDefaultRenderer(String.class,
+						    new PathLocRenderer
+						    (pathmap));
+		}
 	    }
 	    dec.close();
 	    is.close();
