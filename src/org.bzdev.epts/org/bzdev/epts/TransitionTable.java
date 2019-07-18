@@ -1,9 +1,7 @@
 package org.bzdev.epts;
 
 import org.bzdev.geom.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import javax.swing.*;
 import java.util.*;
 class Transition {
@@ -57,6 +55,8 @@ public class TransitionTable {
 	new JMenuItem(localeString("Vector"));
     private static JMenuItem arcMenuItem = new JMenuItem(localeString("Arc"));
     private static JMenuItem locMenuItem = new JMenuItem(localeString("Loc"));
+    private static JMenuItem offsetMenuItem =
+	new JMenuItem(localeString("OffsetMenuItem"));
 
     static {
 	vectorMenuItem.setEnabled(false);
@@ -65,6 +65,9 @@ public class TransitionTable {
 	arcMenuItem.setEnabled(false);
 	locMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, 0));
 	locMenuItem.setEnabled(false);
+	offsetMenuItem.setAccelerator
+	    (KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.ALT_DOWN_MASK));
+	offsetMenuItem.setEnabled(false);
     }
 
     static JMenuItem getMenuItem(Enum state) {
@@ -74,6 +77,7 @@ public class TransitionTable {
     static JMenuItem getVectorMenuItem() {return vectorMenuItem;}
     static JMenuItem getArcMenuItem() {return arcMenuItem;}
     static JMenuItem getLocMenuItem() {return locMenuItem;}
+    static JMenuItem getOffsetMenuItem() {return offsetMenuItem;}
 
     private static void createMenuItem(Enum state, String label, int keycode,
 				       boolean enabled, boolean selected)
@@ -318,7 +322,7 @@ public class TransitionTable {
 	    currentState = newState;
 	    if (currentState == SplinePathBuilder.CPointType.MOVE_TO) {
 		vectorMenuItem.setEnabled(true);
-		arcMenuItem.setEnabled(false);
+		arcMenuItem.setEnabled(true);
 	    } else if (currentState == SplinePathBuilder.CPointType.SEG_END) {
 		vectorMenuItem.setEnabled(true);
 		arcMenuItem.setEnabled(true);

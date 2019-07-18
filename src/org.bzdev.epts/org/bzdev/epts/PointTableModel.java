@@ -10,9 +10,11 @@ import org.bzdev.util.TemplateProcessor.KeyMap;
 import org.bzdev.util.TemplateProcessor.KeyMapList;
 
 import java.awt.Graphics2D;
+import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,7 +43,6 @@ public class
     
     public int pathVariableNameCount() {return pnames.size();}
 
-
     public List<PointTMR> getRows() {
 	return Collections.unmodifiableList(rows);
     }
@@ -53,6 +54,18 @@ public class
     public Set<String> getPathVariableNames() {
 	return Collections.unmodifiableSet(pnames);
     }
+
+    public List<String> getPathVariableNamesInTableOrder() {
+	// order in which they
+	List<String> names = new LinkedList<String>();
+	for (PointTMR row: rows) {
+	    if (row.getMode() == EPTS.Mode.PATH_START) {
+		names.add(row.getVariableName());
+	    }
+	}
+	return names;
+    }
+
 
     public void stopFiltering() {
 	for (PointTMR row: rows) {
@@ -98,6 +111,47 @@ public class
 	    }
 	}
 	return -1;
+    }
+
+    public Path2D getPath(String pname) {
+	int start = findStart(pname);
+	if (start == -1)  return null;
+	int end = findEnd(start);
+	if (end == -1) return null;
+	start++;
+	if (start >= end) return null;
+	if (start+1 >= end) return null;
+	// System.out.format("start = %d, end = %d\n", start, end);
+	SplinePathBuilder pb = new SplinePathBuilder();
+	while (start < end) {
+	    PointTMR row = getRow(start++);
+	    Enum rmode = row.getMode();
+	    double x = row.getX();
+	    double y = row.getY();
+	    if (rmode instanceof SplinePathBuilder.CPointType) {
+		SplinePathBuilder.CPointType
+		    mode = (SplinePathBuilder.CPointType) rmode;
+		switch (mode) {
+		case MOVE_TO:
+		case SPLINE:
+		case SEG_END:
+		case CONTROL:
+		    pb.append(new SplinePathBuilder.CPoint(mode, x, y));
+		    break;
+		case CLOSE:
+		    pb.append(new SplinePathBuilder.CPoint(mode));
+		    break;
+		}
+	    }
+	}
+	return pb.getPath();
+    }
+
+    public PointTMR getNextToLastRow() {
+	int n = rows.size();
+	n -= 2;
+	if (n < 0) return null;
+	return rows.get(n);
     }
 
 
@@ -281,6 +335,8 @@ public class
 	    names.remove(varname);
 	    if (mode == EPTS.Mode.PATH_START) {
 		pnames.remove(varname);
+		OffsetPane.removeOurPathName(varname);
+		OffsetPane.removeBasename(varname);
 	    }
 	}
 	if (repaint && row != null ) {
@@ -301,6 +357,8 @@ public class
 		names.remove(varname);
 		if (mode == EPTS.Mode.PATH_START) {
 		    pnames.remove(varname);
+		    OffsetPane.removeOurPathName(varname);
+		    OffsetPane.removeBasename(varname);
 		}
 	    }
 	}

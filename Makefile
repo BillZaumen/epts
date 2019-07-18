@@ -153,6 +153,7 @@ RESOURCES = manual/manual.xml \
 	manual/drawing5.png \
 	manual/filewindow.png \
 	manual/menubar.png \
+	manual/offsetPane.png \
 	manual/table2.png \
 	manual/terminal.png \
 	manual/LocationDialog.png \

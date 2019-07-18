@@ -476,10 +476,10 @@ The <code>Edit</code> menu contains the following items:
   <LI><B><CODE>Undo point insertion</CODE></B>. This essentially removes
     the last row (two rows for a closed path) from the table. If
     a previous path is extended via the <CODE>Edit</CODE> menu's
-    <CODE>Add to B&eacute;zier Path</CODE> item, that path will be
+    <CODE>Add to a B&eacute;zier Path</CODE> item, that path will be
     moved to the end of the table. While creating a path, this option
     undoes the last change.
-  <LI><B><CODE>Add to B&eacute;zier Path</CODE></B>. This option will
+  <LI><B><CODE>Append to a B&eacute;zier Path</CODE></B>. This option will
     extend a Bezier path.  If one of a path's nodes has been selected,
     that path will be extended. Otherwise a dialog box will allow one to
     select the desired path.
@@ -572,6 +572,17 @@ displayed in textual form. This menu contains the following items:
     <BR>
     <CENTER><IMG src="table2.png"></CENTER>
     <BR>
+  <LI><B><CODE>Set Arc-Angle Level</CODE></B>. This option allows the
+    user to set the arc-angle level.  When circular arcs are drawn,
+    multiple segments will be used when the desired angle is larger
+    than a limit.  Four levels are provided: Level 1 corresponds to a
+    limit of 90 degrees, Level 2 corresponds to a limit of 45 degrees,
+    Level 3 corresponds to a limit of 22.5 degrees, and level 4
+    corresponds to a limit of 11.25 degrees. Circular arcs can be
+    drawn by using the <B><CODE>Add Arc</CODE></B> operation and
+    the <B><CODE>Offset Path</CODE></B> option provided by this menu. The
+    <B><CODE>Offset Path</CODE></B> option will draw a circular arc only
+    when necessary.
   <LI><B><CODE>Create a Point</CODE></B>. This option will create a new,
     isolated point. It will appear in the table if given a name.
     A description of this point, in a format set by <CODE>Edit</CODE>
@@ -590,11 +601,76 @@ displayed in textual form. This menu contains the following items:
     variable name is left as an empty string, a new variable name will
     be generated, starting the string "path" and followed by a number
     (e.g., <CODE>path24</CODE>.)
-  <LI><B><CODE>Add to a B&eacute;zier Path</CODE></B>. The user will be asked to
-    select the name of a path, and adding points to the path will then
-    be possible.
-  <LI>A series of radio buttons specifying the type for
-      the next point along a curve:
+  <LI><B><CODE>Offset Path</CODE></B>. This option will allow one to
+    create offset paths by bringing up a dialog box:
+    <BR>
+    <CENTER><IMG src="offsetPane.png"></CENTER>
+    <BR>
+    Pull-down menus (Java combo boxes) describing units allow distances
+    to be expressed in a variety of units.  These will be converted to
+    meters.  When a distance is provided in meters, or when it uses
+    custom units, the distance is not modified. The intention is to allow
+    the user to pick units appropriate for an application and to convert
+    those to MKS or custom units for actual use.
+    The fields provided by this dialog box are described below:
+    <UL>
+      <LI><B><CODE>Path to Offset</CODE></B>. A pull-down menu will allow
+	one to specify a reference path. There are paths associated with
+	the reference path: one in the counterclockwise direction when
+	proceeding along the reference path from its start to its end, and
+	the other in the clockwise direction. Where the reference path is
+	a smooth path, these aditional paths are offset from the reference
+	path by spacified distances.
+      <LI><B><CODE>CCW Distance</CODE></B>. The distance from the reference
+	path to the associated path in the counterclockwise direction.
+      <LI><B><CODE>CW Distance</CODE></B>. The distance from the reference
+	path to the associated path in the clockwise direction.
+      <LI><B><CODE>Single-Path Distance</CODE></B>. For some modes (see
+	below), only a single path will be created. This provides the distance
+	of that path from the reference path.  When single paths are created,
+	the path will be offset from the associated paths, but may deviate
+	from the reference path (typically at points were the reference path
+	is not smooth).
+      <LI><B><CODE>Mode</CODE></B>. This specifies the mode used to create
+	a path. The modes are
+	<UL>
+	  <LI><B><CODE>Closed Path</CODE></B>. The associated paths will
+	    be connected at their end points, creating a loop.
+	  <LI><B><CODE>Path on CCW Side Only</CODE></B>.
+	    A single path will be created at a nominal distance from the
+	    reference path specified by the
+	    <B><CODE>Single-Path Distance</CODE></B> option above. This
+	    path will be on the counterclockwise side of the reference path
+	    and will run in the same direction.
+	  <LI><B><CODE>Reversed Path on CCW Side Only</CODE></B>.
+	    A single path will be created at a nominal distance from the
+	    reference path specified by the
+	    <B><CODE>Single-Path Distance</CODE></B> option above. This
+	    path will be on the counterclockwise side of the reference path
+	    and will run in the opposite direction.
+	  <LI><B><CODE>Path on CW Side Only</CODE></B>.
+	    A single path will be created at a nominal distance from the
+	    reference path specified by the
+	    <B><CODE>Single-Path Distance</CODE></B> option above. This
+	    path will be on the clockwise side of the reference path
+	    and will run in the same direction.
+	  <LI><B><CODE>Reversed Path on CW Side Only</CODE></B>.
+	    A single path will be created at a nominal distance from the
+	    reference path specified by the
+	    <B><CODE>Single-Path Distance</CODE></B> option above. This
+	    path will be on the clockwise side of the reference path
+	    and will run in the opposite direction.
+	</UL>
+    </UL>
+    The <B><CODE>Offset Path</CODE></B> uses various heuristics to
+    guess appropriate values for various fields. These values can be
+    changed as appropriate. Typically, it uses data associated with each
+    reference path, and notices if single paths have been created for a
+    base path.
+  <LI> When the <B><CODE>Create a B&eacute;zier Path</CODE></B> or
+    the edit menu's <B><CODE>Append to a B&eacute;zier Path</CODE></B>
+    options are in effect, a series of radio buttons specifying the type for
+    the next point along a curve will be enabled:
     <UL>
       <LI><B><CODE>Spline Point(s)</CODE></B>. This option indicates that the
 	next point clicked will be a knot on a segment described by a
@@ -667,6 +743,12 @@ displayed in textual form. This menu contains the following items:
 	units to be specified (distance units for the
 	<B><CODE>length</CODE></B> field and angular units
 	(degrees or radians) for the <B><CODE>Angle</CODE></B> field.
+	If there is a previous segment, the angle will be preset so
+	that the tangent at the end of the previous segment matches
+	the tangent for this segment. The angle can be changed if desired.
+	In cases where straight-line segments should be connected with
+	arcs whenever the direction changes, the preset angle will have
+	the desired value.
       <LI><B><CODE>Add Arc</CODE></B>. This menu item will open a
 	dialog box that will ask for a radius, angle, angle direction,
 	and arc-accuracy level:
@@ -693,6 +775,10 @@ displayed in textual form. This menu contains the following items:
 	When the arc accuracy is set to 1 (the default), the maximum
 	angular extent for a cubic B&eacute;zier curve segment is 90
 	degrees. Increasing the arc accuracy by 1 halves this angle.
+	For the case where an arc occurs at the start of a path, a
+	dialog box will appear asking for an initial angle. This
+	initial angle is measure counterclockwise from the positive
+	X axis.
     </UL>
 </UL>
 Menu items that are not applicable are disabled.

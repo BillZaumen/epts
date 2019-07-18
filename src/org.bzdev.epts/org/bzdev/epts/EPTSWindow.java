@@ -21,9 +21,13 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Formatter;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.Vector;
 import javax.imageio.ImageIO;
 import javax.script.ScriptException;
@@ -42,6 +46,7 @@ import org.bzdev.ejws.maps.*;
 import org.bzdev.geom.FlatteningPathIterator2D;
 import org.bzdev.geom.Path2DInfo;
 import org.bzdev.geom.Paths2D;
+import org.bzdev.geom.PathSplitter;
 import org.bzdev.geom.SplinePath2D;
 import org.bzdev.geom.SplinePathBuilder;
 import org.bzdev.geom.SplinePathBuilder.CPointType;
@@ -58,8 +63,142 @@ import org.bzdev.util.TemplateProcessor.KeyMapList;
 import org.bzdev.swing.ErrorMessage;
 import org.bzdev.swing.HtmlWithTocPane;
 import org.bzdev.swing.PortTextField;
+import org.bzdev.swing.SwingOps;
 import org.bzdev.swing.VTextField;
 import org.bzdev.swing.text.CharDocFilter;
+
+class AnglePane extends JPanel {
+    static int aindexSaved = 0;
+    int aindex = aindexSaved;
+    void saveIndices() {
+	aindexSaved = aindex;
+    }
+    static String errorMsg(String key, Object... args) {
+	return EPTS.errorMsg(key, args);
+    }
+
+    static String localeString(String key) {
+	return EPTS.localeString(key);
+    }
+    VTextField atf;		// angle text field
+    static Vector<String> av = new Vector<>(2);
+    static {
+	av.add("Degrees");
+	av.add("Radians");
+    }
+    JComboBox<String> aunits = new JComboBox<>(av);
+    boolean firstTime = true;
+    CharDocFilter cdf = new CharDocFilter();
+    InputVerifier atfiv = new InputVerifier() {
+	    public boolean verify(JComponent input) {
+		JTextField tf = (VTextField)input;
+		String string = tf.getText();
+		if (string == null) string = "";
+		string = string.trim();
+		try {
+		    if (string.length() == 0) return true;
+		    double value = Double.parseDouble(string);
+		    return true;
+		} catch (Exception e) {
+		    return false;
+		}
+	    }
+	};
+    double angle = 0.0;
+    public double getAngle() {
+	return (aindex == 0)? Math.toRadians(angle): angle;
+    }
+
+    boolean noPrevErrors = true;
+
+    public AnglePane() {
+	super();
+	cdf.setAllowedChars("09eeEE..,,++--");
+	JLabel al = new JLabel(localeString("Angle"));
+	atf = new VTextField("", 10) {
+		@Override
+		protected void onAccepted() {
+		    String text = getText();
+		    if (text == null || text.length() == 0) {
+			angle = 0.0;
+		    } else {
+			angle = Double.valueOf(text);
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    JOptionPane.showMessageDialog
+			(this, "Must enter a real number",
+			 "Error", JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+	((AbstractDocument)atf.getDocument()).setDocumentFilter(cdf);
+	atf.setInputVerifier(atfiv);
+	JButton okButton = new JButton(localeString("OK"));
+	okButton.addActionListener((e) -> {
+		Window w = SwingUtilities.getWindowAncestor(AnglePane.this);
+		w.setVisible(false);
+	    });
+
+	/*
+	okButton.addFocusListener(new FocusListener() {
+		public void focusGained(FocusEvent e) {
+		    System.out.println("okButton has Focus");
+		}
+		public void focusLost(FocusEvent e) {
+		    System.out.println("okButton lost Focus");
+		}
+	    });
+	*/
+
+	// Normally the OK button will only respond to a 'space'.
+	// we want it to respond to a return so it works like a
+	// normal dialog box.
+	KeyAdapter ka = new KeyAdapter() {
+		boolean notPressed = true;
+		public void keyPressed(KeyEvent e) {
+		    switch(e.getKeyChar()) {
+		    case KeyEvent.VK_ENTER:
+			if (notPressed) {
+			    Window w =
+				SwingUtilities.getWindowAncestor
+				(AnglePane.this);
+			    w.setVisible(false);
+			    notPressed = false;
+			}
+			break;
+		    default:
+			break;
+		    }
+		}
+	    };
+	okButton.addKeyListener(ka);
+
+	GridBagLayout gridbag = new GridBagLayout();
+	GridBagConstraints c = new GridBagConstraints();
+	setLayout(gridbag);
+	c.insets = new Insets(5, 5, 5, 5);
+	c.ipadx = 5;
+	c.ipady = 5;
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = 1;
+	gridbag.setConstraints(al, c);
+	add(al);
+	gridbag.setConstraints(atf, c);
+	add(atf);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(aunits, c);
+	add(aunits);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(okButton, c);
+	add(okButton);
+
+	aunits.addActionListener((ae) -> {
+		aindex = aunits.getSelectedIndex();
+	    });
+    }
+}
 
 class VectorPane extends JPanel {
     static int lindexSaved = 0;
@@ -146,6 +285,14 @@ class VectorPane extends JPanel {
 	return (aindex == 0)? Math.toRadians(angle): angle;
     }
 
+    public void setAngle(double angle) {
+	this.angle = (aindex == 0)? Math.toDegrees(angle): angle;
+	String sangle = String.format("%.7g", this.angle);
+	// System.out.println("angle = " + this.angle);
+	// System.out.println("sangle = " + sangle);
+	atf.setText(sangle);
+    }
+
     boolean noPrevErrors = true;
 
     public VectorPane() {
@@ -209,6 +356,20 @@ class VectorPane extends JPanel {
 	    };
 	((AbstractDocument)atf.getDocument()).setDocumentFilter(cdf);
 	atf.setInputVerifier(atfiv);
+	atf.addFocusListener(new FocusAdapter() {
+		boolean firstTime = true;
+		@Override
+		public void focusGained(FocusEvent e) {
+		    String text = atf.getText();
+		    if (firstTime) {
+			atf.setCaretPosition(0);
+			atf.moveCaretPosition(text.length());
+			firstTime = false;
+		    }
+		}
+	    });
+
+
 	GridBagLayout gridbag = new GridBagLayout();
 	GridBagConstraints c = new GridBagConstraints();
 	setLayout(gridbag);
@@ -239,6 +400,564 @@ class VectorPane extends JPanel {
 	    });
 	aunits.addActionListener((ae) -> {
 		aindex = aunits.getSelectedIndex();
+	    });
+    }
+}
+
+class OffsetPane extends JPanel {
+
+    static String errorMsg(String key, Object... args) {
+	return EPTS.errorMsg(key, args);
+    }
+
+    static String localeString(String key) {
+	return EPTS.localeString(key);
+    }
+
+    static double dist1Saved = 0.0;
+    static double dist2Saved = 0.0;
+    static double dist3Saved = 0.0;
+
+    static int uindex1Saved = 0;
+    static int uindex2Saved = 0;
+    static int uindex3Saved = 0;
+    // static int nsegIndexSaved = 1;
+
+    static String lastBaseName = null;
+
+    int mindex = 0;
+    int uindex1 = uindex1Saved;
+    int uindex2 = uindex2Saved;
+    int uindex3 = uindex3Saved;
+    // int nsegIndex = nsegIndexSaved;
+
+    void saveDistances() {
+	dist1Saved = dist1;
+	dist2Saved = dist2;
+    }
+
+    void saveIndices() {
+	if (newBasename) {
+	    uindex1Saved = uindex1;
+	    uindex2Saved = uindex2;
+	    uindex3Saved = uindex3;
+	}
+	// nsegIndexSaved = nsegIndex;
+    }
+    JComboBox<String> pcb;
+
+    public String getBasePathName() {
+	if (pcb.getSelectedIndex() == 0) return null;
+	// System.out.println("basename = " + (String)pcb.getSelectedItem());
+	return ((String)pcb.getSelectedItem()).trim();
+    }
+
+    JComponent targetTF = null;
+    public JComponent getTargetTF() {return targetTF;}
+
+    private static String[] modes = {
+	localeString("closedPathMode"), // 0
+	localeString("CCWPathMode"),  // 1
+	localeString("CCWReversedPathMode"), // 2
+	localeString("CWPathMode"),  // 3
+	localeString("CWReversedPathMode"), // 4
+    };
+
+    JComboBox<String> modesCB = new JComboBox<>(modes);
+
+    /*
+    private static String[] dirs = {
+	localeString("CCWSide"),
+	localeString("CWSide")
+    };
+
+    JComboBox<String> dirCB = new JComboBox<>(dirs);
+    */
+
+    public boolean requestsClosedPath() {
+	return modesCB.getSelectedIndex() == 0;
+    }
+    public boolean requestsReversedPath() {
+	int index = modesCB.getSelectedIndex();
+	return (index > 0 && index%2 == 0);
+    }
+
+    public boolean requestsCCWPath() {
+	int index = modesCB.getSelectedIndex();
+	// System.out.println("requestsCCWPath: index = " + index);
+	return (index > 0 && index < 3);
+    }
+
+    public boolean requestsCWPath() {
+	int index = modesCB.getSelectedIndex();
+	// System.out.println("requestsCWPath: index = " + index);
+	return (index > 2 && index < 5);
+    }
+
+    JComboBox<String> lunits1 = new JComboBox<>(ConfigGCSPane.units);
+    JComboBox<String> lunits2 = new JComboBox<>(ConfigGCSPane.units);
+    JComboBox<String> lunits3 = new JComboBox<>(ConfigGCSPane.units);
+    CharDocFilter cdf = new CharDocFilter();
+    InputVerifier utfiv1 = new InputVerifier() {
+	    boolean firstTime = true;
+
+	    public boolean verify(JComponent input) {
+		JTextField tf = (VTextField)input;
+		String string = tf.getText();
+		if (string == null) string = "";
+		string = string.trim();
+		try {
+		    if (string.length() == 0) {
+			if (firstTime) {
+			    return true;
+			} else {
+			    return false;
+			}
+		    }
+		    double value = Double.parseDouble(string);
+		    if (value >= 0.0) {
+			firstTime = false;
+			return true;
+		    } else {
+			return false;
+		    }
+		} catch (Exception e) {
+		    return false;
+		}
+	    }
+	};
+
+    InputVerifier utfiv2 = new InputVerifier() {
+	    boolean firstTime = true;
+
+	    public boolean verify(JComponent input) {
+		JTextField tf = (VTextField)input;
+		String string = tf.getText();
+		if (string == null) string = "";
+		string = string.trim();
+		try {
+		    if (string.length() == 0) {
+			if (firstTime) {
+			    return true;
+			} else {
+			    return false;
+			}
+		    }
+		    double value = Double.parseDouble(string);
+		    if (value >= 0.0) {
+			firstTime = false;
+			return true;
+		    } else {
+			return false;
+		    }
+		} catch (Exception e) {
+		    return false;
+		}
+	    }
+	};
+
+    InputVerifier utfiv3 = new InputVerifier() {
+	    boolean firstTime = true;
+
+	    public boolean verify(JComponent input) {
+		JTextField tf = (VTextField)input;
+		String string = tf.getText();
+		if (string == null) string = "";
+		string = string.trim();
+		try {
+		    if (string.length() == 0) {
+			if (firstTime) {
+			    return true;
+			} else {
+			    return false;
+			}
+		    }
+		    double value = Double.parseDouble(string);
+		    if (value >= 0.0) {
+			firstTime = false;
+			return true;
+		    } else {
+			return false;
+		    }
+		} catch (Exception e) {
+		    return false;
+		}
+	    }
+	};
+
+    /*
+    static Vector<String> nv = new Vector<>(10);
+    static {
+	nv.add("1");
+	nv.add("2");
+	nv.add("3");
+	nv.add("4");
+    }
+    */
+
+    /*
+    JComboBox<String> nsegComboBox = new JComboBox<>(nv);
+
+    public double getMaxDelta() {
+	int divisor = 1 << nsegComboBox.getSelectedIndex();
+	return (Math.PI/2.0)/(divisor);
+    }
+    */
+
+    VTextField d1tf;
+    VTextField d2tf;
+    VTextField d3tf;
+
+    double dist1 = dist1Saved;
+    double dist2 = dist2Saved;
+    double dist3 = 0.0;
+
+    public double getDist1() {
+	return ConfigGCSPane.convert[uindex1].valueAt(dist1);
+    }
+    public double getDist2() {
+	return ConfigGCSPane.convert[uindex2].valueAt(dist2);
+    }
+    public double getDist3() {
+	return ConfigGCSPane.convert[uindex3].valueAt(dist3);
+    }
+
+    private static class BME {
+	int mindex;
+	double dist1;
+	double dist2;
+	double dist3;
+	int uindex1;
+	int uindex2;
+	int uindex3;
+	int count = 0;
+    }
+
+    private static Map<String,BME> baseMap = new TreeMap<String,BME>();
+
+    public void saveBaseMap() {
+	String name = getBasePathName();
+	if (name != null) {
+	    BME entry = baseMap.get(name);
+	    if (entry == null) entry = new BME();
+	    entry.mindex = mindex;
+	    entry.dist1 = dist1;
+	    entry.dist2 = dist2;
+	    entry.dist3 = dist3;
+	    entry.uindex1 = uindex1;
+	    entry.uindex2 = uindex2;
+	    entry.uindex3 = uindex3;
+	    baseMap.put(name, entry);
+	}
+    }
+
+    public static void removeBasename(String name) {
+	BME entry = baseMap.remove(name);
+	if (entry != null) {
+	    // fix up ourpaths
+	    Iterator<Map.Entry<String,String>> iterator
+		= ourpaths.entrySet().iterator();
+	    while (iterator.hasNext()) {
+		Map.Entry mentry = iterator.next();
+		if (mentry.getValue().equals(name)) {
+		    iterator.remove();
+		}
+	    }
+	}
+    }
+
+    private static Map<String,String> ourpaths = new HashMap<String,String>();
+
+    public static void addOurPathName(String name, String bname) {
+	if (!ourpaths.containsKey(name)) {
+	    ourpaths.put(name, bname);
+	    BME entry = baseMap.get(bname);
+	    if (entry != null) entry.count++;
+	}
+    }
+
+    public static void removeOurPathName(String name) {
+	String bname = ourpaths.remove(name);
+	if (bname != null) {
+	    BME entry = baseMap.get(bname);
+	    if (entry != null) {
+		entry.count--;
+		if (entry.count == 0) {
+		    baseMap.remove(bname);
+		}
+	    }
+	}
+    }
+
+    boolean baseMode = false;
+    public boolean getBaseMode() {return baseMode;}
+
+    boolean newBasename = false;
+
+
+    public OffsetPane( PointTableModel ptmodel) {
+	super();
+	cdf.setAllowedChars("09eeEE..,,++--");
+	JLabel nsl = new JLabel(localeString("NSegs"));
+	JLabel pl = new JLabel(localeString("pathLabel"));
+	JLabel d1l = new JLabel(localeString("dist1"));
+	JLabel d2l = new JLabel(localeString("dist2"));
+	JLabel d3l = new JLabel(localeString("dist3"));
+	JLabel ml = new JLabel(localeString("offsetMode"));
+
+	Vector<String> pathnames =
+	    new Vector<>(ptmodel.pathVariableNameCount() + 2);
+	pathnames.add(localeString("PCBHDR"));
+	for (String name: ptmodel.getPathVariableNames()) {
+	    pathnames.add(name);
+	}
+
+	// in order of appearance in the table
+	List<String> allpathnames =
+	    ptmodel.getPathVariableNamesInTableOrder();
+	int  allpathnamesSize = allpathnames.size();
+
+	boolean usingLastBaseName = false;
+	int baseInd = ptmodel.pathVariableNameCount();
+	String baseName;
+	if (baseInd > 0) {
+	    baseName = allpathnames.get(baseInd-1);
+	    // if what we get is actually one of the paths
+	    // we created, skip back further until we find a
+	    // good candiate for a base name: it would be very
+	    // unusual to use an offset path as a base name.
+	    while (ourpaths.containsKey(baseName)) {
+		baseInd--;
+		if (baseInd == 0) {
+		    baseName = null;
+		    break;
+		}
+		baseName = allpathnames.get(baseInd-1);
+	    }
+	} else {
+	    baseName = null;
+	}
+	// System.out.println("initial base name = " + baseName);
+	baseInd = 0;
+	if (baseName != null) {
+	    for (String name: pathnames) {
+		if (baseInd > 0) {
+		    if (name.equals(baseName)) {
+			break;
+		    }
+		}
+		baseInd++;
+	    }
+	}
+	// System.out.println("initial base index = " +  baseInd);
+
+	pcb = new JComboBox<String>(pathnames);
+
+	d1tf = new VTextField("", 10) {
+		@Override
+		protected void onAccepted() {
+		    String text = getText();
+		    if (text == null || text.length() == 0) {
+			dist1 = 0.0;
+		    } else {
+			dist1 = Double.valueOf(text);
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    JOptionPane.showMessageDialog
+			(this, "Must enter a real number",
+			 "Error", JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+	((AbstractDocument)d1tf.getDocument()).setDocumentFilter(cdf);
+	d1tf.setInputVerifier(utfiv1);
+
+	d2tf = new VTextField("", 10) {
+		@Override
+		protected void onAccepted() {
+		    String text = getText();
+		    if (text == null || text.length() == 0) {
+			dist2 = 0.0;
+		    } else {
+			dist2 = Double.valueOf(text);
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    JOptionPane.showMessageDialog
+			(this, "Must enter a real number",
+			 "Error", JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+	((AbstractDocument)d2tf.getDocument()).setDocumentFilter(cdf);
+	d2tf.setInputVerifier(utfiv2);
+
+	d3tf = new VTextField("", 10) {
+		@Override
+		protected void onAccepted() {
+		    String text = getText();
+		    if (text == null || text.length() == 0) {
+			dist3 = 0.0;
+		    } else {
+			dist3 = Double.valueOf(text);
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    JOptionPane.showMessageDialog
+			(this, "Must enter a real number",
+			 "Error", JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+	((AbstractDocument)d3tf.getDocument()).setDocumentFilter(cdf);
+	d3tf.setInputVerifier(utfiv3);
+
+	// initialize fields
+	pcb.setSelectedIndex(baseInd);
+	/*
+	System.out.println("pcb.getSelectedItem() = "
+			   + (String)(pcb.getSelectedItem()));
+	*/
+	if (baseMap.containsKey(baseName)) {
+	    BME entry = baseMap.get(baseName);
+	    mindex = entry.mindex;
+	    uindex1 = entry.uindex1;
+	    uindex2 = entry.uindex2;
+	    uindex3 = entry.uindex3;
+	    dist1 = entry.dist1;
+	    dist2 = entry.dist2;
+	    dist3 = entry.dist3;
+	    if (mindex == 0) {
+		mindex = 1;
+	    }
+	    // System.out.println("mindex = " + mindex);
+	    modesCB.setSelectedIndex(mindex);
+	    lunits1.setSelectedIndex(uindex1);
+	    lunits2.setSelectedIndex(uindex2);
+	    lunits3.setSelectedIndex(uindex3);
+	    if (dist1 != 0.0) d1tf.setText("" + dist1);
+	    if (dist2 != 0.0) d2tf.setText("" + dist2);
+	    if (dist3 != 0.0 && entry.count > 0) {
+		d3tf.setText("" + dist3);
+	    }
+	    // System.out.println("targetTF set for dist3");
+	    targetTF = d3tf;
+	} else {
+	    newBasename = true;
+	    modesCB.setSelectedIndex(0);
+	    // System.out.println("targetTF set for dist1");
+	    targetTF = d1tf;
+	    dist1 = 0.0;
+	    dist2 = 0.0;
+	    dist3 = 0.0;
+	    lunits1.setSelectedIndex(uindex1);
+	    lunits2.setSelectedIndex(uindex2);
+	    lunits3.setSelectedIndex(uindex3);
+	}
+
+	GridBagLayout gridbag = new GridBagLayout();
+	GridBagConstraints c = new GridBagConstraints();
+	setLayout(gridbag);
+	c.insets = new Insets(5, 5, 5, 5);
+	c.ipadx = 5;
+	c.ipady = 5;
+	c.anchor = GridBagConstraints.LINE_START;
+
+	/*
+	c.gridwidth = 1;
+	gridbag.setConstraints(nsl, c);
+	add(nsl);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(nsegComboBox, c);
+	add(nsegComboBox);
+	*/
+
+	c.gridwidth = 1;
+	gridbag.setConstraints(pl, c);
+	add(pl);
+	gridbag.setConstraints(pcb, c);
+	add(pcb);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	JLabel blank = new JLabel(" ");
+	gridbag.setConstraints(blank, c);
+	add(blank);
+
+	c.gridwidth = 1;
+	gridbag.setConstraints(d1l, c);
+	add(d1l);
+	gridbag.setConstraints(d1tf, c);
+	add(d1tf);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(lunits1, c);
+	add(lunits1);
+
+	c.gridwidth = 1;
+	gridbag.setConstraints(d2l, c);
+	add(d2l);
+	gridbag.setConstraints(d2tf, c);
+	add(d2tf);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(lunits2, c);
+	add(lunits2);
+
+	c.gridwidth = 1;
+	gridbag.setConstraints(d3l, c);
+	add(d3l);
+	gridbag.setConstraints(d3tf, c);
+	add(d3tf);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(lunits3, c);
+	add(lunits3);
+
+	c.gridwidth = 1;
+	gridbag.setConstraints(ml, c);
+	add(ml);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(modesCB, c);
+	add(modesCB);
+
+
+	if (dist1 != 0.0) d1tf.setText("" + dist1);
+	if (dist2 != 0.0) d2tf.setText("" + dist2);
+	if (dist3 != 0.0) d3tf.setText("" + dist3);
+
+	// nsegComboBox.setSelectedIndex(nsegIndex);
+	lunits1.setSelectedIndex(uindex1);
+	lunits2.setSelectedIndex(uindex2);
+	lunits3.setSelectedIndex(uindex3);
+
+	/*
+	nsegComboBox.addActionListener((le) -> {
+		nsegIndex = nsegComboBox.getSelectedIndex();
+	    });
+	*/
+	lunits1.addActionListener((le) -> {
+		uindex1 = lunits1.getSelectedIndex();
+	    });
+	lunits2.addActionListener((le) -> {
+		uindex2 = lunits2.getSelectedIndex();
+	    });
+	lunits3.addActionListener((le) -> {
+		uindex3 = lunits3.getSelectedIndex();
+	    });
+	d3l.setEnabled(mindex != 0);
+	d3tf.setEnabled(mindex != 0);
+	lunits3.setEnabled(mindex != 0);
+	modesCB.addActionListener((le) -> {
+		mindex = modesCB.getSelectedIndex();
+		if (mindex != 0) {
+		    d3tf.setEnabled(true);
+		    lunits3.setEnabled(true);
+		    d3l.setEnabled(true);
+		} else {
+		    d3l.setEnabled(false);
+		    d3tf.setEnabled(false);
+		    lunits3.setEnabled(false);
+		}
 	    });
     }
 }
@@ -425,12 +1144,15 @@ class ArcPane extends JPanel {
 
     static int lindexSaved = 0;
     static int aindexSaved = 0;
+    // static int nsegIndexSaved = 1;
     int lindex = lindexSaved;
     int aindex = aindexSaved;
+    // int nsegIndex = nsegIndexSaved;
 
     void saveIndices() {
 	lindexSaved = lindex;
 	aindexSaved = aindex;
+	// nsegIndexSaved = nsegIndex;
     }
 
 
@@ -443,7 +1165,7 @@ class ArcPane extends JPanel {
     }
 
     JCheckBox ccwCheckBox = new JCheckBox(localeString("Counterclockwise"));
-    JComboBox<String> nsegComboBox = new JComboBox<>(nv);
+    // JComboBox<String> nsegComboBox = new JComboBox<>(nv);
 
     VTextField rtf;		// radius text field
     VTextField atf;		// angle text field
@@ -512,10 +1234,12 @@ class ArcPane extends JPanel {
 	return ccwCheckBox.isSelected();
     }
 
+    /*
     public double getMaxDelta() {
 	int divisor = 1 << nsegComboBox.getSelectedIndex();
 	return (Math.PI/2.0)/(divisor);
     }
+    */
 
     boolean noPrevErrors = true;
 
@@ -607,6 +1331,7 @@ class ArcPane extends JPanel {
 	gridbag.setConstraints(ccwCheckBox, c);
 	add(ccwCheckBox);
 	ccwCheckBox.setSelected(true);
+	/*
 	c.gridwidth = 1;
 	gridbag.setConstraints(nsl, c);
 	add(nsl);
@@ -614,7 +1339,11 @@ class ArcPane extends JPanel {
 	gridbag.setConstraints(nsegComboBox, c);
 	add(nsegComboBox);
 
-	nsegComboBox.setSelectedIndex(0);
+	nsegComboBox.setSelectedIndex(nsegIndex);
+	nsegComboBox.addActionListener((le) -> {
+		nsegIndex = nsegComboBox.getSelectedIndex();
+	    });
+	*/
 	lunits.setSelectedIndex(lindex);
 	aunits.setSelectedIndex(aindex);
 	lunits.addActionListener((le) -> {
@@ -1154,6 +1883,7 @@ public class EPTSWindow {
 	}
 	addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	deletePathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
+	offsetPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
     }
 
     private boolean cleanupPartialPath(boolean force) {
@@ -1206,6 +1936,7 @@ public class EPTSWindow {
 	}
 	addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	deletePathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
+	offsetPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	return true;
     }
 
@@ -1214,6 +1945,8 @@ public class EPTSWindow {
     JMenuItem addToPathMenuItem; // for Edit menu.
     JMenuItem deletePathMenuItem; // for Edit menu.
     JMenuItem makeCurrentMenuItem; // for Edit menu
+    JMenuItem offsetPathMenuItem; // for Tools menu
+
     File savedFile = null;
 
     private void doSave(boolean mode) {
@@ -1342,6 +2075,14 @@ public class EPTSWindow {
     };
 
     PTFilters ptfilters = null;
+
+    private int maxdeltaLevel = 2;
+    private double getMaxDelta() {
+	int divisor = 1 << (maxdeltaLevel - 1);
+	return (Math.PI/2.0)/(divisor);
+    }
+
+    private Integer maxdeltaLevels[] = {1, 2, 3, 4};
 
 
     private void setMenus(JFrame frame, double w, double h) {
@@ -1938,6 +2679,23 @@ public class EPTSWindow {
 	    });
 	toolMenu.add(menuItem);
 
+	menuItem = new JMenuItem(localeString("setMaxDelta"), KeyEvent.VK_G);
+	menuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    Integer newlevel = (Integer) JOptionPane.showInputDialog
+			(frame, localeString("selectMaxdelta"),
+			 localeString("setMaxDelta"),
+			 JOptionPane.PLAIN_MESSAGE,
+			 null,
+			 maxdeltaLevels,
+			 maxdeltaLevel);
+		    if (newlevel != null) {
+			maxdeltaLevel = (int) newlevel;
+		    }
+		}
+	    });
+	toolMenu.add(menuItem);
+
 	menuItem = new JMenuItem(localeString("CreatePoint"), KeyEvent.VK_P);
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_P, InputEvent.ALT_DOWN_MASK));
@@ -1985,6 +2743,176 @@ public class EPTSWindow {
 		    createPath();
 		}
 	    });
+	toolMenu.add(menuItem);
+
+	menuItem = TransitionTable.getOffsetMenuItem();
+	offsetPathMenuItem = menuItem;
+
+	menuItem.addActionListener(new ActionListener() {
+		/*
+		Runnable repeat = null;
+		int limit = 0;
+		JComponent target = null;
+		private void setup(OffsetPane offsetPane) {
+		    target = offsetPane.getTargetTF();
+		    limit = 0;
+		    SwingUtilities.invokeLater(() -> {
+			    Toolkit.getDefaultToolkit().sync();
+			});
+		    if (repeat == null) {
+			repeat = () -> {
+			    if (target.requestFocusInWindow()) {
+				System.out.println("request focus succeeded");
+			    } else {
+				limit++;
+				// if something goes wrong, we don't want
+				// this to run forever.
+				if (limit > 256) return;
+				System.out.println("try again");
+				SwingUtilities.invokeLater(() -> {
+					Toolkit.getDefaultToolkit().sync();
+					SwingUtilities.invokeLater(repeat);
+				    });
+			    }
+			};
+		    }
+		}
+		*/
+		public void actionPerformed(ActionEvent e) {
+		    terminatePartialPath();
+		    // System.out.println("creating an offset ...");
+		    OffsetPane offsetPane = new OffsetPane(ptmodel);
+		    //setup(offsetPane);
+		    final JComponent target = offsetPane.getTargetTF();
+		    target.addAncestorListener(new AncestorListener() {
+			    @Override
+			    public void ancestorAdded(AncestorEvent e) {
+				// SwingUtilities.invokeLater(repeat);
+				SwingOps.tryRequestFocusInWindow(target, 0);
+			    }
+			    @Override
+			    public void ancestorMoved(AncestorEvent e) {}
+			    @Override
+			    public void ancestorRemoved(AncestorEvent e) {}
+			});
+		    int status = JOptionPane.showConfirmDialog
+			(frame, offsetPane, localeString("CreateOffset"),
+			 JOptionPane.OK_CANCEL_OPTION,
+			 JOptionPane.QUESTION_MESSAGE);
+		    if (status == 0) {
+			double dist1 = offsetPane.getDist1();
+			double dist2 = offsetPane.getDist2();
+			String bpn = offsetPane.getBasePathName();
+			if (bpn == null) return;
+			OffsetPane.lastBaseName = bpn;
+			// System.out.println("geting path for " + bpn);
+			Path2D basePath = ptmodel.getPath(bpn);
+			if (basePath == null) return;
+			String opathName = null;
+			Set<String> pvnames = ptmodel.getPathVariableNames();
+			do {
+			    opathName = JOptionPane
+				.showInputDialog(frame,
+						 "opathName",
+						 "opathTitle",
+						 JOptionPane.PLAIN_MESSAGE);
+			    if (opathName == null) return;
+			    opathName = opathName.trim();
+			    // System.out.println(opathName);
+			} while (pvnames.contains(opathName));
+			boolean closedPath = offsetPane.requestsClosedPath();
+			double mdelta = getMaxDelta();
+			Path2D opath = null;
+			if (closedPath == false) {
+			    double dist3 = offsetPane.getDist3();
+			    // System.out.println("dist3 = " + dist3);
+			    if ((offsetPane.requestsCCWPath()
+				 && dist1 == dist3)
+				|| (offsetPane.requestsCWPath()
+				    && dist2 == dist3)) {
+				opath = Paths2D.offsetBy(basePath,
+							 dist1, dist2,
+							 closedPath, mdelta);
+				Path2D[] opaths = PathSplitter.split(opath);
+				if (opaths.length == 2) {
+				    if (offsetPane.requestsCCWPath()) {
+					opath = opaths[1];
+				    } else if (offsetPane.requestsCWPath()){
+					opath = opaths[0];
+				    }
+				    if (offsetPane.requestsReversedPath()) {
+					opath = Paths2D.reverse(opath);
+				    }
+				} else {
+				    return;
+				}
+			    } else {
+				boolean ccw = offsetPane.requestsCCWPath();
+				// System.out.println("ccw = " + ccw);
+				opath = Paths2D.offsetBy(basePath,
+							 dist1, dist2, dist3,
+							 ccw, mdelta);
+				if (offsetPane.requestsReversedPath()) {
+				    opath = Paths2D.reverse(opath);
+				}
+				/*
+				System.out.println("opath end: "
+						   + opath.getCurrentPoint());
+				*/
+			    }
+			} else {
+			    opath = Paths2D.offsetBy(basePath,
+						     dist1, dist2, closedPath,
+						     mdelta);
+			    if (opath != null) {
+				OffsetPane.lastBaseName = bpn;
+			    }
+			}
+			if (opath == null) return;
+			offsetPane.saveIndices();
+			offsetPane.saveDistances();
+			offsetPane.saveBaseMap();
+			OffsetPane.addOurPathName(opathName, bpn);
+			ptmodel.addRow(new PointTMR(opathName,
+						    EPTS.Mode.PATH_START,
+						    0.0, 0.0, 0.0, 0.0));
+			double xstart = 0.0;
+			double ystart = 0.0;
+			double nx, ny, nxp, nyp;
+			for (SplinePathBuilder.CPoint cp:
+				 Path2DInfo.getCPoints(opath)) {
+			    SplinePathBuilder.CPointType cptype
+				= (SplinePathBuilder.CPointType) cp.type;
+			    switch(cptype) {
+			    case MOVE_TO:
+				xstart = cp.x;
+				ystart = cp.y;
+			    case SEG_END:
+			    case CONTROL:
+				nx = cp.x;
+				ny = cp.y;
+				nxp = (nx - xrefpoint) / scaleFactor;
+				nyp = (ny - yrefpoint) / scaleFactor;
+				nyp = height - nyp;
+				ptmodel.addRow("", cp.type, nx, ny, nxp, nyp);
+				break;
+			    case CLOSE:
+				nxp = (xstart - xrefpoint) / scaleFactor;
+				nyp = (ystart - yrefpoint) / scaleFactor;
+				ptmodel.addRow("", cp.type, xstart, ystart,
+					      nxp, nyp);
+				break;
+			    default:
+				break;
+			    }
+			}
+			ptmodel.addRow(new PointTMR("",
+						    EPTS.Mode.PATH_END,
+						    0.0, 0.0, 0.0, 0.0));
+		    }
+		}
+	    });
+
 	toolMenu.add(menuItem);
 
 
@@ -2072,7 +3000,8 @@ public class EPTSWindow {
 		    lpane.addAncestorListener(new AncestorListener() {
 			    @Override
 			    public void ancestorAdded(AncestorEvent e) {
-				lpane.xtf.requestFocusInWindow();
+				// lpane.xtf.requestFocusInWindow();
+				SwingOps.tryRequestFocusInWindow(lpane.xtf, 0);
 			    }
 			    @Override
 			    public void ancestorMoved(AncestorEvent e) {}
@@ -2145,10 +3074,101 @@ public class EPTSWindow {
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    final VectorPane vpane = new VectorPane();
+		    PointTMR lastRow = ptmodel.getLastRow();
+		    PointTMR prevRow = ptmodel.getNextToLastRow();
+		    if (lastRow != null && prevRow != null) {
+			Enum lm = lastRow.getMode();
+			Enum pm = prevRow.getMode();
+			// System.out.println("modes = " + lm + ", " + pm);
+			if (lm instanceof SplinePathBuilder.CPointType
+			    && pm instanceof SplinePathBuilder.CPointType) {
+			    SplinePathBuilder.CPointType lastMode =
+				(SplinePathBuilder.CPointType) lm;
+			    SplinePathBuilder.CPointType prevMode =
+				(SplinePathBuilder.CPointType) pm;
+			    double theta = 0.0;
+			    switch(lastMode) {
+			    case CLOSE:
+				break;
+			    case SEG_END:
+				switch(prevMode) {
+				case MOVE_TO:
+				case CONTROL:
+				case SEG_END:
+				    double delX =
+					lastRow.getX() - prevRow.getX();
+				    double delY =
+					lastRow.getY() - prevRow.getY();
+				    theta = Math.atan2(delY, delX);
+				    vpane.setAngle(theta);
+				    break;
+				case SPLINE:
+				    // System.out.println("found a spline");
+				    // create the spline and recover the
+				    // control points.
+				    {
+					SplinePath2D segment =
+					    new SplinePath2D();
+					int lastind = ptmodel.getRowCount()-1;
+					int prevind = lastind;
+					SplinePathBuilder
+					    sb = new SplinePathBuilder();
+					LinkedList<SplinePathBuilder.CPoint>
+					    cpoints = new LinkedList<>();
+					cpoints.add(new SplinePathBuilder
+						    .CPoint
+						    (lastMode,
+						     lastRow.getX(),
+						     lastRow.getY()));
+					Enum m = null;
+					do {
+					    prevind--;
+					    PointTMR r =
+						ptmodel.getRow(prevind);
+					    m = r.getMode();
+					    cpoints.add(new SplinePathBuilder.
+							CPoint
+							((SplinePathBuilder
+							  .CPointType) m,
+							 r.getX(),
+							 r.getY()));
+					} while (m ==
+						 SplinePathBuilder.CPointType
+						 .SPLINE);
+					Collections.reverse(cpoints);
+					sb.initPath();
+					sb.append(cpoints);
+					segment = sb.getPath();
+					List<SplinePathBuilder.CPoint> list
+					    = Path2DInfo.getCPoints(segment);
+					if (list.size() > 1) {
+					    SplinePathBuilder.CPoint prevCPoint
+						= list.get(list.size() - 2);
+					    delX = lastRow.getX()
+						- prevCPoint.x;
+					    delY = lastRow.getY()
+						- prevCPoint.y;
+					    theta = Math.atan2(delY, delX);
+					    vpane.setAngle(theta);
+					}
+				    }
+				}
+			    }
+			    /*
+			    if (lastMode != SplinePathBuilder.CPointType.CLOSE){
+				double delX = lastRow.getX() - prevRow.getX();
+				double delY = lastRow.getY() - prevRow.getY();
+				double theta = Math.atan2(delY, delX);
+				vpane.setAngle(theta);
+			    }
+			    */
+			}
+		    }
 		    vpane.addAncestorListener(new AncestorListener() {
 			    @Override
 			    public void ancestorAdded(AncestorEvent e) {
-				vpane.ltf.requestFocusInWindow();
+				// vpane.ltf.requestFocusInWindow();
+				SwingOps.tryRequestFocusInWindow(vpane.ltf, 0);
 			    }
 			    @Override
 			    public void ancestorMoved(AncestorEvent e) {}
@@ -2212,7 +3232,9 @@ public class EPTSWindow {
 		    apane.addAncestorListener(new AncestorListener() {
 			    @Override
 			    public void ancestorAdded(AncestorEvent e) {
-				apane.rtf.requestFocusInWindow();
+				// apane.rtf.requestFocusInWindow();
+				SwingOps.tryRequestFocusInWindow(apane.rtf, 0);
+
 			    }
 			    @Override
 			    public void ancestorMoved(AncestorEvent e) {}
@@ -2228,13 +3250,54 @@ public class EPTSWindow {
 			double radius = apane.getRadius();
 			if (radius == 0.0) return;
 			double angle = apane.getAngle();
-			double maxdelta = apane.getMaxDelta();
+			double maxdelta = getMaxDelta ();
 			boolean ccw = apane.isCounterClockwise();
 			int lastind = ptmodel.getRowCount()-1;
 			int prevind = lastind - 1;
 			PointTMR row2 = ptmodel.getRow(lastind);
 			PointTMR row1 = ptmodel.getRow(prevind);
 			Enum<?> mode = row1.getMode();
+			if ((row2.getMode()
+			     == SplinePathBuilder.CPointType.MOVE_TO)
+			    && (mode == EPTS.Mode.PATH_START)) {
+			    final AnglePane angPane = new AnglePane();
+			    angPane.addAncestorListener(new AncestorListener() {
+				    @Override
+				    public void ancestorAdded(AncestorEvent e) {
+					// angPane.atf.requestFocusInWindow();
+					SwingOps.tryRequestFocusInWindow
+					    (angPane.atf, 0);
+				    }
+				    @Override
+				    public void ancestorMoved(AncestorEvent e) {
+				    }
+				    @Override
+				    public void ancestorRemoved
+					(AncestorEvent e) {
+				    }
+				});
+			    final JDialog dialog =
+				new JDialog(frame,
+					    localeString("setInitAngle"),
+					    true);
+			    dialog.setLocationRelativeTo(frame);
+			    dialog.setDefaultCloseOperation
+				(JDialog.DISPOSE_ON_CLOSE);
+			    dialog.add(angPane);
+			    dialog.pack();
+			    dialog.setVisible(true);
+			    angPane.saveIndices();
+			    // set row1 to a fake value. We only use
+			    // x, and y, not xp, or yp.
+			    // This will let us compute the tangent to the
+			    // curve correctly.
+			    double theta = angPane.getAngle();
+			    double fakeX = row2.getX() - Math.cos(theta);
+			    double fakeY = row2.getY() - Math.sin(theta);
+			    mode = SplinePathBuilder.CPointType.MOVE_TO;
+			    row1 = new PointTMR(null, mode,
+						fakeX, fakeY, 0.0, 0.0);
+			}
 			if (mode instanceof SplinePathBuilder.CPointType) {
 			    SplinePathBuilder.CPointType type =
 				(SplinePathBuilder.CPointType) mode;
@@ -2733,6 +3796,7 @@ public class EPTSWindow {
 	    }
 	    addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	    deletePathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
+	    offsetPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	    selectedRow = -1;
 	    setModeline("");
 	}
@@ -3211,6 +4275,7 @@ public class EPTSWindow {
 		    if (prevMode == SplinePathBuilder.CPointType.CONTROL
 			&& nextMode == SplinePathBuilder.CPointType.CONTROL) {
 			changeMenuItem.setEnabled(false);
+			deleteMenuItem.setEnabled(false);
 			Enum prevprevMode = ptmodel.getRowMode(selectedRow-2);
 			Enum nextnextMode = ptmodel.getRowMode(selectedRow+2);
 			if ((prevprevMode==SplinePathBuilder.CPointType.MOVE_TO
@@ -3710,6 +4775,7 @@ public class EPTSWindow {
 	TransitionTable.getLocMenuItem().setEnabled(true);
 	addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	deletePathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
+	offsetPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	saveMenuItem.setEnabled(false);
 	saveAsMenuItem.setEnabled(false);
     }
@@ -4412,8 +5478,10 @@ public class EPTSWindow {
 			}
 		    }
 		    if (lastMode == SplinePathBuilder.CPointType.CONTROL) {
-			g2d2.draw(new Line2D.Double(prevx, prevy, x, y));
-			g2d.draw(new Line2D.Double(prevx, prevy, x, y));
+			if (row.isSelectable()) {
+			    g2d2.draw(new Line2D.Double(prevx, prevy, x, y));
+			    g2d.draw(new Line2D.Double(prevx, prevy, x, y));
+			}
 		    }
 		    pb.append(new SplinePathBuilder.CPoint(smode, x, y));
 		    prevx = x;
@@ -4434,8 +5502,10 @@ public class EPTSWindow {
 		    }
 		    if (lastMode == SplinePathBuilder.CPointType.SEG_END
 			|| lastMode == SplinePathBuilder.CPointType.MOVE_TO) {
-			g2d2.draw(new Line2D.Double(prevx, prevy, x, y));
-			g2d.draw(new Line2D.Double(prevx, prevy, x, y));
+			if (row.isSelectable()) {
+			    g2d2.draw(new Line2D.Double(prevx, prevy, x, y));
+			    g2d.draw(new Line2D.Double(prevx, prevy, x, y));
+			}
 		    }
 		    if (index == nrows-1) {
 			pb.append(new SplinePathBuilder.CPoint
@@ -4701,6 +5771,8 @@ public class EPTSWindow {
 				(ptmodel.pathVariableNameCount() > 0);
 			    deletePathMenuItem.setEnabled
 				(ptmodel.pathVariableNameCount() > 0);
+			    offsetPathMenuItem.setEnabled
+				(ptmodel.pathVariableNameCount() > 0);
 			    setupFilters(parser);
 			}
 		    });
@@ -4771,6 +5843,8 @@ public class EPTSWindow {
 			addToPathMenuItem.setEnabled
 			    (ptmodel.pathVariableNameCount() > 0);
 			deletePathMenuItem.setEnabled
+			    (ptmodel.pathVariableNameCount() > 0);
+			offsetPathMenuItem.setEnabled
 			    (ptmodel.pathVariableNameCount() > 0);
 		    }
 		    if (parser != null) {
