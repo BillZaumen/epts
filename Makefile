@@ -105,7 +105,6 @@ EXTLIBS = $(EXTLIB1):$(EXTLIB2):$(EXTLIB3):$(EXTLIB4):$(EXTLIB5):$(EXTLIB6)
 
 MANS = $(JROOT_MANDIR)/man1/epts.1.gz $(JROOT_MANDIR)/man5/epts.5.gz
 
-
 ICONS = $(SOURCEICON) $(SOURCE_FILE_ICON) $(SOURCE_CFILE_ICON) \
 	$(SOURCE_TCFILE_ICON)
 
@@ -184,6 +183,17 @@ testversion:
 	make program EXTDIR=$(JROOT_JARDIR)
 
 all: $(ALL)
+
+
+#
+# Use this to set up the links to the libraries for the jar subdirectory
+# Needed for testing.
+#
+jardirlibs:
+	(cd jar ; rm libbzdev-*.jar)
+	ln -s $(EXTLIB1) $(EXTLIB2) $(EXTLIB3) $(EXTLIB4) \
+		$(EXTLIB5) $(EXTLIB6) jar/
+
 
 include MajorMinor.mk
 
