@@ -139,6 +139,9 @@
       <node title="The filters element"
 	    uri="resource:org/bzdev/epts/manual/manual.html#filtersElement"
 	    href="manual.html#filtersElement"/>
+      <node title="The offsets element"
+	    uri="resource:org/bzdev/epts/manual/manual.html#offsetsElement"
+	    href="manual.html#offsetsElement"/>
     </node>
     <node title="Saved-configuration format"
 	  uri="resource:org/bzdev/epts/manual/manual.html#configFormat"

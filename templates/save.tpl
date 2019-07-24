@@ -35,5 +35,15 @@ $(endPathStatement)$(endItems)  </table>$(endTable)$(hasFilterItems:endHasFilter
       <filter name="$(filterName)" mode="$(filterMode)">$(filterRows:endFilterRows)
          <filterRow varname="$(filterVarname)" mode="$(filterRowMode)"/>$(endFilterRows)
       </filter>$(endFilterItems)
-  </filters>
-$(endHasFilterItems)</epts>
+  </filters>$(endHasFilterItems)$(hasOffsets:endHasOffsets)
+  <offsets>$(hasBasemap:endHasBasemap)
+    <basemap>$(basemapEntries:endBasemapEntries)
+        <basemapEntry base="$(base)" mindex="$(mindex)"
+	    dist1="$(dist1)" dist2="$(dist2)" dist3="$(dist3)"
+	    uindex1="$(uindex1)" uindex2="$(uindex2)" uindex3="$(uindex3)" />
+$(endBasemapEntries)    </basemap>$(endHasBasemap)$(hasPathmap:endHasPathmap)
+    <pathmap>$(pathmapEntries:endPathmapEntries)
+        <pathmapEntry path="$(pathForEntry)" base="$(base)" />
+$(endPathmapEntries)    </pathmap>$(endHasPathmap)
+  </offsets>$(endHasOffsets)
+</epts>

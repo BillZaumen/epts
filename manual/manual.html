@@ -479,10 +479,10 @@ The <code>Edit</code> menu contains the following items:
     <CODE>Add to a B&eacute;zier Path</CODE> item, that path will be
     moved to the end of the table. While creating a path, this option
     undoes the last change.
-  <LI><B><CODE>Append to a B&eacute;zier Path</CODE></B>. This option will
-    extend a Bezier path.  If one of a path's nodes has been selected,
-    that path will be extended. Otherwise a dialog box will allow one to
-    select the desired path.
+  <LI><B><CODE>Append to a B&eacute;zier Path</CODE></B>. This option
+    will extend a B&eacute;zier path.  If one of a path's nodes has
+    been selected, that path will be extended. Otherwise a dialog box
+    will allow one to select the desired path.
   <LI><B><CODE>Delete a Location / B&eacute;zier Path</CODE></B>. This
     option will delete a location or path. If a location or one of a path's
     nodes has been selected, that location or path will be deleted. Otherwise
@@ -619,8 +619,8 @@ displayed in textual form. This menu contains the following items:
 	the reference path: one in the counterclockwise direction when
 	proceeding along the reference path from its start to its end, and
 	the other in the clockwise direction. Where the reference path is
-	a smooth path, these aditional paths are offset from the reference
-	path by spacified distances.
+	a smooth path, these additional paths are offset from the reference
+	path by specified distances.
       <LI><B><CODE>CCW Distance</CODE></B>. The distance from the reference
 	path to the associated path in the counterclockwise direction.
       <LI><B><CODE>CW Distance</CODE></B>. The distance from the reference
@@ -2946,6 +2946,10 @@ with the following attributes
 
 <H2><A name="filtersElement">The filters element</A></H2>
 
+The filters element is provided so that EPTS can restore the state of
+a session. Consequently, it is probably not useful for other
+applications.
+<P>
 The filters element does not have any attributes and just contains
 a possibly empty sequence of filter elements.  Each filter element
 in turn contains a sequence of filterRow elements.  A filter element
@@ -2978,10 +2982,99 @@ it has two attributes:
 	is selectable: it will be drawn and its control points will be
 	shown.
       <LI> <B><CODE>DRAWABLE</CODE></B>. The corresponding path will
-	be drawn but itys control points will not be shown.
+	be drawn but its control points will not be shown.
       <LI> <B><CODE>INVISIBLE</CODE></B>. The corresponding path or
 	location will not be drawn.
     </UL>
+</UL>
+
+<H2><A name="offsetsElement">The offsets element</A></H2>
+
+The offsets element is provided so that EPTS can restore the state of
+a session. Consequently, it is probably not useful for other
+applications.
+<P>
+The offsets element does not have any attributes. It contains two
+other elements: an optional basemap element followed by an optional
+pathmap element. These two elements also do not have any attributes,
+and if neither is present, the offsets element is not needed. If there
+is a pathmap element, it must be preceded by a basemap element.
+<P>
+The basemap element contains a sequence of basemapEntry elements and
+does not contain any other elements. The attributes for the basemapEntry
+element are
+<UL>
+  <LI> <B><CODE>base</CODE></B>. This field provides a string naming
+    the base or reference path for an offset path.
+  <LI> <B><CODE>mindex</CODE></B>. An integer code indicating how an
+    offset path is to be generated. These codes are
+    <UL>
+      <LI><B><CODE>0</CODE></B>. The generated path is a closed path
+	with its distances from the reference path specified by
+	<B><CODE>dist1</CODE></B> and <B><CODE>dist2</CODE></B>.
+      <LI><B><CODE>1</CODE></B>. The generated path is an open path on
+	the counterclockwise side of the reference path with its
+	distance from the reference path specified by
+	<B><CODE>dist3</CODE></B>. The corresponding tangent vectors
+	are parallel to each other.
+      <LI><B><CODE>2</CODE></B>.  The generated path is an open path
+	on the counterclockwise side of the reference path
+	with its distance from the reference path specified by
+	<B><CODE>dist3</CODE></B>. The corresponding tangent vectors
+	are antiparallel to each other.
+      <LI><B><CODE>3</CODE></B>. The generated path is an open path
+	on the clockwise side of the reference path
+	with its distance from the reference path specified by
+	<B><CODE>dist3</CODE></B>. The corresponding tangent vectors
+	are parallel to each other.
+      <LI><B><CODE>4</CODE></B>.  The generated path is an open path
+	on the clockwise side of the reference path with its distance
+	from the reference path specified by
+	<B><CODE>dist3</CODE></B>. The corresponding tangent vectors
+	are antiparallel to each other.
+    </UL>
+    In all cases, clockwise and counterclockwise indicate that a point
+    on the generated path is on the left or right side of the
+    corresponding point on the reference path respectively, measured
+    from the direction of the tangent vector at that point.
+  <LI> <B><CODE>dist1</CODE></B>. The distance from the reference
+    path in the counterclockwise direction to an offset curve that
+    contains segments on both sides of the reference path.
+  <LI> <B><CODE>dist2</CODE></B>. The distance from the reference path
+    in the clockwise direction to an offset curve that contains
+    segments on both sides of the reference path.
+  <LI> <B><CODE>dist3</CODE></B>. The distance from the reference path
+    to a single offset path.
+  <LI> <B><CODE>uindex1</CODE></B>. A code providing the units for the
+    dist1 attribute (see below for a description of these codes).
+  <LI> <B><CODE>uindex2</CODE></B>. A code providing the units for the
+    dist2 attribute (see below for a description of these codes).
+  <LI> <B><CODE>uindex3</CODE></B>. A code providing the units for the
+    dist3 attribute (see below for a description of these codes).
+</UL>
+The attributes uindex1, uindex2, and uindex3 encode units as follows:
+    <UL>
+      <LI> <B><CODE>0</CODE></B>. Distances are in custom units.
+      <LI> <B><CODE>1</CODE></B>. Distances are in nanometers (nm).
+      <LI> <B><CODE>2</CODE></B>. Distances are in micrometers (um).
+      <LI> <B><CODE>3</CODE></B> Distances are in millimeters (mm).
+      <LI> <B><CODE>4</CODE></B>. Distances are in centimeters (cm).
+      <LI> <B><CODE>5</CODE></B>. Distances are in meters (m).
+      <LI> <B><CODE>6</CODE></B>. Distances are in kilometers (km).
+      <LI> <B><CODE>7</CODE></B>. Distances are in inches.
+      <LI> <B><CODE>8</CODE></B>. Distances are in feet.
+      <LI> <B><CODE>9</CODE></B>. Distances are in yards
+      <LI> <B><CODE>10</CODE></B>. Distances are in miles.
+    </UL>
+<P>
+The pathmap element contains a sequence of pathmapEntry elements and
+does not contain any other elements. The attributes for the
+basemapEntry element are
+<UL>
+  <LI> <B><CODE>path</CODE></B>. This attribute contains the name of
+  an offset path.
+  <LI> <B><CODE>base</CODE></B>. This attribute contains name of
+    the base or reference path associated with the offset path.
 </UL>
 
 <H1><A name="configFormat">The saved-configuration-file format</A></H1>
@@ -3268,7 +3361,7 @@ The path names for these documents, of course, is system dependent.
  -->
 <!--  LocalWords:  overlayed scrollbars whitespace varname Makefile
  -->
-<!--  LocalWords:  pathSegment EPTS's epts MAPFILE UTF http
+<!--  LocalWords:  pathSegment EPTS's epts MAPFILE UTF http eptt
  -->
 <!--  LocalWords:  https TFILE OUTFILE Scrunner scrunner JVM LNAME js
  -->
@@ -3310,7 +3403,11 @@ The path names for these documents, of course, is system dependent.
  -->
 <!--  LocalWords:  scriptBackground enhancedBackground templateSetup
  -->
-<!--  LocalWords:  templateConfig usingEPTS gcsconfigElement
+<!--  LocalWords:  templateConfig usingEPTS gcsconfigElement basemap
  -->
-<!--  LocalWords:  configFormat
+<!--  LocalWords:  configFormat selectable classpath filterRow uindex
+ -->
+<!--  LocalWords:  pathmap basemapEntry antiparallel
+ -->
+<!--  LocalWords:  pathmapEntry
  -->

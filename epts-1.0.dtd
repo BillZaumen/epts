@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!ELEMENT epts (image, codebase?, modules?, classpath?,
-	  scripting?, targetList?, gcsconfig, table, filters?)>
+	  scripting?, targetList?, gcsconfig, table, filters?, offsets?)>
 <!ATTLIST epts
 	  xmlns CDATA #FIXED "http://bzdev.org/DTD/epts-1.0">
 
@@ -66,3 +66,25 @@
 <!ATTLIST filterRow
 	  varname CDATA #REQUIRED
 	  mode (DEFAULT|SELECTABLE|DRAWABLE|INVISIBLE) #REQUIRED>
+
+<!ELEMENT offsets (basemap, pathmap?)? >
+
+<!ELEMENT basemap (basemapEntry*)>
+
+<!ELEMENT pathmap (pathmapEntry*)>
+
+<!ELEMENT basemapEntry EMPTY>
+<!ATTLIST basemapEntry
+          base CDATA #REQUIRED
+	  mindex CDATA #REQUIRED
+	  dist1 CDATA #REQUIRED
+	  dist2 CDATA #REQUIRED
+	  dist3 CDATA #REQUIRED
+	  uindex1 CDATA #REQUIRED
+	  uindex2 CDATA #REQUIRED
+	  uindex3 CDATA #REQUIRED>
+
+<!ELEMENT pathmapEntry EMPTY>
+<!ATTLIST pathmapEntry
+          path CDATA #REQUIRED
+	  base CDATA #REQUIRED>

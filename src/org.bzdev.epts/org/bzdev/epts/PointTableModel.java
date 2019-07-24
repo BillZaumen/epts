@@ -788,13 +788,29 @@ public class
 		plist.add(kmap3);
 	    } else if (mode == EPTS.Mode.PATH_END) {
 		BasicSplinePath2D spath = spb.getPath();
+		int ind = -1;
 		int v = -1;
 		for (TemplateProcessor.KeyMap km: plist) {
+		    ind++;
+		    if (km.get("hasParameterInfo") == null) continue;
 		    v++;
+		    if (km.get("s") != null) continue;
 		    double uu = (double)v;
 		    if (uu <= spath.getMaxParameter() + 0.1) {
 			km.put("s",  "" + spath.s(uu));
+		    } else if (km.get("type").equals("CLOSE")) {
+			uu = (double)(v-1);
+			if (uu < 0.0) uu = 0.0;
+			if (uu <= spath.getMaxParameter() + 0.1) {
+			    km.put("s",  "" + spath.s(uu));
+			} else {
+			    System.err.print("at index " + ind + " (type "
+					     + km.get("type") + "): ");
+			    System.err.println(errorMsg("maxpathparm"));
+			}
 		    } else {
+			System.err.print("at index " + ind + " (type "
+					 + km.get("type") + "): ");
 			System.err.println(errorMsg("maxpathparm"));
 		    }
 		}
@@ -1043,13 +1059,28 @@ public class
 		    if (spb != null) {
 			BasicSplinePath2D spath = spb.getPath();
 			int v = -1;
+			int ind = -1;
 			for (TemplateProcessor.KeyMap km: plist) {
-			    if (km.get("s") != null) continue;
+			    ind++;
+			    if (km.get("hasParameterInfo") == null) continue;
 			    v++;
+			    if (km.get("s") != null) continue;
 			    double uu = (double)v;
 			    if (uu <= spath.getMaxParameter() + 0.1) {
 				km.put("s",  "" + spath.s(uu));
+			    } else if (km.get("type").equals("CLOSE")) {
+				uu = (double)(v-1);
+				if (uu <= spath.getMaxParameter() + 0.1) {
+				    km.put("s",  "" + spath.s(uu));
+				} else {
+				    System.err.print("at index " + ind
+						     + " (type "
+						     + km.get("type") + "): ");
+				    System.err.println(errorMsg("maxpathparm"));
+				}
 			    } else {
+				System.err.print("at index " + ind + " (type "
+						 + km.get("type") + "): ");
 				System.err.println(errorMsg("maxpathparm"));
 			    }
 			}

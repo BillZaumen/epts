@@ -14,8 +14,10 @@ import java.net.URL;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import javax.imageio.ImageIO;
 import javax.xml.parsers.*;
 
@@ -244,6 +246,18 @@ public class EPTSParser {
 	return Collections.unmodifiableList(filterList);
     }
 
+    Map<String,OffsetPane.BME> baseMap = new HashMap<String,OffsetPane.BME>();
+    Map<String,String> pathMap = new HashMap<String,String>();
+
+    public void configureOffsetPane() {
+	for (Map.Entry<String,OffsetPane.BME> entry: baseMap.entrySet()) {
+	    OffsetPane.baseMap.put(entry.getKey(), entry.getValue());
+	}
+	for (Map.Entry<String,String> entry: pathMap.entrySet()) {
+	    OffsetPane.addOurPathName(entry.getKey(), entry.getValue());
+	}
+    }
+
     class OurDefaultHandler extends DefaultHandler {
 
 	boolean processingXML = false;
@@ -271,7 +285,6 @@ public class EPTSParser {
 	String name = null;
 
 	BType btype = null;
-
 
 	public void startDocument() {
 	    base = new File(System.getProperty("user.dir"));
@@ -486,6 +499,22 @@ public class EPTSParser {
 		fentry.name = varName;
 		fentry.mode = fmode;
 		newFilterEntry.entries.add(fentry);
+	    } else if (qName.equals("offsets")) {
+		baseMap.clear();
+		pathMap.clear();
+	    } else if (qName.equals("basemapEntry")) {
+		String base = attr.getValue("base");
+		OffsetPane.BME bme = new OffsetPane.BME();
+		bme.mindex = Integer.valueOf(attr.getValue("mindex"));
+		bme.dist1 = Double.valueOf(attr.getValue("dist1"));
+		bme.dist2 = Double.valueOf(attr.getValue("dist2"));
+		bme.dist3 = Double.valueOf(attr.getValue("dist3"));
+		bme.uindex1 = Integer.valueOf(attr.getValue("uindex1"));
+		bme.uindex2 = Integer.valueOf(attr.getValue("uindex2"));
+		bme.uindex3 = Integer.valueOf(attr.getValue("uindex3"));
+		baseMap.put(base, bme);
+	    } else if (qName.equals("pathmapEntry")) {
+		pathMap.put(attr.getValue("path"), attr.getValue("base"));
 	    }
 	}
 

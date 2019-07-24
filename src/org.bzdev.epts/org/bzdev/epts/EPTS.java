@@ -168,8 +168,10 @@ public class EPTS {
     }
 
     public static List<String> getAddedModules() {
+	/*
 	System.out.println("in getAddedModules(), size = "
 			   + addedModules.size());
+	*/
 	return Collections.unmodifiableList(addedModules);
     }
 
@@ -1964,9 +1966,13 @@ public class EPTS {
 	    parser.parse(new FileInputStream(filename));
 	    return parser;
 	} catch (Exception e) {
+	    if (stackTrace) {
+		e.printStackTrace(System.err);
+	    }
 	    String msg = e.getMessage();
 	    if (msg == null) msg = e.getClass().toString();
-	    displayError(e.getMessage());
+	    displayError(errorMsg("exception2", e.getClass().getName(),
+				  e.getMessage()));
 	    System.exit(1);
 	}
 	return null;

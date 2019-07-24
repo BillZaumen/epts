@@ -622,7 +622,7 @@ class OffsetPane extends JPanel {
 	return ConfigGCSPane.convert[uindex3].valueAt(dist3);
     }
 
-    private static class BME {
+    public static class BME {
 	int mindex;
 	double dist1;
 	double dist2;
@@ -633,7 +633,7 @@ class OffsetPane extends JPanel {
 	int count = 0;
     }
 
-    private static Map<String,BME> baseMap = new TreeMap<String,BME>();
+    static Map<String,BME> baseMap = new TreeMap<String,BME>();
 
     public void saveBaseMap() {
 	String name = getBasePathName();
@@ -666,7 +666,7 @@ class OffsetPane extends JPanel {
 	}
     }
 
-    private static Map<String,String> ourpaths = new HashMap<String,String>();
+    static Map<String,String> ourpaths = new HashMap<String,String>();
 
     public static void addOurPathName(String name, String bname) {
 	if (!ourpaths.containsKey(name)) {
@@ -1586,6 +1586,52 @@ public class EPTSWindow {
 	    keymap.put("hasFilterItems", emptyMap);
 	    keymap.put("filterItems", ptfilters.getKeyMapList());
 	}
+
+	boolean hasBaseMap = OffsetPane.baseMap.size() != 0;
+	boolean hasPathMap = OffsetPane.ourpaths.size() != 0;
+
+	if (hasBaseMap || hasPathMap) {
+	    keymap.put("hasOffsets", emptyMap);
+	    if (hasBaseMap) {
+		keymap.put("hasBasemap", emptyMap);
+		TemplateProcessor.KeyMapList basemapList =
+		    new TemplateProcessor.KeyMapList();
+		for(Map.Entry<String,OffsetPane.BME> entry:
+			OffsetPane.baseMap.entrySet()) {
+		    String base = entry.getKey();
+		    OffsetPane.BME bme = entry.getValue();
+		    TemplateProcessor.KeyMap kmp =
+			new TemplateProcessor.KeyMap();
+		    kmp.put("base", WebEncoder.htmlEncode(base));
+		    kmp.put("mindex", "" + bme.mindex);
+		    kmp.put("dist1", "" + bme.dist1);
+		    kmp.put("dist2", "" + bme.dist2);
+		    kmp.put("dist3", "" + bme.dist3);
+		    kmp.put("uindex1", "" + bme.uindex1);
+		    kmp.put("uindex2", "" + bme.uindex2);
+		    kmp.put("uindex3", "" + bme.uindex3);
+		    basemapList.add(kmp);
+		}
+		keymap.put("basemapEntries", basemapList);
+	    }
+	    if (hasPathMap) {
+		keymap.put("hasPathmap", emptyMap);
+		TemplateProcessor.KeyMapList pathmapList =
+		    new TemplateProcessor.KeyMapList();
+		for (Map.Entry<String,String> entry:
+			 OffsetPane.ourpaths.entrySet()) {
+		    TemplateProcessor.KeyMap kmp =
+			new TemplateProcessor.KeyMap();
+		    kmp.put("pathForEntry",
+			    WebEncoder.htmlEncode(entry.getKey()));
+		    kmp.put("base", WebEncoder.htmlEncode(entry.getValue()));
+		    pathmapList.add(kmp);
+		}
+		keymap.put("pathmapEntries", pathmapList);
+	    }
+	}
+
+	// printKeymap(keymap);
 
 	TemplateProcessor tp = new TemplateProcessor(keymap);
 	File tf = File.createTempFile("epts-eptc", null, f.getParentFile());
@@ -5860,6 +5906,7 @@ public class EPTSWindow {
 			    offsetPathMenuItem.setEnabled
 				(ptmodel.pathVariableNameCount() > 0);
 			    setupFilters(parser);
+			    parser.configureOffsetPane();
 			}
 		    });
 	    }
@@ -5935,6 +5982,7 @@ public class EPTSWindow {
 		    }
 		    if (parser != null) {
 			setupFilters(parser);
+			parser.configureOffsetPane();
 		    }
 		}
 	    });

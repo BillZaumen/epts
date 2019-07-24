@@ -265,7 +265,7 @@ units, and XP and YP must be the corresponding coordinates in image-space
 units, measured from the lower-left corner of the image so that X values
 go from left to right and Y values go from bottom to top.
 .PP
-The table element is followed by a
+The table element is followed by an optional
 .B filters
 element, which contains a possibly empty sequence of
 .B filter
@@ -330,14 +330,140 @@ control points (so that the control points cannot be selected), and
 .B INVISIBLE
 indicates that the corresponding location or path will not be displayed.
 .PP
+After the
+.B table
+element, and an optional
+.B filters
+element, there is an optional
+.B offsets
+element.  The
+.B offsets
+element contains an optional
+.B basemap
+element followed by an optional
+.B pathmap
+element. If a
+.B pathmap
+element is present, it must be preceded by a
+.B basemap
+element.  Neither the
+.B basemap
+nor the
+.B pathmap
+elements have any attributes.
+.PP
+The
+.B basemap
+element contains a sequence of
+.B basemapEntry
+elements. These do not contain any other elements, but do have some
+attributes.
+.IP
+The attribute
+.B base
+This field provides a string naming the base or reference path for an
+offset path.
+.IP
+.B mindex
+An integer code indicating how an offset path is to be generated.
+There are five codes.
+.B 0
+indicates that the generated path is a closed path with its distance
+from the reference path specified by
+.B dist1
+and
+.BR dist2 .
+.B 1
+indicates that the generated path is an open path on the
+counterclockwise side of the reference path with is distance
+from the reference path specified by
+.BR dist3 .
+The corresponding tangent vectors are parallel to each other.
+.B 2
+indicates that the generated path is an open path on the
+counterclockwise side of the reference path with is distance
+from the reference path specified by
+.BR dist3 .
+The corresponding tangent vectors are antiparallel to each other.
+.B 3
+indicates that the generated path is an open path on the
+clockwise side of the reference path with is distance
+from the reference path specified by
+.BR dist3 .
+The corresponding tangent vectors are parallel to each other.
+.B 4
+indicates that the generated path is an open path on the
+clockwise side of the reference path with is distance
+from the reference path specified by
+.BR dist3 .
+The corresponding tangent vectors are antiparallel to each other.  In
+all cases, clockwise and counterclockwise indicate that a point on the
+generated path is on the left or right side of the corresponding point
+on the reference path respectively, measured from the direction of the
+tangent vector at that point.
+.IP
+The attribute
+.B dist1
+specifies the distance from the reference path in the counterclockwise
+direction to an offset curve that contains segments on both sides
+of the reference path.
+.IP
+The attribute
+.B dist2
+specifies the distance from the reference path in the clockwise
+direction to an offset curve that contains segments on both sides
+of the reference path.
+.IP
+The attribute
+.B dist3
+specifies the distance from the reference path to a single offset
+path.
+.IP
+The attribute
+.B uindex1
+specifies the units for the attribute
+.BR dist1 .
+.IP
+The attribute
+.B uindex2
+specifies the units for the attribute
+.BR dist2 .
+.IP
+The attribute
+.B uindex3
+specifies the units for the attribute
+.BR dist1 .
+.PP
+The attributes uindex1, uindex2, and uindex3 encode units as follows:
+.B 0
+indicates that distances are in custom units.
+.B 1
+indicates that distances are in nanometers (nm).
+.B 2
+indicates that distances are in micrometers (um).
+.B 3
+indicates that distances are in millimeters (mm).
+.B 4
+indicates that distances are in centimeters (cm).
+.B 5
+indicates that distances are in meters (m).
+.B 5
+indicates that distances are in kilometers (km)l
+.B 7
+indicates that distances are in inches.
+.B 8
+indicates that distances are in feet.
+.B 9
+indicates that distances are in yards
+.B 10
+indicates that distances are in miles.
+.PP
 Finally, the file ends by closing the
 .B epts
-element:
+element as required for a valid XML file:
 .IP
-.B
-</epts>
-.PP
-as required for a valid XML file.
+.B </epts>
+
 .SH TEMPLATE SYNTAX
 Templates specify an output format for points and paths using the
 syntax specified by the Java
