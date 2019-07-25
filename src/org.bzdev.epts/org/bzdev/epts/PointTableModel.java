@@ -799,18 +799,10 @@ public class
 		    if (uu <= spath.getMaxParameter() + 0.1) {
 			km.put("s",  "" + spath.s(uu));
 		    } else if (km.get("type").equals("CLOSE")) {
-			uu = (double)(v-1);
-			if (uu < 0.0) uu = 0.0;
-			if (uu <= spath.getMaxParameter() + 0.1) {
-			    km.put("s",  "" + spath.s(uu));
-			} else {
-			    System.err.print("at index " + ind + " (type "
-					     + km.get("type") + "): ");
-			    System.err.println(errorMsg("maxpathparm"));
-			}
+			km.remove("hasParameterInfo");
 		    } else {
-			System.err.print("at index " + ind + " (type "
-					 + km.get("type") + "): ");
+			System.err.print("epts: at index " + ind + " (type "
+					 + km.get("type") + "), ");
 			System.err.println(errorMsg("maxpathparm"));
 		    }
 		}
@@ -1069,18 +1061,11 @@ public class
 			    if (uu <= spath.getMaxParameter() + 0.1) {
 				km.put("s",  "" + spath.s(uu));
 			    } else if (km.get("type").equals("CLOSE")) {
-				uu = (double)(v-1);
-				if (uu <= spath.getMaxParameter() + 0.1) {
-				    km.put("s",  "" + spath.s(uu));
-				} else {
-				    System.err.print("at index " + ind
-						     + " (type "
-						     + km.get("type") + "): ");
-				    System.err.println(errorMsg("maxpathparm"));
-				}
+				km.remove("hasParamterInfo");
 			    } else {
-				System.err.print("at index " + ind + " (type "
-						 + km.get("type") + "): ");
+				System.err.print("epts: at index " + ind
+						 + " (type "
+						 + km.get("type") + "), ");
 				System.err.println(errorMsg("maxpathparm"));
 			    }
 			}
