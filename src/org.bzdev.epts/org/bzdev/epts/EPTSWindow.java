@@ -114,7 +114,7 @@ class AnglePane extends JPanel {
     public AnglePane() {
 	super();
 	cdf.setAllowedChars("09eeEE..,,++--");
-	JLabel al = new JLabel(localeString("Angle"));
+	JLabel al = new JLabel(localeString("TangentAngle"));
 	atf = new VTextField("", 10) {
 		@Override
 		protected void onAccepted() {
