@@ -10,6 +10,7 @@ import org.bzdev.util.TemplateProcessor.KeyMap;
 import org.bzdev.util.TemplateProcessor.KeyMapList;
 
 import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -137,6 +138,46 @@ public class
 		case SEG_END:
 		case CONTROL:
 		    pb.append(new SplinePathBuilder.CPoint(mode, x, y));
+		    break;
+		case CLOSE:
+		    pb.append(new SplinePathBuilder.CPoint(mode));
+		    break;
+		}
+	    }
+	}
+	return pb.getPath();
+    }
+
+    double[] originalxy = new double[2];
+    double[] modifiedxy = new double[2];
+    public Path2D getPath(String pname, AffineTransform af) {
+	int start = findStart(pname);
+	if (start == -1)  return null;
+	int end = findEnd(start);
+	if (end == -1) return null;
+	start++;
+	if (start >= end) return null;
+	if (start+1 >= end) return null;
+	// System.out.format("start = %d, end = %d\n", start, end);
+	SplinePathBuilder pb = new SplinePathBuilder();
+	while (start < end) {
+	    PointTMR row = getRow(start++);
+	    Enum rmode = row.getMode();
+	    if (rmode instanceof SplinePathBuilder.CPointType) {
+		SplinePathBuilder.CPointType
+		    mode = (SplinePathBuilder.CPointType) rmode;
+		switch (mode) {
+		case MOVE_TO:
+		case SPLINE:
+		case SEG_END:
+		case CONTROL:
+		    originalxy[0] = row.getX();
+		    originalxy[1] = row.getY();
+		    af.transform(originalxy, 0, modifiedxy, 0, 1);
+		    // double x = row.getX();
+		    // double y = row.getY();
+		    pb.append(new SplinePathBuilder.CPoint(mode, modifiedxy[0],
+							   modifiedxy[1]));
 		    break;
 		case CLOSE:
 		    pb.append(new SplinePathBuilder.CPoint(mode));

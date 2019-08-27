@@ -128,8 +128,8 @@ class AnglePane extends JPanel {
 		@Override
 		protected boolean handleError() {
 		    JOptionPane.showMessageDialog
-			(this, "Must enter a real number",
-			 "Error", JOptionPane.ERROR_MESSAGE);
+			(this, localeString("needRealNumber"),
+			 localeString("errorTitle"), JOptionPane.ERROR_MESSAGE);
 		    return false;
 		}
 	    };
@@ -330,7 +330,7 @@ class VectorPane extends JPanel {
 		    }
 		    JOptionPane.showMessageDialog
 			(this, "Must enter a positive real number",
-			 "Error", JOptionPane.ERROR_MESSAGE);
+			 localeString("errorTitle"), JOptionPane.ERROR_MESSAGE);
 		    return false;
 		}
 	    };
@@ -349,8 +349,8 @@ class VectorPane extends JPanel {
 		@Override
 		protected boolean handleError() {
 		    JOptionPane.showMessageDialog
-			(this, "Must enter a real number",
-			 "Error", JOptionPane.ERROR_MESSAGE);
+			(this, localeString("needRealNumber"),
+			 localeString("errorTitle"), JOptionPane.ERROR_MESSAGE);
 		    return false;
 		}
 	    };
@@ -766,8 +766,8 @@ class OffsetPane extends JPanel {
 		@Override
 		protected boolean handleError() {
 		    JOptionPane.showMessageDialog
-			(this, "Must enter a real number",
-			 "Error", JOptionPane.ERROR_MESSAGE);
+			(this, localeString("needRealNumber"),
+			 localeString("errorTitle"), JOptionPane.ERROR_MESSAGE);
 		    return false;
 		}
 	    };
@@ -787,8 +787,8 @@ class OffsetPane extends JPanel {
 		@Override
 		protected boolean handleError() {
 		    JOptionPane.showMessageDialog
-			(this, "Must enter a real number",
-			 "Error", JOptionPane.ERROR_MESSAGE);
+			(this, localeString("needRealNumber"),
+			 localeString("errorTitle"), JOptionPane.ERROR_MESSAGE);
 		    return false;
 		}
 	    };
@@ -808,8 +808,8 @@ class OffsetPane extends JPanel {
 		@Override
 		protected boolean handleError() {
 		    JOptionPane.showMessageDialog
-			(this, "Must enter a real number",
-			 "Error", JOptionPane.ERROR_MESSAGE);
+			(this, localeString("needRealNumber"),
+			 localeString("errorTitle"), JOptionPane.ERROR_MESSAGE);
 		    return false;
 		}
 	    };
@@ -1071,8 +1071,8 @@ class LocPane extends JPanel {
 			}
 		    }
 		    JOptionPane.showMessageDialog
-			(this, "Must enter a real number",
-			 "Error", JOptionPane.ERROR_MESSAGE);
+			(this, localeString("needRealNumber"),
+			 localeString("errorTitle"), JOptionPane.ERROR_MESSAGE);
 		    return false;
 		}
 	    };
@@ -1091,8 +1091,8 @@ class LocPane extends JPanel {
 		@Override
 		protected boolean handleError() {
 		    JOptionPane.showMessageDialog
-			(this, "Must enter a real number",
-			 "Error", JOptionPane.ERROR_MESSAGE);
+			(this, localeString("needRealNumber"),
+			 localeString("errorTitle"), JOptionPane.ERROR_MESSAGE);
 		    return false;
 		}
 	    };
@@ -1278,7 +1278,7 @@ class ArcPane extends JPanel {
 		    }
 		    JOptionPane.showMessageDialog
 			(this, "Must enter a positive real number",
-			 "Error", JOptionPane.ERROR_MESSAGE);
+			 localeString("errorTitle"), JOptionPane.ERROR_MESSAGE);
 		    return false;
 		}
 	    };
@@ -1297,8 +1297,8 @@ class ArcPane extends JPanel {
 		@Override
 		protected boolean handleError() {
 		    JOptionPane.showMessageDialog
-			(this, "Must enter a real number",
-			 "Error", JOptionPane.ERROR_MESSAGE);
+			(this, localeString("needRealNumber"),
+			 localeString("errorTitle"), JOptionPane.ERROR_MESSAGE);
 		    return false;
 		}
 	    };
@@ -1355,7 +1355,495 @@ class ArcPane extends JPanel {
     }
 }
 
+abstract class TransformPane extends JPanel {
+    static String errorMsg(String key, Object... args) {
+	return EPTS.errorMsg(key, args);
+    }
 
+    static String localeString(String key) {
+	return EPTS.localeString(key);
+    }
+
+    AffineTransform af = null;
+    Path2D oldpath = null;
+    // Path2D newpath = null;
+
+    Point2D ref = null;
+
+    double scale1 = 1.0;
+    double scale2 = 1.0;
+
+    double shear12 = 0.0;
+    double shear21 = 0.0;
+
+    static int lindexSaved = 0;
+    static int aindexSaved = 0;
+
+    double rotAngle = 0.0;
+    static Vector<String> av = new Vector<>(2);
+    static {
+	av.add("Degrees");
+	av.add("Radians");
+    }
+    JComboBox<String> aunits = new JComboBox<>(av);
+    int aindex = aindexSaved;
+
+    JComboBox<String> lunits = new JComboBox<>(ConfigGCSPane.units);
+    int lindex = lindexSaved;
+
+    double principalAngle = 0.0;
+    double tx = 0.0;
+    double ty = 0.0;
+
+    void saveIndices() {
+	lindexSaved = lindex;
+	aindexSaved = aindex;
+    }
+
+    public AffineTransform getTransform() {
+	double x = ConfigGCSPane.convert[lindex].valueAt(tx);
+	double y = ConfigGCSPane.convert[lindex].valueAt(ty);
+	AffineTransform af =
+	    AffineTransform.getTranslateInstance(x+ref.getX(), y+ref.getY());
+	int quadrants = 0;
+	double rangle;
+	if (aindex == 0.0) {
+	    if (rotAngle == 0.0) {
+		rangle = 0.0;
+	    } else if (rotAngle == 90.0) {
+		rangle = 0.0;
+		quadrants = 1;
+	    } else if (rotAngle == 180.0) {
+		rangle = 0.0;
+		quadrants = 2;
+	    } else if (rotAngle == 270.0) {
+		rangle = 0.0;
+		quadrants = 3;
+	    } else if (rotAngle == -90.0) {
+		rangle = 0.0;
+		quadrants = 3;
+	    } else if (rotAngle == -180.0) {
+		rangle = 0.0;
+		quadrants = -2;
+	    } else if (rotAngle == -270.0) {
+		rangle = 0.0;
+		quadrants = 1;
+	    } else {
+		quadrants = 0;
+		rangle = Math.toRadians(rotAngle);
+	    }
+	} else {
+	    rangle = rotAngle;
+	}
+	if (quadrants > 0) {
+	    af.quadrantRotate(quadrants);
+	}
+	af.rotate(rangle+principalAngle);
+	af.shear(shear12, shear21);
+	af.scale(scale1, scale2);
+	af.rotate(-principalAngle);
+	af.translate(-ref.getX(), -ref.getY());
+	return af;
+    }
+
+    String oldName;
+    PointTableModel ptmodel;
+
+    public Path2D getOldPath() {
+	return oldpath;
+    }
+
+    public Path2D getNewPath() {
+	Path2D newpath = ptmodel.getPath(oldName, getTransform());
+	return newpath;
+    }
+
+    CharDocFilter cdf = new CharDocFilter();
+
+    boolean status =  false;
+    public boolean getStatus() {return status;}
+
+    Line2D paline1;
+    Line2D paline2;
+
+    public Line2D principalAxis1() {
+	return paline1;
+    }
+    public Line2D principalAxis2() {
+	return paline2;
+    }
+
+    public TransformPane(PointTableModel ptmodel, String name) {
+	super();
+	oldName = name;
+	this.ptmodel = ptmodel;
+	oldpath = ptmodel.getPath(name);
+	ref = Path2DInfo.centerOfMassOf(oldpath);
+	double[][] moments = Path2DInfo.momentsOf(ref, oldpath);
+	double[] principalMoments = Path2DInfo.principalMoments(moments);
+	double mean = (principalMoments[0] + principalMoments[1])/2;
+	if (mean == 0.0) {
+	    // punt - the area must be zero.
+	    principalAngle = 0.0;
+	} else if (Math.abs((principalMoments[0]
+			     - principalMoments[1])/mean) < 0.01) {
+	    // we can't see the difference so use X and Y axes
+	    principalAngle = 0.0;
+	    paline1 = new Line2D.Double(ref.getX(),  ref.getY(),
+					ref.getX() + Math.sqrt(mean),
+					ref.getY());
+	    paline2 = new Line2D.Double(ref.getX(),  ref.getY(),
+					ref.getX(),
+					ref.getY() + Math.sqrt(mean));
+	} else {
+	    double[][]principalAxes =
+		Path2DInfo.principalAxes(moments, principalMoments);
+	    principalAngle = Math.atan2(principalAxes[0][1],
+					principalAxes[0][0]);
+	    double len = Math.sqrt(principalMoments[0]);
+	    paline1 = new Line2D.Double(ref.getX(), ref.getY(),
+					ref.getX() + len*principalAxes[0][0],
+					ref.getY() + len*principalAxes[0][1]);
+	    len = Math.sqrt(principalMoments[1]);
+	    paline2 = new Line2D.Double(ref.getX(), ref.getY(),
+					ref.getX() + len*principalAxes[1][0],
+					ref.getY() + len*principalAxes[1][1]);
+	}
+
+	/*
+	JRadioButton cmButton = new JRadioButton(localeString("cm"), true);
+	JRadioButton bbButton = new JRadioButton(localeString("bbCenter"),
+						 false);
+	ButtonGroup group = new ButtonGroup();
+	group.add(cmButton);
+	group.add(bbButton);
+	cmButton.addActionListener((e) -> {
+		ref = Path2DInfo.centerOfMassOf(oldpath);
+	    });
+	bbButton.addActionListener((e) -> {
+		Rectangle2D rect = oldpath.getBounds2D();
+		ref = new Point2D.Double(rect.getCenterX(), rect.getCenterY());
+	    });
+	*/
+	cdf.setAllowedChars("09eeEE..,,++--");
+	InputVerifier tfiv = new InputVerifier() {
+	    public boolean verify(JComponent input) {
+		JTextField tf = (VTextField)input;
+		String string = tf.getText();
+		if (string == null) string = "";
+		string = string.trim();
+		try {
+		    if (string.length() == 0) return true;
+		    double value = Double.parseDouble(string);
+		    return true;
+		} catch (Exception e) {
+		    return false;
+		}
+	    }
+	};
+	JLabel scale1Label = new JLabel(localeString("scale1Label"));
+	VTextField scale1TF = new VTextField(10) {
+		@Override
+		protected void onAccepted() {
+		    String text = getText();
+		    if (text == null || text.length() == 0) {
+			scale1 = 1.0;
+		    } else {
+			scale1 = Double.valueOf(text);
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    JOptionPane.showMessageDialog
+			(this, localeString("needRealNumber"),
+			 localeString("errorTitle"), JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+	JLabel scale2Label = new JLabel(localeString("scale1Label"));
+	VTextField scale2TF = new VTextField(10) {
+		@Override
+		protected void onAccepted() {
+		    String text = getText();
+		    if (text == null || text.length() == 0) {
+			scale2 = 1.0;
+		    } else {
+			scale2 = Double.valueOf(text);
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    JOptionPane.showMessageDialog
+			(this, localeString("needRealNumber"),
+			 localeString("errorTitle"), JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+	JLabel shear12Label = new JLabel(localeString("shear12Label"));
+	VTextField shear12TF = new VTextField(10) {
+		@Override
+		protected void onAccepted() {
+		    String text = getText();
+		    if (text == null || text.length() == 0) {
+			shear12 = 0.0;
+		    } else {
+			shear12 = Double.valueOf(text);
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    JOptionPane.showMessageDialog
+			(this, localeString("needRealNumber"),
+			 localeString("errorTitle"), JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+	JLabel shear21Label = new JLabel(localeString("shear21Label"));
+	VTextField shear21TF = new VTextField(10) {
+		@Override
+		protected void onAccepted() {
+		    String text = getText();
+		    if (text == null || text.length() == 0) {
+			shear21 = 0.0;
+		    } else {
+			shear21 = Double.valueOf(text);
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    JOptionPane.showMessageDialog
+			(this, localeString("needRealNumber"),
+			 localeString("errorTitle"), JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+	JLabel rotLabel = new JLabel(localeString("rotation"));
+	JLabel rotUnitsLabel = new JLabel(localeString("rotUnits"));
+	VTextField rotTF = new VTextField(10) {
+		@Override
+		protected void onAccepted() {
+		    String text = getText();
+		    if (text == null || text.length() == 0) {
+			rotAngle = 0.0;
+		    } else {
+			rotAngle = Double.valueOf(text);
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    JOptionPane.showMessageDialog
+			(this, localeString("needRealNumber"),
+			 localeString("errorTitle"), JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+	aunits.setSelectedIndex(aindex);
+	aunits.addActionListener((e) -> {
+		aindex = aunits.getSelectedIndex();
+	    });
+	lunits.setSelectedIndex(lindex);
+	lunits.addActionListener((e) -> {
+		lindex = lunits.getSelectedIndex();
+	    });
+
+	JLabel transXLabel = new JLabel(localeString("translateX"));
+	VTextField transXTF = new VTextField(10) {
+		@Override
+		protected void onAccepted() {
+		    String text = getText();
+		    if (text == null || text.length() == 0) {
+			tx = 0.0;
+		    } else {
+			tx = Double.valueOf(text);
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    JOptionPane.showMessageDialog
+			(this, localeString("needRealNumber"),
+			 localeString("errorTitle"), JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+	JLabel transYLabel = new JLabel(localeString("translateY"));
+	VTextField transYTF = new VTextField(10) {
+		@Override
+		protected void onAccepted() {
+		    String text = getText();
+		    if (text == null || text.length() == 0) {
+			ty = 0.0;
+		    } else {
+			ty = Double.valueOf(text);
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    JOptionPane.showMessageDialog
+			(this, localeString("needRealNumber"),
+			 localeString("errorTitle"), JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+	JLabel translateUnitsLabel = new JLabel(localeString("translateUnits"));
+
+	JButton okButton = new JButton(localeString("okButton"));
+	JButton acceptButton = new JButton(localeString("acceptButton"));
+	JButton cancelButton = new JButton(localeString("cancelButton"));
+
+	((AbstractDocument)scale1TF.getDocument()).setDocumentFilter(cdf);
+	scale1TF.setInputVerifier(tfiv);
+	((AbstractDocument)scale2TF.getDocument()).setDocumentFilter(cdf);
+	scale2TF.setInputVerifier(tfiv);
+	((AbstractDocument)shear12TF.getDocument()).setDocumentFilter(cdf);
+	shear12TF.setInputVerifier(tfiv);
+	((AbstractDocument)shear21TF.getDocument()).setDocumentFilter(cdf);
+	shear21TF.setInputVerifier(tfiv);
+	((AbstractDocument)rotTF.getDocument()).setDocumentFilter(cdf);
+	rotTF.setInputVerifier(tfiv);
+	((AbstractDocument)transXTF.getDocument()).setDocumentFilter(cdf);
+	transXTF.setInputVerifier(tfiv);
+	((AbstractDocument)transYTF.getDocument()).setDocumentFilter(cdf);
+	transYTF.setInputVerifier(tfiv);
+
+
+	GridBagLayout gridbag = new GridBagLayout();
+	GridBagConstraints c = new GridBagConstraints();
+	setLayout(gridbag);
+	c.insets = new Insets(5, 5, 5, 5);
+	c.ipadx = 5;
+	c.ipady = 5;
+	c.anchor  = GridBagConstraints.LINE_START;
+	c.gridwidth = 1;
+	/*
+	JPanel rbPanel = new JPanel();
+	GridBagLayout gridbag1 = new GridBagLayout();
+	rbPanel.setLayout(gridbag1);
+	gridbag1.setConstraints(cmButton, c);
+	rbPanel.add(cmButton);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag1.setConstraints(bbButton, c);
+	rbPanel.add(bbButton);
+
+	c.gridwidth = GridBagConstraints.CENTER;
+	gridbag.setConstraints(rbPanel, c);
+	add(rbPanel);
+
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	JLabel spacer = new JLabel(" ");
+	gridbag.setConstraints(spacer, c);
+	add(spacer);
+	*/
+	gridbag.setConstraints(scale1Label, c);
+	add(scale1Label);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(scale1TF, c);
+	add(scale1TF);
+	c.gridwidth = 1;
+	gridbag.setConstraints(scale2Label, c);
+	add(scale2Label);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(scale2TF, c);
+	add(scale2TF);
+
+	JLabel spacer = new JLabel(" ");
+	gridbag.setConstraints(spacer, c);
+	add(spacer);
+
+	c.gridwidth = 1;
+	gridbag.setConstraints(shear12Label, c);
+	add(shear12Label);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(shear12TF, c);
+	add(shear12TF);
+	c.gridwidth = 1;
+	gridbag.setConstraints(shear21Label, c);
+	add(shear21Label);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(shear21TF, c);
+	add(shear21TF);
+
+	spacer = new JLabel(" ");
+	gridbag.setConstraints(spacer, c);
+	add(spacer);
+
+	c.gridwidth = 1;
+	gridbag.setConstraints(rotLabel, c);
+	add(rotLabel);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(rotTF, c);
+	add(rotTF);
+	c.gridwidth = 1;
+	gridbag.setConstraints(rotUnitsLabel, c);
+	add(rotUnitsLabel);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(aunits, c);
+	add(aunits);
+
+	spacer = new JLabel(" ");
+	gridbag.setConstraints(spacer, c);
+	add(spacer);
+
+	c.gridwidth = 1;
+	gridbag.setConstraints(transXLabel, c);
+	add(transXLabel);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(transXTF, c);
+	add(transXTF);
+	c.gridwidth = 1;
+	gridbag.setConstraints(transYLabel, c);
+	add(transYLabel);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(transYTF, c);
+	add(transYTF);
+	c.gridwidth = 1;
+	gridbag.setConstraints(translateUnitsLabel, c);
+	add(translateUnitsLabel);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(lunits, c);
+	add(lunits);
+
+	acceptButton.addActionListener((e) -> {
+		status = false;
+		accept();
+	    });
+	cancelButton.addActionListener((e) -> {
+		status = false;
+		Window w = SwingUtilities.getWindowAncestor(TransformPane.this);
+		w.setVisible(false);
+		cancel();
+	    });
+	okButton.addActionListener((e) -> {
+		status = true;
+		Window w = SwingUtilities.getWindowAncestor(TransformPane.this);
+		w.setVisible(false);
+		saveIndices();
+		ok();
+	    });
+
+	JPanel buttonPane = new JPanel();
+	GridBagLayout gridbag2 = new GridBagLayout();
+	buttonPane.setLayout(gridbag2);
+	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.CENTER;
+	gridbag2.setConstraints(okButton, c);
+	buttonPane.add(okButton);
+	// c.anchor = GridBagConstraints.CENTER;
+	gridbag2.setConstraints(acceptButton, c);
+	buttonPane.add(acceptButton);
+	// c.anchor  = GridBagConstraints.LINE_END;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag2.setConstraints(cancelButton, c);
+	buttonPane.add(cancelButton);
+
+	c.anchor = GridBagConstraints.CENTER;
+	gridbag.setConstraints(buttonPane, c);
+	add(buttonPane);
+    }
+
+    public abstract void accept();
+    public abstract void cancel();
+    public abstract void ok();
+}
 
 public class EPTSWindow {
 
@@ -1930,6 +2418,7 @@ public class EPTSWindow {
 	addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	deletePathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	offsetPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
+	newTFMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
     }
 
     private boolean cleanupPartialPath(boolean force) {
@@ -1983,6 +2472,7 @@ public class EPTSWindow {
 	addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	deletePathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	offsetPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
+	newTFMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	return true;
     }
 
@@ -1991,6 +2481,8 @@ public class EPTSWindow {
     JMenuItem addToPathMenuItem; // for Edit menu.
     JMenuItem deletePathMenuItem; // for Edit menu.
     JMenuItem makeCurrentMenuItem; // for Edit menu
+    JMenuItem newTFMenuItem;	  // for Edit menu
+
     JMenuItem offsetPathMenuItem; // for Tools menu
 
     File savedFile = null;
@@ -2307,7 +2799,7 @@ public class EPTSWindow {
 		    } catch (Exception ex) {
 			JOptionPane.showMessageDialog
 			    (frame, errorMsg("TPfailed", ex.getMessage()),
-			 "Error", JOptionPane.ERROR_MESSAGE);
+			 localeString("errorTitle"), JOptionPane.ERROR_MESSAGE);
 		    }
 		}
 	    });
@@ -2436,6 +2928,66 @@ public class EPTSWindow {
 		}
 	    });
 	editMenu.add(menuItem);
+
+	newTFMenuItem = new JMenuItem(localeString("newTransformedPath"),
+				      KeyEvent.VK_T);
+	newTFMenuItem.setAccelerator (KeyStroke.getKeyStroke
+				      (KeyEvent.VK_T,
+				       (InputEvent.ALT_DOWN_MASK
+					| InputEvent.CTRL_DOWN_MASK)));
+	newTFMenuItem.setEnabled(false);
+	newTFMenuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    // select a path.
+		    String oldPathName = null;
+		    if (selectedRow == -1) {
+			Set<String> vnameSet = ptmodel.getPathVariableNames();
+			if (vnameSet.isEmpty()) return;
+			String[] vnames =
+			    vnameSet.toArray(new String[vnameSet.size()]);
+			String vname;
+			if (vnames.length == 1) {
+			    vname = vnames[0];
+			} else {
+			    vname = (String)JOptionPane.showInputDialog
+				(frame, localeString("newTransformedPath1"),
+				 localeString("SelectPath"),
+				 JOptionPane.PLAIN_MESSAGE, null,
+				 vnames, vnames[0]);
+			}
+			if (vname == null || vname.length() == 0) return;
+			oldPathName = vname;
+		    } else {
+			int index = ptmodel.findStart(selectedRow);
+			if (ptmodel.getRowMode(index) == EPTS.Mode.LOCATION) {
+			    return;
+			} else {
+			    oldPathName = ptmodel.getVariableName(index);
+			}
+		    }
+		    // complete the current path.
+		    if (nextState != null) {
+			PointTMR lastrow = ptmodel.getLastRow();
+			Enum lrmode = lastrow.getMode();
+			if (lrmode == SplinePathBuilder.CPointType
+			    .CONTROL || lrmode ==
+			    SplinePathBuilder.CPointType.SPLINE) {
+			    ptmodel.setLastRowMode
+				(SplinePathBuilder.CPointType.SEG_END);
+			}
+			// This can call a radio-button menu item's
+			// action listener's actionPeformed
+			// method, and that sets the
+			// nextState variable.
+			ttable.nextState(EPTS.Mode.PATH_END);
+			ptmodel.addRow("", EPTS.Mode.PATH_END,
+				       0.0, 0.0, 0.0, 0.0);
+		    }
+		    resetState();
+		    onNewTransformedPath(oldPathName);
+		}
+	    });
+	editMenu.add(newTFMenuItem);
 
 	menuItem = new JMenuItem(localeString("DeleteBezier"), KeyEvent.VK_D);
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
@@ -2985,6 +3537,7 @@ public class EPTSWindow {
 				case CLOSE:
 				    nxp = (xstart - xrefpoint) / scaleFactor;
 				    nyp = (ystart - yrefpoint) / scaleFactor;
+				    nyp = height - nyp;
 				    ptmodel.addRow("", cp.type, xstart, ystart,
 						   nxp, nyp);
 				    break;
@@ -3027,6 +3580,7 @@ public class EPTSWindow {
 					    / scaleFactor;
 					nyp = (ystart - yrefpoint)
 					    / scaleFactor;
+					nyp = height - nyp;
 					ptmodel.addRow("", cp.type,
 						       xstart, ystart,
 						       nxp, nyp);
@@ -3154,7 +3708,8 @@ public class EPTSWindow {
 			if (xp < 0.0 || xp > width || yp < 0.0 || yp > height) {
 			    JOptionPane.showMessageDialog
 				(frame, "New point out of range",
-				 "Error", JOptionPane.ERROR_MESSAGE);
+				 localeString("errorTitle"),
+				 JOptionPane.ERROR_MESSAGE);
 			    return;
 			}
 			if (locState) {
@@ -3324,7 +3879,8 @@ public class EPTSWindow {
 			    // point out of range.
 			    JOptionPane.showMessageDialog
 				(frame, "New point out of range",
-				 "Error", JOptionPane.ERROR_MESSAGE);
+				 localeString("errorTitle"),
+				 JOptionPane.ERROR_MESSAGE);
 			    return;
 			}
 			*/
@@ -3334,7 +3890,8 @@ public class EPTSWindow {
 			if (xp < 0.0 || xp > width || yp < 0.0 || yp > height) {
 			    JOptionPane.showMessageDialog
 				(frame, "New point out of range",
-				 "Error", JOptionPane.ERROR_MESSAGE);
+				 localeString("errorTitle"),
+				 JOptionPane.ERROR_MESSAGE);
 			    return;
 			}
 			ptmodel.addRow("", SplinePathBuilder.CPointType.SEG_END,
@@ -3493,7 +4050,8 @@ public class EPTSWindow {
 				    || yp < 0.0 || yp > height) {
 				    JOptionPane.showMessageDialog
 					(frame, "New point out of range",
-					 "Error", JOptionPane.ERROR_MESSAGE);
+					 localeString("errorTitle"),
+					 JOptionPane.ERROR_MESSAGE);
 				    return;
 				}
 				x = coords[2];
@@ -3505,7 +4063,8 @@ public class EPTSWindow {
 				    || yp < 0.0 || yp > height) {
 				    JOptionPane.showMessageDialog
 					(frame, "New point out of range",
-					 "Error", JOptionPane.ERROR_MESSAGE);
+					 localeString("errorTitle"),
+					 JOptionPane.ERROR_MESSAGE);
 				    return;
 				}
 				x = coords[4];
@@ -3517,7 +4076,8 @@ public class EPTSWindow {
 				    || yp < 0.0 || yp > height) {
 				    JOptionPane.showMessageDialog
 					(frame, "New point out of range",
-					 "Error", JOptionPane.ERROR_MESSAGE);
+					 localeString("errorTitle"),
+					 JOptionPane.ERROR_MESSAGE);
 				    return;
 				}
 				// Now repeat but set the row instead of
@@ -3596,7 +4156,8 @@ public class EPTSWindow {
 			} else {
 			    JOptionPane.showMessageDialog
 				(frame, "Filter name in use",
-				 "Error", JOptionPane.ERROR_MESSAGE);
+				 localeString("errorTitle"),
+				 JOptionPane.ERROR_MESSAGE);
 			}
 		    } while (loop);
 		    ptfilters.addFilter(name, e, panel);
@@ -3765,6 +4326,81 @@ public class EPTSWindow {
 	}
     }
 
+
+    private Path2D tmpTransformedPath = null;
+    private Line2D paxis1 = null;
+    private Line2D paxis2 = null;
+
+    private void onNewTransformedPath(String oldPathName) {
+	final TransformPane tfpane = new TransformPane(ptmodel, oldPathName) {
+		public void accept(){
+		    tmpTransformedPath = getNewPath();
+		    panel.repaint();
+		}
+		public void cancel(){
+		    tmpTransformedPath = null;
+		}
+		public void ok() {
+		    tmpTransformedPath = null;
+		}
+	    };
+	paxis1 = tfpane.principalAxis1();
+	paxis2 = tfpane.principalAxis2();
+	panel.repaint();
+	// panel.getToolkit().sync();
+	final JDialog dialog = new JDialog(frame,
+				    localeString("newTransformedPath"),
+				    true);
+	dialog.setLocationRelativeTo(frame);
+	dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+	dialog.add(tfpane);
+	dialog.pack();
+	dialog.setVisible(true);
+	System.out.println("setting paxis1 to null");
+	paxis1 = null;
+	paxis2 = null;
+	if (tfpane.getStatus()) {
+	    String newPathName = null;
+	    do {
+		newPathName = (String)JOptionPane.showInputDialog
+		    (frame, localeString("PleaseEnterNewVariableName"),
+		     localeString("ScriptingLanguageVariableName"),
+		     JOptionPane.PLAIN_MESSAGE);
+		if (newPathName == null) {
+		    panel.repaint();
+		    return;
+		}
+	    } while (ptmodel.getVariableNames().contains(newPathName));
+	    ;
+	    int n = ptmodel.getRowCount();
+	    AffineTransform af = tfpane.getTransform();
+	    double[] tcoords = new double[4];
+	    for (int index = ptmodel.findStart(oldPathName);
+		 index < n; index++) {
+		PointTMR row = ptmodel.getRow(index);
+		Enum mode = row.getMode();
+		if (mode == EPTS.Mode.PATH_START) {
+		    ptmodel.addRow(new PointTMR(newPathName, mode,
+						0.0, 0.0, 0.0, 0.0));
+		} else if (mode == EPTS.Mode.PATH_END) {
+		    ptmodel.addRow(new PointTMR("", mode, 0.0, 0.0, 0.0, 0.0));
+		} else {
+		    tcoords[0] = row.getX();
+		    tcoords[1] = row.getY();
+		    af.transform(tcoords, 0, tcoords, 2, 1);
+		    double x = tcoords[2];
+		    double y = tcoords[3];
+		    double xp = (x - xrefpoint) / scaleFactor;
+		    double yp = (y - yrefpoint) / scaleFactor;
+		    yp = height - yp;
+		    // add to table.
+		    ptmodel.addRow(new PointTMR("", mode, x, y, xp, yp));
+		}
+	    }
+	}
+	panel.repaint();
+    }
+
     private void onInsertAfter() {
 	insertionSelectedRow = selectedRow;
 	resetState();
@@ -3929,6 +4565,7 @@ public class EPTSWindow {
 	    addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	    deletePathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	    offsetPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
+	    newTFMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	    selectedRow = -1;
 	    setModeline("");
 	}
@@ -4908,6 +5545,7 @@ public class EPTSWindow {
 	addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	deletePathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	offsetPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
+	newTFMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	saveMenuItem.setEnabled(false);
 	saveAsMenuItem.setEnabled(false);
     }
@@ -5746,6 +6384,38 @@ public class EPTSWindow {
 						     (startx*zoom, starty*zoom,
 						      lastx*zoom, lasty*zoom));
 					}
+					if (paxis1 != null) {
+					    g2d.setColor(Color.ORANGE);
+					    AffineTransform af2 =
+						(zoom == 1.0)?
+						new AffineTransform():
+						AffineTransform.getScaleInstance
+						(zoom, zoom);
+
+					    af2.translate
+						(-xrefpoint/scaleFactor,
+						 height+yrefpoint/scaleFactor);
+					    af2.scale(1.0/scaleFactor,
+						      -1.0/scaleFactor);
+					    Path2D paxis1Line = new
+						Path2D.Double
+						(paxis1, af2);
+					    Path2D paxis2Line = new
+						Path2D.Double
+						(paxis2, af2);
+					    g2d2.draw(paxis1Line);
+					    g2d.draw(paxis1Line);
+					    g2d2.draw(paxis2Line);
+					    g2d.draw(paxis2Line);
+					    if (tmpTransformedPath != null) {
+						g2d.setColor(Color.RED);
+						Path2D tmpPath = new
+						    Path2D.Double
+						    (tmpTransformedPath, af2);
+						g2d2.draw(tmpPath);
+						g2d.draw(tmpPath);
+					    }
+					}
 				    } finally {
 					g2d2.dispose();
 					g2d.setStroke(savedStroke);
@@ -5905,6 +6575,8 @@ public class EPTSWindow {
 				(ptmodel.pathVariableNameCount() > 0);
 			    offsetPathMenuItem.setEnabled
 				(ptmodel.pathVariableNameCount() > 0);
+			    newTFMenuItem.setEnabled
+				(ptmodel.pathVariableNameCount() > 0);
 			    setupFilters(parser);
 			    parser.configureOffsetPane();
 			}
@@ -5979,6 +6651,8 @@ public class EPTSWindow {
 			    (ptmodel.pathVariableNameCount() > 0);
 			offsetPathMenuItem.setEnabled
 			    (ptmodel.pathVariableNameCount() > 0);
+			    newTFMenuItem.setEnabled
+				(ptmodel.pathVariableNameCount() > 0);
 		    }
 		    if (parser != null) {
 			setupFilters(parser);
