@@ -156,6 +156,8 @@ RESOURCES = manual/manual.xml \
 	manual/table2.png \
 	manual/terminal.png \
 	manual/LocationDialog.png \
+	manual/NTPDialog.png \
+	manual/NTPWindow.png \
 	manual/AddVector.png \
 	manual/AddArc.png \
 	epts-1.0.dtd

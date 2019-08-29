@@ -483,6 +483,42 @@ The <code>Edit</code> menu contains the following items:
     will extend a B&eacute;zier path.  If one of a path's nodes has
     been selected, that path will be extended. Otherwise a dialog box
     will allow one to select the desired path.
+  <LI><B><CODE>Transform an Existing Path</CODE></B>. This option will
+    scale, rotate, and/or translate an existing path. EPTS will close the
+    path with a straight line segment if it is open, and will then compute
+    the enclosed area's center of mass and moments.  The moments are used
+    to compute the principal moments with the eigenvalue for the largest
+    of the two giving the direction of the first principal axis. The
+    second principal axis is perpendicular to the first, and points in the
+    counterclockwise direction from the first. A dialog box gives the
+    user the option of scaling along the principal axes, rotating about
+    the center of mass, and then translating the curve. For example,
+    the following dialog box
+    <BR><BR>
+    <CENTER><IMG src="NTPDialog.png"></CENTER>
+    <BR>
+    chooses options for scaling the distances along the second
+    principal axis by 1/2, then rotating by 20 degrees around the
+    center of mass, and finally translating by 200 units in the X
+    direction and 50 units in the Y direction (in this example custom
+    units are user-space units).  If the <CODE>Apply</CODE> button is
+    clicked, a red shape will appear showing the position of the
+    transformed shape. The corresponding EPTS window
+    <BR><BR>
+    <CENTER><IMG src="NTPWindow.png"></CENTER>
+    <BR>
+    shows the original shape in black, the principal axes (positive
+    values only, with a length given by the square root of the
+    principal moments), and the new transformed shape in red.  If the
+    <CODE>OK</CODE> button is pressed, the original shape will replace
+    the new shape at the new shape's position.  The <CODE>Cancel</CODE>
+    button will cancel this operation.  The EPTS window's controls are
+    disabled while this dialog box is visible.  The dialog box, however,
+    does provide buttons allowing one to zoom in or zoom out.
+   <LI><B><CODE>New Transformed Path</CODE></B>. This option's behavior
+    is nearly identical to the <CODE>Transform an Existing Path</CODE>
+    option, but instead of altering the original shape, a new one is
+    added. EPTS will ask for a new variable name.
   <LI><B><CODE>Delete a Location / B&eacute;zier Path</CODE></B>. This
     option will delete a location or path. If a location or one of a path's
     nodes has been selected, that location or path will be deleted. Otherwise

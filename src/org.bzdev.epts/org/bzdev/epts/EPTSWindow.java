@@ -1369,12 +1369,13 @@ abstract class TransformPane extends JPanel {
     // Path2D newpath = null;
 
     Point2D ref = null;
+    Point2D getRef() {return ref;}
 
     double scale1 = 1.0;
     double scale2 = 1.0;
 
-    double shear12 = 0.0;
-    double shear21 = 0.0;
+    // double shear12 = 0.0;
+    // double shear21 = 0.0;
 
     static int lindexSaved = 0;
     static int aindexSaved = 0;
@@ -1439,7 +1440,7 @@ abstract class TransformPane extends JPanel {
 	    af.quadrantRotate(quadrants);
 	}
 	af.rotate(rangle+principalAngle);
-	af.shear(shear12, shear21);
+	// af.shear(shear12, shear21);
 	af.scale(scale1, scale2);
 	af.rotate(-principalAngle);
 	af.translate(-ref.getX(), -ref.getY());
@@ -1463,6 +1464,7 @@ abstract class TransformPane extends JPanel {
     boolean status =  false;
     public boolean getStatus() {return status;}
 
+
     Line2D paline1;
     Line2D paline2;
 
@@ -1471,6 +1473,16 @@ abstract class TransformPane extends JPanel {
     }
     public Line2D principalAxis2() {
 	return paline2;
+    }
+
+    JButton zoomIn = new JButton(localeString("ZoomIn"));
+    JButton zoomOut = new JButton(localeString("ZoomOut"));
+
+    protected void enableIn(boolean enabled) {
+	zoomIn.setEnabled(enabled);
+    }
+    protected void enableOut(boolean enabled) {
+	zoomOut.setEnabled(enabled);
     }
 
     public TransformPane(PointTableModel ptmodel, String name) {
@@ -1560,7 +1572,7 @@ abstract class TransformPane extends JPanel {
 		    return false;
 		}
 	    };
-	JLabel scale2Label = new JLabel(localeString("scale1Label"));
+	JLabel scale2Label = new JLabel(localeString("scale2Label"));
 	VTextField scale2TF = new VTextField(10) {
 		@Override
 		protected void onAccepted() {
@@ -1579,6 +1591,7 @@ abstract class TransformPane extends JPanel {
 		    return false;
 		}
 	    };
+	/*
 	JLabel shear12Label = new JLabel(localeString("shear12Label"));
 	VTextField shear12TF = new VTextField(10) {
 		@Override
@@ -1617,6 +1630,7 @@ abstract class TransformPane extends JPanel {
 		    return false;
 		}
 	    };
+	*/
 	JLabel rotLabel = new JLabel(localeString("rotation"));
 	JLabel rotUnitsLabel = new JLabel(localeString("rotUnits"));
 	VTextField rotTF = new VTextField(10) {
@@ -1686,6 +1700,16 @@ abstract class TransformPane extends JPanel {
 	    };
 	JLabel translateUnitsLabel = new JLabel(localeString("translateUnits"));
 
+	JLabel zoomLabel = new JLabel(localeString("ZoomWindow"));
+	zoomIn.addActionListener((e) -> {
+		doZoomIn();
+		setZoomEnabled();
+	    });
+	zoomOut.addActionListener((e) -> {
+		doZoomOut();
+		setZoomEnabled();
+	    });
+
 	JButton okButton = new JButton(localeString("okButton"));
 	JButton acceptButton = new JButton(localeString("acceptButton"));
 	JButton cancelButton = new JButton(localeString("cancelButton"));
@@ -1694,10 +1718,12 @@ abstract class TransformPane extends JPanel {
 	scale1TF.setInputVerifier(tfiv);
 	((AbstractDocument)scale2TF.getDocument()).setDocumentFilter(cdf);
 	scale2TF.setInputVerifier(tfiv);
+	/*
 	((AbstractDocument)shear12TF.getDocument()).setDocumentFilter(cdf);
 	shear12TF.setInputVerifier(tfiv);
 	((AbstractDocument)shear21TF.getDocument()).setDocumentFilter(cdf);
 	shear21TF.setInputVerifier(tfiv);
+	*/
 	((AbstractDocument)rotTF.getDocument()).setDocumentFilter(cdf);
 	rotTF.setInputVerifier(tfiv);
 	((AbstractDocument)transXTF.getDocument()).setDocumentFilter(cdf);
@@ -1749,6 +1775,7 @@ abstract class TransformPane extends JPanel {
 	gridbag.setConstraints(spacer, c);
 	add(spacer);
 
+	/*
 	c.gridwidth = 1;
 	gridbag.setConstraints(shear12Label, c);
 	add(shear12Label);
@@ -1765,7 +1792,7 @@ abstract class TransformPane extends JPanel {
 	spacer = new JLabel(" ");
 	gridbag.setConstraints(spacer, c);
 	add(spacer);
-
+	*/
 	c.gridwidth = 1;
 	gridbag.setConstraints(rotLabel, c);
 	add(rotLabel);
@@ -1803,7 +1830,7 @@ abstract class TransformPane extends JPanel {
 	add(lunits);
 
 	acceptButton.addActionListener((e) -> {
-		status = false;
+		status = true;
 		accept();
 	    });
 	cancelButton.addActionListener((e) -> {
@@ -1820,6 +1847,20 @@ abstract class TransformPane extends JPanel {
 		ok();
 	    });
 
+	JPanel zoomPane = new JPanel();
+	GridBagLayout gridbagZ = new GridBagLayout();
+	zoomPane.setLayout(gridbagZ);
+	c.gridwidth = 1;
+	gridbagZ.setConstraints(zoomLabel, c);
+	zoomPane.add(zoomLabel);
+	gridbagZ.setConstraints(zoomIn, c);
+	zoomPane.add(zoomIn);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbagZ.setConstraints(zoomOut, c);
+	zoomPane.add(zoomOut);
+	c.anchor = GridBagConstraints.CENTER;
+	gridbag.setConstraints(zoomPane, c);
+	add(zoomPane);
 	JPanel buttonPane = new JPanel();
 	GridBagLayout gridbag2 = new GridBagLayout();
 	buttonPane.setLayout(gridbag2);
@@ -1838,11 +1879,16 @@ abstract class TransformPane extends JPanel {
 	c.anchor = GridBagConstraints.CENTER;
 	gridbag.setConstraints(buttonPane, c);
 	add(buttonPane);
+	setZoomEnabled();
     }
 
     public abstract void accept();
     public abstract void cancel();
     public abstract void ok();
+
+    public abstract void doZoomIn();
+    public abstract void doZoomOut();
+    protected abstract void setZoomEnabled();
 }
 
 public class EPTSWindow {
@@ -2418,6 +2464,7 @@ public class EPTSWindow {
 	addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	deletePathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	offsetPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
+	tfMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	newTFMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
     }
 
@@ -2472,6 +2519,7 @@ public class EPTSWindow {
 	addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	deletePathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	offsetPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
+	tfMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	newTFMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	return true;
     }
@@ -2481,7 +2529,8 @@ public class EPTSWindow {
     JMenuItem addToPathMenuItem; // for Edit menu.
     JMenuItem deletePathMenuItem; // for Edit menu.
     JMenuItem makeCurrentMenuItem; // for Edit menu
-    JMenuItem newTFMenuItem;	  // for Edit menu
+    JMenuItem newTFMenuItem;	  // for Edit menu (copy a path)
+    JMenuItem tfMenuItem;	  // for Edit menu (modify a path)
 
     JMenuItem offsetPathMenuItem; // for Tools menu
 
@@ -2621,6 +2670,53 @@ public class EPTSWindow {
     }
 
     private Integer maxdeltaLevels[] = {1, 2, 3, 4};
+
+    private void transformPathAction(boolean copyMode) {
+	// select a path.
+	String oldPathName = null;
+	if (selectedRow == -1) {
+	    Set<String> vnameSet = ptmodel.getPathVariableNames();
+	    if (vnameSet.isEmpty()) return;
+	    String[] vnames =
+		vnameSet.toArray(new String[vnameSet.size()]);
+	    String vname;
+	    if (vnames.length == 1) {
+		vname = vnames[0];
+	    } else {
+		vname = (String)JOptionPane.showInputDialog
+		    (frame, localeString("newTransformedPath1"),
+		     localeString("SelectPath"),
+		     JOptionPane.PLAIN_MESSAGE, null,
+		     vnames, vnames[0]);
+	    }
+	    if (vname == null || vname.length() == 0) return;
+	    oldPathName = vname;
+	} else {
+	    int index = ptmodel.findStart(selectedRow);
+	    if (ptmodel.getRowMode(index) == EPTS.Mode.LOCATION) {
+		return;
+	    } else {
+		oldPathName = ptmodel.getVariableName(index);
+	    }
+	}
+	// complete the current path.
+	if (nextState != null) {
+	    PointTMR lastrow = ptmodel.getLastRow();
+	    Enum lrmode = lastrow.getMode();
+	    if (lrmode == SplinePathBuilder.CPointType
+		.CONTROL || lrmode == SplinePathBuilder.CPointType.SPLINE) {
+		ptmodel.setLastRowMode(SplinePathBuilder.CPointType.SEG_END);
+	    }
+	    // This can call a radio-button menu item's
+	    // action listener's actionPeformed
+	    // method, and that sets the
+	    // nextState variable.
+	    ttable.nextState(EPTS.Mode.PATH_END);
+	    ptmodel.addRow("", EPTS.Mode.PATH_END, 0.0, 0.0, 0.0, 0.0);
+	}
+	resetState();
+	onNewTransformedPath(oldPathName, copyMode);
+    }
 
 
     private void setMenus(JFrame frame, double w, double h) {
@@ -2929,62 +3025,31 @@ public class EPTSWindow {
 	    });
 	editMenu.add(menuItem);
 
-	newTFMenuItem = new JMenuItem(localeString("newTransformedPath"),
+	tfMenuItem = new JMenuItem(localeString("TransformedPath"),
 				      KeyEvent.VK_T);
-	newTFMenuItem.setAccelerator (KeyStroke.getKeyStroke
+	tfMenuItem.setAccelerator (KeyStroke.getKeyStroke
 				      (KeyEvent.VK_T,
+				       (InputEvent.ALT_DOWN_MASK
+					| InputEvent.CTRL_DOWN_MASK)));
+	tfMenuItem.setEnabled(false);
+	tfMenuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    transformPathAction(false);
+		}
+	    });
+	editMenu.add(tfMenuItem);
+
+
+	newTFMenuItem = new JMenuItem(localeString("newTransformedPath"),
+				      KeyEvent.VK_N);
+	newTFMenuItem.setAccelerator (KeyStroke.getKeyStroke
+				      (KeyEvent.VK_N,
 				       (InputEvent.ALT_DOWN_MASK
 					| InputEvent.CTRL_DOWN_MASK)));
 	newTFMenuItem.setEnabled(false);
 	newTFMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
-		    // select a path.
-		    String oldPathName = null;
-		    if (selectedRow == -1) {
-			Set<String> vnameSet = ptmodel.getPathVariableNames();
-			if (vnameSet.isEmpty()) return;
-			String[] vnames =
-			    vnameSet.toArray(new String[vnameSet.size()]);
-			String vname;
-			if (vnames.length == 1) {
-			    vname = vnames[0];
-			} else {
-			    vname = (String)JOptionPane.showInputDialog
-				(frame, localeString("newTransformedPath1"),
-				 localeString("SelectPath"),
-				 JOptionPane.PLAIN_MESSAGE, null,
-				 vnames, vnames[0]);
-			}
-			if (vname == null || vname.length() == 0) return;
-			oldPathName = vname;
-		    } else {
-			int index = ptmodel.findStart(selectedRow);
-			if (ptmodel.getRowMode(index) == EPTS.Mode.LOCATION) {
-			    return;
-			} else {
-			    oldPathName = ptmodel.getVariableName(index);
-			}
-		    }
-		    // complete the current path.
-		    if (nextState != null) {
-			PointTMR lastrow = ptmodel.getLastRow();
-			Enum lrmode = lastrow.getMode();
-			if (lrmode == SplinePathBuilder.CPointType
-			    .CONTROL || lrmode ==
-			    SplinePathBuilder.CPointType.SPLINE) {
-			    ptmodel.setLastRowMode
-				(SplinePathBuilder.CPointType.SEG_END);
-			}
-			// This can call a radio-button menu item's
-			// action listener's actionPeformed
-			// method, and that sets the
-			// nextState variable.
-			ttable.nextState(EPTS.Mode.PATH_END);
-			ptmodel.addRow("", EPTS.Mode.PATH_END,
-				       0.0, 0.0, 0.0, 0.0);
-		    }
-		    resetState();
-		    onNewTransformedPath(oldPathName);
+		    transformPathAction(true);
 		}
 	    });
 	editMenu.add(newTFMenuItem);
@@ -4331,17 +4396,116 @@ public class EPTSWindow {
     private Line2D paxis1 = null;
     private Line2D paxis2 = null;
 
-    private void onNewTransformedPath(String oldPathName) {
+    private void adjustForNTP(Point vpp, Path2D oldpath, Point2D oldCM,
+			      Path2D newpath)
+    {
+	if (newpath == null) {
+	    // we canceled so go back to the previous state
+	    scrollPane.getViewport().setViewPosition(vpp);
+	} else {
+	    // make sure the new object is visible by shifting the view
+	    // so that either the new object's center of mass is at the
+	    // center of the view or both the new and old object's
+	    // CM is in the view.
+	    JViewport vp = scrollPane.getViewport();
+	    Point2D newCM = Path2DInfo.centerOfMassOf(newpath);
+	    AffineTransform af =(zoom == 1.0)? new AffineTransform():
+		AffineTransform.getScaleInstance(zoom, zoom);
+	    af.translate(-xrefpoint/scaleFactor, height+yrefpoint/scaleFactor);
+	    af.scale(1.0/scaleFactor, -1.0/scaleFactor);
+	    Point2D oldCMXP = af.transform(oldCM, null);
+	    Point2D newCMXP = af.transform(newCM, null);
+	    double x1 = oldCMXP.getX();
+	    double y1 = oldCMXP.getY();
+	    double x2 = newCMXP.getX();
+	    double y2 = newCMXP.getY();
+	    int vpx = (int)Math.round(vpp.getX());
+	    int vpy = (int)Math.round(vpp.getY());
+	    int vpw = vp.getWidth();
+	    int vph = vp.getHeight();
+	    /*
+	    System.out.format("oldCM=(%g, %g), newCM=(%g, %g)\n",
+			      x1, y1, x2, y2);
+	    System.out.format("vpp=(%d, %d), dim=(%d,%d)\n",
+			      vpx, vpy, vpw, vph);
+	    */
+	    int ix, iy;
+	    if ((int)Math.ceil(Math.abs(x2-x1)) < vpw
+		&& (int)Math.ceil(Math.abs(y2-y1)) < vph) {
+		ix = (int)(Math.round((x1+x2)/2)) - vpw/2;
+		iy = (int)(Math.round((y1+y2)/2)) - vph/2;
+	    } else {
+		ix = (int)(Math.round(x2)) - vpw/2;
+		iy = (int)(Math.round(y2)) - vph/2;
+	    }
+	    if (ix < 0) ix = 0;
+	    if (iy < 0) iy = 0;
+	    if (ix > (Math.ceil(width*zoom) - vpw)) {
+		ix = (int)Math.round(width*zoom) - vpw;
+	    }
+	    if (iy > (Math.ceil(height*zoom) - vph)) {
+		iy = (int)Math.round(height*zoom) - vph;
+	    }
+	    // System.out.format("(ix,iy) = (%d, %d)\n", ix, iy);
+	    vp.setViewPosition(new Point(ix, iy));
+	}
+    }
+
+    private void onNewTransformedPath(String oldPathName, boolean copyMode) {
 	final TransformPane tfpane = new TransformPane(ptmodel, oldPathName) {
+		Point vpp = scrollPane.getViewport().getViewPosition();
 		public void accept(){
 		    tmpTransformedPath = getNewPath();
+		    adjustForNTP(vpp, getOldPath(), getRef(),
+				 tmpTransformedPath);
 		    panel.repaint();
 		}
 		public void cancel(){
+		    adjustForNTP(vpp, getOldPath(), getRef(), null);
 		    tmpTransformedPath = null;
 		}
 		public void ok() {
+		    adjustForNTP(vpp, getOldPath(), getRef(), getNewPath());
 		    tmpTransformedPath = null;
+		}
+
+		public void doZoomIn() {
+		    int lastIndex = zoomIndex;
+		    zoomIndex++;
+		    if (zoomIndex >= zoomTable.length) {
+			zoomIndex = zoomTable.length -1;
+		    }
+		    if (lastIndex != zoomIndex) {
+			rezoom();
+			if (getStatus()) {
+			    accept();
+			} else {
+			    adjustForNTP(vpp, getOldPath(), getRef(),
+					 getOldPath());
+			    panel.repaint();
+			}
+		    }
+		}
+		public void doZoomOut() {
+		    int lastIndex = zoomIndex;
+		    zoomIndex--;
+		    if (zoomIndex < 0) {
+			zoomIndex = 0;
+		    }
+		    if (lastIndex != zoomIndex) {
+			rezoom();
+			if (getStatus()) {
+			    accept();
+			} else {
+			    adjustForNTP(vpp, getOldPath(), getRef(),
+					 getOldPath());
+			    panel.repaint();
+			}
+		    }
+		}
+		protected void setZoomEnabled() {
+		    enableIn(zoomIndex < zoomTable.length - 1);
+		    enableOut(zoomIndex > 0);
 		}
 	    };
 	paxis1 = tfpane.principalAxis1();
@@ -4356,45 +4520,86 @@ public class EPTSWindow {
 	dialog.add(tfpane);
 	dialog.pack();
 	dialog.setVisible(true);
-	System.out.println("setting paxis1 to null");
 	paxis1 = null;
 	paxis2 = null;
+	tmpTransformedPath = null;
 	if (tfpane.getStatus()) {
 	    String newPathName = null;
-	    do {
-		newPathName = (String)JOptionPane.showInputDialog
-		    (frame, localeString("PleaseEnterNewVariableName"),
-		     localeString("ScriptingLanguageVariableName"),
-		     JOptionPane.PLAIN_MESSAGE);
-		if (newPathName == null) {
-		    panel.repaint();
-		    return;
-		}
-	    } while (ptmodel.getVariableNames().contains(newPathName));
-	    ;
+	    if (copyMode == false) {
+		newPathName = oldPathName;
+	    } else {
+		do {
+		    newPathName = (String)JOptionPane.showInputDialog
+			(frame, localeString("PleaseEnterNewVariableName"),
+			 localeString("ScriptingLanguageVariableName"),
+			 JOptionPane.PLAIN_MESSAGE);
+		    if (newPathName == null) {
+			panel.repaint();
+			return;
+		    } else if (newPathName.equals(oldPathName)) {
+			copyMode = false;
+			break;
+		    }
+		} while (ptmodel.getVariableNames().contains(newPathName));
+	    }
 	    int n = ptmodel.getRowCount();
 	    AffineTransform af = tfpane.getTransform();
 	    double[] tcoords = new double[4];
-	    for (int index = ptmodel.findStart(oldPathName);
-		 index < n; index++) {
-		PointTMR row = ptmodel.getRow(index);
-		Enum mode = row.getMode();
-		if (mode == EPTS.Mode.PATH_START) {
-		    ptmodel.addRow(new PointTMR(newPathName, mode,
-						0.0, 0.0, 0.0, 0.0));
-		} else if (mode == EPTS.Mode.PATH_END) {
-		    ptmodel.addRow(new PointTMR("", mode, 0.0, 0.0, 0.0, 0.0));
-		} else {
-		    tcoords[0] = row.getX();
-		    tcoords[1] = row.getY();
-		    af.transform(tcoords, 0, tcoords, 2, 1);
-		    double x = tcoords[2];
-		    double y = tcoords[3];
-		    double xp = (x - xrefpoint) / scaleFactor;
-		    double yp = (y - yrefpoint) / scaleFactor;
-		    yp = height - yp;
-		    // add to table.
-		    ptmodel.addRow(new PointTMR("", mode, x, y, xp, yp));
+	    if (copyMode) {
+		int start = ptmodel.findStart(oldPathName);
+		if (start == -1) {
+		    ErrorMessage.display(frame, localeString("errorTitle"),
+					 errorMsg("noPath", oldPathName));
+		    panel.repaint();
+		    return;
+		}
+		for (int index = start; index < n; index++) {
+		    PointTMR row = ptmodel.getRow(index);
+		    Enum mode = row.getMode();
+		    if (mode == EPTS.Mode.PATH_START) {
+			ptmodel.addRow(new PointTMR(newPathName, mode,
+						    0.0, 0.0, 0.0, 0.0));
+		    } else if (mode == EPTS.Mode.PATH_END) {
+			ptmodel.addRow(new PointTMR("", mode,
+						    0.0, 0.0, 0.0, 0.0));
+		    } else {
+			tcoords[0] = row.getX();
+			tcoords[1] = row.getY();
+			af.transform(tcoords, 0, tcoords, 2, 1);
+			double x = tcoords[2];
+			double y = tcoords[3];
+			double xp = (x - xrefpoint) / scaleFactor;
+			double yp = (y - yrefpoint) / scaleFactor;
+			yp = height - yp;
+			// add to table.
+			ptmodel.addRow(new PointTMR("", mode, x, y, xp, yp));
+		    }
+		}
+	    } else {
+		int start = ptmodel.findStart(oldPathName);
+		if (start == -1) {
+		    ErrorMessage.display(frame, localeString("errorTitle"),
+					 errorMsg("noPath", oldPathName));
+		    panel.repaint();
+		    return;
+		}
+		for (int index = start; index < n; index++) {
+		    PointTMR row = ptmodel.getRow(index);
+		    Enum ourmode = row.getMode();
+		    if (ourmode instanceof SplinePathBuilder.CPointType) {
+			tcoords[0] = row.getX();
+			tcoords[1] = row.getY();
+			af.transform(tcoords, 0, tcoords, 2, 1);
+			double x = tcoords[2];
+			double y = tcoords[3];
+			double xp = (x - xrefpoint) / scaleFactor;
+			double yp = (y - yrefpoint) / scaleFactor;
+			yp = height - yp;
+			row.setX(x, xp);
+			row.setY(y, yp);
+		    } else if (ourmode == EPTS.Mode.PATH_END) {
+			break;
+		    }
 		}
 	    }
 	}
@@ -4565,6 +4770,7 @@ public class EPTSWindow {
 	    addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	    deletePathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	    offsetPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
+	    tfMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	    newTFMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	    selectedRow = -1;
 	    setModeline("");
@@ -5545,6 +5751,7 @@ public class EPTSWindow {
 	addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	deletePathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	offsetPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
+	tfMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	newTFMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	saveMenuItem.setEnabled(false);
 	saveAsMenuItem.setEnabled(false);
@@ -6575,6 +6782,8 @@ public class EPTSWindow {
 				(ptmodel.pathVariableNameCount() > 0);
 			    offsetPathMenuItem.setEnabled
 				(ptmodel.pathVariableNameCount() > 0);
+			    tfMenuItem.setEnabled
+				(ptmodel.pathVariableNameCount() > 0);
 			    newTFMenuItem.setEnabled
 				(ptmodel.pathVariableNameCount() > 0);
 			    setupFilters(parser);
@@ -6651,8 +6860,10 @@ public class EPTSWindow {
 			    (ptmodel.pathVariableNameCount() > 0);
 			offsetPathMenuItem.setEnabled
 			    (ptmodel.pathVariableNameCount() > 0);
-			    newTFMenuItem.setEnabled
-				(ptmodel.pathVariableNameCount() > 0);
+			tfMenuItem.setEnabled
+			    (ptmodel.pathVariableNameCount() > 0);
+			newTFMenuItem.setEnabled
+			    (ptmodel.pathVariableNameCount() > 0);
 		    }
 		    if (parser != null) {
 			setupFilters(parser);
