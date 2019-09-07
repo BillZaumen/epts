@@ -346,6 +346,45 @@ public class
 	fireTableChanged(index, index, Mode.MODIFIED);
     }
 	
+    public void moveObject(int index,
+			   double x, double y, double xp, double yp,
+			   boolean notify)
+    {
+	PointTMR row = rows.get(index);
+	if (row == null) return;
+	Enum mode = row.getMode();
+	if (mode == EPTS.Mode.LOCATION) {
+	    changeCoords(index, x, y, xp, yp, notify);
+	    return;
+	}
+	double refx = row.x;
+	double refy = row.y;
+	double refxp = row.xp;
+	double refyp = row.yp;
+	double deltax = x - refx;
+	double deltay = y - refy;
+	double deltaxp = xp - refxp;
+	double deltayp = yp - refyp;
+	int start = findStart(index);
+	int ind = start;
+	for(;;) {
+	    row = rows.get(++ind);
+	    if (row == null) {
+		break;
+	    } else if (row.getMode() == EPTS.Mode.PATH_END) {
+		break;
+	    } else if (ind == index) {
+		changeCoords(index, x, y, xp, yp, false);
+	    } else {
+		changeCoords(ind, row.x+deltax, row.y+deltay,
+			     row.xp + deltaxp, row.yp+deltayp,
+			     false);
+	    }
+	}
+	if (notify) {
+	    fireTableChanged(start+1, ind-1, Mode.MODIFIED);
+	}
+    }
 
     public void changeCoords(int index,
 			     double x, double y, double xp, double yp,
