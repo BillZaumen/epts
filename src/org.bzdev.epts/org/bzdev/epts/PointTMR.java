@@ -77,6 +77,15 @@ public class PointTMR {
 	this.yp = yp;
     }
 
+    public PointTMR(PointTMR row) {
+	this.varname = row.varname;
+	this.mode = row.mode;
+	this.x = row.x;
+	this.y = row.y;
+	this.xp = row.xp;
+	this.yp = row.yp;
+    }
+
     public Enum<?> getMode() {return mode;}
 
     protected void setMode(Enum mode) {

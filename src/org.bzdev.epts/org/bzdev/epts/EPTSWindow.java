@@ -1408,7 +1408,7 @@ abstract class TransformPane extends JPanel {
 	    AffineTransform.getTranslateInstance(x+ref.getX(), y+ref.getY());
 	int quadrants = 0;
 	double rangle;
-	if (aindex == 0.0) {
+	if (aindex == 0) {
 	    if (rotAngle == 0.0) {
 		rangle = 0.0;
 	    } else if (rotAngle == 90.0) {
@@ -2532,7 +2532,9 @@ public class EPTSWindow {
     JMenuItem makeCurrentMenuItem; // for Edit menu
     JMenuItem newTFMenuItem;	  // for Edit menu (copy a path)
     JMenuItem tfMenuItem;	  // for Edit menu (modify a path)
-    JMenuItem mpMenuItem;	   // for Edit Menu (move a path))
+    JMenuItem mpMenuItem;	   // for Edit Menu (move a path)
+    JMenuItem rotMenuItem;	   // for Edit Menu (rotate a path)
+    JMenuItem scaleMenuItem;	   // for Edit Menu (scale a path)
 
     JMenuItem offsetPathMenuItem; // for Tools menu
 
@@ -2674,22 +2676,150 @@ public class EPTSWindow {
     private Integer maxdeltaLevels[] = {1, 2, 3, 4};
 
     boolean moveLocOrPath = false;
+    boolean rotatePath = false;
+    int pathStart = -1;
+    double rotateAngle = 0.0;
     void cancelPathOps() {
-	if (moveLocOrPath) {
+	if (rotatePath) {
+	    pathStart = -1;
+	    centerOfMass = null;
+	    rotStart = null;
+	    rotRows = null;
+	    paxis1 = null;
+	    paxis2 = null;
+	    rotateAngle = 0.0;
+	}
+	if (moveLocOrPath || rotatePath) {
 	    setModeline("");
 	    moveLocOrPath = false;
+	    rotatePath = false;
 	}
     }
     boolean hasPathOps() {
-	return moveLocOrPath;
+	return moveLocOrPath || rotatePath;
     }
 
     String pathOpsModelineString() {
 	if (moveLocOrPath) {
 	    return "Move: drag selected point";
+	} else if (rotatePath) {
+	    return "Rotate: drag selected point around CM";
 	} else {
 	    return "";
 	}
+    }
+
+    Point2D centerOfMass = null;
+    Point2D rotStart = null;
+    PointTMR[] rotRows = null;
+
+    private boolean rotPathSetup() {
+	int start = ptmodel.findStart(selectedRow);
+	if (start == -1) return false;
+	if (ptmodel.getRowMode(start) == EPTS.Mode.LOCATION) return false;
+	pathStart = start;
+	PointTMR row = ptmodel.getRow(selectedRow);
+	rotStart = new Point2D.Double(row.getX(), row.getY());
+	String name = ptmodel.getVariableName(start);
+	Path2D path = ptmodel.getPath(name);
+	boolean linear = false;
+	Rectangle2D bounds = path.getBounds2D();
+	if (bounds.getWidth() == 0.0 && bounds.getHeight() == 0.0) {
+	    // reject if this is a degenerate case in which all
+	    // control points on the curve are at the same location.
+	    pathStart = -1;
+	    rotStart = null;
+	    return false;
+	}
+	double area = Path2DInfo.areaOf(path);
+	if (area/(bounds.getWidth()*bounds.getHeight()) < 1.e-10) {
+	    centerOfMass = new Point2D.Double(bounds.getCenterX(),
+						  bounds.getCenterY());
+	} else {
+	    centerOfMass = Path2DInfo.centerOfMassOf(path);
+	    if (centerOfMass == null) {
+		// should have been caught above, but just in case we'll
+		// set it.
+		centerOfMass = new Point2D.Double(bounds.getCenterX(),
+						  bounds.getCenterY());
+	    } else {
+		bounds = null;
+	    }
+	}
+	if (centerOfMass.distanceSq(rotStart) == 0.0) {
+	    // reject if the selected point is also the center of mass
+	    // as a line we use to determine the rotation will have zero
+	    // length.
+	    System.out.println("rejecting - try again");
+	    pathStart = -1;
+	    rotStart = null;
+	    centerOfMass = null;
+	    return false;
+	}
+	rotRows = ptmodel.getRows(selectedRow);
+	double[][] moments = (bounds == null)?
+	    Path2DInfo.momentsOf(centerOfMass, path):
+	    Path2DInfo.momentsOf(centerOfMass, bounds);
+	if (moments == null) {
+	    if (bounds == null) System.out.println("bounding box expected");
+	    else {
+		System.out.println("bounds = " + bounds);
+	    }
+	    if (bounds.getHeight() == 0.0) {
+		moments = new double[2][2];
+		double tmp = bounds.getWidth();
+		moments[0][0] = (tmp*tmp)/3;
+	    } else if (bounds.getWidth() == 0.0) {
+		moments = new double[2][2];
+		double tmp = bounds.getHeight();
+		moments[1][1] = (tmp*tmp)/3;
+	    }
+	}
+	/*
+	System.out.println("cm = " + centerOfMass);;
+	System.out.format("| %8.3g %8.3g |\n",
+			  moments[0][0], moments[0][1]);
+	System.out.format("| %8.3g %8.3g |\n",
+			  moments[1][0], moments[1][1]);
+	*/
+	double[] principalMoments = Path2DInfo.principalMoments(moments);
+	double mean = (principalMoments[0] + principalMoments[1])/2;
+	// double principalAngle;
+	// mean == 0.0 if all points are identical, in which case the
+	// bounding box is a point, a case handled above.
+	if (Math.abs((principalMoments[0]
+			     - principalMoments[1])/mean) < 0.01) {
+	    // we can't see the difference so use X and Y axes
+	    // principalAngle = 0.0;
+	    paxis1 = new Line2D.Double(centerOfMass.getX(),
+				       centerOfMass.getY(),
+				       centerOfMass.getX() + Math.sqrt(mean),
+				       centerOfMass.getY());
+	    paxis2 = new Line2D.Double(centerOfMass.getX(),
+				       centerOfMass.getY(),
+				       centerOfMass.getX(),
+				       centerOfMass.getY() + Math.sqrt(mean));
+	} else {
+	    double[][]principalAxes =
+		Path2DInfo.principalAxes(moments, principalMoments);
+	    /*
+	    principalAngle = Math.atan2(principalAxes[0][1],
+					principalAxes[0][0]);
+	    */
+	    double len = Math.sqrt(principalMoments[0]);
+	    paxis1 = new Line2D.Double(centerOfMass.getX(), centerOfMass.getY(),
+				       centerOfMass.getX()
+				       + len*principalAxes[0][0],
+				       centerOfMass.getY()
+				       + len*principalAxes[0][1]);
+	    len = Math.sqrt(principalMoments[1]);
+	    paxis2 = new Line2D.Double(centerOfMass.getX(), centerOfMass.getY(),
+				       centerOfMass.getX()
+				       + len*principalAxes[1][0],
+				       centerOfMass.getY()
+				       + len*principalAxes[1][1]);
+	}
+	return true;
     }
 
     /*
@@ -3018,6 +3148,7 @@ public class EPTSWindow {
 				case PATH_START:
 				    cancelPathOps();
 				    mpMenuItem.setEnabled(false);
+				    rotMenuItem.setEnabled(false);
 				    createPathFinalAction();
 				    break;
 				}
@@ -3025,6 +3156,7 @@ public class EPTSWindow {
 				       SplinePathBuilder.CPointType) {
 				cancelPathOps();
 				mpMenuItem.setEnabled(false);
+				rotMenuItem.setEnabled(false);
 				SplinePathBuilder.CPointType smode =
 				    (SplinePathBuilder.CPointType) mode;
 				if (ttable == null) {
@@ -3121,6 +3253,7 @@ public class EPTSWindow {
 		public void actionPerformed(ActionEvent e) {
 		    if (nextState != null) return;
 		    if (locState) return;
+		    cancelPathOps();
 		    moveLocOrPath = true;
 		    if (selectedRow == -1) {
 			setModeline("Move: select a location or a point "
@@ -3131,6 +3264,37 @@ public class EPTSWindow {
 		}
 	    });
 	editMenu.add(mpMenuItem);
+
+	rotMenuItem = new JMenuItem(localeString("rotatePath"));
+	rotMenuItem.setAccelerator(KeyStroke.getKeyStroke
+				   (KeyEvent.VK_R,
+				    (InputEvent.ALT_DOWN_MASK
+				     | InputEvent.CTRL_DOWN_MASK)));
+	rotMenuItem.setEnabled(false);
+	rotMenuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    cancelPathOps();
+		    if (nextState != null) return;
+		    if (locState) return;
+		    rotatePath = true;
+		    if (selectedRow == -1) {
+			setModeline("Rotate: select a point on a path; "
+				    + "then drag around center of mass");
+		    } else {
+			// will not do anything if the object
+			// is a location instead of a path
+			if (rotPathSetup()) {
+			    setModeline(pathOpsModelineString());
+			} else {
+			    selectedRow = -1;
+			    setModeline("Rotate: select a point (not the "
+					+ "center of mass) on a path; "
+					+ "then drag to rotate");
+			}
+		    }
+		}
+	    });
+	editMenu.add(rotMenuItem);
 
 	tfMenuItem = new JMenuItem(localeString("TransformedPath"),
 				      KeyEvent.VK_T);
@@ -5511,6 +5675,9 @@ public class EPTSWindow {
 			    makeCurrentMenuItem.setEnabled(true);
 			    mpMenuItem.setEnabled(true);
 			}
+			if (ptmodel.pathVariableNameCount() > 0) {
+			    rotMenuItem.setEnabled(true);
+			}
 		    } else if (distState != 0) {
 			Point p = panel.getMousePosition();
 			if (p != null) {
@@ -5685,6 +5852,22 @@ public class EPTSWindow {
 						   lastYPSelected,
 						   true);
 				cancelPathOps();
+			    } else if (rotatePath) {
+				double cmxp = (centerOfMass.getX() - xrefpoint)
+				    /scaleFactor;
+				double cmyp = (centerOfMass.getY() - yrefpoint)
+				    / scaleFactor;
+				cmyp = height - cmyp;
+				Point2D cmp = new Point2D.Double(cmxp, cmyp);
+				double xx = rotStart.getX();
+				double yy = rotStart.getY();
+				double xxp = (xx - xrefpoint) / scaleFactor;
+				double yyp = (yy - yrefpoint) / scaleFactor;
+				yyp = height - yyp;
+				ptmodel.rotateObject(rotRows, centerOfMass, cmp,
+						     rotStart, pathStart,
+						     xx, yy, xxp, yyp, true);
+				cancelPathOps();
 			    } else {
 				ptmodel.changeCoords(selectedRow,
 						     lastXSelected,
@@ -5753,6 +5936,16 @@ public class EPTSWindow {
 				// the ESCAPE key is pressed or when the
 				// ENTER key is typed, as the user may
 				// press the arrow keys multiple times.
+			    } else if (rotatePath) {
+				double cmxp = (centerOfMass.getX() - xrefpoint)
+				    /scaleFactor;
+				double cmyp = (centerOfMass.getY() - yrefpoint)
+				    / scaleFactor;
+				cmyp = height - cmyp;
+				Point2D cmp = new Point2D.Double(cmxp, cmyp);
+				ptmodel.rotateObject(rotRows, centerOfMass, cmp,
+						     rotStart, pathStart,
+						     x, y, xp, yp, false);
 			    } else {
 				ptmodel.changeCoords(selectedRow, x, y,
 						     xp, yp, true);
@@ -5831,6 +6024,9 @@ public class EPTSWindow {
 	    makeCurrentMenuItem.setEnabled(true);
 	    mpMenuItem.setEnabled(true);
 	}
+	if (ptmodel.pathVariableNameCount() > 0) {
+	    rotMenuItem.setEnabled(true);
+	}
     }
 
 
@@ -5842,6 +6038,7 @@ public class EPTSWindow {
 	distInGCS = gcs;
 	makeCurrentMenuItem.setEnabled(false);
 	mpMenuItem.setEnabled(false);
+	rotMenuItem.setEnabled(false);
 	setModeline(localeString("LeftClickFirstPoint"));
 	distState = 2;
 	// makeCurrentMenuItem.setEnabled(false);
@@ -5856,6 +6053,7 @@ public class EPTSWindow {
 	resetState();
 	makeCurrentMenuItem.setEnabled(false);
 	mpMenuItem.setEnabled(false);
+	rotMenuItem.setEnabled(false);
 	setModeline(localeString("LeftClickCreate"));
 	TransitionTable.getLocMenuItem().setEnabled(true);
 	distState = 0; 
@@ -5892,6 +6090,7 @@ public class EPTSWindow {
 	// nextState = SplinePathBuilder.CPointType.MOVE_TO;
 	makeCurrentMenuItem.setEnabled(false);
 	mpMenuItem.setEnabled(false);
+	rotMenuItem.setEnabled(false);
 	ptmodel.addRow(varname, EPTS.Mode.PATH_START, 0.0, 0.0, 0.0, 0.0);
 	savedCursorPath = panel.getCursor();
 	panel.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
@@ -6004,6 +6203,9 @@ public class EPTSWindow {
 			    makeCurrentMenuItem.setEnabled(true);
 			    mpMenuItem.setEnabled(true);
 			}
+			if (ptmodel.pathVariableNameCount() > 0) {
+			    rotMenuItem.setEnabled(true);
+			}
 			panel.repaint();
 		    } else if (distState == 2) {
 			// g2d.setXORMode(Color.BLACK);
@@ -6065,6 +6267,16 @@ public class EPTSWindow {
 			selectedRow = ptmodel.findRowXPYP(xp, yp, zoom);
 			if (selectedRow != -1) {
 			    PointTMR row = ptmodel.getRow(selectedRow);
+			    if (rotatePath) {
+				if (row.getMode() == EPTS.Mode.LOCATION) {
+				    // ignore case where the selected row
+				    // turns out to be a location, not part of
+				    // a path: we can't meaninfully rotate a
+				    // single point.
+				    selectedRow = -1;
+				    return;
+				}
+			    }
 			    lastXSelected = row.getX();
 			    lastYSelected = row.getY();
 			    lastXPSelected = row.getXP();
@@ -6075,13 +6287,28 @@ public class EPTSWindow {
 				(ptmodel.findStart(selectedRow));
 			    if (hasPathOps()) {
 				setModeline(pathOpsModelineString());
+				if (moveLocOrPath) {
+				    TransitionTable.getLocMenuItem()
+					.setEnabled(true);
+				} else if (rotatePath) {
+				    // will not be called if the point
+				    // is a location instead of a point on
+				    // a path
+				    if (rotPathSetup() == false) {
+					selectedRow = -1;
+					setModeline("Rotate: select a point "
+						    + "(not the center of "
+						    + "mass) on a path; "
+						    + "then drag to rotate");
+				    }
+				}
 			    } else {
 				setModeline(String.format
 					    (localeString("SelectedPoint"),
 					     selectedRow, vn, row.getMode()));
+				TransitionTable.getLocMenuItem()
+				    .setEnabled(true);
 			    }
-			    TransitionTable.getLocMenuItem().setEnabled(true);
-			    
 			} else {
 			    if (hasPathOps()) {
 				cancelPathOps();
@@ -6214,6 +6441,16 @@ public class EPTSWindow {
 			    // because this is called repeated when a
 			    // point is dragged.  We do it instead when
 			    // the mouse button is released.
+			} else if (rotatePath) {
+			    double cmxp = (centerOfMass.getX() - xrefpoint)
+				/scaleFactor;
+			    double cmyp = (centerOfMass.getY() - yrefpoint)
+				/ scaleFactor;
+			    cmyp = height - cmyp;
+			    Point2D cmp = new Point2D.Double(cmxp, cmyp);
+			    ptmodel.rotateObject(rotRows, centerOfMass, cmp,
+						 rotStart, pathStart,
+						 x, y, xp, yp, false);
 			} else {
 			    ptmodel.changeCoords(selectedRow, x, y,
 						 xp, yp, false);

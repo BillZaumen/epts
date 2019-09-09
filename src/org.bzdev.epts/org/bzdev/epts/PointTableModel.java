@@ -48,6 +48,22 @@ public class
 	return Collections.unmodifiableList(rows);
     }
 
+    // get the rows for the object whose table entries contain the row
+    // specified by index
+    public PointTMR[] getRows(int index) {
+	int start = findStart(index);
+	if (start == -1) return null;
+	int end = findEnd(index);
+	if (end == -1) return null;
+	end++;
+	List<PointTMR> sublist = rows.subList(start, end);
+	PointTMR[] results = new PointTMR[sublist.size()];
+	for (int i = 0; i < sublist.size(); i++) {
+	    results[i] = new PointTMR(sublist.get(i));
+	}
+	return results;
+    }
+
     public Set<String> getVariableNames() {
 	return Collections.unmodifiableSet(names);
     }
@@ -385,6 +401,57 @@ public class
 	    fireTableChanged(start+1, ind-1, Mode.MODIFIED);
 	}
     }
+
+    double[] coords = new double[4]; // tmp  work area
+
+    public void rotateObject(PointTMR[] origRows, Point2D cm, Point2D cmp,
+			     Point2D start, int pathStart,
+			     double x, double y, double xp, double yp,
+			     boolean notify)
+    {
+	double x1 = start.getX() - cm.getX();
+	double y1 = start.getY() - cm.getY();
+	double norm = Math.sqrt(x1*x1 + y1*y1);
+	x1 /= norm;
+	y1 /= norm;
+	double x2 = x - cm.getX();
+	double y2 = y - cm.getY();
+	norm = Math.sqrt(x2*x2 + y2*y2);
+	x2 /= norm;
+	y2 /= norm;
+	double xx = x1*x2 + y1*y2;
+	double yy = x1*y2 - x2*y1;
+	double angle = Math.atan2(yy, xx);
+
+	AffineTransform af1 =
+	    AffineTransform.getRotateInstance(xx, yy, cm.getX(), cm.getY());
+	AffineTransform af2 =
+	    AffineTransform.getRotateInstance(xx, -yy, cmp.getX(), cmp.getY());
+
+	for (int i = 1; i <  origRows.length-1; i++) {
+	    PointTMR origRow = origRows[i];
+	    if (origRow.getMode() != SplinePathBuilder.CPointType.CLOSE) {
+		coords[0] = origRow.getX();
+		coords[1] = origRow.getY();
+		af1.transform(coords, 0, coords, 2, 1);
+		xx = coords[2];
+		yy = coords[3];
+		coords[0] = origRow.getXP();
+		coords[1] = origRow.getYP();
+		af2.transform(coords, 0, coords, 2, 1);
+		double xxp = coords[2];
+		double yyp = coords[3];
+		PointTMR row = rows.get(pathStart + i);
+		row.setX(xx, xxp);
+		row.setY(yy, yyp);
+	    }
+	}
+	if (notify) {
+	    fireTableChanged(pathStart+1, pathStart+origRows.length-2,
+			     Mode.MODIFIED);
+	}
+    }
+
 
     public void changeCoords(int index,
 			     double x, double y, double xp, double yp,
