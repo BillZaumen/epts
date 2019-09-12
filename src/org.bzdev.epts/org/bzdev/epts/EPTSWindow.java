@@ -1,5 +1,4 @@
 package org.bzdev.epts;
-
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
@@ -2679,24 +2678,50 @@ public class EPTSWindow {
     boolean rotatePath = false;
     int pathStart = -1;
     double rotateAngle = 0.0;
+    boolean scalePath = false;
+    Line2D scaleLine = null;
+    Point2D scaleCMP = null;
+    double paX1, paY1, paX2, paY2;
+    boolean scaleInitializedWhenClicked = false;
+    double scaleX = 1.0;
+    double scaleY = 1.0;
+    double initialX = 0.0;
+    double initialY = 0.0;;
+
     void cancelPathOps() {
-	if (rotatePath) {
+	if (rotatePath || scalePath) {
 	    pathStart = -1;
 	    centerOfMass = null;
 	    rotStart = null;
 	    rotRows = null;
 	    paxis1 = null;
 	    paxis2 = null;
+	}
+	if (rotatePath) {
 	    rotateAngle = 0.0;
 	}
-	if (moveLocOrPath || rotatePath) {
+	if (scalePath) {
+	    scaleLine = null;
+	    paX1 = 0.0;
+	    paY1 = 0.0;
+	    paX2 = 0.0;
+	    paY2 = 0.0;
+	    scaleX = 1.0;
+	    scaleY = 1.0;
+	    scaleCMP = null;
+	    initialX = 0.0;
+	    initialY = 0.0;
+	    scaleInitializedWhenClicked = false;
+	}
+	if (moveLocOrPath || rotatePath || scalePath) {
 	    setModeline("");
 	    moveLocOrPath = false;
 	    rotatePath = false;
+	    scalePath = false;
 	}
     }
     boolean hasPathOps() {
-	return moveLocOrPath || rotatePath;
+	return moveLocOrPath || rotatePath || scalePath;
     }
 
     String pathOpsModelineString() {
@@ -2704,6 +2729,8 @@ public class EPTSWindow {
 	    return "Move: drag selected point";
 	} else if (rotatePath) {
 	    return "Rotate: drag selected point around CM";
+	} else if (scalePath) {
+	    return "Scale: drag selected point";
 	} else {
 	    return "";
 	}
@@ -2712,6 +2739,7 @@ public class EPTSWindow {
     Point2D centerOfMass = null;
     Point2D rotStart = null;
     PointTMR[] rotRows = null;
+    PointTMR[] scaleRows = null;
 
     private boolean rotPathSetup() {
 	int start = ptmodel.findStart(selectedRow);
@@ -2819,6 +2847,119 @@ public class EPTSWindow {
 				       centerOfMass.getY()
 				       + len*principalAxes[1][1]);
 	}
+	return true;
+    }
+
+    private boolean scalePathSetup() {
+	int start = ptmodel.findStart(selectedRow);
+	if (start == -1) return false;
+	if (ptmodel.getRowMode(start) == EPTS.Mode.LOCATION) return false;
+	pathStart = start;
+	String name = ptmodel.getVariableName(start);
+	Path2D path = ptmodel.getPath(name);
+	boolean linear = false;
+	Rectangle2D bounds = path.getBounds2D();
+	if (bounds.getWidth() == 0.0 && bounds.getHeight() == 0.0) {
+	    // reject if this is a degenerate case in which all
+	    // control points on the curve are at the same location.
+	    pathStart = -1;
+	    return false;
+	}
+	double area = Path2DInfo.areaOf(path);
+	if (area/(bounds.getWidth()*bounds.getHeight()) < 1.e-10) {
+	    centerOfMass = new Point2D.Double(bounds.getCenterX(),
+						  bounds.getCenterY());
+	} else {
+	    centerOfMass = Path2DInfo.centerOfMassOf(path);
+	    if (centerOfMass == null) {
+		// should have been caught above, but just in case we'll
+		// set it.
+		centerOfMass = new Point2D.Double(bounds.getCenterX(),
+						  bounds.getCenterY());
+	    } else {
+		bounds = null;
+	    }
+	}
+	scaleRows = ptmodel.getRows(selectedRow);
+	double[][] moments = (bounds == null)?
+	    Path2DInfo.momentsOf(centerOfMass, path):
+	    Path2DInfo.momentsOf(centerOfMass, bounds);
+	if (moments == null) {
+	    if (bounds == null) System.out.println("bounding box expected");
+	    else {
+		System.out.println("bounds = " + bounds);
+	    }
+	    if (bounds.getHeight() == 0.0) {
+		moments = new double[2][2];
+		double tmp = bounds.getWidth();
+		moments[0][0] = (tmp*tmp)/3;
+	    } else if (bounds.getWidth() == 0.0) {
+		moments = new double[2][2];
+		double tmp = bounds.getHeight();
+		moments[1][1] = (tmp*tmp)/3;
+	    }
+	}
+	/*
+	System.out.println("cm = " + centerOfMass);;
+	System.out.format("| %8.3g %8.3g |\n",
+			  moments[0][0], moments[0][1]);
+	System.out.format("| %8.3g %8.3g |\n",
+			  moments[1][0], moments[1][1]);
+	*/
+	double[] principalMoments = Path2DInfo.principalMoments(moments);
+	double mean = (principalMoments[0] + principalMoments[1])/2;
+	// double principalAngle;
+	// mean == 0.0 if all points are identical, in which case the
+	// bounding box is a point, a case handled above.
+	if (Math.abs((principalMoments[0]
+			     - principalMoments[1])/mean) < 0.01) {
+	    // we can't see the difference so use X and Y axes
+	    // principalAngle = 0.0;
+	    paxis1 = new Line2D.Double(centerOfMass.getX(),
+				       centerOfMass.getY(),
+				       centerOfMass.getX() + Math.sqrt(mean),
+				       centerOfMass.getY());
+	    paX1 = 1.0;
+	    paY1 = 0.0;
+	    paX2 = 0.0;
+	    paY2 = 1.0;
+	    paxis2 = new Line2D.Double(centerOfMass.getX(),
+				       centerOfMass.getY(),
+				       centerOfMass.getX(),
+				       centerOfMass.getY() + Math.sqrt(mean));
+	} else {
+	    double[][]principalAxes =
+		Path2DInfo.principalAxes(moments, principalMoments);
+	    double len1 = Math.sqrt(principalMoments[0]);
+	    paxis1 = new Line2D.Double(centerOfMass.getX(), centerOfMass.getY(),
+				       centerOfMass.getX()
+				       + len1*principalAxes[0][0],
+				       centerOfMass.getY()
+				       + len1*principalAxes[0][1]);
+	    paX1 = principalAxes[0][0];
+	    paY1 = principalAxes[0][1];
+	    paX2 = principalAxes[1][0];
+	    paY2 = principalAxes[1][1];
+	    double len2 = Math.sqrt(principalMoments[1]);
+	    if (len2/len1 < 1.e-10) {
+		// we don't show paxis2 if it is so short that
+		// the points effectively lie along a straight line
+		paxis2 = null;
+	    } else {
+		paxis2 =
+		    new Line2D.Double(centerOfMass.getX(), centerOfMass.getY(),
+				      centerOfMass.getX()
+				      + len2*principalAxes[1][0],
+				      centerOfMass.getY()
+				      + len2*principalAxes[1][1]);
+	    }
+	}
+	double cmxp = (centerOfMass.getX() - xrefpoint) /scaleFactor;
+	double cmyp = (centerOfMass.getY() - yrefpoint) / scaleFactor;
+	cmyp = height - cmyp;
+	scaleCMP = new Point2D.Double(cmxp, cmyp);
+	scaleX = 1.0;
+	scaleY = 1.0;
 	return true;
     }
 
@@ -3149,6 +3290,7 @@ public class EPTSWindow {
 				    cancelPathOps();
 				    mpMenuItem.setEnabled(false);
 				    rotMenuItem.setEnabled(false);
+				    scaleMenuItem.setEnabled(false);
 				    createPathFinalAction();
 				    break;
 				}
@@ -3157,6 +3299,7 @@ public class EPTSWindow {
 				cancelPathOps();
 				mpMenuItem.setEnabled(false);
 				rotMenuItem.setEnabled(false);
+				scaleMenuItem.setEnabled(false);
 				SplinePathBuilder.CPointType smode =
 				    (SplinePathBuilder.CPointType) mode;
 				if (ttable == null) {
@@ -3243,6 +3386,9 @@ public class EPTSWindow {
 	    });
 	editMenu.add(menuItem);
 
+	editMenu.addSeparator();
+	editMenu.add(new JLabel(localeString("DirectManip")));
+
 	mpMenuItem = new JMenuItem(localeString("moveLocOrPath"));
 	mpMenuItem.setAccelerator(KeyStroke.getKeyStroke
 				      (KeyEvent.VK_M,
@@ -3296,6 +3442,42 @@ public class EPTSWindow {
 	    });
 	editMenu.add(rotMenuItem);
 
+	scaleMenuItem = new JMenuItem(localeString("scalePath"));
+	scaleMenuItem.setAccelerator(KeyStroke.getKeyStroke
+				   (KeyEvent.VK_S,
+				    (InputEvent.ALT_DOWN_MASK
+				     | InputEvent.CTRL_DOWN_MASK)));
+	scaleMenuItem.setEnabled(false);
+	scaleMenuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    cancelPathOps();
+		    if (nextState != null) return;
+		    if (locState) return;
+		    scalePath = true;
+		    if (selectedRow == -1) {
+			setModeline("Scale: select a point on a path; "
+				    + "then drag to scale");
+		    } else {
+			// will not do anything if the object
+			// is a location instead of a path
+			if (scalePathSetup()) {
+			    setModeline(pathOpsModelineString());
+			    PointTMR row = ptmodel.getRow(selectedRow);
+			    initialX = row.getXP()*zoom;
+			    initialY = row.getYP()*zoom;
+			} else {
+			    selectedRow = -1;
+			    setModeline("Scale: select a point on a path; "
+					+ "then drag to scale");
+			}
+		    }
+		}
+	    });
+	editMenu.add(scaleMenuItem);
+
+	editMenu.addSeparator();
+	editMenu.add(new JLabel(localeString("DialogBased")));
+
 	tfMenuItem = new JMenuItem(localeString("TransformedPath"),
 				      KeyEvent.VK_T);
 	tfMenuItem.setAccelerator (KeyStroke.getKeyStroke
@@ -3324,6 +3506,8 @@ public class EPTSWindow {
 		}
 	    });
 	editMenu.add(newTFMenuItem);
+
+	editMenu.addSeparator();
 
 	menuItem = new JMenuItem(localeString("DeleteBezier"), KeyEvent.VK_D);
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
@@ -5677,6 +5861,7 @@ public class EPTSWindow {
 			}
 			if (ptmodel.pathVariableNameCount() > 0) {
 			    rotMenuItem.setEnabled(true);
+			    scaleMenuItem.setEnabled(true);
 			}
 		    } else if (distState != 0) {
 			Point p = panel.getMousePosition();
@@ -5868,6 +6053,17 @@ public class EPTSWindow {
 						     rotStart, pathStart,
 						     xx, yy, xxp, yyp, true);
 				cancelPathOps();
+			    } else if (scalePath) {
+				double cmxp = (centerOfMass.getX() - xrefpoint)
+				    /scaleFactor;
+				double cmyp = (centerOfMass.getY() - yrefpoint)
+				    / scaleFactor;
+				cmyp = height - cmyp;
+				Point2D cmp = new Point2D.Double(cmxp, cmyp);
+				ptmodel.scaleObject(scaleRows, centerOfMass,
+						    cmp, paX1, paY1,
+						    1.0, 1.0, pathStart, true);
+				cancelPathOps();
 			    } else {
 				ptmodel.changeCoords(selectedRow,
 						     lastXSelected,
@@ -5893,6 +6089,82 @@ public class EPTSWindow {
 			    resetState();
 			    setModeline("");
 			}
+		    } else if (scalePath && selectedRow != -1) {
+		       boolean lock = ((modifiers & KEY_MASK) ==
+				       InputEvent.SHIFT_DOWN_MASK);
+		       if (scaleLine == null) {
+			   scaleInitializedWhenClicked = true;
+			   initialX = scaleCMP.getX()*zoom;
+			   initialY = scaleCMP.getY()*zoom;
+			   scaleLine = new Line2D.Double(initialX, initialY,
+							 initialX, initialY);
+		       }
+			double px = scaleLine.getX2();
+			double py = scaleLine.getY2();
+			switch (e.getKeyCode()) {
+			case KeyEvent.VK_RIGHT:
+			    // px += 1.0;
+			    px += paX1;
+			    py -= paY1;
+			    scaleX += 0.01;
+			    if (lock) {
+				// py -= 1.0;
+				px += paX2;
+				py -= paY2;
+				scaleY += 0.01;
+			    }
+			    // xp += 1.0/zoom;
+			    break;
+			case KeyEvent.VK_LEFT:
+			    // px -= 1.0;
+			    px -= paX1;
+			    py += paY1;
+			    scaleX -= 0.01;
+			    if (lock) {
+				// py += 1.0;
+				px -= paX2;
+				py += paY2;
+				scaleY -= 0.01;
+			    }
+			    // xp -= 1.0/zoom;
+			    break;
+			case KeyEvent.VK_UP:
+			    // py -= 1.0;
+			    px += paX2;
+			    py -= paY2;
+			    scaleY += 0.01;
+			    if (lock) {
+				// px += 1.0;
+				px += paX1;
+				py -= paY1;
+				scaleX += 0.01;
+			    }
+			    // yp -= 1.0/zoom;
+			    break;
+			case KeyEvent.VK_DOWN:
+			    // py += 1.0;
+			    px -= paX2;
+			    py += paY2;
+			    scaleY -= 0.01;
+			    if (lock) {
+				// px -= 1.0;
+				px -= paX1;
+				py += paY1;
+				scaleX -= 0.01;
+			    }
+			    // yp += 1.0/zoom;
+			    break;
+			default:
+			    return;
+			}
+			scaleInitializedWhenClicked = true;
+			scaleLine =
+			    new Line2D.Double(initialX, initialY, px, py);
+			ptmodel.scaleObject(scaleRows, centerOfMass,
+					    scaleCMP, paX1, paY1,
+					    scaleX, scaleY,
+					    pathStart, true);
+			panel.repaint();
 		    } else if (selectedRow != -1) {
 			PointTMR row = ptmodel.getRow(selectedRow);
 			if (row == null) {
@@ -6026,6 +6298,7 @@ public class EPTSWindow {
 	}
 	if (ptmodel.pathVariableNameCount() > 0) {
 	    rotMenuItem.setEnabled(true);
+	    scaleMenuItem.setEnabled(true);
 	}
     }
 
@@ -6039,6 +6312,7 @@ public class EPTSWindow {
 	makeCurrentMenuItem.setEnabled(false);
 	mpMenuItem.setEnabled(false);
 	rotMenuItem.setEnabled(false);
+	scaleMenuItem.setEnabled(false);
 	setModeline(localeString("LeftClickFirstPoint"));
 	distState = 2;
 	// makeCurrentMenuItem.setEnabled(false);
@@ -6054,6 +6328,7 @@ public class EPTSWindow {
 	makeCurrentMenuItem.setEnabled(false);
 	mpMenuItem.setEnabled(false);
 	rotMenuItem.setEnabled(false);
+	scaleMenuItem.setEnabled(false);
 	setModeline(localeString("LeftClickCreate"));
 	TransitionTable.getLocMenuItem().setEnabled(true);
 	distState = 0; 
@@ -6091,6 +6366,7 @@ public class EPTSWindow {
 	makeCurrentMenuItem.setEnabled(false);
 	mpMenuItem.setEnabled(false);
 	rotMenuItem.setEnabled(false);
+	scaleMenuItem.setEnabled(false);
 	ptmodel.addRow(varname, EPTS.Mode.PATH_START, 0.0, 0.0, 0.0, 0.0);
 	savedCursorPath = panel.getCursor();
 	panel.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
@@ -6205,6 +6481,7 @@ public class EPTSWindow {
 			}
 			if (ptmodel.pathVariableNameCount() > 0) {
 			    rotMenuItem.setEnabled(true);
+			    scaleMenuItem.setEnabled(true);
 			}
 			panel.repaint();
 		    } else if (distState == 2) {
@@ -6301,6 +6578,28 @@ public class EPTSWindow {
 						    + "mass) on a path; "
 						    + "then drag to rotate");
 				    }
+				} else if (scalePath) {
+				    if (scalePathSetup() == false) {
+					selectedRow = -1;
+					cancelPathOps();
+				    } else {
+					/*
+					double cmxp =
+					    (centerOfMass.getX() - xrefpoint)
+					    /scaleFactor;
+					double cmyp =
+					    (centerOfMass.getY() - yrefpoint)
+					    / scaleFactor;
+					cmyp = height - cmyp;
+					scaleCMP =
+					    new Point2D.Double(cmxp, cmyp);
+					*/
+					initialX = p.x;
+					initialY = p.y;
+					scaleInitializedWhenClicked = true;
+					// scaleX = 1.0;
+					// scaleY = 1.0;
+				    }
 				}
 			    } else {
 				setModeline(String.format
@@ -6355,10 +6654,13 @@ public class EPTSWindow {
 			Point p = panel.getMousePosition();
 			double xp =(p.x/zoom);
 			double yp = (p.y/zoom);
-			if (selectedRow != ptmodel.findRowXPYP(xp, yp, zoom)) {
+			if (selectedRow != ptmodel.findRowXPYP(xp, yp, zoom)
+			    && scalePath == false) {
 			    // this is done in case we select a point,
 			    // intend to click a location between points to
 			    // deselected, but inadvertently drag the mouse.
+			    // If scalePath is true, that is an exception to
+			    // this rule.
 			    if (selectedRow != -1 && nextState == null) {
 				TransitionTable
 				    .getLocMenuItem().setEnabled(false);
@@ -6384,7 +6686,7 @@ public class EPTSWindow {
 		    }
 		    if (pointDragged && selectedRow != -1) {
 			cancelPathOps();
-			ptmodel.fireRowChanged(selectedRow);
+			ptmodel.fireRowsChanged(selectedRow);
 		    }
 		    if (selectedRow != -1 && nextState == null) {
 			TransitionTable.getLocMenuItem().setEnabled(false);
@@ -6433,7 +6735,6 @@ public class EPTSWindow {
 			y *= scaleFactor;
 			x += xrefpoint;
 			y += yrefpoint;
-			pointDragged = true;
 			if (moveLocOrPath) {
 			    ptmodel.moveObject(selectedRow, x, y,
 					       xp, yp, false);
@@ -6451,10 +6752,72 @@ public class EPTSWindow {
 			    ptmodel.rotateObject(rotRows, centerOfMass, cmp,
 						 rotStart, pathStart,
 						 x, y, xp, yp, false);
+			} else if (scalePath) {
+			    if (pointDragged || scaleInitializedWhenClicked) {
+				double deltaX = p.x - initialX;
+				// user space has increasing Y coords go down.
+				double deltaY = initialY - p.y;
+				double delta1 = deltaX*paX1 + deltaY*paY1;
+				double delta2 = deltaX*paX2 + deltaY*paY2;
+				int modifiers = e.getModifiersEx();
+				boolean lock =
+				    (modifiers & KEY_MASK)
+				    == InputEvent.SHIFT_DOWN_MASK;
+				boolean one = (modifiers & KEY_MASK)
+				    == (InputEvent.CTRL_DOWN_MASK
+					| InputEvent.SHIFT_DOWN_MASK);
+				if (lock) {
+				    if (Math.abs(delta1) < Math.abs(delta2)) {
+					scaleY = (delta2)/100 + 1.0;
+					scaleX = scaleY;
+				    } else {
+					scaleX = (delta1)/100 + 1.0;
+					scaleY = scaleX;
+				    }
+
+				} else if (one) {
+				    double dx = p.x - initialX;
+				    double dy = p.y - initialY;
+				    if (Math.abs(delta1) < Math.abs(delta2)) {
+					scaleY = (delta2)/100 + 1.0;
+					scaleX = 1.0;
+				    } else {
+					scaleX = (delta1)/100 + 1.0;
+					scaleY = 1.0;
+				    }
+				} else {
+				    scaleX = (delta1)/100 + 1.0;
+				    scaleY = (delta2)/100 + 1.0;
+				}
+				scaleLine =
+				    new Line2D.Double(initialX, initialY,
+						      p.x, p.y);
+				ptmodel.scaleObject(scaleRows, centerOfMass,
+						    scaleCMP, paX1, paY1,
+						    scaleX, scaleY,
+						    pathStart, false);
+			    } else {
+				if (centerOfMass == null) {
+				    // just in case we didn't call this
+				    // previously.
+				    scalePathSetup();
+				}
+				/*
+				double cmxp = (centerOfMass.getX() - xrefpoint)
+				    /scaleFactor;
+				double cmyp = (centerOfMass.getY() - yrefpoint)
+				    / scaleFactor;
+				cmyp = height - cmyp;
+				scaleCMP = new Point2D.Double(cmxp, cmyp);
+				*/
+				initialX = p.x;
+				initialY = p.y;
+			    }
 			} else {
 			    ptmodel.changeCoords(selectedRow, x, y,
 						 xp, yp, false);
 			}
+			pointDragged = true;
 			panel.repaint();
 		    } else {
 			JViewport vp = scrollPane.getViewport();
@@ -7034,6 +7397,11 @@ public class EPTSWindow {
 						    (tmpTransformedPath, af2);
 						g2d2.draw(tmpPath);
 						g2d.draw(tmpPath);
+					    }
+					    if (scaleLine != null) {
+						g2d.setColor(Color.RED);
+						g2d2.draw(scaleLine);
+						g2d.draw(scaleLine);
 					    }
 					}
 				    } finally {

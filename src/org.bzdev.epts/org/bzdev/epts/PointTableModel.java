@@ -452,6 +452,51 @@ public class
 	}
     }
 
+    // (paX, paY) has unit length
+    public void scaleObject(PointTMR[] origRows, Point2D cm, Point2D cmp,
+			    double paX, double paY,
+			    double scaleX, double scaleY,
+			    int pathStart, boolean notify)
+    {
+
+	AffineTransform af1 =
+	    AffineTransform.getTranslateInstance(cm.getX(), cm.getY());
+	af1.rotate(paX, paY);
+	af1.scale(scaleX, scaleY);
+	af1.rotate(paX, -paY);
+	af1.translate(-cm.getX(), -cm.getY());
+
+	AffineTransform af2 =
+	    AffineTransform.getTranslateInstance(cmp.getX(), cmp.getY());
+	af2.rotate(paX, -paY);
+	af2.scale(scaleX, scaleY);
+	af2.rotate(paX, paY);
+	af2.translate(-cmp.getX(), -cmp.getY());
+
+	for (int i = 1; i <  origRows.length-1; i++) {
+	    PointTMR origRow = origRows[i];
+	    if (origRow.getMode() != SplinePathBuilder.CPointType.CLOSE) {
+		coords[0] = origRow.getX();
+		coords[1] = origRow.getY();
+		af1.transform(coords, 0, coords, 2, 1);
+		double xx = coords[2];
+		double yy = coords[3];
+		coords[0] = origRow.getXP();
+		coords[1] = origRow.getYP();
+		af2.transform(coords, 0, coords, 2, 1);
+		double xxp = coords[2];
+		double yyp = coords[3];
+		PointTMR row = rows.get(pathStart + i);
+		row.setX(xx, xxp);
+		row.setY(yy, yyp);
+	    }
+	}
+	if (notify) {
+	    fireTableChanged(pathStart+1, pathStart+origRows.length-2,
+			     Mode.MODIFIED);
+	}
+    }
+
 
     public void changeCoords(int index,
 			     double x, double y, double xp, double yp,
@@ -616,6 +661,20 @@ public class
 	if (index == -1) return;
 	fireTableChanged(index, index, Mode.MODIFIED);
     }
+
+    public void fireRowsChanged(int index) {
+	if (index == -1) return;
+	int start = findStart(index);
+	int end = findEnd(index);
+	if (start != -1 && end != -1) {
+	    if (end-start > 1) {
+		fireTableChanged(start+1, end-1, Mode.MODIFIED);
+	    } else {
+		fireTableChanged(start, end, Mode.MODIFIED);
+	    }
+	}
+    }
+
 
     /**
      * Notify listeners.

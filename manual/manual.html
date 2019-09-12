@@ -471,6 +471,19 @@ The <code>File</code> menu contains the following items:
 
 <H2><A name="editMenu">The Edit menu</A></H2>
 
+Some of the menu items provided by the Edit menu use the center
+of mass of a path and the moments about the center of mass of
+the path (assuming the area enclosed by the path has a uniform density).
+If the path is not closed, an additional line will be added to create
+a closed path.  In addition, the principal moments and the
+corresponding principal axes for the path are computed. The principal
+axes are basically the eigenvectors of the path's moments about the
+center of mass. These eigenvectors are orthogonal to each other. When
+an object is rotated, it will be rotated about its center of mass,
+and when scaled, it is scaled along its principal axes. When this is
+done, the order of the operations (translations, scaling, and rotations)
+does not matter.
+
 The <code>Edit</code> menu contains the following items:
 <UL>
   <LI><B><CODE>Undo point insertion</CODE></B>. This essentially removes
@@ -483,17 +496,62 @@ The <code>Edit</code> menu contains the following items:
     will extend a B&eacute;zier path.  If one of a path's nodes has
     been selected, that path will be extended. Otherwise a dialog box
     will allow one to select the desired path.
+  <LI><B><CODE>Move Location/Path</CODE></B>. This option is used
+    to move a path or location using the mouse or keyboard. One will
+    select a control point (either before or after this option is selected),
+    and then drag the selected point. The operation will be completed
+    when the mouse button (the left mouse button) is released.
+    Alternatively, the keyboard's arrow keys can be used to
+    move the point one pixel at a time, ending a sequence of moves
+    by hitting the Enter key, or the Escape key if the operation should
+    be terminated.  When the Escape key is used, the object selected will
+    be returned to its previous position.
+  <LI><B><CODE>Rotate Path</CODE></B>. This option can be used to
+    rotate a path using the keyboard or mouse. One will select a
+    control on the curve (either before or after this option is
+    selected) and then drag the point (with the left mouse button
+    depressed) around the center of mass of the path.  The center of
+    mass is shown by the intersection of two principal axes drawn in
+    orange.  The operation ends when the left mouse button is released.
+    Alternatively, one may use the arrow keys to indicate which way the
+    end of the first principal axis should move. The two principal
+    axes are shown and the longest one is the first principal axis.
+    When the keyboard is used, the operation ends with the Enter key
+    is hit to accept the change or the Escape key is hit to cancel
+    the operation.
+  <LI><B><CODE>Scale Path</CODE></B>. This option can be used to scale
+    a path along its principal axes.  One will select a control point
+    on the curve and then drag the mouse.  A red line will indicate
+    the amount of scaling, starting with a value of 1.0 in each
+    direction. Each pixel (a unit of 1 point, actually) represents an
+    increment of 0.01. The principal axes will be shown in orange,
+    with their intersection point at the center of mass for the path.
+    Instead of dragging the mouse, the keyboard can be used. In this
+    case, the left and right arrows decrease and increase the scaling
+    along the first principal axis by 0.01, and the up and down arrows
+    increase or decrease the scaling along the second principal axis
+    by 0.01. Hitting the Enter key ends the sequence and hitting the
+    Escape key cancels the operation. If the shift key is pressed
+    while the arrow keys are used, both directions change
+    simultaneously by the same amount. When the mouse is used, the
+    behavior depends on the use of the control and shift keys:
+    <UL>
+      <LI> If the SHIFT key is depressed while the mouse is dragged,
+	the scaling is the same along both principal axes.
+      <LI> If the CONTROL and the SHIFT keys are depressed simultaneously
+	while the mouse is dragged, scaling will be along only one
+	principal axis: the one that is closest to being parallel to the
+	red line indicating the amount of scaling.
+      <LI> Otherwise the scaling is adjusted based on distance dragged
+	parallel to the respective principal axes.
+    </UL>
+    When the mouse is used, the scaling operation ends with the left
+    mouse button is released.
   <LI><B><CODE>Transform an Existing Path</CODE></B>. This option will
-    scale, rotate, and/or translate an existing path. EPTS will close the
-    path with a straight line segment if it is open, and will then compute
-    the enclosed area's center of mass and moments.  The moments are used
-    to compute the principal moments with the eigenvalue for the largest
-    of the two giving the direction of the first principal axis. The
-    second principal axis is perpendicular to the first, and points in the
-    counterclockwise direction from the first. A dialog box gives the
-    user the option of scaling along the principal axes, rotating about
-    the center of mass, and then translating the curve. For example,
-    the following dialog box
+    scale, rotate, and/or translate an existing path. The
+    transformation is specified by a dialog box.  As with the previous
+    operations, the center of mass for the path and its principal axes
+    are shown.  For example, the following dialog box
     <BR><BR>
     <CENTER><IMG src="NTPDialog.png"></CENTER>
     <BR>
