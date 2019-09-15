@@ -1458,6 +1458,12 @@ abstract class TransformPane extends JPanel {
 	return newpath;
     }
 
+    private JCheckBox reversePathCB;
+
+    public boolean requestsReversed() {
+	return reversePathCB.isSelected();
+    }
+
     CharDocFilter cdf = new CharDocFilter();
 
     boolean status =  false;
@@ -1520,6 +1526,10 @@ abstract class TransformPane extends JPanel {
 					ref.getX() + len*principalAxes[1][0],
 					ref.getY() + len*principalAxes[1][1]);
 	}
+
+	reversePathCB = new JCheckBox(localeString("reversePath"));
+	reversePathCB.setEnabled(true);
+	reversePathCB.setSelected(false);
 
 	/*
 	JRadioButton cmButton = new JRadioButton(localeString("cm"), true);
@@ -1769,8 +1779,14 @@ abstract class TransformPane extends JPanel {
 	c.gridwidth = GridBagConstraints.REMAINDER;
 	gridbag.setConstraints(scale2TF, c);
 	add(scale2TF);
-
+	c.gridwidth = 1;
+	gridbag.setConstraints(reversePathCB, c);
+	add(reversePathCB);
 	JLabel spacer = new JLabel(" ");
+	gridbag.setConstraints(spacer, c);
+	add(spacer);
+	spacer = new JLabel(" ");
+	c.gridwidth = GridBagConstraints.REMAINDER;
 	gridbag.setConstraints(spacer, c);
 	add(spacer);
 
@@ -1845,6 +1861,11 @@ abstract class TransformPane extends JPanel {
 		saveIndices();
 		ok();
 	    });
+
+	spacer = new JLabel(" ");
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(spacer, c);
+	add(spacer);
 
 	JPanel zoomPane = new JPanel();
 	GridBagLayout gridbagZ = new GridBagLayout();
@@ -2686,7 +2707,7 @@ public class EPTSWindow {
     double scaleX = 1.0;
     double scaleY = 1.0;
     double initialX = 0.0;
-    double initialY = 0.0;;
+    double initialY = 0.0;
 
     void cancelPathOps() {
 	if (rotatePath || scalePath) {
@@ -2804,7 +2825,7 @@ public class EPTSWindow {
 	    }
 	}
 	/*
-	System.out.println("cm = " + centerOfMass);;
+	System.out.println("cm = " + centerOfMass);
 	System.out.format("| %8.3g %8.3g |\n",
 			  moments[0][0], moments[0][1]);
 	System.out.format("| %8.3g %8.3g |\n",
@@ -2900,7 +2921,7 @@ public class EPTSWindow {
 	    }
 	}
 	/*
-	System.out.println("cm = " + centerOfMass);;
+	System.out.println("cm = " + centerOfMass);
 	System.out.format("| %8.3g %8.3g |\n",
 			  moments[0][0], moments[0][1]);
 	System.out.format("| %8.3g %8.3g |\n",
@@ -5011,6 +5032,7 @@ public class EPTSWindow {
 	    }
 	    int n = ptmodel.getRowCount();
 	    AffineTransform af = tfpane.getTransform();
+	    boolean reverse = tfpane.requestsReversed();
 	    double[] tcoords = new double[4];
 	    if (copyMode) {
 		int start = ptmodel.findStart(oldPathName);
@@ -5020,18 +5042,16 @@ public class EPTSWindow {
 		    panel.repaint();
 		    return;
 		}
-		for (int index = start; index < n; index++) {
-		    PointTMR row = ptmodel.getRow(index);
-		    Enum mode = row.getMode();
-		    if (mode == EPTS.Mode.PATH_START) {
-			ptmodel.addRow(new PointTMR(newPathName, mode,
-						    0.0, 0.0, 0.0, 0.0));
-		    } else if (mode == EPTS.Mode.PATH_END) {
-			ptmodel.addRow(new PointTMR("", mode,
-						    0.0, 0.0, 0.0, 0.0));
-		    } else {
-			tcoords[0] = row.getX();
-			tcoords[1] = row.getY();
+		if (reverse) {
+		    ptmodel.addRow(new PointTMR(newPathName,
+						EPTS.Mode.PATH_START,
+						0.0, 0.0, 0.0, 0.0));
+		    int ind1 = ptmodel.getRowCount();
+		    for (SplinePathBuilder.CPoint cp:
+			     ptmodel.getCPoints(start,true, null)) {
+			Enum mode = cp.type;
+			tcoords[0] = cp.x;
+			tcoords[1] = cp.y;
 			af.transform(tcoords, 0, tcoords, 2, 1);
 			double x = tcoords[2];
 			double y = tcoords[3];
@@ -5040,6 +5060,35 @@ public class EPTSWindow {
 			yp = height - yp;
 			// add to table.
 			ptmodel.addRow(new PointTMR("", mode, x, y, xp, yp));
+		    }
+		    ptmodel.addRow(new PointTMR("", EPTS.Mode.PATH_END,
+						0.0, 0.0, 0.0, 0.0));
+		    int ind2 = ptmodel.getRowCount()-1;
+		    ptmodel.fireTableChanged(ind1, ind2,
+					     PointTableModel.Mode.ADDED);
+		} else {
+		    for (int index = start; index < n; index++) {
+			PointTMR row = ptmodel.getRow(index);
+			Enum mode = row.getMode();
+			if (mode == EPTS.Mode.PATH_START) {
+			    ptmodel.addRow(new PointTMR(newPathName, mode,
+							0.0, 0.0, 0.0, 0.0));
+			} else if (mode == EPTS.Mode.PATH_END) {
+			    ptmodel.addRow(new PointTMR("", mode,
+							0.0, 0.0, 0.0, 0.0));
+			} else {
+			    tcoords[0] = row.getX();
+			    tcoords[1] = row.getY();
+			    af.transform(tcoords, 0, tcoords, 2, 1);
+			    double x = tcoords[2];
+			    double y = tcoords[3];
+			    double xp = (x - xrefpoint) / scaleFactor;
+			    double yp = (y - yrefpoint) / scaleFactor;
+			    yp = height - yp;
+			    // add to table.
+			    ptmodel.addRow(new PointTMR("", mode,
+							x, y, xp, yp));
+			}
 		    }
 		}
 	    } else {
@@ -5050,22 +5099,45 @@ public class EPTSWindow {
 		    panel.repaint();
 		    return;
 		}
-		for (int index = start; index < n; index++) {
-		    PointTMR row = ptmodel.getRow(index);
-		    Enum ourmode = row.getMode();
-		    if (ourmode instanceof SplinePathBuilder.CPointType) {
-			tcoords[0] = row.getX();
-			tcoords[1] = row.getY();
+		if (reverse) {
+		    int index = start + 1;
+		    int end = ptmodel.findEnd(start);
+		    for (SplinePathBuilder.CPoint cp:
+			     ptmodel.getCPoints(start,true, null)) {
+			tcoords[0] = cp.x;
+			tcoords[1] = cp.y;
 			af.transform(tcoords, 0, tcoords, 2, 1);
 			double x = tcoords[2];
 			double y = tcoords[3];
 			double xp = (x - xrefpoint) / scaleFactor;
 			double yp = (y - yrefpoint) / scaleFactor;
 			yp = height - yp;
+			PointTMR row = ptmodel.getRow(index);
+			row.setMode(cp.type);
 			row.setX(x, xp);
 			row.setY(y, yp);
-		    } else if (ourmode == EPTS.Mode.PATH_END) {
-			break;
+			index++;
+		    }
+		    ptmodel.fireTableChanged(start, end,
+					     PointTableModel.Mode.MODIFIED);
+		} else {
+		    for (int index = start; index < n; index++) {
+			PointTMR row = ptmodel.getRow(index);
+			Enum ourmode = row.getMode();
+			if (ourmode instanceof SplinePathBuilder.CPointType) {
+			    tcoords[0] = row.getX();
+			    tcoords[1] = row.getY();
+			    af.transform(tcoords, 0, tcoords, 2, 1);
+			    double x = tcoords[2];
+			    double y = tcoords[3];
+			    double xp = (x - xrefpoint) / scaleFactor;
+			    double yp = (y - yrefpoint) / scaleFactor;
+			    yp = height - yp;
+			    row.setX(x, xp);
+			    row.setY(y, yp);
+			} else if (ourmode == EPTS.Mode.PATH_END) {
+			    break;
+			}
 		    }
 		}
 	    }

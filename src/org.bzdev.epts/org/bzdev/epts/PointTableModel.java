@@ -130,6 +130,41 @@ public class
 	return -1;
     }
 
+    public SplinePathBuilder.CPoint[]
+	getCPoints(int index, boolean reversed, AffineTransform af)
+    {
+	int start = findStart(index);
+	if (start == -1)  return null;
+	int end = findEnd(start);
+	if (end == -1) return null;
+	start++;
+	if (start >= end) return null;
+	if (start+1 >= end) return null;
+	SplinePathBuilder pb = new SplinePathBuilder();
+	while (start < end) {
+	    PointTMR row = getRow(start++);
+	    Enum rmode = row.getMode();
+	    double x = row.getX();
+	    double y = row.getY();
+	    if (rmode instanceof SplinePathBuilder.CPointType) {
+		SplinePathBuilder.CPointType
+		    mode = (SplinePathBuilder.CPointType) rmode;
+		switch (mode) {
+		case MOVE_TO:
+		case SPLINE:
+		case SEG_END:
+		case CONTROL:
+		    pb.append(new SplinePathBuilder.CPoint(mode, x, y));
+		    break;
+		case CLOSE:
+		    pb.append(new SplinePathBuilder.CPoint(mode));
+		    break;
+		}
+	    }
+	}
+	return pb.getCPoints(reversed, af);
+    }
+
     public Path2D getPath(String pname) {
 	int start = findStart(pname);
 	if (start == -1)  return null;
