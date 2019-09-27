@@ -54,6 +54,7 @@ import org.bzdev.graphs.RefPointName;
 import org.bzdev.lang.UnexpectedExceptionError;
 import org.bzdev.imageio.BlockingImageObserver;
 import org.bzdev.math.Functions;
+import org.bzdev.math.VectorOps;
 import org.bzdev.net.WebEncoder;
 import org.bzdev.util.CopyUtilities;
 import org.bzdev.util.TemplateProcessor;
@@ -65,6 +66,118 @@ import org.bzdev.swing.PortTextField;
 import org.bzdev.swing.SwingOps;
 import org.bzdev.swing.VTextField;
 import org.bzdev.swing.text.CharDocFilter;
+
+/**
+ * Principal moments and axes.
+ * For EPTS, we want the first prinical axis to have the
+ * largest principal moment, and the second the smallest.
+ * We also want the first pricipal axes to preferentially
+ * point towards the positive X axis, with the second principal
+ * axis pointing 90 degrees from the first in the counterclockwise
+ * direction. This class computes the principal moments and
+ * principal axes given these constraints.
+ */
+class Moments {
+    /**
+     * Find the principle moments of a shape given its moments.
+     * The array returned contains the moments sorted so that the
+     * largest moment appears first.  The argument array can be
+     * computed from a shape by calling {@link #momentsOf(Shape)} or
+     * {@link #momentsOf(Shape, AffineTransform)}.
+     * <P>
+     * The principal moments are the eigenvalues of the moments
+     * matrix.
+     * @param moments the shape's moments.
+     * @return the principal moments
+     */
+    public static double[] principalMoments(double[][] moments) {
+	if (moments[0][1] != moments[1][0]) {
+	    throw new IllegalArgumentException();
+	}
+	if (moments[0][1] == 0.0) {
+	    double val1 = moments[0][0];
+	    double val2 = moments[1][1];
+	    double results[] = {Math.max(val1, val2), Math.min(val1, val2)};
+	    return results;
+	}
+	double negB = moments[0][0] + moments[1][1];
+	double radical = (moments[0][0] - moments[1][1]);
+	radical *= radical;
+	double term = moments[0][1];
+	term *= term;
+	radical += 4*term;
+	if (radical == 0.0) {
+	    double results[] = {moments[0][0], moments[1][1]};
+	    return results;
+	} else {
+	    radical = Math.sqrt(radical);
+	    double results[] = {0.5*(negB + radical),
+				0.5*(negB - radical)};
+	    return results;
+	}
+    }
+
+    /**
+     * Compute the axes corresponding to the principal moments of a
+     * moments matrix.
+     * The moments matrix can be computed from a shape by calling the
+     * method {@link #momentsOf(Shape)} or by calling the method
+     * {@link #momentsOf(Shape, AffineTransform)}. The method
+     * {@link #principalMoments(double[][])} can be used to compute
+     * the principal moments given a moments array.  The return value
+     * for principalAxes is a two dimensional array.  If the array
+     * returned is stored as pmatrix, then pmatrix[i] is an array
+     * containing the principal axis corresponding to the
+     * i<sup>th</sup> principal moment. Each principal axis vector
+     * contains its X component followed by its Y component and
+     * is normalized so its length is 1.0.
+     * <P>
+     * The principal axes are actually the eigenvectors of the moments
+     * matrix provided as this method's first argument.  In addition,
+     * the eigenvector at index 1 points counterclockwise from the one
+     * at index 0, assuming the convention in which the positive Y
+     * axis is counterclockwise from the positive X axis.
+     * @param moments the moments
+     * @param principalMoments the principle moments
+     * @areturn an array of vectors, each providing an axis.
+     */
+    public static double[][] principalAxes(double[][] moments,
+					   double[] principalMoments)
+    {
+	if (moments[0][1] != moments[1][0]) {
+	    throw new IllegalArgumentException();
+	}
+
+	if (principalMoments[0] == principalMoments[1]) {
+	    double results[][] = {{1.0, 0.0}, {0.0, 1.0}};
+	    return results;
+	}
+	double[][] results = new double[2][2];
+	if (moments[0][1] == 0.0) {
+	    if (principalMoments[0] == moments[0][0]) {
+		    results[0][0] = 1.0;
+		    results[0][1] = 0.0;
+		    results[1][0] = 0.0;
+		    results[1][1] = 1.0;
+	    } else {
+		results[0][0] = 0.0;
+		results[0][1] = 1.0;
+		results[1][0] = -1.0;
+		results[1][1] = 0.0;
+	    }
+	    return results;
+	}
+	double v1 = 1.0;
+	// double v2 = -(moments[0][0] - principalMoments[0]) / moments[0][1];
+	double v2 = (principalMoments[0] - moments[0][0]) / moments[0][1];
+	results[0][0] = v1;
+	results[0][1] = v2;
+	VectorOps.normalize(results[0]);
+	results[1][1] = results[0][0];
+	results[1][0] = -results[0][1];
+	return results;
+    }
+}
 
 class AnglePane extends JPanel {
     static int aindexSaved = 0;
@@ -1497,7 +1610,7 @@ abstract class TransformPane extends JPanel {
 	oldpath = ptmodel.getPath(name);
 	ref = Path2DInfo.centerOfMassOf(oldpath);
 	double[][] moments = Path2DInfo.momentsOf(ref, oldpath);
-	double[] principalMoments = Path2DInfo.principalMoments(moments);
+	double[] principalMoments = Moments.principalMoments(moments);
 	double mean = (principalMoments[0] + principalMoments[1])/2;
 	if (mean == 0.0) {
 	    // punt - the area must be zero.
@@ -1514,7 +1627,7 @@ abstract class TransformPane extends JPanel {
 					ref.getY() + Math.sqrt(mean));
 	} else {
 	    double[][]principalAxes =
-		Path2DInfo.principalAxes(moments, principalMoments);
+		Moments.principalAxes(moments, principalMoments);
 	    principalAngle = Math.atan2(principalAxes[0][1],
 					principalAxes[0][0]);
 	    double len = Math.sqrt(principalMoments[0]);
@@ -2831,7 +2944,7 @@ public class EPTSWindow {
 	System.out.format("| %8.3g %8.3g |\n",
 			  moments[1][0], moments[1][1]);
 	*/
-	double[] principalMoments = Path2DInfo.principalMoments(moments);
+	double[] principalMoments = Moments.principalMoments(moments);
 	double mean = (principalMoments[0] + principalMoments[1])/2;
 	// double principalAngle;
 	// mean == 0.0 if all points are identical, in which case the
@@ -2850,7 +2963,7 @@ public class EPTSWindow {
 				       centerOfMass.getY() + Math.sqrt(mean));
 	} else {
 	    double[][]principalAxes =
-		Path2DInfo.principalAxes(moments, principalMoments);
+		Moments.principalAxes(moments, principalMoments);
 	    /*
 	    principalAngle = Math.atan2(principalAxes[0][1],
 					principalAxes[0][0]);
@@ -2927,7 +3040,7 @@ public class EPTSWindow {
 	System.out.format("| %8.3g %8.3g |\n",
 			  moments[1][0], moments[1][1]);
 	*/
-	double[] principalMoments = Path2DInfo.principalMoments(moments);
+	double[] principalMoments = Moments.principalMoments(moments);
 	double mean = (principalMoments[0] + principalMoments[1])/2;
 	// double principalAngle;
 	// mean == 0.0 if all points are identical, in which case the
@@ -2950,7 +3063,7 @@ public class EPTSWindow {
 				       centerOfMass.getY() + Math.sqrt(mean));
 	} else {
 	    double[][]principalAxes =
-		Path2DInfo.principalAxes(moments, principalMoments);
+		Moments.principalAxes(moments, principalMoments);
 	    double len1 = Math.sqrt(principalMoments[0]);
 	    paxis1 = new Line2D.Double(centerOfMass.getX(), centerOfMass.getY(),
 				       centerOfMass.getX()
@@ -3012,7 +3125,7 @@ public class EPTSWindow {
 	Path2D itpath = ptmodel.getPath(itName);
 	Point2D itref = Path2DInfo.centerOfMassOf(itpath);
 	double[][] moments = Path2DInfo.momentsOf(itref, itpath);
-	double[] principalMoments = Path2DInfo.principalMoments(moments);
+	double[] principalMoments = Moments.principalMoments(moments);
 	double mean = (principalMoments[0] + principalMoments[1])/2;
 	double itprincipalAngle;
 	if (mean == 0.0) {
@@ -3030,7 +3143,7 @@ public class EPTSWindow {
 				       itref.getY() + Math.sqrt(mean));
 	} else {
 	    double[][]principalAxes =
-		Path2DInfo.principalAxes(moments, principalMoments);
+		Moments.principalAxes(moments, principalMoments);
 	    itprincipalAngle = Math.atan2(principalAxes[0][1],
 					  principalAxes[0][0]);
 	    double len = Math.sqrt(principalMoments[0]);

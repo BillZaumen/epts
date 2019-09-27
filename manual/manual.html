@@ -45,13 +45,14 @@ file formats as well:
     alternative to providing a long series of command-line options.
 </UL>
 
-<H2><A name="Stuttgart's">Starting EPTS</A></H2>
+<H2><A name="startingEPTS">Starting EPTS</A></H2>
 
 EPTS has a large number of command-line options, mostly for generating
 output files in various formats. These are provided for cases in which
 EPTS is used by build tools such as <CODE>make</CODE> or <CODE>ant</CODE>.
 Most of these options can by stored in EPTS saved-state,
-session-configuration, and template-configuration files.
+session-configuration, and template-configuration files, and can be
+set up by using various dialog boxes.
 
 When a window system is used, it will tyically be configured to allow
 a number of operations to be performed without using the command-line
@@ -115,7 +116,6 @@ The procedure for opening these files depends on the file type:
     Move the mouse pointer to select EPTS and click the left mouse
     button.
 </UL>
-
 
 How EPTS should be started in order to create a new session is task
 dependent.  Several use cases are shown in the following subsections.
@@ -260,7 +260,7 @@ Templates are describe in detail in the section
 as follows:
 <UL>
   <LI> Templates contain text, ordinary directives (called simply
-    directives), and iterative directives.  If a directive is used by
+    directives), and iterative directives.  If a directive is used but
     not defined, its value defaults to an empty string.
   <LI> A directive is a name with an associated value.
   <LI> An iterative directive is a name with an associated list. Each
@@ -397,6 +397,71 @@ points and B&eacute;zier curves, expressing their locations and control
 points in graph coordinate space units. It will also allow one to measure
 the distance between points in either image space or graph coordinate space
 units.
+<P>
+EPTS users should be familiar with several computer-graphics concepts when
+templates are used.
+<UL>
+  <LI> A <A name="windingRule"><EM>winding rule</EM></A> indicates how
+    to determine if a point is inside or outside a closed path
+    (explicitly closed or implicitly closed by a line segment from the
+    curve's last point to its initial point). There are two
+    choices. The option <CODE>evenodd</CODE> means that a point is
+    outside the curve's enclosed area if a line from the point to
+    infinity crosses the curve an even number of times and is
+    otherwise inside the curve's enclosed area. The
+    option <CODE>nonzero</CODE> computes the difference in the sums of
+    the number of times a line from a point to infinity crosses a
+    curve that turns counterclockwise and the of times a line from
+    that point to infinity crosses a curve that turns clockwise. If
+    this sum is zero, the point is outside the area and otherwise the
+    point is inside the area. At an intersection point, a curve turns
+    counterclockwise if it passes the line (pointing to infinity) from
+    right to left and is clockwise if it passes that line from left to
+    right.
+  <LI> The term <A name="zorder"><EM>Z-order</EM></Z> refers to the
+    order in which curves are drawn: ones with a lower Z order appear
+    first.  This is particularly important when overlapping curves are
+    filled as it will determine the color of the intersection of the
+    relevant areas.
+  <LI> A <A name="stroke"><EM>stroke</EM></A> indicates how the
+    outline of a curve is drawn.  Typically one will specify a line
+    thickness (the stroke width), and possibly a dash pattern. Dash
+    patterns in EPTS are defined by a string containing a series of
+    '-' or ' ' characters, starting with a '-'. each '-' and space
+    represents a solid line or gap with a width specified by a field
+    called the dash increment. Finally, the dash phase indicates the
+    offset into the dash pattern for its starting point.  The dash
+    width, dash increment and the dash phase can be expressed using
+    either user-space units or GCS units.
+  <LI> <A name="splines">Splines</A> can be used to define portions of
+    curves. These avoid the need to provide control points explicitly.
+    Splines in EPTS are built from cubic B&eacute;zier curve segments.  A
+    cubic spline is a sequence of cubic B&eacute;zier curves for which
+    adjacent curves meet at 'knots' (points the curve must go through)
+    with matching first and second derivatives with respect to the
+    path parameters. Some of the documentation below refers to knots
+    as "spline points" as they are points whose EPTS type
+    is <CODE>SPLINE</CODE>.  Before being displayed, a sequence of
+    segments separated by knots will be converted to a sequence of
+    cubic B&eacute;zier curves, each with two intermediate control
+    points.
+  <LI> The <A name="centerOfMass"><EM>center of mass</EM></A> for a path
+    (which will be implicitly closed if necessary), is the center of mass
+    of the enclosed area, assuming a uniform density.
+  <LI> The <A name="principalMoments">principal moments</A> of a path
+    are the eigenvalues of the second order moments about the center
+    of mass.  If the shape is rotated so that its the corresponding
+    eigenvectors are parallel to the X and Y axes, the off-diagonal
+    elements (corresponding to the products of inertia) will vanish.
+  <LI> The <A name="principalAxes">principal axes</A> of a path are
+    unit vectors parallel to the eigenvectors.  The principal axes
+    used by EPTS are always perpendicular to each other (including the
+    case when the two eigenvalues are equal).
+</UL>
+For readers not familiar with concepts such as center of mass, moments,
+eigenvalues, eigenvectors, etc., it suffices to note that these are used
+so that scaling, rotation, and scaling operations are independent of their
+order and thus easily reversed.
 
 <H1><A name="menus">The menu bar</A></H1>
 
@@ -471,18 +536,19 @@ The <code>File</code> menu contains the following items:
 
 <H2><A name="editMenu">The Edit menu</A></H2>
 
-Some of the menu items provided by the Edit menu use the center
-of mass of a path and the moments about the center of mass of
-the path (assuming the area enclosed by the path has a uniform density).
-If the path is not closed, an additional line will be added to create
-a closed path.  In addition, the principal moments and the
-corresponding principal axes for the path are computed. The principal
-axes are basically the eigenvectors of the path's moments about the
-center of mass. These eigenvectors are orthogonal to each other. When
-an object is rotated, it will be rotated about its center of mass,
-and when scaled, it is scaled along its principal axes. When this is
-done, the order of the operations (translations, scaling, and rotations)
-does not matter.
+Some of the menu items provided by the Edit menu use the
+<A href="#centerOfMass">center of mass</A> of a path and the moments
+about the center of mass of the path (assuming the area enclosed by
+the path has a uniform density).  If the path is not closed, an
+additional line will be added to create a closed path.  In addition,
+the <A href="#principalMoments">principal moments</A> and the
+corresponding <A href="#principalAxes">principal axes</A> for the path
+are computed. The principal axes are basically the eigenvectors of the
+path's moments about the center of mass. These eigenvectors are
+orthogonal to each other. When an object is rotated, it will be
+rotated about its center of mass, and when scaled, it is scaled along
+its principal axes. When this is done, the order of the operations
+(translations, scaling, and rotations) does not matter.
 
 The <code>Edit</code> menu contains the following items:
 <UL>
@@ -510,48 +576,58 @@ The <code>Edit</code> menu contains the following items:
     rotate a path using the keyboard or mouse. One will select a
     control on the curve (either before or after this option is
     selected) and then drag the point (with the left mouse button
-    depressed) around the center of mass of the path.  The center of
-    mass is shown by the intersection of two principal axes drawn in
-    orange.  The operation ends when the left mouse button is released.
-    Alternatively, one may use the arrow keys to indicate which way the
-    end of the first principal axis should move. The two principal
+    depressed) around the <A href="#centerOfMass">center of mass</A>
+    of the path.  The center of mass is shown by the intersection of
+    two <A href="#principalAxes">principal axes</A> drawn in orange.
+    The operation ends when the left mouse button is released.
+    Alternatively, one may use the arrow keys to indicate which way
+    the end of the first principal axis should move. The two principal
     axes are shown and the longest one is the first principal axis.
     When the keyboard is used, the operation ends with the Enter key
-    is hit to accept the change or the Escape key is hit to cancel
-    the operation.
-  <LI><B><CODE>Scale Path</CODE></B>. This option can be used to scale
-    a path along its principal axes.  One will select a control point
-    on the curve and then drag the mouse.  A red line will indicate
-    the amount of scaling, starting with a value of 1.0 in each
-    direction. Each pixel (a unit of 1 point, actually) represents an
-    increment of 0.01. The principal axes will be shown in orange,
-    with their intersection point at the center of mass for the path.
-    Instead of dragging the mouse, the keyboard can be used. In this
-    case, the left and right arrows decrease and increase the scaling
-    along the first principal axis by 0.01, and the up and down arrows
-    increase or decrease the scaling along the second principal axis
-    by 0.01. Hitting the Enter key ends the sequence and hitting the
+    is hit to accept the change or the Escape key is hit to cancel the
+    operation.
+  <LI><B><CODE><A name="scalePath">Scale Path</A></CODE></B>. This
+    option can be used to scale a path along its
+    <A href="#principalAxes">principal axes</A>.  One will select a
+    control point on the curve and then drag the mouse.  A red line
+    will indicate the amount of scaling, starting with a value of 1.0
+    in each direction. Each pixel (a unit of 1 point, actually)
+    represents an increment of 0.01. The principal axes will be shown
+    in orange, with their intersection point at the
+    <A href="#centerOfMass">center of mass</A> for the path.  Instead
+    of dragging the mouse, the keyboard can be used. In this case, the
+    left and right arrows decrease and increase the scaling along the
+    first principal axis by 0.01, and the up and down arrows increase
+    or decrease the scaling along the second principal axis by
+    0.01. Hitting the Enter key ends the sequence and hitting the
     Escape key cancels the operation. If the shift key is pressed
     while the arrow keys are used, both directions change
     simultaneously by the same amount. When the mouse is used, the
     behavior depends on the use of the control and shift keys:
     <UL>
       <LI> If the SHIFT key is depressed while the mouse is dragged,
-	the scaling is the same along both principal axes.
+	the scaling is the same along both
+	<A href="#principalAxes">principal axes</A>.
       <LI> If the CONTROL and the SHIFT keys are depressed simultaneously
 	while the mouse is dragged, scaling will be along only one
-	principal axis: the one that is closest to being parallel to the
-	red line indicating the amount of scaling.
+	principal axis.  If the motion from the original point is closer
+	to being along the X axis than the Y axis, the longer principal
+	axis is scaled; otherwise the shorter principal axis is scaled.
       <LI> Otherwise the scaling is adjusted based on distance dragged
-	parallel to the respective principal axes.
+	parallel to the respective <A href="#principalAxes">principal axes</A>.
     </UL>
-    When the mouse is used, the scaling operation ends with the left
-    mouse button is released.
+    The length of a red line that is drawn during this operation shows
+    the amount of scaling. This read line starts at the point where
+    the scaling in both directions is a factor of 1.  When the mouse
+    is used, the scaling operation ends with the left mouse button is
+    released.  A modifier key is detected when the left mouse button
+    is pressed.
   <LI><B><CODE>Transform an Existing Path</CODE></B>. This option will
     scale, rotate, and/or translate an existing path. The
     transformation is specified by a dialog box.  As with the previous
-    operations, the center of mass for the path and its principal axes
-    are shown.  For example, the following dialog box
+    operations, the <A href="#centerOfMass">center of mass</A> for the
+    path and its <A href="#principalAxes">principal axes</A> are
+    shown.  For example, the following dialog box
     <BR><BR>
     <CENTER><IMG src="NTPDialog.png"></CENTER>
     <BR>
@@ -563,15 +639,24 @@ The <code>Edit</code> menu contains the following items:
     is not used in this example - when checked, it does not change the
     path but does change the order in which the points along the path
     are displayed in the table by listing the points in the reverse
-    order.  If the <CODE>Apply</CODE> button is clicked, a red shape
-    will appear showing the position of the transformed shape. The
-    corresponding EPTS window
+    order. Reversing a path is useful in cases where a
+    <A href="#windingRule">winding rule</A> equal
+    to <CODE>nonzero</CODE> is used in cases in which paths are
+    concatenated (e.g., by using the <CODE>--tname</CODE> option), and
+    when a path is used in a animation or simulation as a path that
+    some object will follow (so that increasing the path parameter
+    moves a point along the path in the desired direction).  If
+    the <CODE>Apply</CODE> button is clicked, a red shape will appear
+    showing the position of the transformed shape. The corresponding
+    EPTS window
     <BR><BR>
     <CENTER><IMG src="NTPWindow.png"></CENTER>
     <BR>
-    shows the original shape in black, the principal axes (positive
+    shows the original shape in black, the
+    <A href="#principalAxes">principal axes</A> (positive
     values only, with a length given by the square root of the
-    principal moments), and the new transformed shape in red.  If the
+    <A href="#principalMoments">principal moments</A>), and the new
+    transformed shape in red.  If the
     <CODE>OK</CODE> button is pressed, the original shape will replace
     the new shape at the new shape's position.  The <CODE>Cancel</CODE>
     button will cancel this operation.  The EPTS window's controls are
@@ -660,12 +745,13 @@ displayed in textual form. This menu contains the following items:
   <LI><B><CODE>Show PointTable</CODE></B>. Show a table containing
     each location and curve, including the curve segments, with
     control points for quadratic and cubic B&eacute; segments and with
-    knots for spline segments. The only points contained in this table
-    are those created with a variable name.  All curves are included
-    because all of the curves have a variable name. As an example
-    corresponding to an <A href="#drawing2">example shown below</A>, a
-    table for a cubic B&eacute;zier curve with two control points is
-    the following:
+    knots for <A href="#splines">spline</A> segments. The only points
+    contained in this table are those created with a variable name.
+    All curves are included because all of the curves have a variable
+    name. As an example corresponding to
+    an <A href="#drawing2">example shown below</A>, a table for a
+    cubic B&eacute;zier curve with two control points is the
+    following:
     <BR>
     <BR>
     <CENTER><IMG src="table2.png"></CENTER>
@@ -775,14 +861,15 @@ displayed in textual form. This menu contains the following items:
     <UL>
       <LI><B><CODE>Spline Point(s)</CODE></B>. This option indicates that the
 	next point clicked will be a knot on a segment described by a
-	spline. The path will be a smooth path going through each of
-	the specified knots. While the spline is actually a sequence
-	of cubic B&eacute;zier curve segments, the inner control
-	points for those segments are not shown as these are
-	implicitly computed. Spline points are shown as solid black
-	circles with white borders. For example, the following figure
-	shows an EPTS window containing a closed curve consisting of
-	spline points (how to close a curve is described below):
+	<A href="#splines">spline</A>. The path will be a smooth path
+	going through each of the specified knots. While the spline is
+	actually a sequence of cubic B&eacute;zier curve segments, the
+	inner control points for those segments are not shown as these
+	are implicitly computed. Spline points are shown as solid
+	black circles with white borders. For example, the following
+	figure shows an EPTS window containing a closed curve
+	consisting of spline points (how to close a curve is described
+	below):
 	<BR>
 	<BR>
 	<CENTER><IMG src="drawing1.png"></CENTER>
@@ -800,11 +887,12 @@ displayed in textual form. This menu contains the following items:
 	<BR>
 	In the figure, the tangent lines leading to the control points
 	shown as squares are not part of the curve itself.
-      <LI><B><CODE>End Curve/Line Segment</CODE></B>. This option indicates
-	that the next point is the end of a segment. A segment with no
-	intermediate control or spline points is a straight-line segment.
-	Like spline points, the end-of-segment points are shown as
-	black circles with white borders.
+      <LI><B><CODE>End Curve/Line Segment</CODE></B>. This option
+	indicates that the next point is the end of a segment. A
+	segment with no intermediate control
+	or <A href="#splines">spline</A> points is a straight-line
+	segment.  Like spline points, the end-of-segment points are
+	shown as black circles with white borders.
     </UL>
   <LI>Two menu items provide Options for ending a path:
     <UL>
@@ -1064,38 +1152,62 @@ The remaining shortcuts apply to saved states.
 
 Some saved-state shortcuts apply regardless of the current mode:
 <UL>
-  <LI> Control-P. This will print the table.
-  <LI> Control-Z. This is an "undo" operation.
   <LI> Control-Minus. Zoom out.
-  <LI> Control-Plus.  Zoom in.
-  <LI> Control-0. Restore the zoom factor to the original size. (1 to 1).
-  <LI> Control-T. Display the table in a separate window.
+  <LI> Control-Plus.  Zoom in. The <CODE>Zoom</CODE> menu will list this
+    as <CODE>Ctrl-Equals</CODE>.
+  <LI> Control-0. Restore the zoom factor to the original size (1 to 1).
   <LI> Control-Right-Arrow. Move the horizontal scroll bar to the right.
   <LI> Control-Left-Arrow. Move the horizontal scroll bar to the left.
   <LI> Control-Up-Arrow. Move the vertical scroll bar up.
   <LI> Control-Down-Arrow. Move the vertical scroll bar down.
-  <LI> Alt-A. Append points to a B&eacute;zier path.
-  <LI> Alt-X. Delete a location or B&eacute;zier path.
-  <LI> Alt-D. This toggles whether
-    <A href="#dragImage">drag-image mode</A> is in effect, and can
-    be used when a window system provides shortcuts that use the
-    ALT key with the primary mouse button.
-  <LI> Alt-I. Measure the image-space distance between two points.
-  <LI> Alt-G. Measure the graph-coordinate-space distance between two
-    points.  To provide a meaningful distance, graph coordinate space
-    must be configured first. The
-    <A href="#config"><CODE>Configure CGS</CODE></A> menu item allows
-    graph coordinate space to be configured.
-  <LI> Alt-P. Add an isolated point.  The user will be asked to supply
-    a variable name that has not been used before. If that variable
-    name is not provided or consists of just whitespace, a name will
-    be generated.  A generated name starts with the
-    string <CODE>pt</CODE> and ends with a positive integer.
+  <LI> Alt-A. Append points to a B&eacute;zier path  (at least one path must
+    exist)
   <LI> Alt-B. Add a B&eacute;zier path. The user will be asked to
     supply a variable name that has not been used before. If that
     variable name is not provided or consists of just whitespace, a
     name will be generated.  A generated name starts with the
     string <CODE>path</CODE> and ends with a positive integer.
+  <LI> Alt-D. This toggles whether
+    <A href="#dragImage">drag-image mode</A> is in effect, and can
+    be used when a window system provides shortcuts that use the
+    ALT key with the primary mouse button.
+  <LI> Alt-G. Measure the graph-coordinate-space distance between two
+    points.  To provide a meaningful distance, graph coordinate space
+    must be configured first. The
+    <A href="#config"><CODE>Configure CGS</CODE></A> menu item allows
+    graph coordinate space to be configured.
+  <LI> Alt-I. Measure the image-space distance between two points.
+  <LI> Alt-P. Add an isolated point.  The user will be asked to supply
+    a variable name that has not been used before. If that variable
+    name is not provided or consists of just whitespace, a name will
+    be generated.  A generated name starts with the
+    string <CODE>pt</CODE> and ends with a positive integer.
+  <LI> Ctrl+Alt-M. Move an existing point or path.
+  <LI> Ctrl+Alt-N. Create a new path by applying an affine
+    transformation that scales an existing path along its
+    <A href="#principalAxes">principal axes</A>, rotates the path about its
+    <A href="#centerOfMass">center of mass</A>, and applies a
+    translation. The translation's values determines the offsets of
+    the center of mass from its starting location to its new location.
+    A dialog box sets up the affine  transformation.
+  <LI> Control-P. This will print the table.
+  <LI> Ctrl+Alt-R. Rotate an existing path.
+  <LI> Ctrl+Alt-S. Scale an existing path as described in the
+    <A href="#scalePath">menu-item documentation</A> (which includes a
+    description of the use of modifier keys).
+  <LI> Ctrl-T. Display the table in a separate window.
+  <LI> Ctrl+Alt-T. Modify an existing path by applying an affine
+    transformation that scales the existing path along its
+    <A href="#principalAxes">principal axes</A>, rotates the path, and
+    apply a translation to the path. The translation's values
+    determines the offsets of the
+    <A href="#centerOfMass">center of mass</A> from its starting
+    location to its new location.  A dialog box sets up the affine
+    transformation.
+  <LI> Alt-X. Delete a location or B&eacute;zier path (at least one path or
+    location must exist).
+  <LI> Control-Z. This is an "undo" operation. It undoes the last entry to
+    the table, which may not always be the last operation performed.
 </UL>
 <P>
 By contrast, some key combinations apply only when adding a point to
@@ -1122,33 +1234,36 @@ a path or creating an isolated point at a specific location:
   <LI> E. When the E key is pressed (without a modifier key, regardless
     of whether the caps-lock key is in use), the next point will be an
     end-of-segment point.
-  <LI> L. When the L key is pressed (without a modifier key, regardless
-    of whether the caps-lock key is in use), the current path will be
-    ended in a loop. This option will be ignored if the last point is
-    a control point or if the last point is a spline point and there is
-    an end-of-segment point that is already part of the path.
+  <LI> L. When the L key is pressed (without a modifier key,
+    regardless of whether the caps-lock key is in use), the current
+    path will be ended in a loop. This option will be ignored if the
+    last point is a control point or if the last point is
+    a <A href="#splines">spline</A> point and there is an
+    end-of-segment point that is already part of the path.
   <LI> P. When the P key is pressed (without a modifier key, regardless
     of whether the caps-lock key is in use), a dialog box will appear
     that allows one to enter GCS coordinates for a point.  The behavior
     is identical to clicking the left mouse button when the cross-hair
     cursor appears over the corresponding point. This key is ignored when
     not creating a location or a point on a B&eacute;zier curve.
-  <LI> S. When the S key is pressed (without a modifier key, regardless
-    of whether the caps-lock key is in use), the next point will be
-    a spline point. If a spline point is not allowed, the keystroke
-    will be ignored.
-  <LI> V. When the V key is pressed (without a modifier key, regardless
-    of whether the caps-lock key is in use), if a curve is being
-    created and the current point is not a control point or spline
-    point, a dialog box specifying a vector to the end of the next
-    segment will appear. This is equivalent to selecting
-    the <B><CODE>Add Vector</CODE></B> menu item from the
+  <LI> S. When the S key is pressed (without a modifier key,
+    regardless of whether the caps-lock key is in use), the next point
+    will be a <A href="#splines">spline</A> point. If a spline point
+    is not allowed, the keystroke will be ignored.
+  <LI> V. When the V key is pressed (without a modifier key,
+    regardless of whether the caps-lock key is in use), if a curve is
+    being created and the current point is not a control point
+    or <A href="#splines">spline</A> point, a dialog box specifying a
+    vector to the end of the next segment will appear. This is
+    equivalent to selecting the <B><CODE>Add Vector</CODE></B> menu
+    item from the
     <B><CODE>Tools</CODE></B> menu.
   <LI> Z. When the Z key is pressed (without a modifier key, regardless
     of whether the caps-lock key is in use), the current path will remain
     open and will be ended.  The type of the last point will be changed to
     an end-of-segment point.
 </UL>
+<P>
 
 <H1><A name="templates">Templates</A></H1>
 
@@ -1166,8 +1281,8 @@ into two categories: table templates and path-iterator templates.
 Table templates represent paths as a series of points whose types
 are <CODE>MOVE_TO</CODE>, <CODE>CONTROL</CODE>, <CODE>SEG_END</CODE>,
 <CODE>SPLINE</CODE>, and <CODE>CLOSE</CODE>. Path-iterator templates
-by contrast construct each spline along a path and then represent
-the path as a sequence of <CODE>SEG_CLOSE</CODE>,
+by contrast construct each <A href="#splines">spline</A> along a path
+and then represent the path as a sequence of <CODE>SEG_CLOSE</CODE>,
 <CODE>SEG_CUBICTO</CODE>, <CODE>SEG_LINETO</CODE>,
 <CODE>SEG_MOVETO</CODE>, or <CODE>SEG_QUADTO</CODE> segments, each
 with 0 to 3 control points. The names for each type are the same as
@@ -1214,11 +1329,11 @@ The built-in table templates are the following:
 <UL>
   <LI><B><CODE>resource:distances</CODE></B>. This will print the
     distances and corresponding path parameters for those points along
-    a path that are spline points or points on segment boundaries. The
-    path parameters are integer-valued, and for the path parameter 0.0,
-    the corresponding distance is always zero.  For paths that have
-    subpaths, the distances and path parameters are those appropriate
-    for each subpath.
+    a path that are <A href="#splines">spline</A> points or points on
+    segment boundaries. The path parameters are integer-valued, and
+    for the path parameter 0.0, the corresponding distance is always
+    zero.  For paths that have subpaths, the distances and path
+    parameters are those appropriate for each subpath.
   <LI><B><CODE>resource:ECMAScript</CODE></B>.  This will print the
     information included in the EPTS table. Each path or location is
     represented by an ECMAScript variable. For locations, the value
@@ -1238,9 +1353,9 @@ The built-in table templates are the following:
     <CODE>org.bzdev.geom.BasicSplinePathBuilder</CODE>. If a stroke or
     color option is provided, the object will be an array of two
     objects, where the first object describes a stroke, color, and
-    Z-order, and where the second object contains an array of control
-    points describing the path itself.  Because of the constraints
-    imposed by the class
+    <A href="#zorder">Z-order</A>, and where the second object
+    contains an array of control points describing the path itself.
+    Because of the constraints imposed by the class
     <CODE>AnimationPath2DFactory</CODE> the corresponding
     <CODE>--tname</CODE> option must name a single EPTS path when a
     stroke or color option is provided.
@@ -1290,9 +1405,10 @@ The built-in table templates are the following:
     option for a path. If there are no <CODE>--tname</CODE> options,
     the field names are the names of all the paths defined in the EPTS
     table. A <CODE>--winding-rule</CODE> option preceding a
-    <CODE>--tname</CODE> option will configure a winding rule for
-    the corresponding spline-path builder, but any stroke or color
-    options will be ignored.
+    <CODE>--tname</CODE> option will configure a
+    <A href="#windingRule">winding rule</A> for the corresponding
+    spline-path builder, but any stroke or color options will be
+    ignored.
   <LI><B><CODE>resource:JavaPathFactories</CODE></B>.
     This template provides a Java class containing fields that are
     instances of the Java interface
@@ -1577,9 +1693,10 @@ In turn, the <CODE>pathItem</CODE> directive contains the following
 directives:
 <UL>
   <LI><B><CODE>pindex</CODE></B>. The value is "1" for the initial
-    <CODE>MOVE_TO</CODE> operation for a path and is incremented for each
-    control point, spline point, or end-of-segment point, along
-    the path, and for a final 'close' directive if there is one.
+    <CODE>MOVE_TO</CODE> operation for a path and is incremented for
+    each control point, <A href="#splines">spline</A> point, or
+    end-of-segment point, along the path, and for a final 'close'
+    directive if there is one.
   <LI><B><CODE>type</CODE></B>. This is the type of a point or operation
     along the path (<CODE>MOVE_TO</CODE>, <CODE>SPLINE</CODE>,
     <CODE>CONTROL</CODE>, <CODE>SEG_END</CODE>, or <CODE>CLOSE</CODE>).
@@ -1886,9 +2003,14 @@ behavior depends on the file format for the first argument:
     <BLOCKQUOTE>
       <CODE>epts image.png</CODE><BR>
       <EM><A href="#config">Configure GCS</A></EM><BR>
-      <EM><A href="#save">Save the session</A> as </EM><CODE>saved.epts</CODE><BR>
+      <EM><A href="#save">Save the session</A> as (for example)</EM>
+      <CODE>saved.epts</CODE><BR>
       <CODE>epts --double spacing=10m saved.epts resource:grid.js</CODE><BR>
     </BLOCKQUOTE>
+    The <CODE>--double</CODE> option is described below: it sets a
+    scripting-language variable to a specified value with optional unit
+    conversions. The URL scheme "resource" indicates that the script,
+    in this case <CODE>grid.js</CODE> is provided by EPTS.
   <LI> if the argument is a file containing a script and the file's
     extension matches one used for that scripting language, the script
     will be run.  The script can be partitioned into multiple files
@@ -2383,18 +2505,19 @@ The options specific to the EPTS command when templates are used are:
     also be used to provide a non-zero port number. This option will
     start an embedded web server allowing the manual to be shown.
   <LI><B><CODE>--winding-rule</CODE></B> <B><EM>RULE</EM></B>.  This
-    option, when present, adds a winding rule for use with table
-    templates when the <CODE>--tname</CODE>option is used, and must
-    precede that option. After a <CODE>--tname</CODE>option is seen,
-    the winding rule removed.  The values of <EM>RULE</EM> may be
-    <CODE>evenodd</CODE> or <EM>nonzero</EM>. The
+    option, when present, adds a <A href="#windingRule">winding
+    rule</A> for use with table templates when
+    the <CODE>--tname</CODE>option is used, and must precede that
+    option. After a <CODE>--tname</CODE>option is seen, the winding
+    rule removed.  The values of <EM>RULE</EM> may be
+    <CODE>evenodd</CODE> or <CODE>nonzero</CODE>. The
     <CODE>--winding-rule</CODE> option sets a template-table keymap
     directive as described in the documentation for
     <CODE>epts</CODE>(5) and in the on-line manual.
   <LI><B><CODE>--zorder</CODE></B> <B><EM>VALUE</EM></B>. This option is
     used for table templates and applies to the path specified by the
     following  <CODE>--tname</CODE> option. This option's argument
-    <EM>VALUE</EM> provides the Z-order for a path.
+    <EM>VALUE</EM> provides the <A href="#zorder">Z-order</A> for a path.
   <LI><B><CODE>--</CODE></B>. End of options. This can be used
     if file names start with the character '-'. Otherwise
     it is not necessary.
@@ -2593,9 +2716,9 @@ can be displayed.  In particular, animation layers can be used to
 draw simple geometrical figures, figures based on paths, and can
 scale and place images. The normal sequence of calling the animation's
 methods <CODE>initFrames</CODE>, <CODE>scheduleFrames</CODE> and
-<CODE>run</CODE> are skipped: EPTS will iterate through the animation's
-objects using their Z-order and write them to a graph, thereby creating
-a background.
+<CODE>run</CODE> are skipped: EPTS will iterate through the
+animation's objects using their <A href="#zorder">Z-order</A> and
+write them to a graph, thereby creating a background.
 <P>
 To use EPTS in developing animations, one can use templates to
 create ECMAScript code that will provide paths or in some cases
@@ -2715,7 +2838,8 @@ Cartesian grids are the following:
   <LI><B><CODE>strokeWidth</CODE></B> - a double giving the width of
     the stroke used to create grid lines; undefined or null for a
     default.
-  <LI><B><CODE>gridZorder</CODE></B> - an integer giving the z-order
+  <LI><B><CODE>gridZorder</CODE></B> - an integer giving the
+    <A href="#zorder">Z-order</A>
     to use for the object that creates the grid. The default is the
     javascript value java.lang.Long.MAX_VALUE (2<SUP>53</SUP> - 1).
 </UL>
@@ -2795,7 +2919,8 @@ variables that configure polar grids are the following:
   <LI><B><CODE>strokeWidth</CODE></B> - a double giving the width of
     the stroke used to create grid lines; undefined or null for a
     default.
-  <LI><B><CODE>gridZorder</CODE></B> - an integer giving the z-order
+  <LI><B><CODE>gridZorder</CODE></B> - an integer giving the
+    <A href="#zorder">Z-order</A>
     to use for the object that creates the grid. The default is the
     javascript value java.lang.Long.MAX_VALUE (2<SUP>53</SUP> - 1).
 </UL>
@@ -3012,10 +3137,10 @@ with the following attributes
       <LI><B><CODE>MOVE_TO</CODE></B>. The row represents a MOVE_TO operation.
 	The attributes <CODE>x</CODE>, <CODE>y</CODE>, <CODE>xp</CODE>, and
 	<CODE>yp</CODE> must be provided.
-      <LI><B><CODE>SPLINE</CODE></B>. The row represents a knot on a spline,
-	excluding its end points.
-	The attributes <CODE>x</CODE>, <CODE>y</CODE>, <CODE>xp</CODE>, and
-	<CODE>yp</CODE> must be provided.
+      <LI><B><CODE>SPLINE</CODE></B>. The row represents a knot on
+	a <A href="#splines">spline</A>, excluding its end points.
+	The attributes <CODE>x</CODE>, <CODE>y</CODE>, <CODE>xp</CODE>,
+	and <CODE>yp</CODE> must be provided.
       <LI><B><CODE>CONTROL</CODE></B>. The row represents a control point.
 	The attributes <CODE>x</CODE>, <CODE>y</CODE>, <CODE>xp</CODE>, and
 	<CODE>yp</CODE> must be provided.
@@ -3027,8 +3152,9 @@ with the following attributes
 	will be closed. A path is closed by drawing a straight line
 	segment from the last <CODE>SEG_END</CODE> point to the
 	first <CODE>MOVE_TO</CODE> point with one exception: if a path
-	starts with a <CODE>MOVE_TO</CODE> operation and otherwise contains
-	only <CODE>SPLINE</CODE> points, a closed spline will be created.
+	starts with a <CODE>MOVE_TO</CODE> operation and otherwise
+	contains only <CODE>SPLINE</CODE> points, a
+	closed <A href="#splines">spline</A> will be created.
     </UL>
   <LI><B><CODE>x</CODE></B>. The value of this attribute is an
     X coordinate in graph-coordinate-space units (meters or custom units).
@@ -3459,7 +3585,7 @@ The path names for these documents, of course, is system dependent.
  -->
 <!--  LocalWords:  overlayed scrollbars whitespace varname Makefile
  -->
-<!--  LocalWords:  pathSegment EPTS's epts MAPFILE UTF http eptt
+<!--  LocalWords:  pathSegment EPTS's epts MAPFILE UTF http eptt Ctrl
  -->
 <!--  LocalWords:  https TFILE OUTFILE Scrunner scrunner JVM LNAME js
  -->
@@ -3505,7 +3631,7 @@ The path names for these documents, of course, is system dependent.
  -->
 <!--  LocalWords:  configFormat selectable classpath filterRow uindex
  -->
-<!--  LocalWords:  pathmap basemapEntry antiparallel
+<!--  LocalWords:  pathmap basemapEntry antiparallel affine
  -->
 <!--  LocalWords:  pathmapEntry
  -->
