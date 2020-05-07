@@ -100,8 +100,11 @@ EXTLIB3 = $(EXTDIR)/libbzdev-desktop.jar
 EXTLIB4 = $(EXTDIR)/libbzdev-devqsim.jar
 EXTLIB5 = $(EXTDIR)/libbzdev-anim2d.jar
 EXTLIB6 = $(EXTDIR)/libbzdev-ejws.jar
+EXTLIB7 = $(EXTDIR)/libbzdev-math.jar
+EXTLIB8 = $(EXTDIR)/libbzdev-graphics.jar
 
-EXTLIBS = $(EXTLIB1):$(EXTLIB2):$(EXTLIB3):$(EXTLIB4):$(EXTLIB5):$(EXTLIB6)
+EXTLIB1to6 = $(EXTLIB1):$(EXTLIB2):$(EXTLIB3):$(EXTLIB4):$(EXTLIB5):$(EXTLIB6)
+EXTLIBS = $(EXTLIB1to6):$(EXTLIB7):$(EXTLIB8)
 
 MANS = $(JROOT_MANDIR)/man1/epts.1.gz $(JROOT_MANDIR)/man5/epts.5.gz
 
@@ -194,7 +197,7 @@ all: $(ALL)
 jardirlibs:
 	(cd jar ; rm libbzdev-*.jar)
 	ln -s $(EXTLIB1) $(EXTLIB2) $(EXTLIB3) $(EXTLIB4) \
-		$(EXTLIB5) $(EXTLIB6) jar/
+		$(EXTLIB5) $(EXTLIB6) $(EXTLIB7) $(EXTLIB8) jar/
 
 
 include MajorMinor.mk

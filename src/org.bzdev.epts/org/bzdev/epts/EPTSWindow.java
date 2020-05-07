@@ -51,6 +51,7 @@ import org.bzdev.geom.SplinePathBuilder;
 import org.bzdev.geom.SplinePathBuilder.CPointType;
 import org.bzdev.graphs.Graph;
 import org.bzdev.graphs.RefPointName;
+import org.bzdev.lang.MathOps;
 import org.bzdev.lang.UnexpectedExceptionError;
 import org.bzdev.imageio.BlockingImageObserver;
 import org.bzdev.math.Functions;
@@ -60,7 +61,7 @@ import org.bzdev.util.CopyUtilities;
 import org.bzdev.util.TemplateProcessor;
 import org.bzdev.util.TemplateProcessor.KeyMap;
 import org.bzdev.util.TemplateProcessor.KeyMapList;
-import org.bzdev.swing.ErrorMessage;
+import org.bzdev.swing.SwingErrorMessage;
 import org.bzdev.swing.HtmlWithTocPane;
 import org.bzdev.swing.PortTextField;
 import org.bzdev.swing.SwingOps;
@@ -2399,23 +2400,23 @@ public class EPTSWindow {
 		    manualPane.setToc(url, true, false);
 		    manualPane.setSelectionWithAction(0);
 		} catch (IOException e) {
-		    ErrorMessage.display(e);
+		    SwingErrorMessage.display(e);
 		    manualFrame.dispose();
 		    manualFrame = null;
 		    return;
 		} catch (org.xml.sax.SAXException e) {
-		    ErrorMessage.display(e);
+		    SwingErrorMessage.display(e);
 		    manualFrame.dispose();
 		    manualFrame = null;
 		    return;
 		} catch(javax.xml.parsers.ParserConfigurationException e) {
-		    ErrorMessage.display(e);
+		    SwingErrorMessage.display(e);
 		    manualFrame.dispose();
 		    manualFrame = null;
 		    return;
 		}
 	    } else {
-		ErrorMessage.display("cannot load manual/manual.xml");
+		SwingErrorMessage.display("cannot load manual/manual.xml");
 		    manualFrame.dispose();
 		    manualFrame = null;
 		    return;
@@ -3865,10 +3866,10 @@ public class EPTSWindow {
 	zoomTable = new double[exlist.size()];
 	i = 0;
 	for (int exponent: exlist) {
-	    zoomTable[i] = Functions.pow(2.0, exponent);
+	    zoomTable[i] = MathOps.pow(2.0, exponent);
 	    if (exponent < 0) {
 		menuItem = new JMenuItem
-		    (String.format("1/%d", Functions.lPow(2,-exponent)));
+		    (String.format("1/%d", MathOps.lPow(2,-exponent)));
 
 	    } else if (exponent == 0) {
 		zoomIndex = i;
@@ -3876,7 +3877,7 @@ public class EPTSWindow {
 		menuItem = new JMenuItem("1.0");
 	    } else {
 		menuItem = new JMenuItem
-		    (String.format("%d", Functions.lPow(2,exponent)));
+		    (String.format("%d", MathOps.lPow(2,exponent)));
 	    }
 	    final int index = i;
 	    menuItem.addActionListener(new ActionListener() {
@@ -5150,8 +5151,8 @@ public class EPTSWindow {
 	    if (copyMode) {
 		int start = ptmodel.findStart(oldPathName);
 		if (start == -1) {
-		    ErrorMessage.display(frame, localeString("errorTitle"),
-					 errorMsg("noPath", oldPathName));
+		    SwingErrorMessage.display(frame, localeString("errorTitle"),
+					      errorMsg("noPath", oldPathName));
 		    panel.repaint();
 		    return;
 		}
@@ -5207,8 +5208,8 @@ public class EPTSWindow {
 	    } else {
 		int start = ptmodel.findStart(oldPathName);
 		if (start == -1) {
-		    ErrorMessage.display(frame, localeString("errorTitle"),
-					 errorMsg("noPath", oldPathName));
+		    SwingErrorMessage.display(frame, localeString("errorTitle"),
+					      errorMsg("noPath", oldPathName));
 		    panel.repaint();
 		    return;
 		}

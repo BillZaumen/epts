@@ -4,6 +4,8 @@ open module org.bzdev.epts {
     requires java.desktop;
     requires java.scripting;
     requires org.bzdev.base;
+    requires org.bzdev.math;
+    requires org.bzdev.graphics;
     requires org.bzdev.desktop;
     requires org.bzdev.obnaming;
     requires org.bzdev.devqsim;

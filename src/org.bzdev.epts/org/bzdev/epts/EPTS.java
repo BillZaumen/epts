@@ -53,7 +53,7 @@ import org.bzdev.obnaming.misc.BasicStrokeParm;
 import org.bzdev.obnaming.misc.BasicStrokeParm.Cap;
 import org.bzdev.obnaming.misc.BasicStrokeParm.Join;
 import org.bzdev.scripting.Scripting;
-import org.bzdev.swing.ErrorMessage;
+import org.bzdev.swing.SwingErrorMessage;
 import org.bzdev.swing.SimpleConsole;
 import org.bzdev.swing.WholeNumbTextField;
 import org.bzdev.util.CopyUtilities;
@@ -192,9 +192,9 @@ public class EPTS {
 
     private static void displayError(String string) {
 	if (guiMode) {
-	    ErrorMessage.displayFormat((Component)null,
-				       localeString("eptsErrorTitle"),
-				       "%s", string);
+	    SwingErrorMessage.displayFormat((Component)null,
+					    localeString("eptsErrorTitle"),
+					    "%s", string);
 	} else {
 	    if (string.startsWith("epts:")) {
 		System.err.println(string);
@@ -1735,15 +1735,14 @@ public class EPTS {
 				inputFile = f.getCanonicalPath();
 				break;
 			    } else {
-				ErrorMessage.setComponent(null);
-				ErrorMessage.display
-				    (null, null,
-				     errorMsg("unrecognizedFNE"));
+				SwingErrorMessage.setComponent(null);
+				SwingErrorMessage.display
+				    (null, null, errorMsg("unrecognizedFNE"));
 			    }
 			    continue;
 			} catch (Exception e) {
-			    ErrorMessage.setComponent(null);
-			    ErrorMessage.display(e);
+			    SwingErrorMessage.setComponent(null);
+			    SwingErrorMessage.display(e);
 			    System.exit(1);
 			}
 		    } else {
@@ -3128,7 +3127,7 @@ public class EPTS {
 			if (urls.length != 1) {
 			    String title = errorMsg("errorTitle");
 			    String msg = errorMsg("multipleURLs");
-			    ErrorMessage.display(null, title, msg);
+			    SwingErrorMessage.display(null, title, msg);
 			    System.exit(1);
 			}
 			if (name.startsWith(".../")) {
@@ -3300,15 +3299,15 @@ public class EPTS {
 					}
 					break;
 				    } else {
-					ErrorMessage.setComponent(null);
-					ErrorMessage.display
+					SwingErrorMessage.setComponent(null);
+					SwingErrorMessage.display
 					    (null, null,
 					     errorMsg("unrecognizedFNE"));
 				    }
 				    continue;
 				} catch (Exception e) {
-				    ErrorMessage.setComponent(null);
-				    ErrorMessage.display(e);
+				    SwingErrorMessage.setComponent(null);
+				    SwingErrorMessage.display(e);
 				    System.exit(1);
 				}
 			    } else {
@@ -3891,7 +3890,7 @@ public class EPTS {
 	   org.bzdev.protocols.Handlers.enable();
 	   init(argv);
 	} catch (Exception e) {
-	    ErrorMessage.display(e);
+	    SwingErrorMessage.display(e);
 	    if (stackTrace) {
 		e.printStackTrace();
 	    }

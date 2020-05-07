@@ -24,7 +24,7 @@ import javax.xml.parsers.*;
 import org.bzdev.geom.SplinePathBuilder;
 import org.bzdev.geom.SplinePathBuilder.CPointType;
 import org.bzdev.graphs.RefPointName;
-import org.bzdev.swing.ErrorMessage;
+import org.bzdev.swing.SwingErrorMessage;
 
 import org.xml.sax.helpers.*;
 import org.xml.sax.*;
@@ -216,15 +216,15 @@ public class EPTSParser {
     
     void displayMessage(String msg, String title) {
 	if (comp != null) {
-	    ErrorMessage.display(comp, title, msg);
+	    SwingErrorMessage.display(comp, title, msg);
 	} else {
-	    ErrorMessage.display(msg);
+	    SwingErrorMessage.display(msg);
 	}
     }
 
     void displayMessage(Locator locator, 
 			String msg, String title) {
-	ErrorMessage.display(xmlFilename, locator.getLineNumber(), msg);
+	SwingErrorMessage.display(xmlFilename, locator.getLineNumber(), msg);
     }
 
     ArrayList<String> argList = new ArrayList<>();
