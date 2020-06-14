@@ -28,12 +28,21 @@ SYS_DOCDIR = /usr/share/doc/epts
 SYS_MIMEDIR = /usr/share/mime
 SYS_APPDIR = /usr/share/applications
 SYS_ICON_DIR = /usr/share/icons/hicolor
+SYS_POPICON_DIR = /usr/share/icons/Pop
 SYS_APP_ICON_DIR = $(SYS_ICON_DIR)/scalable/$(APPS_DIR)
+SYS_APP_POPICON_DIR = $(SYS_POPICON_DIR)/scalable/$(APPS_DIR)
 SYS_MIME_ICON_DIR =$(SYS_ICON_DIR)/scalable/$(MIMETYPES_DIR)
+SYS_MIME_POPICON_DIR =$(SYS_POPICON_DIR)/scalable/$(MIMETYPES_DIR)
 SYS_JARDIRECTORY = /usr/share/java
 SYS_BZDEVDIR = /usr/share/bzdev
 
-ICON_WIDTHS = 16 20 22 24 32 36 48 64 72 96 128 192 256
+# ICON_WIDTHS = 16 20 22 24 32 36 48 64 72 96 128 192 256
+
+ICON_WIDTHS = 8 16 20 22 24 32 36 48 64 72 96 128 192 256 512
+ICON_WIDTHS2x = 16 24 32 48 64 128 256
+
+POPICON_WIDTHS = 8 16 24 32 48 64 128 256
+POPICON_WIDTHS2x = 8 16 24 32 48 64 128 256
 
 # Target JARDIRECTORY - where 'make install' actually puts the jar
 # file (DESTDIR is not null when creating packages)
@@ -52,9 +61,13 @@ DOCDIR = $(DESTDIR)$(SYS_DOCDIR)
 MIMEDIR = $(DESTDIR)$(SYS_MIMEDIR)
 APPDIR = $(DESTDIR)$(SYS_APPDIR)
 MIME_ICON_DIR = $(DESTDIR)$(SYS_MIME_ICON_DIR)
+POPICON_DIR = $(DESTDIR)$(SYS_POPICON_DIR)
+MIME_POPICON_DIR=$(DESTDIR)$(SYS_MIME_POPICON_DIR)
+
 # Icon directory for applications
 #
 APP_ICON_DIR = $(DESTDIR)$(SYS_APP_ICON_DIR)
+APP_POPICON_DIR = $(DESTDIR)$(SYS_APP_POPICON_DIR)
 ICON_DIR = $(DESTDIR)$(SYS_ICON_DIR)
 
 # Full path name of for where epts.desktop goes
@@ -218,7 +231,7 @@ $(JROOT_JARDIR)/epts.jar: $(FILES) $(TEMPLATES) $(CRLF_TEMPLATES)\
 		-d mods/org.bzdev.epts -p $(EXTLIBS) \
 		src/org.bzdev.epts/module-info.java $(JFILES)
 	cp $(PROPERTIES) $(EPTS_JDIR)
-	for i in $(ICON_WIDTHS) 512 ; do \
+	for i in $(ICON_WIDTHS) ; do \
 		inkscape -w $$i -e $(EPTS_JDIR)/eptsicon$${i}.png \
 		icons/epts.svg ; \
 	done
@@ -287,6 +300,14 @@ install: all
 			$(ICON_DIR)/$${i}x$${i}/$(APPS_DIR)/$(TARGETICON_PNG); \
 		rm tmp.png ; \
 	done
+	for i in $(ICON_WIDTHS2x) ; do \
+		install -d $(ICON_DIR)/$${i}x$${i}@2x/$(APPS_DIR) ; \
+		ii=`expr 2 '*' $$i` ; \
+		inkscape -w $$ii -e tmp.png $(SOURCEICON) ; \
+		install -m 0644 -T tmp.png \
+		    $(ICON_DIR)/$${i}x$${i}@2x/$(APPS_DIR)/$(TARGETICON_PNG); \
+		rm tmp.png ; \
+	done
 	install -m 0644 -T mime/epts.xml $(MIMEDIR)/packages/epts.xml
 	install -m 0644 -T $(SOURCE_FILE_ICON) \
 		$(MIME_ICON_DIR)/$(TARGET_FILE_ICON)
@@ -295,19 +316,28 @@ install: all
 	install -m 0644 -T $(SOURCE_TCFILE_ICON) \
 		$(MIME_ICON_DIR)/$(TARGET_TCFILE_ICON)
 	for i in $(ICON_WIDTHS) ; do \
-	    install -d $(ICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR) ; \
-	done;
-	for i in $(ICON_WIDTHS) ; do \
 	  inkscape -w $$i -e tmp.png $(SOURCE_FILE_ICON) ; \
-	  install -m 0644 -T tmp.png \
-	  $(ICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR)/$(TARGET_FILE_ICON_PNG); \
+	  dir=$(ICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR) ; \
+	  install -d $$dir ; \
+	  install -m 0644 -T tmp.png $$dir/$(TARGET_FILE_ICON_PNG); \
 	  rm tmp.png ; \
 	  inkscape -w $$i -e tmp.png $(SOURCE_CFILE_ICON) ; \
-	  install -m 0644 -T tmp.png \
-	  $(ICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR)/$(TARGET_CFILE_ICON_PNG); \
+	  install -m 0644 -T tmp.png $$dir/$(TARGET_CFILE_ICON_PNG); \
 	  inkscape -w $$i -e tmp.png $(SOURCE_TCFILE_ICON) ; \
-	  install -m 0644 -T tmp.png \
-	  $(ICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR)/$(TARGET_TCFILE_ICON_PNG); \
+	  install -m 0644 -T tmp.png $$dir/$(TARGET_TCFILE_ICON_PNG); \
+	  rm tmp.png ; \
+	done
+	for i in $(ICON_WIDTHS2x) ; do \
+	  ii=`expr 2 '*' $$i` ; \
+	  inkscape -w $$ii -e tmp.png $(SOURCE_FILE_ICON) ; \
+	  dir=$(ICON_DIR)/$${i}x$${i}@2x/$(MIMETYPES_DIR) ; \
+	  install -d $$dir ; \
+	  install -m 0644 -T tmp.png $$dir/$(TARGET_FILE_ICON_PNG); \
+	  rm tmp.png ; \
+	  inkscape -w $$ii -e tmp.png $(SOURCE_CFILE_ICON) ; \
+	  install -m 0644 -T tmp.png $$dir/$(TARGET_CFILE_ICON_PNG);\
+	  inkscape -w $$ii -e tmp.png $(SOURCE_TCFILE_ICON) ; \
+	  install -m 0644 -T tmp.png $$dir/$(TARGET_TCFILE_ICON_PNG);\
 	  rm tmp.png ; \
 	done
 	install -m 0644 $(JROOT_JARDIR)/epts.jar $(BZDEVDIR)
@@ -316,6 +346,57 @@ install: all
 	install -m 0644 epts.desktop $(APPDIR)
 	install -m 0644 $(JROOT_MANDIR)/man1/epts.1.gz $(MANDIR)/man1
 	install -m 0644 $(JROOT_MANDIR)/man5/epts.5.gz $(MANDIR)/man5
+
+install-pop: all
+	install -d $(APP_POPICON_DIR)
+	install -d $(MIME_POPICON_DIR)
+	install -m 0644 -T $(SOURCEICON) $(APP_POPICON_DIR)/$(TARGETICON)
+	for i in $(POPICON_WIDTHS) ; do \
+	    install -d $(POPICON_DIR)/$${i}x$${i}/$(APPS_DIR) ; \
+	    inkscape -w $$i -e tmp.png $(SOURCEICON) ; \
+	    install -m 0644 -T tmp.png \
+		$(POPICON_DIR)/$${i}x$${i}/$(APPS_DIR)/$(TARGETICON_PNG); \
+	    rm tmp.png ; \
+	done
+	for i in $(POPICON_WIDTHS2x) ; do \
+	    install -d $(POPICON_DIR)/$${i}x$${i}@2x/$(APPS_DIR) ; \
+	    ii=`expr 2 '*' $$i` ; \
+	    inkscape -w $$ii -e tmp.png $(SOURCEICON) ; \
+	    install -m 0644 -T tmp.png \
+		$(POPICON_DIR)/$${i}x$${i}@2x/$(APPS_DIR)/$(TARGETICON_PNG); \
+	    rm tmp.png ; \
+	done
+	install -m 0644 -T $(SOURCE_FILE_ICON) \
+		$(MIME_POPICON_DIR)/$(TARGET_FILE_ICON)
+	install -m 0644 -T $(SOURCE_CFILE_ICON) \
+		$(MIME_POPICON_DIR)/$(TARGET_CFILE_ICON)
+	install -m 0644 -T $(SOURCE_TCFILE_ICON) \
+		$(MIME_POPICON_DIR)/$(TARGET_TCFILE_ICON)
+	for i in $(POPICON_WIDTHS) ; do \
+	    inkscape -w $$i -e tmp.png $(SOURCE_FILE_ICON) ; \
+	    dir=$(POPICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR) ; \
+	    install -d $$dir ; \
+	    install -m 0644 -T tmp.png $$dir/$(TARGET_FILE_ICON_PNG); \
+	    rm tmp.png ; \
+	    inkscape -w $$i -e tmp.png $(SOURCE_CFILE_ICON) ; \
+	    install -m 0644 -T tmp.png $$dir/$(TARGET_CFILE_ICON_PNG); \
+	    inkscape -w $$i -e tmp.png $(SOURCE_TCFILE_ICON) ; \
+	    install -m 0644 -T tmp.png $$dir/$(TARGET_TCFILE_ICON_PNG); \
+	    rm tmp.png ; \
+	done
+	for i in $(POPICON_WIDTHS2x) ; do \
+	    ii=`expr 2 '*' $$i` ; \
+	    inkscape -w $$ii -e tmp.png $(SOURCE_FILE_ICON) ; \
+	    dir=$(POPICON_DIR)/$${i}x$${i}@2x/$(MIMETYPES_DIR) ; \
+	    install -d $$dir ; \
+	    install -m 0644 -T tmp.png $$dir/$(TARGET_FILE_ICON_PNG); \
+	    rm tmp.png ; \
+	    inkscape -w $$ii -e tmp.png $(SOURCE_CFILE_ICON) ; \
+	    install -m 0644 -T tmp.png $$dir/$(TARGET_CFILE_ICON_PNG);\
+	    inkscape -w $$ii -e tmp.png $(SOURCE_TCFILE_ICON) ; \
+	    install -m 0644 -T tmp.png $$dir/$(TARGET_TCFILE_ICON_PNG);\
+	    rm tmp.png ; \
+	done
 
 install-links:
 	 [ -h $(BZDEVDIR)/libbzdev.jar ] || \
