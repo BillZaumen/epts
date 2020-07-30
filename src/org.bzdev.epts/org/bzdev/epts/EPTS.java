@@ -56,7 +56,7 @@ import org.bzdev.scripting.Scripting;
 import org.bzdev.swing.SwingErrorMessage;
 import org.bzdev.swing.SimpleConsole;
 import org.bzdev.swing.WholeNumbTextField;
-import org.bzdev.util.CopyUtilities;
+// import org.bzdev.util.CopyUtilities;
 import org.bzdev.util.SafeFormatter;
 import org.bzdev.util.TemplateProcessor;
 
@@ -258,7 +258,8 @@ public class EPTS {
 		    tmp.deleteOnExit();
 		    OutputStream os = new FileOutputStream(tmp);
 		    InputStream is = url.openConnection().getInputStream();
-		    CopyUtilities.copyStream(is, os);
+		    // CopyUtilities.copyStream(is, os);
+		    is.transferTo(os);
 		    os.close();
 		    is.close();
 		    fname = tmp.getCanonicalPath();
