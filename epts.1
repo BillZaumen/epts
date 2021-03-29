@@ -46,6 +46,14 @@ system. The points and paths can then be written to an output stream
 in a variety of text formats, each specified by a template, for use
 by other programs.
 .PP
+EPTS has a large number of options, but there is a desktop action for
+starting EPTS in various modes.  In particular one can use a GUI to
+configure a new EPTS session and can use a GUI to set up template
+processing.  For casual use, these options are far easier to use than
+the command line. With no specific arguments, EPTS will ask for an input
+image file or a window size, display that, and allow users to draw paths
+within EPTS's window.
+.PP
 Arguments that are not options can be one of four types of files:
 .TP
 .IR CFILE .
@@ -218,6 +226,32 @@ To show these points and paths, the EPTS
 saved-state file must be the first file-name argument (the first
 argument after the final option) and the
 .B \-\- image options must not be used.
+.TP
+.BI \-w\  WIDTH
+This option is an alternative to the
+.B \-\-image
+option, and will create a blank image with the width in points
+specified by
+.IR WIDTH .
+Normally the
+.B \-w
+and
+.B \-h
+options are used together. The defaults are 1024, but at least one has
+to be specified to create a blank image.
+.TP
+.BI \-h\  HEIGHT
+This option is an alternative to the
+.B \-\-image
+option, and will create a blank image with the height in points
+specified by
+.IR HEIGHT .
+Normally the
+.B \-w
+and
+.B \-h
+options are used together. The defaults are 1024, but at least one has
+to be specified to create a blank image.
 .TP
 .BI \-\-port\  PORT
 When
@@ -1731,6 +1765,9 @@ and
 The area is in GCS units.
 .SH USER GUIDES AND API DOCUMENTATION
 .TP
+The EPTS users guide is built into EPTS and is accessible via
+a menu item.
+.TP
 .B /usr/share/doc/libbzdev-doc/api/index.html
 The web page for the API documentation for the BZDev class library.
 .TP
@@ -1738,18 +1775,6 @@ The web page for the API documentation for the BZDev class library.
 The web page for the BZDev class library's factories and their
 parameters. This is usually sufficient for determining how to to
 configure a factory.
-.TP
-.B /usr/share/doc/libbzdev-doc/ByExample.pdf
-This is a copy of \fIAn Introduction to the BZDev Java Class Library
-with Examples\fR.
-.TP
-.B /usr/share/doc/libbzdev-doc/SimScript.pdf
-This is a copy of \fISimulation Scripting Guide for the BZDev class library\fR.
-It describes how to create factories.
-.TP
-.B /usr/share/doc/libbzdev-doc/Factories.pdf
-This is a copy of \fIProgramming Named-Objects and their Factories\fR. This
-guide concentrates on how to create new objects and their factories.
 .SH FILES
 .TP
 .B /etc/bzdev/scrunner.conf\ \fRor\fB\ /etc/opt/bzdev/scrunner.conf

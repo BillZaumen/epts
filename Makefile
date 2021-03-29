@@ -115,9 +115,10 @@ EXTLIB5 = $(EXTDIR)/libbzdev-anim2d.jar
 EXTLIB6 = $(EXTDIR)/libbzdev-ejws.jar
 EXTLIB7 = $(EXTDIR)/libbzdev-math.jar
 EXTLIB8 = $(EXTDIR)/libbzdev-graphics.jar
+EXTLIB9 = $(EXTDIR)/libbzdev-esp.jar
 
 EXTLIB1to6 = $(EXTLIB1):$(EXTLIB2):$(EXTLIB3):$(EXTLIB4):$(EXTLIB5):$(EXTLIB6)
-EXTLIBS = $(EXTLIB1to6):$(EXTLIB7):$(EXTLIB8)
+EXTLIBS = $(EXTLIB1to6):$(EXTLIB7):$(EXTLIB8):$(EXTLIB9)
 
 MANS = $(JROOT_MANDIR)/man1/epts.1.gz $(JROOT_MANDIR)/man5/epts.5.gz
 
@@ -139,7 +140,8 @@ TEMPLATES = templates/distances.tpl \
 	templates/area.tpl templates/circumference.tpl \
 	templates/pathlength.tpl
 
-SCRIPTS = scripts/grid.js scripts/polar.js
+SCRIPTS = scripts/grid.js scripts/polar.js \
+	scripts/grid.esp scripts/polar.esp
 
 CRLF_TEMPLATES = templates/SegmentsCSV.tpl
 
@@ -148,6 +150,7 @@ RESOURCES = manual/manual.xml \
 	manual/index.html \
 	manual/manual.html \
 	manual/manual.css \
+	manual/OpeningDialog.png \
 	manual/desktop.png \
 	manual/inputfiles.png \
 	manual/openfile.png \
@@ -210,7 +213,7 @@ all: $(ALL)
 jardirlibs:
 	(cd jar ; rm libbzdev-*.jar)
 	ln -s $(EXTLIB1) $(EXTLIB2) $(EXTLIB3) $(EXTLIB4) \
-		$(EXTLIB5) $(EXTLIB6) $(EXTLIB7) $(EXTLIB8) jar/
+		$(EXTLIB5) $(EXTLIB6) $(EXTLIB7) $(EXTLIB8) $(EXTLIB9) jar/
 
 
 include MajorMinor.mk
@@ -232,7 +235,8 @@ $(JROOT_JARDIR)/epts.jar: $(FILES) $(TEMPLATES) $(CRLF_TEMPLATES)\
 		src/org.bzdev.epts/module-info.java $(JFILES)
 	cp $(PROPERTIES) $(EPTS_JDIR)
 	for i in $(ICON_WIDTHS) ; do \
-		inkscape -w $$i -e $(EPTS_JDIR)/eptsicon$${i}.png \
+		inkscape -w $$i \
+			--export-filename=$(EPTS_JDIR)/eptsicon$${i}.png \
 		icons/epts.svg ; \
 	done
 	mkdir -p $(JROOT_JARDIR)
@@ -241,7 +245,7 @@ $(JROOT_JARDIR)/epts.jar: $(FILES) $(TEMPLATES) $(CRLF_TEMPLATES)\
 		cp $$i $(EPTS_JDIR)/$$tname; done
 	for i in $(CRLF_TEMPLATES) ; do tname=`basename $$i .tpl`; \
 		cat $$i | sed -e 's/.*/\0\r/' > $(EPTS_JDIR)/$$tname; done
-	for i in $(SCRIPTS) ; do sname=`basename $$i .js` ; \
+	for i in $(SCRIPTS) ; do sname=`basename $$i` ; \
 		cp $$i $(EPTS_JDIR)/$$sname; done
 	mkdir -p $(EPTS_JDIR)/manual
 	for i in $(RESOURCES) ; do cp $$i $(EPTS_JDIR)/$$i ; done
@@ -295,7 +299,7 @@ install: all
 	install -m 0644 -T $(SOURCEICON) $(APP_ICON_DIR)/$(TARGETICON)
 	for i in $(ICON_WIDTHS) ; do \
 		install -d $(ICON_DIR)/$${i}x$${i}/$(APPS_DIR) ; \
-		inkscape -w $$i -e tmp.png $(SOURCEICON) ; \
+		inkscape -w $$i --export-filename=tmp.png $(SOURCEICON) ; \
 		install -m 0644 -T tmp.png \
 			$(ICON_DIR)/$${i}x$${i}/$(APPS_DIR)/$(TARGETICON_PNG); \
 		rm tmp.png ; \
@@ -303,7 +307,7 @@ install: all
 	for i in $(ICON_WIDTHS2x) ; do \
 		install -d $(ICON_DIR)/$${i}x$${i}@2x/$(APPS_DIR) ; \
 		ii=`expr 2 '*' $$i` ; \
-		inkscape -w $$ii -e tmp.png $(SOURCEICON) ; \
+		inkscape -w $$ii --export-filename=tmp.png $(SOURCEICON) ; \
 		install -m 0644 -T tmp.png \
 		    $(ICON_DIR)/$${i}x$${i}@2x/$(APPS_DIR)/$(TARGETICON_PNG); \
 		rm tmp.png ; \
@@ -316,27 +320,27 @@ install: all
 	install -m 0644 -T $(SOURCE_TCFILE_ICON) \
 		$(MIME_ICON_DIR)/$(TARGET_TCFILE_ICON)
 	for i in $(ICON_WIDTHS) ; do \
-	  inkscape -w $$i -e tmp.png $(SOURCE_FILE_ICON) ; \
+	  inkscape -w $$i --export-filename=tmp.png $(SOURCE_FILE_ICON) ; \
 	  dir=$(ICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR) ; \
 	  install -d $$dir ; \
 	  install -m 0644 -T tmp.png $$dir/$(TARGET_FILE_ICON_PNG); \
 	  rm tmp.png ; \
-	  inkscape -w $$i -e tmp.png $(SOURCE_CFILE_ICON) ; \
+	  inkscape -w $$i --export-filename=tmp.png $(SOURCE_CFILE_ICON) ; \
 	  install -m 0644 -T tmp.png $$dir/$(TARGET_CFILE_ICON_PNG); \
-	  inkscape -w $$i -e tmp.png $(SOURCE_TCFILE_ICON) ; \
+	  inkscape -w $$i --export-filename=tmp.png $(SOURCE_TCFILE_ICON) ; \
 	  install -m 0644 -T tmp.png $$dir/$(TARGET_TCFILE_ICON_PNG); \
 	  rm tmp.png ; \
 	done
 	for i in $(ICON_WIDTHS2x) ; do \
 	  ii=`expr 2 '*' $$i` ; \
-	  inkscape -w $$ii -e tmp.png $(SOURCE_FILE_ICON) ; \
+	  inkscape -w $$ii --export-filename=tmp.png $(SOURCE_FILE_ICON) ; \
 	  dir=$(ICON_DIR)/$${i}x$${i}@2x/$(MIMETYPES_DIR) ; \
 	  install -d $$dir ; \
 	  install -m 0644 -T tmp.png $$dir/$(TARGET_FILE_ICON_PNG); \
 	  rm tmp.png ; \
-	  inkscape -w $$ii -e tmp.png $(SOURCE_CFILE_ICON) ; \
+	  inkscape -w $$ii --export-filename=tmp.png $(SOURCE_CFILE_ICON) ; \
 	  install -m 0644 -T tmp.png $$dir/$(TARGET_CFILE_ICON_PNG);\
-	  inkscape -w $$ii -e tmp.png $(SOURCE_TCFILE_ICON) ; \
+	  inkscape -w $$ii --export-filename=tmp.png $(SOURCE_TCFILE_ICON) ; \
 	  install -m 0644 -T tmp.png $$dir/$(TARGET_TCFILE_ICON_PNG);\
 	  rm tmp.png ; \
 	done
@@ -353,7 +357,7 @@ install-pop: all
 	install -m 0644 -T $(SOURCEICON) $(APP_POPICON_DIR)/$(TARGETICON)
 	for i in $(POPICON_WIDTHS) ; do \
 	    install -d $(POPICON_DIR)/$${i}x$${i}/$(APPS_DIR) ; \
-	    inkscape -w $$i -e tmp.png $(SOURCEICON) ; \
+	    inkscape -w $$i --export-filename=tmp.png $(SOURCEICON) ; \
 	    install -m 0644 -T tmp.png \
 		$(POPICON_DIR)/$${i}x$${i}/$(APPS_DIR)/$(TARGETICON_PNG); \
 	    rm tmp.png ; \
@@ -361,7 +365,7 @@ install-pop: all
 	for i in $(POPICON_WIDTHS2x) ; do \
 	    install -d $(POPICON_DIR)/$${i}x$${i}@2x/$(APPS_DIR) ; \
 	    ii=`expr 2 '*' $$i` ; \
-	    inkscape -w $$ii -e tmp.png $(SOURCEICON) ; \
+	    inkscape -w $$ii --export-filename=tmp.png $(SOURCEICON) ; \
 	    install -m 0644 -T tmp.png \
 		$(POPICON_DIR)/$${i}x$${i}@2x/$(APPS_DIR)/$(TARGETICON_PNG); \
 	    rm tmp.png ; \
@@ -373,27 +377,27 @@ install-pop: all
 	install -m 0644 -T $(SOURCE_TCFILE_ICON) \
 		$(MIME_POPICON_DIR)/$(TARGET_TCFILE_ICON)
 	for i in $(POPICON_WIDTHS) ; do \
-	    inkscape -w $$i -e tmp.png $(SOURCE_FILE_ICON) ; \
+	    inkscape -w $$i --export-filename=tmp.png $(SOURCE_FILE_ICON) ; \
 	    dir=$(POPICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR) ; \
 	    install -d $$dir ; \
 	    install -m 0644 -T tmp.png $$dir/$(TARGET_FILE_ICON_PNG); \
 	    rm tmp.png ; \
-	    inkscape -w $$i -e tmp.png $(SOURCE_CFILE_ICON) ; \
+	    inkscape -w $$i --export-filename=tmp.png $(SOURCE_CFILE_ICON) ; \
 	    install -m 0644 -T tmp.png $$dir/$(TARGET_CFILE_ICON_PNG); \
-	    inkscape -w $$i -e tmp.png $(SOURCE_TCFILE_ICON) ; \
+	    inkscape -w $$i --export-filename=tmp.png $(SOURCE_TCFILE_ICON) ; \
 	    install -m 0644 -T tmp.png $$dir/$(TARGET_TCFILE_ICON_PNG); \
 	    rm tmp.png ; \
 	done
 	for i in $(POPICON_WIDTHS2x) ; do \
 	    ii=`expr 2 '*' $$i` ; \
-	    inkscape -w $$ii -e tmp.png $(SOURCE_FILE_ICON) ; \
+	    inkscape -w $$ii --export-filename=tmp.png $(SOURCE_FILE_ICON) ; \
 	    dir=$(POPICON_DIR)/$${i}x$${i}@2x/$(MIMETYPES_DIR) ; \
 	    install -d $$dir ; \
 	    install -m 0644 -T tmp.png $$dir/$(TARGET_FILE_ICON_PNG); \
 	    rm tmp.png ; \
-	    inkscape -w $$ii -e tmp.png $(SOURCE_CFILE_ICON) ; \
+	    inkscape -w $$ii --export-filename=tmp.png $(SOURCE_CFILE_ICON) ; \
 	    install -m 0644 -T tmp.png $$dir/$(TARGET_CFILE_ICON_PNG);\
-	    inkscape -w $$ii -e tmp.png $(SOURCE_TCFILE_ICON) ; \
+	    inkscape -w $$ii --export-filename=tmp.png $(SOURCE_TCFILE_ICON) ; \
 	    install -m 0644 -T tmp.png $$dir/$(TARGET_TCFILE_ICON_PNG);\
 	    rm tmp.png ; \
 	done

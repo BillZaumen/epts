@@ -945,6 +945,8 @@ public class
 		vindex++;
 		kmap1 = new TemplateProcessor.KeyMap();
 		kmap2 = new TemplateProcessor.KeyMap();
+		kmap2.put("draw", "false");
+		kmap2.put("fill", "false");
 		varname = row.getVariableName();
 		kmap1.put("varname", varname);
 		kmap1.put("index", ("" + index));

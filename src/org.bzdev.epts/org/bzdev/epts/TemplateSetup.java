@@ -284,8 +284,35 @@ public class TemplateSetup {
     };
 
     private static String chooseTemplateOptions2[] = {
-	"area", "circumference", "pathlength", "SegmentsCVS"
+	"area", "circumference", "pathlength", "SegmentsCSV"
     };
+
+    // Following so the GUI will be localized
+    private static String[] chooseTemplateOptions1L =
+	new String[chooseTemplateOptions1.length];
+
+    private static String[] chooseTemplateOptions2L =
+	new String[chooseTemplateOptions2.length];
+
+    private static Map<String,String> chooseTemplateOptions1Map =
+	new HashMap<>();
+    private static Map<String,String> chooseTemplateOptions2Map =
+	new HashMap<>();
+
+    static {
+	for (int i = 0; i < chooseTemplateOptions1.length; i++) {
+	    chooseTemplateOptions1L[i] =
+		localeString(chooseTemplateOptions1[i]);
+	    chooseTemplateOptions1Map.put(chooseTemplateOptions1L[i],
+					  chooseTemplateOptions1[i]);
+	}
+	for (int i = 0; i < chooseTemplateOptions2.length; i++) {
+	    chooseTemplateOptions2L[i] =
+		localeString(chooseTemplateOptions2[i]);
+	    chooseTemplateOptions2Map.put(chooseTemplateOptions2L[i],
+					  chooseTemplateOptions2[i]);
+	}
+    }
 
     private static boolean templateMatch(String savedState, int index) {
 	switch (index) {
@@ -319,15 +346,17 @@ public class TemplateSetup {
 		    (pane, localeString("chooseTemplateMsg"),
 		     localeString("chooseTemplateTitle"),
 		     JOptionPane.PLAIN_MESSAGE,
-		     null, chooseTemplateOptions1, chooseTemplateOptions1[3]);
-		return "resource:" + result1;
+		     null, chooseTemplateOptions1L, chooseTemplateOptions1L[3]);
+		String tail1 = chooseTemplateOptions1Map.get(result1);
+		return "resource:" + tail1;
 	    case PIT:
 		String result2 = (String)JOptionPane.showInputDialog
 		    (pane, localeString("chooseTemplateMsg"),
 		     localeString("chooseTemplateTitle"),
 		     JOptionPane.PLAIN_MESSAGE,
-		     null, chooseTemplateOptions2, chooseTemplateOptions2[2]);
-		return "resource:" + result2;
+		     null, chooseTemplateOptions2L, chooseTemplateOptions2L[2]);
+		String tail2 = chooseTemplateOptions2Map.get(result2);
+		return "resource:" + tail2;
 	    default:
 		return null;
 	    }
@@ -1251,13 +1280,11 @@ public class TemplateSetup {
 	    subpathComboBox.removeAllItems();
 	    subpathComboBox.addItem("");
 	}
-	if (initialPaths != null) {
-	    for (String s: initialPaths) {
-		if (subpathComboBox != null) {
-		    subpathComboBox.addItem(s);
-		}
-		initialSet.add(s);
+	for (String s: initialPaths) {
+	    if (subpathComboBox != null) {
+		subpathComboBox.addItem(s);
 	    }
+	    initialSet.add(s);
 	}
     }
 
@@ -1270,6 +1297,7 @@ public class TemplateSetup {
     static boolean subpathEditingAllowed = false;
 
     static void setupAllowedSubpaths() {
+	if (initialPaths == null) initialPaths = new String[0];
 	int n = initialPaths.length;
 	subpathLabel.setText(localeString("subpathTbl1"));
 	subpathTable.setRowSelectionAllowed(false);
@@ -1866,6 +1894,7 @@ public class TemplateSetup {
 	outFileButton = new JButton(localeString("outFileButton"));
 	outFileButton.addActionListener((ae) -> {
 		String name = chooseFile(panel);
+		if (name == null) return;
 		if (name.endsWith(".epts") || name.endsWith(".EPTS")
 		    || name.endsWith(".eptt") || name.endsWith(".EPTT")
 		    || name.endsWith(".eptc") || name.endsWith(".EPTC")) {

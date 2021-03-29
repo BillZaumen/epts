@@ -71,182 +71,112 @@
 //                   that creates the grid. The default is the javascript
 //                   value java.lang.Long.MAX_VALUE (2^53 - 1).
 
-scripting.importClass("org.bzdev.anim2d.Animation2D");
-scripting.importClass("org.bzdev.anim2d.AnimationLayer2DFactory");
-scripting.importClass("org.bzdev.anim2d.PolarGridFactory");
+import(org.bzdev.anim2d, [Animation2D,
+			  AnimationLayer2DFactory,
+			  PolarGridFactory]);
+import (java.lang, [Math, Long, Number]);
+import (org.bzdev.epts.ScriptingEnv.EPTSInfo);
 
-if (typeof frameWidth === 'undefined' || frameWidth == null) {
-    if (typeof a2d === 'undefined' || a2d == null) {
-	if (typeof epts === 'undefined' || epts == null) {
-	    var frameWidth = 1920;
-	} else {
-	    var frameWidth = epts.getWidth();
-	}
-    } else {
-	var frameWidth = a2d.getWidthAsInt();
-    }
-}
-if (typeof frameHeight === 'undefined' || frameHeight == null) {
-    if (typeof a2d === 'undefined' || a2d == null) {
-	if (typeof epts === 'undefined' || epts == null) {
-	    var frameHeight = 1080;
-	} else {
-	    var frameHeight = epts.getHeight();
-	}
-    } else {
-	var frameHeight = a2d.getHeightAsInt();
-    }
-}
+var epts;
+var a2d ?= null;
 
-if (typeof userdist === 'undefined' || userdist == null) {
-    if (typeof epts == 'undefined' || epts == null || !epts.hasDistances()) {
-	var userdist = 1.0;
-    } else {
-	var userdist = epts.getUserDist();
-    }
-}
+var frameWidth ??= (a2d == null)?
+    (!var.epts || epts == null)? 1920: epts.getWidth():
+    a2d.getWidthAsInt();
 
-if (typeof gcsdist == 'undefined' || gcsdist == null) {
-    if (typeof epts == 'undefined' || epts == null || !epts.hasDistances()) {
-	var gcsdist = 1.0;
-    } else {
-	var gcsdist = epts.getGCSDist();
-    }
-}
+var frameHeight ??= (a2d == null)?
+    (!var.epts || epts == null)? 1080: epts.getHeight():
+    a2d.getHeightAsInt();
 
-if (typeof xorigin === 'undefined' || xorigin == null) {
-    if (typeof epts == 'undefined' || epts == null || !epts.hasDistances()) {
-	var xorigin = 0.0;
-    } else {
-	var xorigin = epts.getXOrigin();
-    }
-}
+var userdist ??= (!var.epts || epts == null || !epts.hasDistances())?
+    1.0: epts.getUserDist();
 
-if (typeof yorigin === 'undefined'|| yorigin == null) {
-    if (typeof epts == 'undefined' || epts == null || !epts.hasDistances()) {
-	var yorigin = 0.0;
-    } else {
-	var yorigin = epts.getYOrigin();
-    }
-}
+var gcsdist ??= (!var.epts || epts == null || !epts.hasDistances())?
+    1.0:
+    epts.getGCSDist();
 
-if (typeof xfract === 'undefined' || xfract == null) {
-    if (typeof epts == 'undefined' || epts == null || !epts.hasDistances()) {
-	var xfract = 0.0;
-    } else {
-	var xfract = epts.getXFract();
-    }
-}
+var xorigin ??=  (!var.epts || epts == null || !epts.hasDistances())?
+    0.0: epts.getXOrigin();
 
-if (typeof yfract === 'undefined' || yfract == null) {
-    if (typeof epts == 'undefined' || epts == null || !epts.hasDistances()) {
-	var yfract = 0.0;
-    } else {
-	var yfract = epts.getYFract();
-    }
-}
+var yorigin ??= (!var.epts || epts == null || !epts.hasDistances())?
+    0.0: epts.getYOrigin();
 
-if (typeof fractional === 'undefined' || fractional == null) {
-    var fractional = true;
-} else {
-    if (fractional != true && fractional != false) {
-	throw "The variable 'fractional' is not a boolean"
-    }
-}
+var xfract ??= (!var.epts || epts == null || !epts.hasDistances())?
+    0.0: epts.getXFract();
 
-if (typeof gridXOrigin === 'undefined' || gridXOrigin == null) {
-    var gridXOrigin = fractional? 0.5: 0.0;
-}
+var yfract ??= (!var.epts || epts == null || !epts.hasDistances())?
+    0.0: epts.getYFract();
 
-if (typeof gridYOrigin === 'undefined' || gridYOrigin == null) {
-    var gridYOrigin = fractional? 0.5: 0.0;
-}
+var fractional ??= true;
+(fractional != true && fractional != false)
+    &&  throw "The variable 'fractional' is not a boolean";
 
-if (typeof gridZorder === 'undefined' || gridZorder == null) {
-    var gridZorder = java.lang.Long.MAX_VALUE;
-}
+var gridXOrigin ??= fractional? 0.5: 0.0;
 
-if (typeof radialSpacing === 'undefined') {
-    var radialSpacing = null;
-}
+var gridYOrigin ??= fractional? 0.5: 0.0;
 
-if (typeof angularSpacing === 'undefined') {
-    var angularSpacing = null;
-}
+var gridZorder ??= Long.MAX_VALUE;
 
-if (typeof strokeWidth === 'undefined') {
-    var strokeWidth = null;
-}
+var radialSpacing ?= null;
 
-if (typeof gridColor === 'undefined') {
-    var gridColor = null;
-}
+var angularSpacing ?= null;
 
-var a2d;
+var strokeWidth ?= null;
 
-// Use a function because the 'let' keyword is not recognized
-// by Nashorn and we want any variable not defined above  (and
-// hence not documented) to be a local variable.  The keyword
-// 'var' makes variables inside functions local.
+var gridColor ?= null;
 
-(function() {
-    var JMath = java.lang.Math;
-    var plainBackground = false;
-    if (typeof a2d === 'undefined' || a2d == null) {
-	a2d = new Animation2D(scripting, frameWidth, frameHeight, 1000.0, 40);
-	var scalef = userdist / gcsdist;
-	a2d.setRanges(xorigin, yorigin, xfract, yfract, scalef, scalef);
-	if (epts === 'undefined' || epts == null) {
-	    plainBackground = true;
-	}
-    } else {
-	var scalef = (a2d.getWidth() - a2d.getXLowerOffset()
-		      - a2d.getXUpperOffset())
+function() {
+    // use a lambda expression to avoid adding more variables.
+    var a2dtest = (a2d == null);
+    var plainBackground = (a2dtest && (!var.epts || epts == null));
+    var scalef = a2dtest?
+	function() {
+	    var sf = userdist/gcsdist;
+	    a2d = new Animation2D(scripting, frameWidth, frameHeight,
+				  1000.0, 40);
+	    a2d.setRanges(xorigin, yorigin, xfract, yfract, sf, sf);
+	    sf
+	}():
+	(a2d.getWidth() - a2d.getXLowerOffset() -  a2d.getXUpperOffset())
 	    / (a2d.getXUpper() - a2d.getXLower());
-    }
-    var objects = [];
 
-    if (plainBackground) {
+    plainBackground? function() {
 	var xlower = a2d.getXLower();
 	var xupper = a2d.getXUpper();
 	var ylower = a2d.getYLower();
 	var yupper = a2d.getYUpper();
 	var alf = new AnimationLayer2DFactory(a2d);
-	alf.configure([
+	var spec = [
 	    {zorder: gridZorder, visible: true},
 	    {withPrefix: "object",
-	     withIndex: {type: "RECTANGLE", x: xlower, y: ylower,
-			refPoint: "LOWER_LEFT",
-			width: (xupper-xlower),
-			height: (yupper-ylower),
-			fill: true, draw: true,
-			"stroke.width": 1.0,
-			"fillColor.css": "white",
-			"drawColor.css": "white"}}]);
+	     withIndex: [{type: "RECTANGLE", x: xlower, y: ylower,
+			  refPoint: "LOWER_LEFT",
+			  width: (xupper-xlower),
+			  height: (yupper-ylower),
+			  fill: true, draw: true,
+			  "stroke.width": 1.0,
+			  "fillColor.css": "white",
+			  "drawColor.css": "white"}]}];
+	alf.configure(spec);
 	alf.createObject();
-    }
-    var i = 1;
+	void
+    }(): void;
+
     var spec = [{zorder: gridZorder, visible: true,
 		 fractional: fractional,
 		 xo: gridXOrigin, yo: gridYOrigin}];
 
-    if (angularSpacing != null) {
-	spec[i++] = {angularSpacing: angularSpacing};
-    }
+    (angularSpacing != null)? spec.add({"angularSpacing": angularSpacing}):
+	false;
 
-    if (radialSpacing != null) {
-	spec[i++] = {radialSpacing: radialSpacing};
-    }
+    (radialSpacing != null)? spec.add({"radialSpacing": radialSpacing}): false;
 
-    if (strokeWidth != null) {
-	spec[i++] = {strokeWidth: strokeWidth};
-    }
+    (strokeWidth != null)? spec.add({"strokeWidth": strokeWidth}): false;
 
-    if (gridColor != null) {
-	spec[i++] = {"color.css": gridColor};
-    }
+    (gridColor != null)? spec.add({"color.css": gridColor}): false;
 
     var gridf = new PolarGridFactory(a2d);
     gridf.configure(spec);
     gridf.createObject();
-}())
+    void
+}()

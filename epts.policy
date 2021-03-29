@@ -1,12 +1,27 @@
 grant codebase "file:LOCATION/libbzdev-base.jar" {
       permission java.security.AllPermission;
 };
+
+grant codebase "file:LOCATION/libbzdev-esp.jar" {
+      permission java.security.AllPermission;
+};
+
+grant codebase "file:LOCATION/libbzdev-math.jar" {
+      permission java.security.AllPermission;
+};
+
 grant codebase "file:LOCATION/libbzdev-obnaming.jar" {
       permission java.security.AllPermission;
 };
+
+grant codebase "file:LOCATION/libbzdev-graphics.jar" {
+      permission java.security.AllPermission;
+};
+
 grant codebase "file:LOCATION/libbzdev-desktop.jar" {
       permission java.security.AllPermission;
 };
+
 grant codebase "file:LOCATION/libbzdev-devqsim.jar" {
       permission java.security.AllPermission;
 };

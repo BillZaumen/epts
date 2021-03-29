@@ -1434,7 +1434,9 @@ public class EPTS {
 	    extInd++;
 	    if (extInd < arg.length()) {
 		languageName = arg.substring(extInd);
-		if (languageName.equals("epts")) {
+		if (languageName.equals("epts")
+		    || languageName.equals("eptt")
+		    || languageName.equals("eptc")) {
 		    languageName = null;
 		} else if (ImageMimeInfo
 			   .getFormatNameForSuffix(languageName)
@@ -1681,6 +1683,35 @@ public class EPTS {
     private static final Runnable fileDialogRunnable = new Runnable() {
 	    public void run() {
 		String cdir = System.getProperty("user.dir");
+		OpeningFileChooser ofc = new
+		    OpeningFileChooser(localeString("EPTSFiles"),
+				       new String[] {
+					   "epts",
+					   "eptc",
+					   "eptt"
+				       });
+		switch(ofc.showOpeningDialog(null, new File(cdir))) {
+		case OpeningFileChooser.DIMENSIONS_OPTION:
+		    width = ofc.getWidth();
+		    height = ofc.getHeight();
+		    imageMode = true;
+		    break;
+		case OpeningFileChooser.APPROVE_OPTION:
+		    try {
+			inputFile = ofc.getSelectedFile().getCanonicalPath();
+		    } catch (IOException e) {
+			String name = ofc.getSelectedFile().getName();
+			String  msg = errorMsg("toCanonicalPath", name);
+			System.err.println(msg);
+			System.exit(1);
+		    }
+		    break;
+		case OpeningFileChooser.CANCEL_OPTION:
+		    System.exit(0);
+		    return;
+		}
+		fdrUsed = true;
+		/*
 		for(;;) {
 		    JFileChooser fc = new JFileChooser(cdir);
 		    fc.setAcceptAllFileFilterUsed(false);
@@ -1752,6 +1783,7 @@ public class EPTS {
 		    }
 		}
 		fdrUsed = true;
+		*/
 	    }
 	};
 
@@ -1759,6 +1791,8 @@ public class EPTS {
     private static String[] preprocessArgs(int ind, String[] argv, String arg) {
 	if (arg == null) {
 	    try {
+		System.out.println("got here");
+		boolean prevImageMode = imageMode;
 		SwingUtilities.invokeAndWait(fileDialogRunnable);
 		if (inputFile != null) {
 		    boolean by1 =
@@ -1769,6 +1803,19 @@ public class EPTS {
 		    newargv[argv.length+ (by1? 0: 1)] = inputFile;
 		    argv = newargv;
 		    arg = inputFile;
+		} else if (imageMode && (prevImageMode == false)) {
+		    // we set width and height using fileDialogRunnable
+		    boolean by1 =
+			(argv.length > 0 && argv[argv.length-1].equals("--"));
+		    String[] newargv = new String[argv.length + (by1? 3: 4)];
+		    System.arraycopy(argv, 0, newargv, 0, argv.length);
+		    if (!by1) newargv[argv.length] = "--";
+		    int indx = argv.length+ (by1? -1: 0);
+		    newargv[indx++] = "-w";
+		    newargv[indx++] = "" + width;
+		    newargv[indx++] = "-h";
+		    newargv[indx++] = "" + height;
+		    argv = newargv;
 		} else {
 		    // we must have canceled
 		    if (ind > -1 && ind < 4) {
@@ -2953,6 +3000,28 @@ public class EPTS {
 		} else if (argv[index].equals("--gui")) {
 		    guiMode = true;
 		    argsList.add(argv[index]);
+		}  else if (argv[index].equals("-w")) {
+		    // Special case - we just want to open a black frame
+		    // with a specified width.
+		    index++;
+		    if (index == argv.length) {
+			displayError
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    width = Integer.parseInt(argv[index]);
+		    imageMode = true;
+		}  else if (argv[index].equals("-h")) {
+		    // Special case - we just want to open a black frame
+		    // with a specified height.
+		    index++;
+		    if (index == argv.length) {
+			displayError
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    height = Integer.parseInt(argv[index]);
+		    imageMode = true;
 		} else if (argv[index].equals("--")) {
 		    argsList.add(argv[index]);
 		    jcontinue = false;
@@ -2960,12 +3029,16 @@ public class EPTS {
 		    displayError(errorMsg("unknownOption", argv[index]));
 		    System.exit(1);
 		} else {
+		    //System.out.println("argv[" + index + "] = "+argv[index]);
 		    if (languageName == null) {
 			String extension = processLanguageName(argv[index]);
 			if (extension != null) {
 			    languageName =
 				Scripting.getLanguageNameByExtension(extension);
+			    scriptMode = true;
 			}
+		    } else if (processLanguageName(argv[index]) != null) {
+			scriptMode = true;
 		    }
 		    argsList.add(argv[index]);
 		    if (!imageMode && targetList.isEmpty()) {
@@ -3006,7 +3079,10 @@ public class EPTS {
 		    if (extension != null) {
 			languageName =
 			    Scripting.getLanguageNameByExtension(extension);
+			scriptMode = true;
 		    }
+		} else if (processLanguageName(argv[index]) != null) {
+		    scriptMode = true;
 		}
 		argsList.add(argv[index]);
 		if (!imageMode && targetList.isEmpty()) {
@@ -3062,8 +3138,10 @@ public class EPTS {
 	}
 	// We use a scripting language only if there is a script to
 	// process.
-	if (scriptMode == false) languageName = null;
-	
+	if (scriptMode == false) {
+	    // System.out.println("setting language to null");
+	    languageName = null;
+	}
 	if (languageName != null) {
 	    // need to extend class path because scripting-language-independent
 	    // class path entries in the configuration files may be needed for
@@ -3185,11 +3263,13 @@ public class EPTS {
 	    System.exit(0);
 	}
 
+	/*
 	try {
 	    org.bzdev.protocols.Handlers.enable();
 	} catch (Exception e) {
 	    e.printStackTrace(System.err);
 	}
+	*/
 
 
 	/*
@@ -3220,9 +3300,100 @@ public class EPTS {
 	if (!fdrUsed && !imageMode && !scriptMode && targetList.size() == 0) {
 	    // No arguments that would indicate a saved state, image file,
 	    // or script files, so open a dialog box prompting for
-	    // the input to use (an image file
+	    // the input to use (an image file)
+
 	    SwingUtilities.invokeAndWait(new Runnable() {
 		    public void run() {
+			File f;
+			OpeningFileChooser ofc = new
+			    OpeningFileChooser(localeString("EPTSSavedStates"),
+					       new String[] {
+						   "epts"
+					       });
+			switch(ofc.showOpeningDialog(null, cdir)) {
+			case OpeningFileChooser.DIMENSIONS_OPTION:
+			    width = ofc.getWidth();
+			    height = ofc.getHeight();
+			    BufferedImage bi = new
+				BufferedImage(width,height,
+					      BufferedImage.TYPE_INT_ARGB_PRE);
+			    Graphics2D g2d = bi.createGraphics();
+			    g2d.setBackground(Color.WHITE);
+			    g2d.clearRect(0, 0, width, height);
+			    imageMode = true;
+			    imageURI = null;
+			    image = bi;
+			    break;
+			case OpeningFileChooser.APPROVE_OPTION:
+			    f = ofc.getSelectedFile();
+			    try {
+				String[] extensions =
+				    ImageIO.getReaderFileSuffixes();
+			    Set<String> extensionSet =
+				Scripting.getExtensionSet();
+			    String[] sextensions =
+				extensionSet.toArray
+				(new String[extensionSet.size()]);
+			    ArrayList<String> allExtensionsList =
+				new ArrayList<>();
+			    allExtensionsList.add("epts");
+			    for (String ext: extensions) {
+				allExtensionsList.add(ext);
+			    }
+			    for (String ext: sextensions) {
+				allExtensionsList.add(ext);
+			    }
+			    String[] allExtensions = allExtensionsList
+				.toArray(new String[allExtensionsList.size()]);
+			    String eptsExtensions[] = {"epts"};
+				if (extensionMatch(f, eptsExtensions)) {
+				    targetList.add(f.getCanonicalPath());
+				    break;
+				} else if (extensionMatch(f, extensions)) {
+				    imageMode = true;
+				    imageURI = f.toURI();
+				    image = ImageIO.read(f);
+				    break;
+				} else if (extensionMatch(f, sextensions)) {
+				    // script case.
+				    scriptMode = true;
+				    String pathname = f.getCanonicalPath();
+				    argsList.add(pathname);
+				    if (!alreadyForked) {
+					// need to add
+					// -Djava.security.policy=...
+					// if not already there
+					fork(jargsList, argsList,
+					     policyFile, dryrun);
+				    } else {
+					targetList.add(pathname);
+				    }
+				    String ext =
+					processLanguageName(pathname);
+				    if (a2dName == null) a2dName = "a2d";
+				    if (ext != null) {
+					languageName =
+					    Scripting
+					    .getLanguageNameByExtension
+					    (ext);
+				    }
+				    break;
+				} else {
+				    SwingErrorMessage.setComponent(null);
+				    SwingErrorMessage.display
+					(null, null,
+					 errorMsg("unrecognizedFNE"));
+				}
+			    }  catch (Exception e) {
+				SwingErrorMessage.setComponent(null);
+				SwingErrorMessage.display(e);
+				System.exit(1);
+			    }
+			    break;
+			case OpeningFileChooser.CANCEL_OPTION:
+			    System.exit(0);
+			}
+			/*
 			for(;;) {
 			    JFileChooser fc = new JFileChooser(cdir);
 			    fc.setAcceptAllFileFilterUsed(false);
@@ -3317,6 +3488,7 @@ public class EPTS {
 				break;
 			    }
 			}
+			*/
 		    }
 		});
 	} else if (fdrUsed && !imageMode && !scriptMode
@@ -3352,6 +3524,7 @@ public class EPTS {
 	}
 	if (imageMode) {
 	    if (imageURI == null) {
+		/*
 		SwingUtilities.invokeAndWait(new Runnable() {
 			public void run() {
 			    InputVerifier iv = new InputVerifier() {
@@ -3410,6 +3583,16 @@ public class EPTS {
 		g2d.setBackground(Color.WHITE);
 		g2d.clearRect(0, 0, width, height);
 		image = bi;
+		*/
+		if (image == null) {
+		    BufferedImage bi = new
+			BufferedImage(width,height,
+				      BufferedImage.TYPE_INT_ARGB_PRE);
+		    Graphics2D g2d = bi.createGraphics();
+		    g2d.setBackground(Color.WHITE);
+		    g2d.clearRect(0, 0, width, height);
+		    image = bi;
+		}
 	    } else {
 		// image already exists and was read.
 		width = image.getWidth(null);
@@ -3887,7 +4070,8 @@ public class EPTS {
     public static void main(String argv[]) {
 	try {
 	    String url  = (new File(ourCodebase)).toURI().toURL().toString();
-	   System.setProperty("org.bzdev.protocols.resource.path", url);
+	    String path = url + "|jar:" + url + "!/org/bzdev/epts/";
+	   System.setProperty("org.bzdev.protocols.resource.path", path);
 	   org.bzdev.protocols.Handlers.enable();
 	   init(argv);
 	} catch (Exception e) {

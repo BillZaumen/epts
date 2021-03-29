@@ -20,18 +20,17 @@
 //                 space. The default is 1.0. The ratio userdist/gcsdist is the
 //                 scaling factor for converting distances in graph coordinate
 //                 space to user space. The value is ignored if the
-//                 animation was created by another script. If undefined or
-//                 null, the default will be used.
+//                 animation was created by another script.
 //    * xorigin - a double giving the X coordinate in graph coordinate space
 //                for the frame's reference point. The default is 0.0.
 //                The value is ignored if the animation was created by
-//                another script. If undefined or
-//                 null, the default will be used.
+//                another script.  If undefined or null, the default will
+//                 be used.
 //    * yorigin - a double giving the Y coordinate in graph coordinate space
 //                for the frame's reference point. The  default is 0.0.
 //                The value is ignored if the animation was created by
-//                another script. If undefined or
-//                 null, the default will be used.
+//                another script. If undefined or null, the default will
+//                 be used.
 //    * xfract - a double giving the fraction of the frame width at which
 //               the reference point appears (0.0 is the left edge and 1.0
 //               is the right edge). The default is 0.0. The value is
@@ -52,7 +51,7 @@
 //                grid lines will appear at X or Y coordinates that are
 //                an integral multiple of the spacing.
 //    * subspacing - the number of subspacings per spacing for a finer grid.
-//                   if undefined or 1, the value is ignored. In practice,
+//                   if undefined, null or 1, the value is ignored. In practice,
 //                   values that create a subgrid are either 2, 4, 5, or 10.
 //                   The value must be an integer. If undefined or null,
 //                   a default value is used.
@@ -68,169 +67,100 @@
 //                   that creates the grid. The default is the javascript
 //                   value java.lang.Long.MAX_VALUE (2^53 - 1).
 //
-// The variable a2d is expected to be the variable name for an animation.
-// It will be created if it does not already exist, but an existing one
-// can be used as well so that a grid can be overlayed.
+// The variable a2d is expected to be the variable name for an
+// animation. The animation is expected to be configured: in
+// particular its setRanges method must have been called.  It will be
+// created if it does not already exist or is null, but an existing
+// one can be used as well so that a grid can be overlayed.
 // Generally, if provided, the axisColor should be more prominent than
 // the spacing color, which in turn should be more prominent than the
 // subspacing color.
 
-scripting.importClass("org.bzdev.anim2d.Animation2D");
-scripting.importClass("org.bzdev.anim2d.AnimationLayer2DFactory");
-scripting.importClass("org.bzdev.anim2d.CartesianGrid2DFactory");
+import(org.bzdev.anim2d, [Animation2D,
+			  AnimationLayer2DFactory,
+			  CartesianGrid2DFactory]);
+import (java.lang, [Math, Long, Number]);
+import (org.bzdev.epts.ScriptingEnv.EPTSInfo);
 
-if (typeof subspacing  === 'undefined') {
-    var subspacing = 1;
-} else if (subspacing != Math.round(subspacing) || subspacing < 0) {
-    throw "subspacing = " + subspacing;
-}
-if (subspacing == 0) {
-    subspacing = 1;
-}
+var epts;
+var a2d ?= null;
 
-if (typeof frameWidth === 'undefined'|| frameWidth == null) {
-    if (typeof a2d === 'undefined' || a2d == null) {
-	if (typeof epts === 'undefined' || epts == null) {
-	    var frameWidth = 1920;
-	} else {
-	    var frameWidth = epts.getWidth();
-	}
-    } else {
-	var frameWidth = a2d.getWidthAsInt();
-    }
-}
-if (typeof frameHeight === 'undefined' || frameHeight == null) {
-    if (typeof a2d === 'undefined' || a2d == null) {
-	if (typeof epts === 'undefined' || epts == null) {
-	    var frameHeight = 1080;
-	} else {
-	    var frameHeight = epts.getHeight();
-	}
-    } else {
-	var frameHeight = a2d.getHeightAsInt();
-    }
-}
+var subspacing ??= 1;
 
-if (typeof userdist === 'undefined' || userdist == null) {
-    if (typeof epts == 'undefined' || epts == null || !epts.hasDistances()) {
-	var userdist = 1.0;
-    } else {
-	var userdist = epts.getUserDist();
-    }
-}
+(!(subspacing instanceof Number) || (subspacing != Math.round(subspacing))
+ || (subspacing < 0)) && throw "subspacing = " + subspacing;
 
-if (typeof gcsdist == 'undefined' || gcsdist == null) {
-    if (typeof epts == 'undefined' || epts == null) {
-	var gcsdist = 1.0;
-    } else {
-	var gcsdist = epts.getGCSDist();
-    }
-}
+subspacing = (subspacing == 0)? 1: subspacing;
 
-if (typeof xorigin === 'undefined' || xorigin == null) {
-    if (typeof epts == 'undefined' || epts == null) {
-	var xorigin = 0.0;
-    } else {
-	var xorigin = epts.getXOrigin();
-    }
-}
+var frameWidth ??= (a2d == null)?
+    (!var.epts || epts == null)? 1920: epts.getWidth():
+    a2d.getWidthAsInt();
 
-if (typeof yorigin === 'undefined' || yorigin == null) {
-    if (typeof epts == 'undefined' || epts == null) {
-	var yorigin = 0.0;
-    } else {
-	var yorigin = epts.getYOrigin();
-    }
-}
+var frameHeight ??= (a2d == null)?
+    (!var.epts || epts == null)? 1080: epts.getHeight():
+    a2d.getHeightAsInt();
 
-if (typeof xfract === 'undefined'|| xfract == null) {
-    if (typeof epts == 'undefined' || epts == null) {
-	var xfract = 0.0;
-    } else {
-	var xfract = epts.getXFract();
-    }
-}
+var userdist ??= (!var.epts || epts == null || !epts.hasDistances())? 1.0:
+    epts.getUserDist();
 
-if (typeof yfract === 'undefined' || yfract == null) {
-    if (typeof epts == 'undefined' || epts == null || !epts.hasDistances()) {
-	var yfract = 0.0;
-    } else {
-	var yfract = epts.getYFract();
-    }
-}
+var gcsdist ??= (!var.epts || epts == null)? 1.0: epts.getGCSDist();
 
-if (typeof spacing === 'undefined') {
-    var spacing = null;
-}
+var xorigin ??= (!var.epts || epts == null)? 0.0: epts.getXOrigin();
 
-if (typeof gridZorder === 'undefined' || gridZOrder == null) {
-    var gridZorder = java.lang.Long.MAX_VALUE;
-}
+var yorigin ??= (!var.epts || epts == null)? 0.0: epts.getYOrigin();
 
-if (typeof axisColor === 'undefined') {
-    var axisColor = null;
-}
+var xfract ??= (!var.epts || epts == null)? 0.0: epts.getXFract();
 
-if (typeof spacingColor === 'undefined') {
-    var spacingColor = null;
-}
+var yfract ??= (!var.epts || epts == null)? 0.0: epts.getYFract();
 
-if (typeof subspacingColor === 'undefined') {
-    var subspacingColor = null;
-}
+var spacing ?= null;
 
-if (typeof strokeWidth === 'undefined') {
-    var strokeWidth = null;
-}
+var gridZorder ??= Long.MAX_VALUE;
+
+var axisColor ?= null;
+
+var spacingColor ?= null;
+
+var subspacingColor ?= null;
+
+var strokeWidth ?= null;
 
 
-// Use a function because the 'let' keyword is not recognized
-// by Nashorn and we want any variable not defined above  (and
-// hence not documented) to be a local variable.  The keyword
-// 'var' makes variables inside functions local.
-
-var a2d;
-
-(function() {
-    var JMath = java.lang.Math;
-    var plainBackground = false;
-    if (typeof a2d === 'undefined' || a2d == null) {
-	a2d = new Animation2D(scripting, frameWidth, frameHeight, 1000.0, 40);
-	if (epts === 'undefined' || epts == null) {
-	    plainBackground = true;
-	}
-	var scalef = userdist / gcsdist;
-	a2d.setRanges(xorigin, yorigin, xfract, yfract, scalef, scalef);
-    } else {
-	var scalef = (a2d.getWidth() - a2d.getXLowerOffset()
-		      - a2d.getXUpperOffset())
+function() {
+    var a2dtest = (a2d == null);
+    var plainBackground = (a2dtest && (!var.epts || epts == null));
+    var scalef = a2dtest?
+	function() {
+	    var sf = userdist/gcsdist;
+	    a2d = new Animation2D(scripting, frameWidth, frameHeight,
+				  1000.0, 40);
+	    a2d.setRanges(xorigin, yorigin, xfract, yfract, sf, sf);
+	    sf
+	}():
+	(a2d.getWidth() - a2d.getXLowerOffset() -  a2d.getXUpperOffset())
 	    / (a2d.getXUpper() - a2d.getXLower());
-    }
 
+    spacing = (spacing == null)?
+	function() {
+	    // By default, arrange so that there are roughly 10 lines
+	    // in the shortest direction, with the constraint that the
+	    // graph coordinate space values are powers of 10 in graph
+	    // coordinate space
+	    var s = ((frameWidth > frameHeight)? frameHeight: frameWidth)
+		/ scalef;
+	    s = Math.floor(Math.log10(s/10));
+	    (s > -0.1)?
+		Math.round(Math.pow(10.0, ((s < 0.0)? 0.0: s))):
+		1.0 / Math.round(Math.pow(10.0, s))
+	}(): spacing;
 
-
-    if (spacing == null) {
-	// By default, arrange so that there are roughly 10 lines in the
-	// shortest direction, with the constraint that the graph coordinate
-	// space values are powers of 10 in graph coordinate space
-	spacing = (frameWidth > frameHeight)? frameHeight: frameWidth;
-	spacing /= scalef;
-	spacing = Math.floor(JMath.log10(spacing/10));
-	if (spacing > -0.1) {
-	    if (spacing < 0.0) spacing = 0.0;
-	    spacing = JMath.round(JMath.pow(10.0, spacing));
-	} else {
-	    spacing = 1.0 / JMath.round(JMath.pow(10.0, spacing));
-	}
-    }
-    var spec;
-    if (plainBackground) {
+    plainBackground? function() {
 	var xlower = a2d.getXLower();
 	var xupper = a2d.getXUpper();
 	var ylower = a2d.getYLower();
 	var yupper = a2d.getYUpper();
 	var alf = new AnimationLayer2DFactory(a2d);
-	spec = [
+	var spec = [
 	    {zorder: gridZorder, visible: true},
 	    {withPrefix: "object",
 	     withIndex: [{type: "RECTANGLE", x: xlower, y: ylower,
@@ -243,27 +173,24 @@ var a2d;
 			  "drawColor.css": "white"}]}];
 	alf.configure(spec);
 	alf.createObject();
-    }
+	void
+    }(): void;
 
     var gridf = new CartesianGrid2DFactory(a2d);
 
-    spec = [{zorder: gridZorder, visible: true},
+    var spec = [{zorder: gridZorder, visible: true},
 	    {spacing: spacing, subspacing: subspacing}];
 
-    var i = 2;
-    if (axisColor != null) {
-	spec[i++] = {"axisColor.css": axisColor};
-    }
-    if (spacingColor != null) {
-	spec[i++] = {"spacingColor.css": spacingColor};
-    }
-    if (subspacingColor != null) {
-	spec[i++] = {"subspacingColor.css": subspacingColor};
-    }
-    if (strokeWidth != null) {
-	spec[i++] = {strokeWidth: strokeWidth};
-    }
+    (axisColor != null)? spec.add({"spacingColor.css": spacingColor}): false;
+
+    (spacingColor != null)? spec.add({"spacingColor.css": spacingColor}): false;
+
+    (subspacingColor != null)?
+	spec.add({"subspacingColor.css": subspacingColor}):false;
+
+    (strokeWidth != null)?  spec.add({"strokeWidth": strokeWidth}): false;
 
     gridf.configure(spec);
     gridf.createObject();
-})();
+    void
+}();

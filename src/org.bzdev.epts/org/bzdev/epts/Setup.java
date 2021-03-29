@@ -10,7 +10,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.Vector;
@@ -444,9 +446,11 @@ public class Setup {
 	localeString("gridBuiltin"),
 	localeString("polarBuiltin")
     };
+
+    // to use, tag on the extension
     private static String builtinScriptLocations[] = {
-	"sresource:grid",
-	"sresource:polar"
+	"resource:grid",
+	"resource:polar",
     };
     
     private static void addControls(final JPanel pane, final JTable table,
@@ -536,7 +540,10 @@ public class Setup {
 					break;
 				    }
 				}
-				table.setValueAt(builtinScriptLocations[i],
+				String ext = "."+ langToExtMap
+				    .get(langCB.getSelectedItem());
+				table.setValueAt(builtinScriptLocations[i]
+						 + ext,
 						 index, 0);
 			    }
 			}			
@@ -1024,11 +1031,22 @@ public class Setup {
     private static String[] scriptingLanguages;
     private static String DEFAULT_LANG = "(DEFAULT)";
     private static String defaultSL = "(" + localeString("defaultSL") + ")";
+    private static HashMap<String,String> langToExtMap = new HashMap<>();
+
     static {
 	Set<String> langSet = Scripting.getLanguageNameSet();
-	scriptingLanguages = new String[langSet.size()+1];
-	langSet = new TreeSet<String>(langSet);
+	for (String ln: langSet) {
+	    for (String ext: Scripting.getExtensionsByLanguageName(ln)) {
+		if (EPTS.class.getResource("grid." + ext) != null) {
+		    langToExtMap.put(ln,ext);
+		    break;
+		}
+	    }
+	}
+	langSet = new TreeSet<String>(langToExtMap.keySet());
 	langSet.add(defaultSL);
+	langToExtMap.put(defaultSL, "esp");
+	scriptingLanguages = new String[langSet.size()];
 	scriptingLanguages = langSet.toArray(scriptingLanguages);
     }
 
@@ -1065,6 +1083,8 @@ public class Setup {
 
     static private File savedStateFile = null;
 
+    static JComboBox<String> langCB;
+
     public static String[] getSetupArgs(ZipDocFile zf, File zfile) {
 	try {
 	    results = null;
@@ -1086,8 +1106,7 @@ public class Setup {
 			new JLabel(localeString("animLabel"));
 		    JTextField animTF = new JTextField("a2d", 32);
 		    JLabel slLabel = new JLabel(localeString("slLabel"));
-		    JComboBox<String> langCB =
-			new JComboBox<String>(scriptingLanguages);
+		    langCB = new JComboBox<String>(scriptingLanguages);
 		    langCB.setEditable(false);
 
 		    String jcolumnNames[] = {
@@ -1620,6 +1639,11 @@ public class Setup {
 				arglist.add("--gui");
 				if (EPTS.stackTrace) {
 				    arglist.add("--stackTrace");
+				}
+				String lang = (String)langCB.getSelectedItem();
+				if (lang != null || !lang.equals(defaultSL)) {
+				    arglist.add("-L");
+				    arglist.add(lang);
 				}
 				int len = javaOptionTable.getRowCount();
 				for (int i = 0; i < len; i++) {
