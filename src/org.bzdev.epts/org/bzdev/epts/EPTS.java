@@ -1787,11 +1787,9 @@ public class EPTS {
 	    }
 	};
 
-
     private static String[] preprocessArgs(int ind, String[] argv, String arg) {
 	if (arg == null) {
 	    try {
-		System.out.println("got here");
 		boolean prevImageMode = imageMode;
 		SwingUtilities.invokeAndWait(fileDialogRunnable);
 		if (inputFile != null) {

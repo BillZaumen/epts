@@ -150,6 +150,7 @@ RESOURCES = manual/manual.xml \
 	manual/index.html \
 	manual/manual.html \
 	manual/manual.css \
+	manual/DesktopIcons.png \
 	manual/OpeningDialog.png \
 	manual/desktop.png \
 	manual/inputfiles.png \
