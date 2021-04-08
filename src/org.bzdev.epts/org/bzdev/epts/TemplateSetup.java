@@ -28,6 +28,9 @@ import org.xml.sax.*;
 
 public class TemplateSetup {
 
+    // true if the first pane is being edited
+    static boolean initialEditing = true;
+
     static String errorMsg(String key, Object... args) {
 	return EPTS.errorMsg(key, args);
     }
@@ -281,6 +284,10 @@ public class TemplateSetup {
 	"JavaLocations",
 	"JavaPathBuilders",
 	"JavaPathFactories",
+	"YAMLLayers",
+	"YAMLLocations",
+	"YAMLPaths",
+	"YAML"
     };
 
     private static String chooseTemplateOptions2[] = {
@@ -2588,8 +2595,10 @@ public class TemplateSetup {
 			    mayNeedSave = true;
 			    doEnables(tabpane);
 			    setupAllowedSubpaths();
+			    templateTypeLabel.setEnabled(false);
 			    // templateTypeCB.setEnabled(false);
 			    freezeTemplateType(true);
+			    templateTypeCB.setEnabled(false);
 			    useBuiltinCheckBox.setEnabled(false);
 			    basicData.useBuiltins =
 				useBuiltinCheckBox.isSelected();
@@ -2599,7 +2608,7 @@ public class TemplateSetup {
 			    templateButton.setEnabled(false);
 			    resetTypeButton.setEnabled(true);
 			    acceptTypeButton.setEnabled(false);
-			    // savedStateLabel.setEnabled(false);
+			    savedStateLabel.setEnabled(false);
 			    String savedState = savedStateTF.getText().trim();
 			    basicData.savedState = savedState;
 			    lastSavedState = savedState;
@@ -2609,10 +2618,13 @@ public class TemplateSetup {
 			    mapTF.setEnabled(false);
 			    mapButton.setEnabled(false);
 			    basicData.mapName  = mapTF.getText().trim();
+			    initialEditing = false;
 			});
 		    resetTypeButton.addActionListener((ae) -> {
 			    resetTypeButton.setEnabled(false);
 			    acceptTypeButton.setEnabled(false);
+			    templateTypeLabel.setEnabled(true);
+			    templateTypeCB.setEnabled(true);
 			    freezeTemplateType(false);
 			    savedStateLabel.setEnabled(true);
 			    savedStateTF.setEnabled(true);
@@ -2646,6 +2658,7 @@ public class TemplateSetup {
 			    tabpane.setEnabledAt(3, false);
 			    tabpane.setEnabledAt(4, false);
 			    mayNeedSave = true;
+			    initialEditing = true;
 			});
 
 		    templateLabel =
@@ -2843,14 +2856,18 @@ public class TemplateSetup {
 			    doEnables(null);
 			    acceptTypeButton.setEnabled(false);
 			    resetTypeButton.setEnabled(true);
+			    initialEditing = false;
+			    templateTypeLabel.setEnabled(false);
 			    useBuiltinCheckBox.setEnabled(false);
 			    freezeTemplateType(true);
+			    templateTypeCB.setEnabled(false);
 			    setupAllowedSubpaths();
 			    setupCompoundPaths();
 			    // templateLabel.setEnabled(false);
 			    templateTF.setEnabled(false);
 			    templateButton.setEnabled(false);
 			    savedStateButton.setEnabled(false);
+			    savedStateLabel.setEnabled(false);
 			    savedStateTF.setEnabled(false);
 			    mapTF.setEnabled(false);
 			    mapButton.setEnabled(false);
@@ -2978,7 +2995,7 @@ public class TemplateSetup {
 		    dialog.addWindowListener(new WindowAdapter() {
 			    public void windowClosing(WindowEvent we) {
 				if (dialogButtonPushed == false) {
-				    if (mayNeedSave) {
+				    if (mayNeedSave && initialEditing==false) {
 					switch(JOptionPane
 					       .showConfirmDialog
 					       (dialog,

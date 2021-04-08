@@ -137,6 +137,8 @@ TEMPLATES = templates/distances.tpl \
 	templates/ECMAScriptLayers.tpl 	templates/JavaLayers.tpl \
 	templates/JavaPathFactories.tpl templates/JavaLocations.tpl \
 	templates/JavaPathBuilders.tpl templates/SVG.tpl \
+	templates/YAMLLayers.tpl templates/YAMLLocations.tpl \
+	templates/YAMLPaths.tpl templates/YAML.tpl \
 	templates/area.tpl templates/circumference.tpl \
 	templates/pathlength.tpl
 
