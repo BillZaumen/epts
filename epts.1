@@ -1024,12 +1024,17 @@ from the protocol by a ":") are
 .BR ECMAScriptLayers ,
 .BR ECMAScriptLayerPaths ,
 .BR EMCAScriptLocations ,
-.BR sresource:EMCAScriptPaths ,
+.BR EMCAScriptPaths ,
 .BR ECMAScript ,
-.BR JavaLocations,
+.BR JavaLocations ,
 .BR JavaPathBuilders ,
+.BR JavaPaths ,
+.BR YAMLLayers ,
+.BR YAMLLocations ,
+.BR YAMLPaths ,
 and
-.BR JavaPaths .
+.BR YAML .
+
 For path-iterator templates, the pathname component of the URLs are
 .BR area ,
 .BR circumference ,
@@ -1193,7 +1198,7 @@ option are used, the template is assumed to be a table template.
 .PP
 The table templates are the following:
 .TP
-.B sresource:distances
+.B resource:distances
 This template will print the distances and corresponding path
 parameters for those points along a path that are spline points or
 points on segment boundaries. The path parameters are integer-valued,
@@ -1201,7 +1206,7 @@ and for the path parameter 0.0, the corresponding distance is always
 zero.  For paths that have subpaths, the distances and path parameters
 are those appropriate for each subpath.
 .TP
-.B sresource:ECMAScript
+.B resource:ECMAScript
 This template will print the
 information included in the EPTS table. Each path or location is
 represented by an ECMAScript variable. For locations, the value
@@ -1232,7 +1237,7 @@ the corresponding
 option must name a single EPTS path when a
 stroke or color option is provided.
 .TP
-.B sresource:ECMAScriptLayers
+.B resource:ECMAScriptLayers
 This template will print the information included in the EPTS
 table. Each path is represented by an ECMAScript variable. Location
 entries are ignored.  For each
@@ -1255,17 +1260,17 @@ option is used, a
 .B \-\-winding-rule
 option may be used, as can color or stroke options.
 .TP
-.B sresource:ECMAScriptLocations
+.B resource:ECMAScriptLocations
 This template provides the same ECMAScript statements that the
-.B sresource:ECMAScript
+.B resource:ECMAScript
 template produces, but only locations are included, not paths.
 .TP
-.B sresource:ECMAScriptPaths
+.B resource:ECMAScriptPaths
 This template provides the same ECMAScript statements that the
-.B sresource:ECMAScript
+.B resource:ECMAScript
 template produces, but only paths are included, not locations.
 .TP
-.B sresource:JavaLocations
+.B resource:JavaLocations
 This template provides a Java class containing fields that are
 instances of the Java class
 .B java.awt.geom.Path2D
@@ -1278,7 +1283,7 @@ the EPTS table.  Multiple
 .B \-\-tname
 options are allowed.
 .TP
-.B sresource:JavaPathBuilders
+.B resource:JavaPathBuilders
 This template provides a Java class containing fields that are
 instances of the Java class
 .B org.bzdev.geom.SplinePathBuilder
@@ -1294,7 +1299,7 @@ the EPTS table. Multiple
 .B \-\-tname
 options are allowed.
 .TP
-.B sresource:JavaPathFactories
+.B resource:JavaPathFactories
 This template provides a Java class containing fields that are
 instances of the Java interface
 .B org.bzdev.obnaming.NamedObjectFactory.IndexedSetter
@@ -1312,10 +1317,34 @@ option, color or stroke options can be specified (these must precede
 the
 .B \-\-tname
 option to which they apply).
+.TP
+.B resource:YAMLLayers
+This template provides variables that can be used in anim2d layers to
+describe paths that make up a layer.  It is similar to
+.BR resource:ECMAScriptLayers ,
+but uses a YAML format.
+.TP
+.B resource:YAMLLocations
+This template provides variable that define locations with X and Y
+coordinates.  It is similar to
+.BR resource:ECMAScriptLocations ,
+but uses a YAML format.
+.TP
+.B resource:YAMLPaths
+This template provides variables that define paths. It is similar
+to
+.BR resource:ECMAScriptPaths ,
+but uses a YAML format.
+.TP
+.B resource:YAML
+This template combines both paths and locations. It is similar
+to
+.BR resource:ECMAScript ,
+but uses a YAML format.
 .PP
 The path-iterator templates are the following:
 .TP
-.B sresource:area
+.B resource:area
 This template requires the use of a
 .B \-\-pname
 option to specify a path name, or to create a new path that is the
@@ -1326,7 +1355,7 @@ the command was run with the
 option, the units are graph-coordinate-space units; otherwise they are
 user-space units.
 .TP
-.B sresource:circumference
+.B resource:circumference
 This template requires the use of a
 .B \-\-pname
 option to specify a path name, or to create a new path that is the
@@ -1337,7 +1366,7 @@ contains any open segments. If the command was run with the
 option, the units are graph-coordinate-space units; otherwise they are
 user-space units.
 .TP
-.B sresource:pathlength
+.B resource:pathlength
 This template requires the use of a
 .B \-\-pname
 option to specify a path name, or to create a new path that is the
@@ -1347,7 +1376,7 @@ path length, summed over all segments making up the path. If the command was run
 option, the units are graph-coordinate-space units; otherwise they are
 user-space units.
 .TP
-.B sresource:SegmentsCSV
+.B resource:SegmentsCSV
 This template requires the use of a
 .B \-\-pname
 option to specify a path name, or to create a new path that is the
@@ -1509,14 +1538,14 @@ options.
 .SH Built-in Scripts
 .PP
 There are two built-in scripts accessible using the
-.B sresource
+.B resource
 protocol:
 .TP
-.B sresource:grid.js
+.B resource:grid.js
 This script overlays a rectilinear grid as a representation of a
 Cartesian coordinates.
 .TP
-.B sresource:polar.js
+.B resource:polar.js
 This script overlays a polar grid as a representation of polar
 coordinates.
 .PP
@@ -1542,9 +1571,9 @@ and
 to set variable names to values as described above.
 .PP
 Some variables are shared by both
-.B sresource:grid.js
+.B resource:grid.js
 and
-.BR sresource:polar.js :
+.BR resource:polar.js :
 .TP
 .B frameWidth
 The value is an integer giving the width of the background image that
@@ -1601,11 +1630,11 @@ creates the grid. The default is the JavaScript value
 java.lang.Long.MAX_VALUE (2<SUP>53</SUP> - 1).
 .PP
 The script
-.B sresource:grid.js
+.B resource:grid.js
 will overlay an image with a Cartesian (rectilinear) grid consisting
 of parallel, evenly spaced lines in both the X and Y directions.  The
 variables specific to
-.B sresource:grid.js
+.B resource:grid.js
 that configure Cartesian grids are the following:
 .TP
 .B spacing
@@ -1637,13 +1666,13 @@ The value is the subspacing color provided as a CSS string, null or
 undefined for the default.
 .PP
 The script
-.B sresource:polar.js
+.B resource:polar.js
 will overlay an image with a polar grid. These grids consist of a set
 of evenly spaced circles centered at a common origin, and radial lines
 with the same angular spacing, excluding areas near the origin where
 some lines may be eliminated in order to prevent them from running
 together.  The variables specific to
-.B sresource:polar.js
+.B resource:polar.js
 that configure polar grids are the following:
 .TP
 .B fractional
@@ -1688,14 +1717,14 @@ interface:
 .B epts\ saved.epts
 Start EPTS, restoring its state to one saved in a previous session.
 .TP
-.B epts\ \-\-double\ spacing=10ft\ saved.epts\ sresource:grid.js
+.B epts\ \-\-double\ spacing=10ft\ saved.epts\ resource:grid.js
 Start EPTS, restoring its state to one saved in a previous session.
 The saved state uses a script to create the image and an additional
 build-in script (grid.js) is used to add a grid overlaying that image
 but not overlaying points or paths. The grid spacing corresponds to
 10 feet in graph coordinate space.
 .TP
-.B epts\ \-\-animation a2d\ \-\-double\ spacing=10ft\ saved.epts\ sresource:grid.js
+.B epts\ \-\-animation a2d\ \-\-double\ spacing=10ft\ saved.epts\ resource:grid.js
 Start EPTS, restoring its state to one saved in a previous session.
 The saved state specifies an image and an additional build-in script
 (grid.js) is used to add a grid overlaying that image but not
@@ -1822,4 +1851,5 @@ file override those in the system configuration file.
 \"  LocalWords:  fIProgramming stackTrace sessionConfig CFILE OFILE
 \"  LocalWords:  templateConfig TCFILE eptc eptt hasFillColor tdef
 \"  LocalWords:  fIDEFNAME DEFVALUE DEFNAME hasCount endCount subpath
-\"  LocalWords:  hasPackage optSpace
+\"  LocalWords:  hasPackage optSpace YAMLLayers YAMLLocations YAML
+\"  LocalWords:  YAMLPaths anim
