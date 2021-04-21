@@ -182,7 +182,14 @@ user-defined formats.  Command-line options are used with templates
 and make it easy to use EPTS as part of a 'build' environment (e.g.,
 Java programs such as ANT or the traditional Unix/Linux use of
 Makefiles). A large number of options are specific to templates
-and are described below.
+and are described below. In some cases, the command-line options
+needed can be exceedingly large. For that case, one should consider
+using the GUI to create an EPTS file with the extension
+.BR .eptt ,
+which will automatically run EPTS to generate templates. If there
+are a large number of script options, one can similarly create an
+EPTS file with the extension
+.BR .eptc .
 .SH OPTIONS
 .PP
 Most options can grouped into three types.
@@ -479,7 +486,7 @@ This suffix is used for distances measured in miles.
 For example,
 .br
 .br
-\fB\ \ \ \ epts\ \-\-double\ spacing=10ft\ saved.epts\ sresource:grid.js\fR
+\fB\ \ \ \ epts\ \-\-double\ spacing=10ft\ saved.epts\ resource:grid.js\fR
 .br
 .br
 will show a script-generated image specified by saved.epts with its
@@ -1005,7 +1012,7 @@ and
 .TP
 .BI \-\-template: RESOURCE
 This option is a shortcut for the option
-.BI \-\-template\ sresource: RESOURCE
+.BI \-\-template\ resource: RESOURCE
 as built-in templates are a common case.
 .TP
 .BI \-\-template\  TFILE
@@ -1017,7 +1024,7 @@ The format of the template file depends on whether or not the
 flag has been set: when set, a path-iterator template must be used;
 otherwise a table template must be used. There are a number of
 built-in templates whose URLs start with the protocol
-.BR sresource .
+.BR resource .
 For table templates, the pathname component of the URLs (separated
 from the protocol by a ":") are
 .BR distances ,
@@ -1537,19 +1544,27 @@ options.
 
 .SH Built-in Scripts
 .PP
-There are two built-in scripts accessible using the
+There are four built-in scripts accessible using the
 .B resource
 protocol:
 .TP
+.B resource:grid.esp
+This script overlays a rectilinear grid as a representation of a
+Cartesian coordinates. The scripting language is ESP.
+.TP
 .B resource:grid.js
 This script overlays a rectilinear grid as a representation of a
-Cartesian coordinates.
+Cartesian coordinates. The scripting language is ECMAScript.
+.TP
+.B resource:polar.esp
+This script overlays a polar grid as a representation of polar
+coordinates. The scripting language is ESP.
 .TP
 .B resource:polar.js
 This script overlays a polar grid as a representation of polar
-coordinates.
+coordinates. The scripting language is ECMAScript.
 .PP
-While there is a default behavior in both cases, the grids can be tuned
+While there is a default behavior in all cases, the grids can be tuned
 if necessary.  These scripts must be used with the option
 .B \-\-animation\ a2d
 as the variable representing an animation is
@@ -1562,7 +1577,7 @@ however, set the value of
 if it is null or undefined.
 .PP
 The grids the scripts display can be controlled by setting various
-EMCAScript variables. This is done using the CLI options
+EMCAScript or ESP variables. This is done using the CLI options
 .BR \-\-boolean ,
 .BR \-\-double ,
 .BR \-\-int ,
@@ -1571,7 +1586,9 @@ and
 to set variable names to values as described above.
 .PP
 Some variables are shared by both
-.B resource:grid.js
+.BR resource:grid.esp ,
+.BR resource:grid.js,
+.B resource:polar.esp
 and
 .BR resource:polar.js :
 .TP
@@ -1629,11 +1646,15 @@ The value is an integer giving the z-order to use for the object that
 creates the grid. The default is the JavaScript value
 java.lang.Long.MAX_VALUE (2<SUP>53</SUP> - 1).
 .PP
-The script
+The scripts
+.B resource:grid.esp
+and
 .B resource:grid.js
 will overlay an image with a Cartesian (rectilinear) grid consisting
 of parallel, evenly spaced lines in both the X and Y directions.  The
 variables specific to
+.B resource:grid.esp
+and
 .B resource:grid.js
 that configure Cartesian grids are the following:
 .TP
@@ -1665,13 +1686,17 @@ undefined for the default.
 The value is the subspacing color provided as a CSS string, null or
 undefined for the default.
 .PP
-The script
+The scripts
+.B resource:polar.esp
+and
 .B resource:polar.js
 will overlay an image with a polar grid. These grids consist of a set
 of evenly spaced circles centered at a common origin, and radial lines
 with the same angular spacing, excluding areas near the origin where
 some lines may be eliminated in order to prevent them from running
 together.  The variables specific to
+.B resource:polar.esp
+and
 .B resource:polar.js
 that configure polar grids are the following:
 .TP
@@ -1828,7 +1853,7 @@ file override those in the system configuration file.
 \"  LocalWords:  config conf VNAME SOPTION SFILE TOPTION ETPS DVALUE
 \"  LocalWords:  fIDVALUE fIIVALUE iVALUE fISVALUE SVALUE pname CSS
 \"  LocalWords:  RGB rgb fIR fIG fIB rull evenodd svg gcs keymap NaN
-\"  LocalWords:  EPTS's fillRule Scaleable sresource ECMAScriptLayers
+\"  LocalWords:  EPTS's fillRule Scaleable  ECMAScriptLayers
 \"  LocalWords:  ECMAScriptLayerPaths EMCAScriptLocations pathlength
 \"  LocalWords:  EMCAScriptPaths SegmentsCSV tname TNAME windingRule
 \"  LocalWords:  BZDev ECMAScriptLocations ECMAScriptPaths CSV LINETO

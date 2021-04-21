@@ -1,8 +1,12 @@
 %YAML 1.2
 ---
  - execute:
-$(items:endItems)$(location:endLocation)     - var $(varname) = {x: $(x), y: $(y)}
-$(endLocation)$(pathStatement:endPathStatement)     - var $(varname) = [{visible: "$(draw)"$(hasAttributes:endAttributes)$(hasWindingRule:endWR),
+$(items:endItems)$(location:endLocation)
+    - !bzdev!esp >-
+      var $(varname) = {x: $(x), y: $(y)}
+$(endLocation)$(pathStatement:endPathStatement)
+    - !bzdev!esp >-
+      var $(varname) = [{visible: "$(draw)"$(hasAttributes:endAttributes)$(hasWindingRule:endWR),
         windingRule: "$(windingRule)"$(endWR)$(hasGcsMode:endGcsMode),
         "stroke.gcsMode": $(gcsMode)$(endGcsMode)$(hasDrawColor:endDrawColor),
         "color.css": "$(drawColor)"$(endDrawColor)$(hasStrokeCap:endStrokeCap),
@@ -16,6 +20,5 @@ $(endLocation)$(pathStatement:endPathStatement)     - var $(varname) = [{visible
         zorder: $(zorder)$(endZorder)$(endAttributes)},
         {withPrefix: "cpoint", withIndex: [$(pathItem:endPathItem)
         {type: "$(type)"$(xy:endXY), x: $(x), y: $(y)$(endXY)}$(optcomma)$(endPathItem)
-        ]}]$(endPathStatement)
-$(endItems)
-...
+        ]}]
+$(endPathStatement)$(endItems)...

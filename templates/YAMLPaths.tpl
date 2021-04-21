@@ -1,7 +1,9 @@
 %YAML 1.2
 ---
  - execute:
-$(items:endItems)$(pathStatement:endPathStatement)    - var $(varname) = [{visible: "$(draw)"$(hasAttributes:endAttributes)$(hasWindingRule:endWR),
+$(items:endItems)$(pathStatement:endPathStatement)
+    - !bzdev!esp >-
+      var $(varname) = [{visible: "$(draw)"$(hasAttributes:endAttributes)$(hasWindingRule:endWR),
         windingRule: "$(windingRule)"$(endWR)$(hasGcsMode:endGcsMode),
         "stroke.gcsMode": $(gcsMode)$(endGcsMode)$(hasDrawColor:endDrawColor),
         "color.css": "$(drawColor)"$(endDrawColor)$(hasStrokeCap:endStrokeCap),
@@ -16,5 +18,4 @@ $(items:endItems)$(pathStatement:endPathStatement)    - var $(varname) = [{visib
         {withPrefix: "cpoint", withIndex: [$(pathItem:endPathItem)
         {type: "$(type)"$(xy:endXY), x: $(x), y: $(y)$(endXY)}$(optcomma)$(endPathItem)
         ]}]
-$(endPathStatement)$(endItems)
-...
+$(endPathStatement)$(endItems)...
