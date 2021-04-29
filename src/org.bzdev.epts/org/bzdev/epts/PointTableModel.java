@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -937,7 +938,7 @@ public class
 		kmap2.put("x", String.format((Locale)null, "%s", row.getX()));
 		kmap2.put("y", String.format((Locale)null, "%s", row.getY()));
 		kmap2.put("xp", String.format((Locale)null, "%s", row.getXP()));
-		kmap2.put("yp", String.format((Locale) null, "%s", row.getYP()));
+		kmap2.put("yp", String.format((Locale) null,"%s", row.getYP()));
 		kmap2.put("ypr", String.format((Locale)null, "%s",
 						height - row.getYP()));
 		list.add(kmap1);
@@ -1319,6 +1320,66 @@ public class
 	}
 	TemplateProcessor.KeyMap map = new TemplateProcessor.KeyMap();
 	map.put("items", list);
+	return map;
+    }
+
+    // provided for generating SVG files.
+    public Map<String,TemplateProcessor.KeyMap>
+	getLocationMap(double height, boolean gcs)
+    {
+	int index = 0;
+	int vindex = 0;
+	int sz = 3 + ((names.size() - pnames.size())/2)*3;
+	Map<String,TemplateProcessor.KeyMap> map = new
+	    LinkedHashMap<String,TemplateProcessor.KeyMap>(sz);
+	for (PointTMR row: rows) {
+	    index++;
+	    Enum mode = row.getMode();
+	    if (mode == EPTS.Mode.LOCATION) {
+		vindex++;
+		TemplateProcessor.KeyMap kmap1 = new TemplateProcessor.KeyMap();
+		TemplateProcessor.KeyMap kmap2 = new TemplateProcessor.KeyMap();
+		String name = row.getVariableName();
+		kmap1.put("varname", name);
+		kmap1.put("vindex", ("" + vindex));
+		kmap1.put("index", ("" + index));
+		kmap1.put("location", kmap2);
+		double xL, xR, yT, yB, lw;
+		if (gcs) {
+		    double r = height/100.0;
+		    double x = row.getX();
+		    double y = row.getY();
+		    lw = r/10.0;
+		    xL = x - r;
+		    xR = x + r;
+		    yT = y + r;
+		    yB = y - r;
+		    kmap2.put("x", String.format((Locale)null, "%s", x));
+		    kmap2.put("y", String.format((Locale)null, "%s", y));
+		    kmap2.put("r", String.format((Locale)null, "%s", r));
+		} else {
+		    double r = 10.0;
+		    double x = row.getXP();
+		    double y = row.getYP();
+		    lw = r/10.0;
+		    xL = x - r;
+		    xR = x + r;
+		    yT = y - r;
+		    yB = y + r;
+		    kmap2.put("x", String.format((Locale)null, "%s", x));
+		    kmap2.put("y", String.format((Locale) null,"%s", y));
+		    kmap2.put("r", String.format((Locale)null, "%s", r));
+		}
+		kmap2.put("xL", String.format((Locale)null, "%s", xL));
+		kmap2.put("xR", String.format((Locale)null, "%s", xR));
+		kmap2.put("yT", String.format((Locale)null, "%s", yT));
+		kmap2.put("yB", String.format((Locale)null, "%s", yB));
+		kmap2.put("lw", String.format((Locale)null, "%s", lw));
+		map.put(name, kmap1);
+	    } else if (mode == EPTS.Mode.PATH_START) {
+		vindex++;
+	    }
+	}
 	return map;
     }
 }

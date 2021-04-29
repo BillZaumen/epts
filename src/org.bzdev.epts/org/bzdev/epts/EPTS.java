@@ -3841,10 +3841,20 @@ public class EPTS {
 			    TemplateProcessor.KeyMap svgmap =
 				new TemplateProcessor.KeyMap();
 			    svgmap.put("width", "" + parser.getWidth());
-			    svgmap.put("height", "" + parser.getHeight());
+			    double height = parser.getHeight();
+			    svgmap.put("height", "" + height);
 			    TemplateProcessor.KeyMapList kmaplist =
 				new TemplateProcessor.KeyMapList();
+			    TemplateProcessor.KeyMapList lkmaplist =
+				new TemplateProcessor.KeyMapList();
+			    Map<String,TemplateProcessor.KeyMap> lmap
+				= ptmodel.getLocationMap(height, gcs);
 			    for (FilterInfo info: filterInfoList) {
+				if (lmap.containsKey(info.name)) {
+				    System.out.println("saw " + info.name);
+				    lkmaplist.add(lmap.get(info.name));
+				    continue;
+				}
 				TemplateProcessor.KeyMap kmap
 				    = EPTSWindow.getPathKeyMap(ptmodel,
 							       info.name,
@@ -3891,6 +3901,7 @@ public class EPTS {
 				kmaplist.add(kmap);
 			    }
 			    svgmap.put("paths", kmaplist);
+			    svgmap.put("locations", lkmaplist);
 			    tp = new TemplateProcessor(svgmap);
 			} else if (filterInfoList.size() > 0) {
 			    FilterInfo[] filters =
