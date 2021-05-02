@@ -4414,8 +4414,8 @@ public class EPTSWindow {
 			JViewport vp = scrollPane.getViewport();
 			int vpw = vp.getWidth();
 			int vph = vp.getHeight();
-			int ipx = (int)(Math.round(xp - vpw/2));
-			int ipy = (int)(Math.round(yp - vph/2));
+			int ipx = (int)(Math.round(xp*zoom - vpw/2));
+			int ipy = (int)(Math.round(yp*zoom - vph/2));
 			if (ipx < 0) ipx = 0;
 			if (ipy < 0) ipy = 0;
 			vp.setViewPosition(new Point(ipx, ipy));
@@ -4571,8 +4571,8 @@ public class EPTSWindow {
 			JViewport vp = scrollPane.getViewport();
 			int vpw = vp.getWidth();
 			int vph = vp.getHeight();
-			int ipx = (int)(Math.round(xp - vpw/2));
-			int ipy = (int)(Math.round(yp - vph/2));
+			int ipx = (int)(Math.round(xp*zoom - vpw/2));
+			int ipy = (int)(Math.round(yp*zoom - vph/2));
 			if (ipx < 0) ipx = 0;
 			if (ipy < 0) ipy = 0;
 			vp.setViewPosition(new Point(ipx, ipy));
@@ -4787,8 +4787,8 @@ public class EPTSWindow {
 			    JViewport vp = scrollPane.getViewport();
 			    int vpw = vp.getWidth();
 			    int vph = vp.getHeight();
-			    int ipx = (int)(Math.round(xp - vpw/2));
-			    int ipy = (int)(Math.round(yp - vph/2));
+			    int ipx = (int)(Math.round(xp*zoom - vpw/2));
+			    int ipy = (int)(Math.round(yp*zoom - vph/2));
 			    if (ipx < 0) ipx = 0;
 			    if (ipy < 0) ipy = 0;
 			    vp.setViewPosition(new Point(ipx, ipy));

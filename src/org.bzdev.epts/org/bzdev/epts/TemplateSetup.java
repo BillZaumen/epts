@@ -1100,13 +1100,30 @@ public class TemplateSetup {
 	PlainDocument dpdoc = new PlainDocument();
 	dpdoc.setDocumentFilter(dpfilter);
 	dashPatternTF = new VTextField(16) {
+		@Override
 		protected void onAccepted() {
 		    currentPLI.dashPattern =
 			dashPatternTF.getText().replace('\u2423', ' ');
 		}
+		@Override
+		protected boolean handleError() {
+		    JOptionPane.showMessageDialog
+			(this, localeString("badDashPattern"),
+			 localeString("errorTitle"), JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
 	    };
 	dashPatternTF.setAllowEmptyTextField(true);
 	dashPatternTF.setDocument(dpdoc);
+	dashPatternTF.setInputVerifier(new InputVerifier() {
+		public boolean verify(JComponent input) {
+		    String s = dashPatternTF.getText();
+		    if (s == null || s.length() == 0) return true;
+		    if (s.charAt(0) != '-') return false;
+		    int ind = s.lastIndexOf('\u2423');
+		    return (ind == -1 || ind == s.length() - 1);
+		}
+	    });
 	dashPatternPhaseLabel = new JLabel(localeString("DashPatternPhase"));
 	dashPatternPhaseTF = new VTextField(16) {
 		protected void onAccepted() {

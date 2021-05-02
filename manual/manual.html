@@ -475,12 +475,16 @@ templates are used.
     outline of a curve is drawn.  Typically one will specify a line
     thickness (the stroke width), and possibly a dash pattern. Dash
     patterns in EPTS are defined by a string containing a series of
-    &#39;-&#39; or &#39; &#39; characters, starting with a &#39;-&#39;. each &#39;-&#39; and space
-    represents a solid line or gap with a width specified by a field
-    called the dash increment. Finally, the dash phase indicates the
-    offset into the dash pattern for its starting point.  The dash
-    width, dash increment and the dash phase can be expressed using
-    either user-space units or GCS units.
+    &#39;-&#39; or &#39;&nbsp;&#39; characters, starting with a
+    &#39;-&#39;.  If the pattern is empty or consists only of the
+    &#39;-&#39; characters, that indicates a solid line.  Otherwise
+    the pattern must start with a &#39;-&#39; and end with a
+    &#39&nbsp;&#39;.  Each &#39;-&#39; and space represents a solid
+    line or gap with a width specified by a field called the dash
+    increment. Finally, the dash phase indicates the offset into the
+    dash pattern for its starting point.  The dash width, dash
+    increment and the dash phase can be expressed using either
+    user-space units or GCS units.
   <LI> <A name="splines">Splines</A> can be used to define portions of
     curves. These avoid the need to provide control points explicitly.
     Splines in EPTS are built from cubic B&eacute;zier curve segments.  A
@@ -2446,7 +2450,9 @@ The options specific to the EPTS command when templates are used are:
     repeat. <U>VALUE</U> is specified in graph coordinate space
     when the option <CODE>--stroke-gcs-mode</CODE> is
     <CODE>true</CODE>; otherwise it is specified in user-space or
-    image space units.
+    image space units. When provided, a dash pattern can consist
+    only of "<CODE>-</CODE>" characters and otherwise must start
+    with a "<CODE>-</CODE>" and end with a "&nbsp;".
   <LI><B><CODE>--stroke-dash-phase</CODE></B> <U>VALUE</U>. This
     option is used for table templates and applies to the path
     specified by the following <CODE>--tname</CODE>
