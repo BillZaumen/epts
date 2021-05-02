@@ -189,6 +189,16 @@ public class EPTSParser {
 		image = bi;
 	    }
 	    return image;
+	} else if (width > 0 && height > 0) {
+	    Image image;
+	    BufferedImage bi = new
+		BufferedImage(width,height,BufferedImage.TYPE_INT_ARGB_PRE);
+	    Graphics2D g2d = bi.createGraphics();
+	    g2d.setBackground(Color.WHITE);
+	    g2d.clearRect(0, 0, width, height);
+	    g2d.dispose();
+	    image = bi;
+	    return image;
 	} else {
 	    return null;
 	}

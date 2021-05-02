@@ -7717,28 +7717,16 @@ public class EPTSWindow {
 	    savedStateCodebase = parser.getCodebase();
 	    savedStateModules = parser.getModules();
 	    savedStateClasspath = parser.getClasspath();
-	    if (parser.imageURIExists()) {
-		URI uri = parser.getImageURI();
-		Image image = parser.getImage();
+	    Image image = parser.getImage();
+	    if (image != null /*parser.imageURIExists()*/) {
+		boolean hasURI = parser.imageURIExists();
+		URI uri = hasURI? parser.getImageURI(): null;
+		// Image image = parser.getImage();
 		imageURI = uri;
 		init(image, (uri != null), null);
 		// now restore state.
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-			    /*
-			      configGCSPane.savedUnitIndex
-			      = parser.getUnitIndex();
-			      configGCSPane.savedRefPointIndex
-			      = parser.getRefPointIndex();
-			      configGCSPane.savedUsDistString =
-			      parser.getUserSpaceDistance();
-			      configGCSPane.savedGcsDistString =
-			      parser.getGcsDistance();
-			      configGCSPane.savedXString = parser.getXRefpoint();
-			      configGCSPane.savedYString = parser.getYRefpoint();
-			      configGCSPane.restoreState();
-			      acceptConfigParms();
-			    */
 			    setupGCSConfigPane(parser);
 			    for (PointTMR row: parser.getRows()) {
 				ptmodel.addRow(row);

@@ -3851,7 +3851,7 @@ public class EPTS {
 				= ptmodel.getLocationMap(height, gcs);
 			    for (FilterInfo info: filterInfoList) {
 				if (lmap.containsKey(info.name)) {
-				    System.out.println("saw " + info.name);
+				    // System.out.println("saw " + info.name);
 				    lkmaplist.add(lmap.get(info.name));
 				    continue;
 				}
