@@ -2913,7 +2913,7 @@ public class EPTSWindow {
 	    // reject if the selected point is also the center of mass
 	    // as a line we use to determine the rotation will have zero
 	    // length.
-	    System.out.println("rejecting - try again");
+	    // System.out.println("rejecting - try again");
 	    pathStart = -1;
 	    rotStart = null;
 	    centerOfMass = null;
@@ -2924,10 +2924,12 @@ public class EPTSWindow {
 	    Path2DInfo.momentsOf(centerOfMass, path):
 	    Path2DInfo.momentsOf(centerOfMass, bounds);
 	if (moments == null) {
+	    /*
 	    if (bounds == null) System.out.println("bounding box expected");
 	    else {
 		System.out.println("bounds = " + bounds);
 	    }
+	    */
 	    if (bounds.getHeight() == 0.0) {
 		moments = new double[2][2];
 		double tmp = bounds.getWidth();
@@ -3020,10 +3022,12 @@ public class EPTSWindow {
 	    Path2DInfo.momentsOf(centerOfMass, path):
 	    Path2DInfo.momentsOf(centerOfMass, bounds);
 	if (moments == null) {
+	    /*
 	    if (bounds == null) System.out.println("bounding box expected");
 	    else {
 		System.out.println("bounds = " + bounds);
 	    }
+	    */
 	    if (bounds.getHeight() == 0.0) {
 		moments = new double[2][2];
 		double tmp = bounds.getWidth();
@@ -5190,6 +5194,7 @@ public class EPTSWindow {
 			} else if (mode == EPTS.Mode.PATH_END) {
 			    ptmodel.addRow(new PointTMR("", mode,
 							0.0, 0.0, 0.0, 0.0));
+			    break;
 			} else {
 			    tcoords[0] = row.getX();
 			    tcoords[1] = row.getY();
