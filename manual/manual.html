@@ -1219,7 +1219,26 @@ Some saved-state shortcuts apply regardless of the current mode:
     supply a variable name that has not been used before. If that
     variable name is not provided or consists of just whitespace, a
     name will be generated.  A generated name starts with the
-    string <CODE>path</CODE> and ends with a positive integer.
+    string <CODE>path</CODE> and ends with a positive integer.  The
+    text field in the dialog box accepts parameters separated from the
+    variable name and each other by semicolons. Each parameter
+    consists of a key and a value, separated by an "=" symbol.  The
+    keys are any of the following:
+    <UL>
+      <LI><A name="keyParameter"><B>key</B></A>. The value is an
+	identifier used to classify paths in some way. A key should
+	have the same syntax as a Java identifier, and printable ASCII
+	is preferred.
+      <LI><A name="linkParameter"><B>link</B></A>. While the value
+	will typically be a URL or URI, any text is allowed. A link is
+	assumed to be a reference to some assocated object.
+      <LI><A name= "descrParameter"><B>descr</B></A>. The value is an
+	arbitrary (but typically short) string containing text
+	describing the path.
+    </UL>
+    EPTS treats these parameters as purely annotative, but they will
+    be accessible in templates. The use in these cases is template
+    specific. All are optional unless required by a template.
   <LI> Alt-D. This toggles whether
     <A href="#dragImage">drag-image mode</A> is in effect, and can
     be used when a window system provides shortcuts that use the
@@ -1234,7 +1253,24 @@ Some saved-state shortcuts apply regardless of the current mode:
     a variable name that has not been used before. If that variable
     name is not provided or consists of just whitespace, a name will
     be generated.  A generated name starts with the
-    string <CODE>pt</CODE> and ends with a positive integer.
+    string <CODE>pt</CODE> and ends with a positive integer. The
+    text field in the dialog box accepts parameters separated from the
+    variable name and each other by semicolons. Each parameter
+    consists of a key and a value, separated by an "=" symbol.  The
+    keys are any of the following:
+    <UL>
+      <LI><B>key</B>. The value is an identifier used to classify
+	points in some way. A key should have the same syntax as a Java
+	identifier, and printable ASCII is preferred.
+      <LI><B>link</B>. While the value will typically be a URL or URI,
+	any text is allowed. A link is assumed to be a reference to some
+	assocated object.
+      <LI><B>descr</B>. The value is an arbitrary (but typically short)
+	string containing text describing the point.
+    </UL>
+    EPTS treats these parameters as purely annotative, but they will
+    be accessible in templates. The use in these cases is template
+    specific. All are optional unless required by a template.
   <LI> Ctrl+Alt-M. Move an existing point or path.
   <LI> Ctrl+Alt-N. Create a new path by applying an affine
     transformation that scales an existing path along its
@@ -1480,21 +1516,51 @@ The built-in table templates are the following:
     ESP variable definitions corresponding to the variable definitions
     created with the <B><CODE>resource:ECMAScriptLayers</CODE></B>
     template.
-    <LI><B><CODE>resource:YAMLLocations</CODE></B>.  This template creates
+  <LI><B><CODE>resource:YAMLLocations</CODE></B>.  This template creates
     a YAML file with an "execute" property that provides a series of
     ESP variable definitions corresponding to the variable definitions
     created with the <B><CODE>resource:ECMAScriptLocations</CODE></B>
     template.
-    <LI><B><CODE>resource:YAMLPaths</CODE></B>.  This template creates
+  <LI><B><CODE>resource:YAMLPaths</CODE></B>.  This template creates
     a YAML file with an "execute" property that provides a series of
     ESP variable definitions corresponding to the variable definitions
     created with the <B><CODE>resource:ECMAScriptPath</CODE></B>
     template.
-    <LI><B><CODE>resource:YAML</CODE></B>.  This template creates
+  <LI><B><CODE>resource:YAML</CODE></B>.  This template creates
     a YAML file with an "execute" property that provides a series of
     ESP variable definitions corresponding to the variable definitions
     created with the <B><CODE>resource:ECMAScript</CODE></B>
     template.
+  <LI><B><CODE>resource:HTMLImageMap</CODE></B>. This template creates
+    an HTML MAP element. Such elements must have a name to be useful.
+    The command-line option <B>--mapName</B> can be used to provide
+    this name, or the GUI can be used, in which case the entry will
+    appear in the Global Parameters tab.
+    The image map will consist of a sequence of
+    AREA elements, each indicated by an EPTS path with some variable
+    name.  An AREA&#39;s SHAPE attribute will have the values
+    <B>circle</B>, <B>rect</B>, or <B>poly</B>, which will also be the
+    value of a variable name&#39;s
+    <A HREF="#keyParameter"><B>key</B> parameter</A>.  When the key's
+    value is <B>circle</B>, <B>rect</B>, or <B>poly</B>, a
+    template-processor directive with the same name will also exist
+    (i.e., if the value of <B>key</B> is <B>circle</B>, then a
+    directive named <B>circle</B> with the value <B>circle</B> will
+    exist as well).  An AREA&#39;s HREF attribute&#39;s value is the
+    value of the variable
+    name&#39;s <A HREF="#linkParameter"><B>link</B> parameter</A>, and
+    an AREA&#39;s ALT attribute&#39;s value is the value of the
+    variable name&#39;s <A HREF="#descrParameter"><B>descr</B>
+      parameter</A>.
+    How the path is drawn depends on the SHAPE attribute. For
+    <UL>
+      <LI> <B>circle</B>, the path is a single line segment that
+	starts at the center and ends at the circle.
+      <LI> <B>rect</B>, the path starts at the upper left corner of
+	the rectangle and ends at the lower right corner.
+      <LI> <B>poly</B>, the path should be closed path of straight
+	line segments providing a polygon.
+    </UL>
 </UL>
 The variables defined by a YAML template can be used with the
 <B>yrunner</B> command by using an expression to obtain its values.
@@ -1629,6 +1695,14 @@ the following directives:
 <UL>
   <LI><B><CODE>varname</CODE></B>. This is a simple directive defining
     a variable name associated with a location or path.
+  <LI> "key".  This provides a key that can be used to classify
+         paths and locations. The value for the key is also the
+         name of another key, and both share the same value. E.g.,
+         if the value for "key" is "foo", there were be a key "foo"
+         whose value is also "foo".
+  <LI> "link". This value associates a path or location with some
+        other object. For example, it could be a URL or URI.
+  <LI> "descr". This value provides a short description of a path or location.
   <LI><B><CODE>index</CODE></B>. An overall index. This value is
     incremented for each line in the table.
   <LI><B><CODE>vindex</CODE></B>. An variable-name index. This value
@@ -1665,6 +1739,11 @@ the following keys describing a point:
   <LI><B><CODE>xp</CODE></B>. The X coordinate of the point in image space.
   <LI><B><CODE>yp</CODE></B>. The Y coordinate of the point in image space,
     measured from top to bottom(the standard Java convention).
+  <LI><B><CODE>ixp</CODE></B>. The X coordinate of the point in image space,
+    rounded to the nearest integer.
+  <LI><B><CODE>iyp</CODE></B>. The Y coordinate of the point in image space,
+    measured from top to bottom (the standard Java convention), rounded to
+    the nearest integer.
   <LI><B><CODE>ypr</CODE></B>. The Y coordinate of the point in image space
     measured from bottom to  (the reverse of the standard Java convention,
     following the convention used in mathematics instead).
@@ -1796,6 +1875,12 @@ directives:
     with an alternative value defined by the user via a command-line
     argument that provides the name of a file mapping types to their
     replacement strings.
+  <LI><B><CODE>optcomma</CODE></B>. This provides an optional comma that,
+    when used at the end of <CODE>pathItem</CODE> block, will result in
+    a comma being inserted as separator between items. If a different
+    separator a semicolon for example, is wanted one can use a construct
+    such as $(+optcomma:endOC);$(endOC), which will replace the comma with
+    a semicolon.
   <LI><B><CODE>xy</CODE></B>. This is an iterative directive, with 0 or 1
     iterations. It defines the following directives (the same ones
     as defined by the location directive) when the value of
@@ -1811,10 +1896,45 @@ directives:
       <LI><B><CODE>yp</CODE></B>. The Y coordinate of the point in image
 	space, measured from top to bottom (the standard Java
 	convention).
+      <LI><B><CODE>ixp</CODE></B>. The X coordinate of the point in image
+	space, rounded to the nearest integer.
+      <LI><B><CODE>iyp</CODE></B>. The Y coordinate of the point in image
+	space, measured from top to bottom (the standard Java
+	convention) and rounded to the nearest integer.
       <LI><B><CODE>ypr</CODE></B>. The Y coordinate of the point in image
 	space measured from bottom to top (the reverse of the
 	standard Java convention, following the convention
 	used in mathematics instead).
+      <LI> <B><CODE>dist</CODE></B>. When set, this provides the
+        distance from the XY coordinates of the previous point to the
+        XY coordinates of this point in GCS units.
+      <LI> <B><CODE>distp</CODE></B>. When set, this provides the
+        distance from the XY coordinates of the previous point to the
+        XY coordinates of this point in image space units.
+      <LI> <B><CODE>idistp</CODE></B>. When set, this provides the
+        distance from the XY coordinates of the previous point to the
+        XY coordinates of this point in image space units, but rounded
+        to the nearest integer.
+      <LI> <B><CODE>rad</CODE></B>. When set, this provides the angle
+        a line from the point represented by the previous row&#39;ss
+        XY coordinates to the point represented by this row&#39;ss XY
+        coordinates makes with the positive X axis. Units are radians
+        with positive values in the counter-clockwise direction.
+      <LI> <B><CODE>deg</CODE></B>. When set, this provides the angle
+        a line from the point represented by the previous row&#39;ss
+        XY coordinates to the point represented by this row&#39;ss XY
+        coordinates makes with the positive X axis. Units are degrees
+        with positive values in the counter-clockwise direction.
+      <LI> <B><CODE>radp</CODE></B>. When set, this provides the angle
+        a line from the point represented by the previous row&#39;ss
+        XY coordinates to the point represented by this row&#39;ss XY
+        coordinates makes with the positive X axis. Units are radians
+        with positive values in the clockwise direction.
+      <LI> <B><CODE>degp</CODE></B>. When set, this provides the angle
+        a line from the point represented by the previous row&#39;ss
+        XY coordinates to the point represented by this row&#39;ss XY
+        coordinates makes with the positive X axis. Units are degrees
+        with positive values in the clockwise direction.
     </UL>
     When the type is <CODE>CLOSE</CODE>, the <CODE>xy</CODE> directive
     is not defined.
@@ -1823,13 +1943,14 @@ directives:
     is <CODE>MOVE_TO</CODE>, <CODE>SEG_END</CODE>, <CODE>SPLINE</CODE>,
     or <CODE>CLOSE</CODE>. An iteration defines the following directives:
     <UL>
-      <LI> <B><CODE>hasSubpathvar</CODE></B>. This is an iterative
+      <LI> <B><CODE>hasSubvarname</CODE></B>. This is an iterative
 	directive with a 0 or 1 iterations. When it has 1 iteration,
-	the directive <CODE>subpathvar</CODE> will be defined.
+	the directive <CODE>subvarname</CODE> will be defined.
       <LI> <B><CODE>subpathvar</CODE></B>. The name of a subpath,
-	if one exists or a path. The iterative directive
+	if one exists. The iterative directive
 	<CODE>hasSubpathvar</CODE> can be used to test if this directive
-	is defined.
+	is defined. For paths that are defined as a sequence of paths,
+	this variable names an individual path in that sequence.
       <LI> <B><CODE>s</CODE></B>. The distance from the start of a subpath,
 	of the distance from the start of a path if there are no subpaths,
 	for the current point along a path.

@@ -530,7 +530,12 @@ and
 .TP
 .B class
 is the simple name of a Java class, and can be used by templates
-that create Java class definitions.
+that create Java class definitions. The
+.B class
+directive is also used to represent the name of an HTML MAP when
+the
+.B resource:HTMLImageMap
+template is used.
 .TP
 .B package
 is the fully qualified name of a Java package and can be used by
@@ -595,15 +600,26 @@ coordinate space.
 This directive provides the Y coordinate of the point in graph
 coordinate space.
 .TP
-.BR xp
+.B xp
 This directive provides the X coordinate of the point in image space
 measured from left to right (the standard Java convention).
 .TP
-.BR yp
+.B yp
 This directive provides the Y coordinate of the point in image space,
 measured from top to bottom (the standard Java convention).
 .TP
-.BR ypr
+.TP
+.BR ixp
+This directive provides the X coordinate of the point in image space
+measured from left to right (the standard Java convention) and rounded
+to the nearest integer.
+.TP
+.B iyp
+This directive provides the Y coordinate of the point in image space,
+measured from top to bottom (the standard Java convention) and rounded
+to the nearest integer.
+.TP
+.B ypr
 This directive provides the Y coordinate of the point in image space
 measured from bottom to top (the reverse of the standard Java convention,
 instead matching the convention used in mathematics).
@@ -839,11 +855,38 @@ or
 .BR y ,
 .BR xp ,
 .BR yp ,
+.BR ixp ,
+.BR iyp ,
 and
-.BR ypj ,
-with the same meaning as used in  the
+.BR ypr ,
+with the same meaning as used in the
 .B location
-directive.
+directive. In addition, the
+.B xy
+directive defines
+.BR dist ,
+.BR distp ,
+.BR rad ,
+.BR radp ,
+.BR deg ,
+and
+.BR degp .
+.B dist
+and
+.BR distp ,
+when present, provide the distance from the last point in graph
+coordinate space units and in image-space units respectively.
+Similarly
+.B rad
+and
+.B radp ,
+when present, provide the angle in radians a line from the last
+point makes with the X axis measured counterclockwise and
+clockwise respectively.
+.B deg
+and
+.B degp
+are the corresponding angles measured in degrees rather than radians.
 .TP
 .B hasParameterInfo
 This is an iterative directive with 0 or 1 iterations.It will be
@@ -860,13 +903,15 @@ The
 .B hasParameterInfo
 directive defines
 .TP
-.B subpathvar
-This directive will be defined when a path has subpaths.
+.B subvarname
+This directive will be defined when a path has subpaths (a subpath is
+a path defined on the command line that is a concatenation of paths
+defined in a saved-state file).
 .TP
-.B hasSubpath
+.B hasSubvarname
 This is an iterative directive with 0 or 1 iterations. It will have
 a single iteration when the
-.B subpathvar
+.B subvarname
 directive is defined.
 .TP
 .B u
@@ -905,7 +950,6 @@ When the
 command contains the
 .B \-\-gcs
 option, GCS units are used; otherwise user-space units are used.
-
 .TP
 .B pathLength
 This directive contains the path length for the boundary of a shape

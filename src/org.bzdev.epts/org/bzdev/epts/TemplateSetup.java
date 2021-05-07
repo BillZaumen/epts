@@ -238,7 +238,7 @@ public class TemplateSetup {
 
     private static String templatesWithClassOrPackage[] = {
 	"JavaLayers", "JavaLocations",
-	"JavaPathBuilders", "JavaPathFactories"
+	"JavaPathBuilders", "JavaPathFactories", "HTMLImageMap"
     };
     
     private static final String RESOURCE_PROTO = "resource:";
@@ -287,7 +287,8 @@ public class TemplateSetup {
 	"YAMLLayers",
 	"YAMLLocations",
 	"YAMLPaths",
-	"YAML"
+	"YAML",
+	"HTMLImageMap"
     };
 
     private static String chooseTemplateOptions2[] = {
@@ -619,6 +620,41 @@ public class TemplateSetup {
 	public boolean gcs;
     };
     static GlobalData globalData = new GlobalData();
+
+    static void setGlobalData() {
+	globalData.packageName = packageNameTF.getText().trim();
+	globalData.className = classNameTF.getText().trim();
+	globalData.isPublic = publicClassCheckBox.isSelected();
+	/*
+	  // handled by action listeners on radio buttons
+	globalData.fmode = normalRB.isSelected()? FlatnessMode.NORMAL:
+	    (straightRB.isSelected()? FlatnessMode.STRAIGHT:
+	     (elevateRB.isSelected()? FlatnessMode.ELEVATE: null));
+	*/
+	String fs = flatnessTF.getText().trim();
+	globalData.flatness = (fs.length() == 0)? 0.0: Double.parseDouble(fs);
+	globalData.limit = limitTF.getValue();
+	globalData.gcs = gcsCheckBox.isSelected();
+    }
+
+    static void restoreFromGlobalData() {
+	packageNameTF.setText(globalData.packageName);
+	classNameTF.setText(globalData.className);
+	publicClassCheckBox.setSelected(globalData.isPublic);
+	switch(globalData.fmode) {
+	case NORMAL:
+	    normalRB.setSelected(true);
+	    break;
+	case STRAIGHT:
+	    straightRB.setSelected(true);
+	    break;
+	case ELEVATE:
+	    elevateRB.setSelected(true);
+	    break;
+	}
+	limitTF.setValue(globalData.limit);
+	gcsCheckBox.setSelected(globalData.gcs);
+    }
 
     public static class PathLocInfo {
 	public boolean isPath;
@@ -1357,6 +1393,10 @@ public class TemplateSetup {
     static JRadioButton elevateRB = null;
     static JCheckBox gcsCheckBox= null;
 
+    static String classname1 = localeString("ClassName");
+    static String classname2 = localeString("MapName");
+    static String currentCN = classname1;
+
     static void createGlobalPanel() {
 	globalPanel = new JPanel();
 	globalCL = new CardLayout();
@@ -1368,9 +1408,10 @@ public class TemplateSetup {
 	packageNameTF.addActionListener((ae) -> {
 		globalData.packageName = packageNameTF.getText().trim();
 	    });
-	classNameLabel = new JLabel(localeString("ClassName"));
+	classNameLabel = new JLabel(currentCN);
 	classNameTF = new JTextField(32);
 	classNameTF.addActionListener((ae) -> {
+		System.out.println("global data classname set");
 		globalData.className = classNameTF.getText().trim();
 	    });
 	publicClassCheckBox = new JCheckBox(localeString("PublicClass"));
@@ -1556,6 +1597,7 @@ public class TemplateSetup {
 	    os.close();
 	    os = zos.nextOutputStream("globalData", true, 9);
 	    enc = new XMLEncoder(os);
+	    setGlobalData();
 	    enc.writeObject(globalData);
 	    enc.close();
 	    os.close();
@@ -1690,7 +1732,9 @@ public class TemplateSetup {
 		return null;
 	    }
 	}
+	setGlobalData();
 	if (globalData.usesTableTemplate) {
+	    System.out.println("trying to generate global data");
 	    String pname = (globalData.packageName == null)? "":
 		globalData.packageName.trim();
 	    String cname = (globalData.className == null)? "":
@@ -1832,6 +1876,12 @@ public class TemplateSetup {
 		if (setComponents) {
 		    useBuiltinCheckBox.setSelected(basicData.useBuiltins);
 		    templateTF.setText(basicData.template);
+		    if (basicData.template.equals("resource:HTMLImageMap")) {
+			currentCN = classname2;
+			if (classNameLabel != null) {
+			    classNameLabel.setText(currentCN);
+			}
+		    }
 		    savedStateTF.setText(basicData.savedState);
 		    mapTF.setText(basicData.mapName);
 		}
@@ -1874,6 +1924,7 @@ public class TemplateSetup {
 	    result = dec.readObject();
 	    if (result instanceof GlobalData) {
 		globalData = (GlobalData) result;
+		restoreFromGlobalData();
 	    }
 	    dec.close();
 	    is.close();
@@ -2309,6 +2360,7 @@ public class TemplateSetup {
 		tabpane.setEnabledAt(4, false);
 		tabpane.setEnabledAt(5, false);
 	    }
+	    globalData.usesTableTemplate = false;
 	    for (Component c: allComponents) {
 		c.setEnabled(false);
 	    }
@@ -2327,22 +2379,25 @@ public class TemplateSetup {
 		for (Component c: svgComponents) {
 		    c.setEnabled(true);
 		}
-	    break;
+		globalData.usesTableTemplate = false;
+		break;
 	    case TT:
 		if (tabpane != null) {
 		    tabpane.setEnabledAt(1, !templateTF.getText()
 					 .startsWith(RESOURCE_PROTO));
 		    if (mayUseClassOrPackage(templateTF.getText())) {
 			tabpane.setEnabledAt(3, true);
+			globalData.usesTableTemplate = true;
 		    } else {
 			tabpane.setEnabledAt(3, false);
+			globalData.usesTableTemplate = false;
 		    }
 		}
 		globalCL.show(globalPanel, "tt");
 		for (Component c: ttComponents) { 
 		    c.setEnabled(true);
 		}
-	    break;
+		break;
 	    case PIT:
 		if (tabpane != null) {
 		    tabpane.setEnabledAt(1, !templateTF.getText()
@@ -2354,6 +2409,7 @@ public class TemplateSetup {
 		    c.setEnabled(true);
 		}
 	    default:
+		globalData.usesTableTemplate = false;
 		break;
 	    }
 	}
@@ -2508,7 +2564,8 @@ public class TemplateSetup {
 			    boolean enable = (index > -1);
 			    String tplate = templateTF.getText().trim();
 			    if (tplate.startsWith("resource:")) {
-				if (!templateMatch(tplate, index)) {
+				if (!templateMatch(tplate.substring(9),
+						   index)) {
 				    tplate = "";
 				    templateTF.setText(tplate);
 				}
@@ -2622,6 +2679,13 @@ public class TemplateSetup {
 			    templateLabel.setEnabled(false);
 			    // templateTF.setEnabled(false);
 			    basicData.template = templateTF.getText().trim();
+			    if (basicData.template
+				.equals("resource:HTMLImageMap")) {
+				currentCN = classname2;
+			    } else {
+				currentCN = classname1;
+			    }
+			    classNameLabel.setText(currentCN);
 			    templateButton.setEnabled(false);
 			    resetTypeButton.setEnabled(true);
 			    acceptTypeButton.setEnabled(false);

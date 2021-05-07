@@ -140,7 +140,7 @@ TEMPLATES = templates/distances.tpl \
 	templates/YAMLLayers.tpl templates/YAMLLocations.tpl \
 	templates/YAMLPaths.tpl templates/YAML.tpl \
 	templates/area.tpl templates/circumference.tpl \
-	templates/pathlength.tpl
+	templates/pathlength.tpl templates/HTMLImageMap.tpl
 
 SCRIPTS = scripts/grid.js scripts/polar.js \
 	scripts/grid.esp scripts/polar.esp

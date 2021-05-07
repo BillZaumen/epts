@@ -25,9 +25,9 @@ $(endScript)  <targetList>$(arglist:arglistEnd)
 	  gcsDistance="$(gcsDistance)"
 	  xrefpointGCS="$(xrefpoint)" yrefpointGCS="$(yrefpoint)"/>
   $(table:endTable)<table>
-$(items:endItems)$(location:endLocation)       <row varname="$(varname)" type="LOCATION"
+$(items:endItems)$(location:endLocation)       <row varname="$(varname)" type="LOCATION" $(+key:endKey)key="$(key)"$(endKey) $(+link:endLink)link="$(link)"$(endLink) $(+descr:endDescr)description="$(descr)"$(endDescr)
        x="$(x)" y="$(y)" xp="$(xp)" yp="$(yp)" />
-$(endLocation)$(pathStatement:endPathStatement)       <row varname="$(varname)" type="PATH_START"/>
+$(endLocation)$(pathStatement:endPathStatement)       <row varname="$(varname)" type="PATH_START" $(+key:endKey)key="$(key)"$(endKey) $(+link:endLink)link="$(link)"$(endLink) $(+descr:endDescr)description="$(descr)"$(endDescr)/>
 $(pathItem:endPathItem)       <row type="$(type)"$(xy:endXY) x="$(x)" y="$(y)" xp="$(xp)" yp="$(yp)"$(endXY)/>
 $(endPathItem)       <row type="PATH_END"/>
 $(endPathStatement)$(endItems)  </table>$(endTable)$(hasFilterItems:endHasFilterItems)

@@ -5,6 +5,7 @@ import org.bzdev.geom.BasicSplinePathBuilder;
 import org.bzdev.geom.SplinePathBuilder;
 import org.bzdev.geom.SplinePathBuilder.CPointType;
 import org.bzdev.lang.UnexpectedExceptionError;
+import org.bzdev.net.WebEncoder;
 import org.bzdev.util.TemplateProcessor;
 import org.bzdev.util.TemplateProcessor.KeyMap;
 import org.bzdev.util.TemplateProcessor.KeyMapList;
@@ -15,9 +16,10 @@ import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -390,6 +392,9 @@ public class
 	if ((rmode == EPTS.Mode.PATH_START || rmode == EPTS.Mode.LOCATION )
 	    && varname != null && varname.length() != 0) {
 	    names.remove(varname);
+	    EPTSWindow.keys.remove(varname);
+	    EPTSWindow.links.remove(varname);
+	    EPTSWindow.descriptions.remove(varname);
 	    if (rmode == EPTS.Mode.PATH_START) {
 		pnames.remove(varname);
 	    }
@@ -561,6 +566,9 @@ public class
 	if (mode == EPTS.Mode.PATH_START || mode == EPTS.Mode.LOCATION) {
 	    String varname = row.getVariableName();
 	    names.remove(varname);
+	    EPTSWindow.keys.remove(varname);
+	    EPTSWindow.links.remove(varname);
+	    EPTSWindow.descriptions.remove(varname);
 	    if (mode == EPTS.Mode.PATH_START) {
 		pnames.remove(varname);
 		OffsetPane.removeOurPathName(varname);
@@ -583,6 +591,9 @@ public class
 	    if (mode == EPTS.Mode.PATH_START || mode == EPTS.Mode.LOCATION) {
 		String varname = row.getVariableName();
 		names.remove(varname);
+		EPTSWindow.keys.remove(varname);
+		EPTSWindow.links.remove(varname);
+		EPTSWindow.descriptions.remove(varname);
 		if (mode == EPTS.Mode.PATH_START) {
 		    pnames.remove(varname);
 		    OffsetPane.removeOurPathName(varname);
@@ -835,13 +846,35 @@ public class
      * contains the keys
      * <UL>
      *   <LI> "varname". This provides a variable name.
-     *   <LI> "location" or "pathStatement" but not both.
+     *   <LI> "key".  This provides a key that can be used to classify
+     *         paths and locations. The value for the key is also the
+     *         name of another key, and both share the same value. E.g.,
+     *         if the value for "key" is "foo", there were be a key "foo"
+     *         whose value is also "foo".
+     *   <LI> "link". This value associates a path or location with some
+     *        other object. For example, it could be a URL.
+     *   <LI> "descr". This value provides a short description of a path.
+     *   <LI> "location" or "pathStatement" but not both for the same item.
      * </UL>
-     * The value for "location" is a keymap
-     * contain the following keys:
+     * The keys "varname", "key", "link", and "descr" are encoded so
+     * that they can be placed in an attribute value in an XML or HTML
+     * docuemnt.  For the syntax used by Java and scripting languages,
+     * this encoding should not change the value for "varname".  The
+     * value for "location" is a keymap contain the following keys:
      * <UL>
      *    <LI> "x". This provides an X coordinate.
      *    <LI> "y". This provides a Y coordinate.
+     *    <LI> $(xp). This provides an image-space X coordinate.
+     *    <LI> $(yp). This provides an image-space  Y coordinate
+     *         measured from the  upper-left corner of the image.
+     *    <LI> $(ixp). This provides an image-space X coordinate
+     *         rounded to the nearest integer.
+     *    <LI> $(iyp). This provides an image-space  Y coordinate
+     *          measured from the upper-left corner of the image.
+     *          rounded to the nearest integer.
+     *    <LI> $(ypr). This provides an image-space Y coordinate
+     *          measured from the lower-left corner of the image
+     *          (the reverse of the normal Java convention).
      * </UL>
      * The value for "pathStatement" is a keymap containing the key
      * "pathItem".  The value for "pathitem" is a list of keymaps,
@@ -861,10 +894,45 @@ public class
      *           <LI> $(y). This provides a GCS Y coordinate.
      *           <LI> $(xp). This provides an image-space X coordinate.
      *           <LI> $(yp). This provides an image-space  Y coordinate
-     *                measured from the lower-left corner of the image.
-     *           <LI> $(ypj). This provides an image-space Y coordinate
-     *                measured from the upper-left corner of the image
-     *                (the normal Java convention).
+     *                measured from the uppser-left corner of the image.
+     *           <LI> $(ixp). This provides an image-space X coordinate
+     *                rounded to the nearest integer.
+     *           <LI> $(iyp). This provides an image-space  Y coordinate
+     *                measured from the upper-left corner of the image.
+     *                rounded to the nearest integer.
+     *           <LI> $(ypr). This provides an image-space Y coordinate
+     *                measured from the lower-left corner of the image
+     *                (the reverse of the normal Java convention).
+     *           <LI> $(dist) When set, this provides the distance from the
+     *                XY coordinates of the previous point to the XY
+     *                coordinates of this point in GCS units.
+     *           <LI> $(distp) When set, this provides the distance from the
+     *                XY coordinates of the previous point to the XY
+     *                coordinates of this point in image space units.
+     *           <LI> $(idistp) When set, this provides the distance from the
+     *                XY coordinates of the previous point to the XY
+     *                coordinates of this point in image space units, but
+     *                rounded to the nearest integer.
+     *           <LI> $(rad). When set, this provides the angle a line from
+     *                the point represented by the previous row's XY coordinates
+     *                to the point represented by this row's XY coordinates
+     *                makes with the positive X axis. Units are radians with
+     *                positive values in the counter-clockwise direction.
+     *           <LI> $(deg). When set, this provides the angle a line from
+     *                the point represented by the previous row's XY coordinates
+     *                to the point represented by this row's XY coordinates
+     *                makes with the positive X axis. Units are degrees with
+     *                positive values in the counter-clockwise direction.
+     *           <LI> $(radp). When set, this provides the angle a line from
+     *                the point represented by the previous row's XY coordinates
+     *                to the point represented by this row's XY coordinates
+     *                makes with the positive X axis. Units are radians with
+     *                positive values in the clockwise direction.
+     *           <LI> $(degp). When set, this provides the angle a line from
+     *                the point represented by the previous row's XY coordinates
+     *                to the point represented by this row's XY coordinates
+     *                makes with the positive X axis. Units are degrees with
+     *                positive values in the clockwise direction.
      *        </UL>
      *   <LI> "optcomma". This is either empty of the string "," and
      *        is used as list-element separator. In a template, $(optcomma)
@@ -923,15 +991,33 @@ public class
 	int pindex = 0;
 	BasicSplinePathBuilder spb = null;
 	int u = -1;
+	boolean hasLast = false;
+	double lastX = 0.0, lastY = 0.0, lastXP = 0.0, lastYP = 0.0;
 	for (PointTMR row: rows) {
 	    index++;
 	    Enum mode = row.getMode();
 	    String varname = null;
 	    if (mode == EPTS.Mode.LOCATION) {
+		hasLast = false;
 		vindex++;
 		kmap1 = new TemplateProcessor.KeyMap();
 		kmap2 = new TemplateProcessor.KeyMap();
-		kmap1.put("varname", row.getVariableName());
+		String vn = row.getVariableName();
+		kmap1.put("varname", WebEncoder.htmlEncode(vn));
+		String key = EPTSWindow.keys.get(vn);
+		if (key != null) {
+		    kmap1.put("key", WebEncoder.htmlEncode(key));
+		    kmap1.put(key, WebEncoder.htmlEncode(key));
+		}
+		String link = EPTSWindow.links.get(vn);
+		if (link != null) {
+		    kmap1.put("link", WebEncoder.htmlEncode(link));
+		}
+		String descr = EPTSWindow.descriptions.get(vn);
+		if (descr != null) {
+		    kmap1.put("descr", WebEncoder.htmlEncode(descr));
+		}
+
 		kmap1.put("vindex", ("" + vindex));
 		kmap1.put("index", ("" + index));
 		kmap1.put("location", kmap2);
@@ -939,17 +1025,37 @@ public class
 		kmap2.put("y", String.format((Locale)null, "%s", row.getY()));
 		kmap2.put("xp", String.format((Locale)null, "%s", row.getXP()));
 		kmap2.put("yp", String.format((Locale) null,"%s", row.getYP()));
+		kmap2.put("ixp", String.format((Locale)null, "%d",
+					       Math.round(row.getXP())));
+		kmap2.put("iyp", String.format((Locale) null,"%d",
+					       Math.round(row.getYP())));
 		kmap2.put("ypr", String.format((Locale)null, "%s",
 						height - row.getYP()));
 		list.add(kmap1);
 	    } else if (mode == EPTS.Mode.PATH_START) {
+		hasLast = false;
 		vindex++;
 		kmap1 = new TemplateProcessor.KeyMap();
 		kmap2 = new TemplateProcessor.KeyMap();
 		kmap2.put("draw", "false");
 		kmap2.put("fill", "false");
 		varname = row.getVariableName();
-		kmap1.put("varname", varname);
+		kmap1.put("varname", WebEncoder.htmlEncode(varname));
+		String key = EPTSWindow.keys.get(varname);
+		if (key != null) {
+		    kmap1.put("key", WebEncoder.htmlEncode(key));
+		    kmap1.put(key, WebEncoder.htmlEncode(key));
+		}
+		String link = EPTSWindow.links.get(varname);
+		if (link != null) {
+		    kmap1.put("link", WebEncoder.htmlEncode(link));
+		}
+		String descr = EPTSWindow.descriptions.get(varname);
+		if (descr != null) {
+		    System.out.println("adding descr = " + descr
+				       + " to kmap1");
+		    kmap1.put("descr", WebEncoder.htmlEncode(descr));
+		}
 		kmap1.put("index", ("" + index));
 		kmap1.put("vindex", ("" + vindex));
 		kmap1.put("pathStatement", kmap2);
@@ -1017,16 +1123,59 @@ public class
 		if (mode != SplinePathBuilder.CPointType.CLOSE) {
 		    TemplateProcessor.KeyMap
 			kmap4 = new TemplateProcessor.KeyMap();
-		    kmap4.put("x",
-			      String.format((Locale)null, "%s", row.getX()));
-		    kmap4.put("y",
-			      String.format((Locale)null, "%s", row.getY()));
-		    kmap4.put("xp",
-			      String.format((Locale)null, "%s", row.getXP()));
-		    kmap4.put("yp",
-			      String.format((Locale)null, "%s", row.getYP()));
+		    double x = row.getX();
+		    double y = row.getY();
+		    double xp = row.getXP();
+		    double yp = row.getYP();
+		    kmap4.put("x", String.format((Locale)null, "%s", x));
+		    kmap4.put("y", String.format((Locale)null, "%s", y));
+		    kmap4.put("xp", String.format((Locale)null, "%s", xp));
+		    kmap4.put("yp", String.format((Locale)null, "%s", yp));
+		    kmap4.put("ixp", String.format((Locale)null, "%d",
+						   Math.round(xp)));
+		    kmap4.put("iyp", String.format((Locale)null, "%s",
+						   Math.round(yp)));
 		    kmap4.put("ypr", String.format((Locale)null, "%s",
 						    height - row.getYP()));
+		    if (hasLast) {
+			double dx = x - lastX;
+			double dy = y - lastY;
+			double dxp = xp - lastXP;
+			double dyp = yp - lastYP;
+			double dist = Math.sqrt(dx*dx + dy*dy);
+			double distp = Math.sqrt(dxp*dxp + dyp*dyp);
+			long idistp = Math.round(distp);
+			kmap4.put("dist",
+				  String.format((Locale)null, "%s", dist));
+			kmap4.put("distp",
+				  String.format((Locale)null, "%s", distp));
+			kmap4.put("idistp",
+				  String.format((Locale)null, "%d",
+						idistp));
+			if (dist > 0.0) {
+			    double rad = (dx == 0.0)? 0.0:
+				Math.atan2(dy, dx);
+			    double deg = Math.toDegrees(rad);
+			    double radp = (dxp == 0.0)? 0.0:
+				Math.atan2(dyp, dxp);
+			    double degp = Math.toDegrees(radp);
+			    kmap4.put("rad",
+				      String.format((Locale)null, "%s",
+						    rad));
+			    kmap4.put("radp",
+				      String.format((Locale)null, "%s",
+						    radp));
+			    kmap4.put("deg",
+				      String.format((Locale)null, "%s",
+						    deg));
+			    kmap4.put("degp",
+				      String.format((Locale)null, "%s",
+						    degp));
+			}
+		    }
+		    lastX = x; lastY = y;
+		    lastXP = xp; lastYP = yp;
+		    hasLast = true;
 		    kmap3.put("xy", kmap4);
 		}
 		plist.add(kmap3);
@@ -1096,10 +1245,13 @@ public class
 	    String fill = filter.fill;
 	    String gcsMode = filter.gcsMode;
 	    String subvarname = null;
+	    boolean hasLast = false;
+	    double lastX = 0.0, lastY = 0.0, lastXP = 0.0, lastYP = 0.0;
 	    for (PointTMR row: rows) {
 		index++;
 		Enum mode = row.getMode();
 		if (mode == EPTS.Mode.LOCATION) {
+		    hasLast = false;
 		    if (isOurPath(names, row.getVariableName())) {
 			if (names.length != 1) {
 			    throw new IllegalArgumentException
@@ -1108,7 +1260,20 @@ public class
 			vindex++;
 			kmap1 = new TemplateProcessor.KeyMap();
 			kmap2 = new TemplateProcessor.KeyMap();
-			kmap1.put("varname", name);
+			kmap1.put("varname", WebEncoder.htmlEncode(name));
+			String key = EPTSWindow.keys.get(name);
+			if (key != null) {
+			    kmap1.put("key", WebEncoder.htmlEncode(key));
+			    kmap1.put(key, WebEncoder.htmlEncode(key));
+			}
+			String link = EPTSWindow.links.get(name);
+			if (link != null) {
+			    kmap1.put("link", WebEncoder.htmlEncode(link));
+			}
+			String descr = EPTSWindow.descriptions.get(name);
+			if (descr != null) {
+			    kmap1.put("descr", WebEncoder.htmlEncode(descr));
+			}
 			kmap1.put("vindex", ("" + vindex));
 			kmap1.put("index", ("" + index));
 			kmap1.put("location", kmap2);
@@ -1120,12 +1285,19 @@ public class
 						      row.getXP()));
 			kmap2.put("yp", String.format((Locale) null, "%s",
 						      row.getYP()));
+			kmap2.put("ixp",
+				  String.format((Locale)null, "%d",
+						Math.round(row.getXP())));
+			kmap2.put("iyp",
+				  String.format((Locale) null, "%d",
+						Math.round(row.getYP())));
 			kmap2.put("ypr", String.format((Locale)null, "%s",
 						       height - row.getYP()));
 			list.add(kmap1);
 			break;
 		    }
 		} else if (mode == EPTS.Mode.PATH_START) {
+		    hasLast = false;
 		    if (isOurPath(names, row.getVariableName())) {
 			ignore = false;
 			spb = new BasicSplinePathBuilder();
@@ -1136,7 +1308,21 @@ public class
 			    vindex++;
 			    kmap1 = new TemplateProcessor.KeyMap();
 			    kmap2 = new TemplateProcessor.KeyMap();
-			    kmap1.put("varname", name);
+			    kmap1.put("varname", WebEncoder.htmlEncode(name));
+			    String key = EPTSWindow.keys.get(name);
+			    if (key != null) {
+				kmap1.put("key", WebEncoder.htmlEncode(key));
+				kmap1.put(key, WebEncoder.htmlEncode(key));
+			    }
+			    String link = EPTSWindow.links.get(name);
+			    if (link != null) {
+				kmap1.put("link", WebEncoder.htmlEncode(link));
+			    }
+			    String descr = EPTSWindow.descriptions.get(name);
+			    if (descr != null) {
+				kmap1.put("descr",
+					  WebEncoder.htmlEncode(descr));
+			    }
 			    kmap1.put("index", ("" + index));
 			    kmap1.put("vindex", ("" + vindex));
 			    kmap1.put("pathStatement", kmap2);
@@ -1273,20 +1459,61 @@ public class
 		    if (mode != SplinePathBuilder.CPointType.CLOSE) {
 			TemplateProcessor.KeyMap
 			    kmap4 = new TemplateProcessor.KeyMap();
-			kmap4.put("x",
-				  String.format((Locale)null, "%s",
-						row.getX()));
-			kmap4.put("y",
-				  String.format((Locale)null, "%s",
-						row.getY()));
-			kmap4.put("xp",
-				  String.format((Locale)null, "%s",
-						row.getXP()));
-			kmap4.put("yp",
-				  String.format((Locale)null, "%s",
-						row.getYP()));
+			double x = row.getX();
+			double y = row.getY();
+			double xp = row.getXP();
+			double yp = row.getYP();
+			kmap4.put("x", String.format((Locale)null, "%s", x));
+			kmap4.put("y", String.format((Locale)null, "%s", y));
+			kmap4.put("xp", String.format((Locale)null, "%s", xp));
+			kmap4.put("yp", String.format((Locale)null, "%s", yp));
+			kmap4.put("ixp",
+				  String.format((Locale)null, "%d",
+						Math.round(xp)));
+			kmap4.put("iyp",
+				  String.format((Locale)null, "%d",
+						Math.round(yp)));
 			kmap4.put("ypr", String.format((Locale)null, "%s",
-						       height - row.getYP()));
+						       height - yp));
+			if (hasLast) {
+			    double dx = x - lastX;
+			    double dy = y - lastY;
+			    double dxp = xp - lastXP;
+			    double dyp = yp - lastYP;
+			    double dist = Math.sqrt(dx*dx + dy*dy);
+			    double distp = Math.sqrt(dxp*dxp + dyp*dyp);
+			    long idistp = Math.round(distp);
+			    kmap4.put("dist",
+				      String.format((Locale)null, "%s", dist));
+			    kmap4.put("distp",
+				      String.format((Locale)null, "%s", distp));
+			    kmap4.put("idistp",
+				      String.format((Locale)null, "%d",
+						    idistp));
+			    if (dist > 0.0) {
+				double rad = (dx == 0.0)? 0.0:
+				    Math.atan2(dy, dx);
+				double deg = Math.toDegrees(rad);
+				double radp = (dxp == 0.0)? 0.0:
+				    Math.atan2(dyp, dxp);
+				double degp = Math.toDegrees(radp);
+				kmap4.put("rad",
+					  String.format((Locale)null, "%s",
+							rad));
+				kmap4.put("radp",
+					  String.format((Locale)null, "%s",
+							radp));
+				kmap4.put("deg",
+					  String.format((Locale)null, "%s",
+							deg));
+				kmap4.put("degp",
+					  String.format((Locale)null, "%s",
+							degp));
+			    }
+			}
+			lastX = x; lastY = y;
+			lastXP = xp; lastYP = yp;
+			hasLast = true;
 			kmap3.put("xy", kmap4);
 		    }
 		    plist.add(kmap3);
@@ -1340,7 +1567,20 @@ public class
 		TemplateProcessor.KeyMap kmap1 = new TemplateProcessor.KeyMap();
 		TemplateProcessor.KeyMap kmap2 = new TemplateProcessor.KeyMap();
 		String name = row.getVariableName();
-		kmap1.put("varname", name);
+		kmap1.put("varname", WebEncoder.htmlEncode(name));
+		String key = EPTSWindow.keys.get(name);
+		if (key != null) {
+		    kmap1.put("key", WebEncoder.htmlEncode(key));
+		    kmap1.put(key, WebEncoder.htmlEncode(key));
+		}
+		String link = EPTSWindow.links.get(name);
+		if (link != null) {
+		    kmap1.put("link", WebEncoder.htmlEncode(link));
+		}
+		String descr = EPTSWindow.descriptions.get(name);
+		if (descr != null) {
+		    kmap1.put("descr", WebEncoder.htmlEncode(descr));
+		}
 		kmap1.put("vindex", ("" + vindex));
 		kmap1.put("index", ("" + index));
 		kmap1.put("location", kmap2);
@@ -1356,6 +1596,7 @@ public class
 		    yB = y - r;
 		    kmap2.put("x", String.format((Locale)null, "%s", x));
 		    kmap2.put("y", String.format((Locale)null, "%s", y));
+		    // used in SVG.tpl to draw a circle around a location.
 		    kmap2.put("r", String.format((Locale)null, "%s", r));
 		} else {
 		    double r = 10.0;
@@ -1368,8 +1609,11 @@ public class
 		    yB = y + r;
 		    kmap2.put("x", String.format((Locale)null, "%s", x));
 		    kmap2.put("y", String.format((Locale) null,"%s", y));
+		    // used in SVG.tpl to draw a circle around a location.
 		    kmap2.put("r", String.format((Locale)null, "%s", r));
 		}
+		// used in SVG.tpl to draw a crosshair with an appropriate
+		// line width.
 		kmap2.put("xL", String.format((Locale)null, "%s", xL));
 		kmap2.put("xR", String.format((Locale)null, "%s", xR));
 		kmap2.put("yT", String.format((Locale)null, "%s", yT));

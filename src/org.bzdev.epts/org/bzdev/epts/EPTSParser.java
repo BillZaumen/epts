@@ -433,6 +433,20 @@ public class EPTSParser {
 		rowList.clear();
 	    } else if (qName.equals("row")) {
 		String varname = attr.getValue("varname");
+		if (varname != null) {
+		    String key = attr.getValue("key");
+		    if (key != null) {
+			EPTSWindow.keys.put(varname, key);
+		    }
+		    String link = attr.getValue("link");
+		    if (link != null) {
+			EPTSWindow.links.put(varname, link);
+		    }
+		    String descr = attr.getValue("description");
+		    if (descr != null) {
+			EPTSWindow.descriptions.put(varname, descr);
+		    }
+		}
 		String type = attr.getValue("type");
 		if (type == null) {
 		    error(errorMsg("noType"));

@@ -2035,6 +2035,10 @@ public class EPTSWindow {
 	return EPTS.localeString(key);
     }
 
+    static Map<String,String> keys = new HashMap<String,String>();
+    static Map<String,String> links = new HashMap<String,String>();
+    static Map<String,String> descriptions = new HashMap<String,String>();
+
     JFrame frame;
     JLabel modeline;
     JScrollPane scrollPane;
@@ -3375,6 +3379,9 @@ public class EPTSWindow {
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    try {
+			System.out.println("savedFile = " + savedFile);
+			System.out.println(EPTS.initialModulePath);
+			System.out.println(EPTS.EPTSmodule);
 			if (savedFile != null) {
 			    new ProcessBuilder("java", "-p",
 					       EPTS.initialModulePath,
@@ -3967,6 +3974,39 @@ public class EPTSWindow {
 			     localeString("ScriptingLanguageVariableName"),
 			     JOptionPane.PLAIN_MESSAGE);
 			if (varname == null) return;
+			String[] components  = varname.split(";");
+			String key = null;
+			String link = null;
+			String descr = null;
+			if (components.length > 1) {
+			    varname = components[0];
+			}
+			for (int i = 1; i < components.length; i++) {
+			    String s = components[i];
+			    String[] term = s.split("\\s*=\\s*");
+			    if (term.length != 2) {
+				JOptionPane.showMessageDialog
+				    (frame, errorMsg("badVarnameFormat", s),
+				     localeString("errorTitle"),
+				     JOptionPane.ERROR_MESSAGE);
+				return;
+			    }
+			    String k = term[0].trim();
+			    String v = term[1].trim();
+			    if (k.equals("key")) {
+				key = v;
+			    } else if (k.equals("link")) {
+				link = v;
+			    } else if (k.equals("descr")) {
+				descr = v;
+			    } else {
+				JOptionPane.showMessageDialog
+				    (frame, errorMsg("badVarnameFormat", s),
+				     localeString("errorTitle"),
+				     JOptionPane.ERROR_MESSAGE);
+				return;
+			    }
+			}
 			varname = varname.trim();
 			if (varname.length() == 0) {
 			    varname = "pt" + (pointIndex++);
@@ -3983,6 +4023,9 @@ public class EPTSWindow {
 				 JOptionPane.ERROR_MESSAGE);
 			    return;
 			}
+			if (key != null) keys.put(varname, key);
+			if (link != null) links.put(varname, link);
+			if (descr != null) descriptions.put(varname, descr);
 		    }
 		    createLocation();
 		}
@@ -5131,6 +5174,9 @@ public class EPTSWindow {
 	tmpTransformedPath = null;
 	if (tfpane.getStatus()) {
 	    String newPathName = null;
+	    String key = null;
+	    String link = null;
+	    String descr = null;
 	    if (copyMode == false) {
 		newPathName = oldPathName;
 	    } else {
@@ -5139,6 +5185,39 @@ public class EPTSWindow {
 			(frame, localeString("PleaseEnterNewVariableName"),
 			 localeString("ScriptingLanguageVariableName"),
 			 JOptionPane.PLAIN_MESSAGE);
+		    if (newPathName != null) {
+			String[] components  = newPathName.split(";");
+			if (components.length > 1) {
+			    newPathName  = components[0];
+			}
+			for (int i = 1; i < components.length; i++) {
+			    String s = components[i];
+			    String[] term = s.split("\\s*=\\s*");
+			    if (term.length != 2) {
+				JOptionPane.showMessageDialog
+				    (frame, errorMsg("badVarnameFormat", s),
+				     localeString("errorTitle"),
+				     JOptionPane.ERROR_MESSAGE);
+				return;
+			    }
+			    String k = term[0].trim();
+			    String v = term[1].trim();
+			    if (k.equals("key")) {
+				key = v;
+			    } else if (k.equals("link")) {
+				link = v;
+			    } else if (k.equals("descr")) {
+				descr = v;
+			    } else {
+				JOptionPane.showMessageDialog
+				    (frame, errorMsg("badVarnameFormat", s),
+				     localeString("errorTitle"),
+				     JOptionPane.ERROR_MESSAGE);
+				return;
+			    }
+			}
+			newPathName = newPathName.trim();
+		    }
 		    if (newPathName == null) {
 			panel.repaint();
 			return;
@@ -5152,6 +5231,9 @@ public class EPTSWindow {
 	    AffineTransform af = tfpane.getTransform();
 	    boolean reverse = tfpane.requestsReversed();
 	    double[] tcoords = new double[4];
+	    if (key != null) keys.put(varname, key);
+	    if (link != null) links.put(varname, link);
+	    if (descr != null) descriptions.put(varname, descr);
 	    if (copyMode) {
 		int start = ptmodel.findStart(oldPathName);
 		if (start == -1) {
@@ -6540,6 +6622,39 @@ public class EPTSWindow {
 	     localeString("ScriptingLanguageVariableName"),
 	     JOptionPane.PLAIN_MESSAGE);
 	if (varname == null) return;
+	String[] components  = varname.split(";");
+	String key = null;
+	String link = null;
+	String descr = null;
+	if (components.length > 1) {
+	    varname  = components[0];
+	}
+	for (int i = 1; i < components.length; i++) {
+	    String s = components[i];
+	    String[] term = s.split("\\s*=\\s*");
+	    if (term.length != 2) {
+		JOptionPane.showMessageDialog
+		    (frame, errorMsg("badVarnameFormat", s),
+		     localeString("errorTitle"),
+		     JOptionPane.ERROR_MESSAGE);
+		return;
+	    }
+	    String k = term[0].trim();
+	    String v = term[1].trim();
+	    if (k.equals("key")) {
+		key = v;
+	    } else if (k.equals("link")) {
+		link = v;
+	    } else if (k.equals("descr")) {
+		descr = v;
+	    } else {
+		JOptionPane.showMessageDialog
+		    (frame, errorMsg("badVarnameFormat", s),
+		     localeString("errorTitle"),
+		     JOptionPane.ERROR_MESSAGE);
+		return;
+	    }
+	}
 	varname = varname.trim();
 	if (varname.length() == 0) {
 	    varname = "path" + (pathIndex++);
@@ -6558,6 +6673,9 @@ public class EPTSWindow {
 	mpMenuItem.setEnabled(false);
 	rotMenuItem.setEnabled(false);
 	scaleMenuItem.setEnabled(false);
+	if (key != null) keys.put(varname, key);
+	if (link != null) links.put(varname, link);
+	if (descr != null) descriptions.put(varname, descr);
 	ptmodel.addRow(varname, EPTS.Mode.PATH_START, 0.0, 0.0, 0.0, 0.0);
 	savedCursorPath = panel.getCursor();
 	panel.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));

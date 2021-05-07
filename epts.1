@@ -571,6 +571,8 @@ The options that may be specified when templates are used are the
 following:
 .TP
 .BI \-\-class\  CLASSNAME
+.TQ
+.BI \-\-mapName\  CLASSNAME
 This option applies when the
 .B \-\-tname
 option is used, and provides a class name for table templates that
@@ -578,7 +580,10 @@ generate Java code (e.g., a single Java class definition). The
 argument
 .I CLASSNAME
 is the simple name for a class that will be defined in the output
-file.
+file.  The variant
+.B \-\-mapName
+is a synonym for readability, intended for the HTML image map template
+where the class name is used as the name of an HTML MAP element.
 .TP
 .B \-\-elevate
 This flag applies when the
@@ -1351,6 +1356,12 @@ This template combines both paths and locations. It is similar
 to
 .BR resource:ECMAScript ,
 but uses a YAML format.
+.TP
+.B resource:HTMLImageMap
+This template generates an HTML MAP element. One should provide a
+.B \-\-mapName
+argument to provide the name of the map.  EPTS has a built-in manual
+that describes how to set up a saved-state file for this template.
 .PP
 The path-iterator templates are the following:
 .TP

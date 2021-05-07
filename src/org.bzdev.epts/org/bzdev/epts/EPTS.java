@@ -2261,7 +2261,8 @@ public class EPTS {
 		    argsList.add(argv[index-1]);
 		    argsList.add(argv[index]);
 		    continue;
-		} else if (argv[index].equals("--class")) {
+		} else if (argv[index].equals("--class")
+			   || argv[index].equals("--mapName")) {
 		    index++;
 		    if (index == argv.length) {
 			displayError
