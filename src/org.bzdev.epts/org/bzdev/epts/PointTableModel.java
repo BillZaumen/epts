@@ -1052,8 +1052,6 @@ public class
 		}
 		String descr = EPTSWindow.descriptions.get(varname);
 		if (descr != null) {
-		    System.out.println("adding descr = " + descr
-				       + " to kmap1");
 		    kmap1.put("descr", WebEncoder.htmlEncode(descr));
 		}
 		kmap1.put("index", ("" + index));

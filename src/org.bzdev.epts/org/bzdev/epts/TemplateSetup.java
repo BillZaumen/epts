@@ -1377,6 +1377,8 @@ public class TemplateSetup {
     static JPanel globalPanel = null;
     static CardLayout globalCL = null;
 
+    static JLabel moduleNameLabel = null;
+    static JTextField moduleNameTF = null;
     static JLabel packageNameLabel = null;
     static JTextField packageNameTF = null;
     static JLabel classNameLabel = null;
@@ -1395,6 +1397,7 @@ public class TemplateSetup {
 
     static String classname1 = localeString("ClassName");
     static String classname2 = localeString("MapName");
+    static String classname3 = localeString("ClassName2");
     static String currentCN = classname1;
 
     static void createGlobalPanel() {
@@ -1403,6 +1406,8 @@ public class TemplateSetup {
 	JPanel svgPanel = new JPanel();
 	JPanel ttPanel = new JPanel();
 	JPanel piPanel = new JPanel();
+	moduleNameLabel = new JLabel(localeString("moduleName"));
+	moduleNameTF = new JTextField(32);
 	packageNameLabel = new JLabel(localeString("PackageName"));
 	packageNameTF = new JTextField(32);
 	packageNameTF.addActionListener((ae) -> {
@@ -1411,7 +1416,6 @@ public class TemplateSetup {
 	classNameLabel = new JLabel(currentCN);
 	classNameTF = new JTextField(32);
 	classNameTF.addActionListener((ae) -> {
-		System.out.println("global data classname set");
 		globalData.className = classNameTF.getText().trim();
 	    });
 	publicClassCheckBox = new JCheckBox(localeString("PublicClass"));
@@ -1424,6 +1428,12 @@ public class TemplateSetup {
 	ttPanel.setLayout(gridbag);
 	c.insets = new Insets(4, 8, 4, 8);
 	ttPanel.setLayout(gridbag);
+	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.LINE_END;
+	addComponent(ttPanel, moduleNameLabel, gridbag, c);
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	addComponent(ttPanel, moduleNameTF, gridbag, c);
 	c.gridwidth = 1;
 	c.anchor = GridBagConstraints.LINE_END;
 	addComponent(ttPanel, packageNameLabel, gridbag, c);
@@ -1602,6 +1612,15 @@ public class TemplateSetup {
 	    enc.close();
 	    os.close();
 
+	    String moduleName = moduleNameTF.getText().trim();
+	    if (moduleName != null && moduleName.length() > 0) {
+		os = zos.nextOutputStream("moduleName", false, 0);
+		enc = new XMLEncoder(os);
+		enc.writeObject(moduleName);
+		enc.close();
+		os.close();
+	    }
+
 	    os = zos.nextOutputStream("pathLocMap", true, 9);
 	    enc = new XMLEncoder(os);
 	    enc.writeObject(pathLocMap);
@@ -1734,7 +1753,6 @@ public class TemplateSetup {
 	}
 	setGlobalData();
 	if (globalData.usesTableTemplate) {
-	    System.out.println("trying to generate global data");
 	    String pname = (globalData.packageName == null)? "":
 		globalData.packageName.trim();
 	    String cname = (globalData.className == null)? "":
@@ -1742,6 +1760,11 @@ public class TemplateSetup {
 	    if (pname.length() > 0) {
 		list.add("--package");
 		list.add(pname);
+	    }
+	    String moduleName = moduleNameTF.getText().trim();
+	    if (moduleName.length() > 0) {
+		list.add("--module");
+		list.add(moduleName);
 	    }
 	    if (cname.length() > 0) {
 		list.add("--class");
@@ -1881,6 +1904,16 @@ public class TemplateSetup {
 			if (classNameLabel != null) {
 			    classNameLabel.setText(currentCN);
 			}
+		    } else if (templateType == TType.TT) {
+			if (basicData.template.length() > RESOURCE_PROTO_LEN
+			    && basicData.template.startsWith(RESOURCE_PROTO)) {
+			    currentCN = classname1;
+			} else {
+			    currentCN = classname3;
+			}
+			if (classNameLabel != null) {
+			    classNameLabel.setText(currentCN);
+			}
 		    }
 		    savedStateTF.setText(basicData.savedState);
 		    mapTF.setText(basicData.mapName);
@@ -1928,6 +1961,18 @@ public class TemplateSetup {
 	    }
 	    dec.close();
 	    is.close();
+
+	    ze = zf.getEntry("moduleName");
+	    if (ze != null) {
+		is = zf.getInputStream(ze);
+		dec = new XMLDecoder(is);
+		result = dec.readObject();
+		if (result instanceof String) {
+		    moduleNameTF.setText((String)result);
+		}
+		dec.close();
+		is.close();
+	    }
 
 	    ze = zf.getEntry("pathLocMap");
 	    is = zf.getInputStream(ze);
@@ -2682,8 +2727,23 @@ public class TemplateSetup {
 			    if (basicData.template
 				.equals("resource:HTMLImageMap")) {
 				currentCN = classname2;
+			    } else if (templateType == TType.TT) {
+				if (basicData.template.length()
+				    > RESOURCE_PROTO_LEN
+				    && basicData.template.startsWith
+					(RESOURCE_PROTO)) {
+				    currentCN = classname1;
+				} else {
+				    currentCN = classname3;
+				}
+				if (classNameLabel != null) {
+				    classNameLabel.setText(currentCN);
+				}
 			    } else {
-				currentCN = classname1;
+				    currentCN = classname1;
+				    if (classNameLabel != null) {
+					classNameLabel.setText(currentCN);
+				    }
 			    }
 			    classNameLabel.setText(currentCN);
 			    templateButton.setEnabled(false);

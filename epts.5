@@ -528,7 +528,7 @@ the global directives
 and
 .BR package :
 .TP
-.B class
+.BR class\  or\  mapName
 is the simple name of a Java class, and can be used by templates
 that create Java class definitions. The
 .B class
@@ -536,10 +536,19 @@ directive is also used to represent the name of an HTML MAP when
 the
 .B resource:HTMLImageMap
 template is used.
+Both
+.B  class
+and
+.B mapName
+are synonyms  - they always have the same value.
 .TP
 .B package
 is the fully qualified name of a Java package and can be used by
-templates that create Java class definitions.
+templates that create Java class definitions.  The directive
+.B packageDir
+will also be defined. This directive provides the same string as the
+.B package
+directive but with '.' replaced with '/'.
 .TP
 .B public
 will either be undefined (in which case it will be expanded to an empty

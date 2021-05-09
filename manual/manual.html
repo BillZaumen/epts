@@ -1231,7 +1231,7 @@ Some saved-state shortcuts apply regardless of the current mode:
 	is preferred.
       <LI><A name="linkParameter"><B>link</B></A>. While the value
 	will typically be a URL or URI, any text is allowed. A link is
-	assumed to be a reference to some assocated object.
+	assumed to be a reference to some associated object.
       <LI><A name= "descrParameter"><B>descr</B></A>. The value is an
 	arbitrary (but typically short) string containing text
 	describing the path.
@@ -1264,7 +1264,7 @@ Some saved-state shortcuts apply regardless of the current mode:
 	identifier, and printable ASCII is preferred.
       <LI><B>link</B>. While the value will typically be a URL or URI,
 	any text is allowed. A link is assumed to be a reference to some
-	assocated object.
+	associated object.
       <LI><B>descr</B>. The value is an arbitrary (but typically short)
 	string containing text describing the point.
     </UL>
@@ -1678,11 +1678,21 @@ for these tables, EPTS defines several global directives:
     is not defined, no text will be added, and when
     <CODE>public</CODE> is defined, there will be space following the
     <CODE>public</CODE> directive.
+  <LI><B><CODE>mapName</CODE></B> is a global directive that is a
+    synonym for <CODE>class</CODE>: Both always have the same
+    value. <CODE>mapName</CODE> is provided because it is a more
+    mnemonic directive name for HTML image maps.
   <LI><B><CODE>package</CODE></B>. This is a global directive that provides
     the fully qualified class name of a Java package. Unless
     documentation for a template states otherwise, this is the name of
     a package in which the template will define a single class whose
     name is specified by a <CODE>class</CODE> directive.
+  <LI><B><CODE>packageDir</CODE></B>. This is global directive that
+    has the same value as the <CODE>package</CODE> directive but with
+    each '.' replaced with '/'. It is not used by build-in
+    templates. One use is for templates that help create HTML image
+    maps for Javadoc comments, where a package name has to be replaced
+    with the corresponding directory path.
   <LI><B><CODE>public</CODE></B>. This is a global directive that
     expands to either an empty string or to the string
     "<CODE>public</CODE>".  As typically used, it will appear before
@@ -1916,23 +1926,23 @@ directives:
         XY coordinates of this point in image space units, but rounded
         to the nearest integer.
       <LI> <B><CODE>rad</CODE></B>. When set, this provides the angle
-        a line from the point represented by the previous row&#39;ss
-        XY coordinates to the point represented by this row&#39;ss XY
+        a line from the point represented by the previous row&#39;s
+        XY coordinates to the point represented by this row&#39;s XY
         coordinates makes with the positive X axis. Units are radians
         with positive values in the counter-clockwise direction.
       <LI> <B><CODE>deg</CODE></B>. When set, this provides the angle
-        a line from the point represented by the previous row&#39;ss
-        XY coordinates to the point represented by this row&#39;ss XY
+        a line from the point represented by the previous row&#39;s
+        XY coordinates to the point represented by this row&#39;s XY
         coordinates makes with the positive X axis. Units are degrees
         with positive values in the counter-clockwise direction.
       <LI> <B><CODE>radp</CODE></B>. When set, this provides the angle
-        a line from the point represented by the previous row&#39;ss
-        XY coordinates to the point represented by this row&#39;ss XY
+        a line from the point represented by the previous row&#39;s
+        XY coordinates to the point represented by this row&#39;s XY
         coordinates makes with the positive X axis. Units are radians
         with positive values in the clockwise direction.
       <LI> <B><CODE>degp</CODE></B>. When set, this provides the angle
-        a line from the point represented by the previous row&#39;ss
-        XY coordinates to the point represented by this row&#39;ss XY
+        a line from the point represented by the previous row&#39;s
+        XY coordinates to the point represented by this row&#39;s XY
         coordinates makes with the positive X axis. Units are degrees
         with positive values in the clockwise direction.
     </UL>
@@ -3795,7 +3805,7 @@ The path names for these documents, of course, is system dependent.
  -->
 <!--  LocalWords:  overlayed scrollbars whitespace varname Makefile
  -->
-<!--  LocalWords:  pathSegment EPTS&#39;s epts MAPFILE UTF http eptt Ctrl
+<!--  LocalWords:  pathSegment EPTS s epts MAPFILE UTF http eptt Ctrl
  -->
 <!--  LocalWords:  https TFILE OUTFILE Scrunner scrunner JVM LNAME js
  -->
@@ -3807,7 +3817,7 @@ The path names for these documents, of course, is system dependent.
  -->
 <!--  LocalWords:  PACKAGENAME subparameter HOSTNAME subpaths URIs nm
  -->
-<!--  LocalWords:  PCDATA targetList gcsconfig nanometers fileMenu
+<!--  LocalWords:  PCDATA targetList gcsconfig nanometers fileMenu XY
  -->
 <!--  LocalWords:  editMenu zoomMenu measureMenu toolsMenu helpMenu
  -->
@@ -3841,7 +3851,9 @@ The path names for these documents, of course, is system dependent.
  -->
 <!--  LocalWords:  configFormat selectable classpath filterRow uindex
  -->
-<!--  LocalWords:  pathmap basemapEntry antiparallel affine eptc
+<!--  LocalWords:  pathmap basemapEntry antiparallel affine eptc rect
  -->
-<!--  LocalWords:  pathmapEntry yrunner
+<!--  LocalWords:  pathmapEntry yrunner crosshairs descr mapName HREF
+ -->
+<!--  LocalWords:  Javadoc optcomma endOC
  -->

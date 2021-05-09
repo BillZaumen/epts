@@ -700,8 +700,8 @@ public class EPTS {
 	"dashIncrement", "hasDashIncrement", "dashPhase", "hasDashPhase",
 	"dashPattern", "hasDashPattern",
 	"zorder", "hasZorder",
-	"width", "height", "package", "hasPackage",
-	"class", "hasClass", "optSpace", "public"
+	"width", "height", "package", "hasPackage", "packageDir",
+	"class", "hasClass", "optSpace", "public", "mapName", "module"
     };
     */
     static final String pathsRTDN[] = {
@@ -2204,6 +2204,7 @@ public class EPTS {
 	ArrayList<PnameInfo> pnameInfoList = new ArrayList<>();
 
 	String pkg = null;
+	String moduleName = null;
 	String clazz = null;
 	boolean isPublic = false;
 
@@ -2261,6 +2262,16 @@ public class EPTS {
 		    argsList.add(argv[index-1]);
 		    argsList.add(argv[index]);
 		    continue;
+		} else if (argv[index].equals("--module")) {
+		    index++;
+		    if (index == argv.length) {
+			displayError
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    moduleName = argv[index];
+		    argsList.add(argv[index-1]);
+		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--class")
 			   || argv[index].equals("--mapName")) {
 		    index++;
@@ -3913,10 +3924,16 @@ public class EPTS {
 						  (double)parser.getHeight());
 			    if (pkg != null) {
 				kmap.put("package", pkg);
+				kmap.put("packageDir", pkg.replace('.','/'));
 				kmap.put("hasPackage", emptyMap);
+			    }
+			    if (moduleName != null) {
+				kmap.put("module", moduleName);
 			    }
 			    if (clazz != null) {
 				kmap.put("class", clazz);
+				// for HTML image maps
+				kmap.put("mapName", clazz);
 			    } else {
 				kmap.put("class", "GeneratedByEPTS");
 			    }
@@ -4008,10 +4025,15 @@ public class EPTS {
 			    }
 			    if (pkg != null) {
 				kmap.put("package", pkg);
+				kmap.put("packageDir", pkg.replace('.','/'));
 				kmap.put("hasPackage", emptyMap);
+			    }
+			    if (moduleName != null) {
+				kmap.put("module", moduleName);
 			    }
 			    if (clazz != null) {
 				kmap.put("class", clazz);
+				kmap.put("mapName", clazz);
 			    } else {
 				kmap.put("class", "GeneratedByEPTS");
 			    }
