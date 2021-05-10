@@ -65,6 +65,8 @@ import org.bzdev.swing.SwingErrorMessage;
 import org.bzdev.swing.HtmlWithTocPane;
 import org.bzdev.swing.PortTextField;
 import org.bzdev.swing.SwingOps;
+import org.bzdev.swing.InputTablePane;
+import org.bzdev.swing.InputTablePane.ColSpec;
 import org.bzdev.swing.VTextField;
 import org.bzdev.swing.text.CharDocFilter;
 
@@ -3939,6 +3941,83 @@ public class EPTSWindow {
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    tableFrame.setVisible(true);
+		}
+	    });
+	toolMenu.add(menuItem);
+
+	menuItem = new JMenuItem(localeString("EditVarParameters"),
+				 KeyEvent.VK_E);
+	menuItem.setAccelerator(KeyStroke.getKeyStroke
+				(KeyEvent.VK_E, InputEvent.CTRL_DOWN_MASK));
+	menuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    InputTablePane.ColSpec colspec[] = {
+			new InputTablePane.ColSpec
+			(localeString("Variable"),
+			 "MMMMMMMMMMMMMMMM",
+			 String.class, null, null),
+			new InputTablePane.ColSpec
+			(localeString("Key"),
+			 "MMMMMMM",
+			 String.class, null,
+			 InputTablePane.DEFAULT_CELL_EDITOR),
+			new InputTablePane.ColSpec
+			(localeString("Link"),
+			 "MMMMMMMMMMMMMMMMMMMMMMMMMMM",
+			 String.class, null,
+			 InputTablePane.DEFAULT_CELL_EDITOR),
+			new InputTablePane.ColSpec
+			(localeString("Descr"),
+			 "MMMMMMMMMMMMMMMMMMMMMMMMMMM",
+			 String.class, null, InputTablePane.DEFAULT_CELL_EDITOR)
+		    };
+		    Vector<Vector<Object>> initialRows =
+			new Vector<>(ptmodel.names.size());
+		    for (String vn: ptmodel.names) {
+			Vector<Object>row = new Vector<>(4);
+			row.add(vn);
+			String s = keys.get(vn);
+			row.add((s == null)? "": s);
+			s = links.get(vn);
+			row.add((s == null)? "": s);
+			s = descriptions.get(vn);
+			row.add((s == null)? "": s);
+			initialRows.add(row);
+		    }
+		    InputTablePane parmPane = InputTablePane
+			.showDialog(frame, localeString("EditVarParameters"),
+				    colspec,  initialRows.size(), initialRows,
+				    false, false, false);
+		    if (parmPane != null) {
+			int n = parmPane.getRowCount();
+			for (int i = 0; i < n; i++) {
+			    String vn = ((String)parmPane.getValueAt(i, 0))
+				.trim();
+			    String key = ((String)parmPane.getValueAt(i, 1))
+				.trim();
+			    String link = ((String)parmPane.getValueAt(i, 2))
+				.trim();
+			    String descr =((String) parmPane.getValueAt(i, 3))
+				.trim();
+			    if (vn != null) {
+				if (key.length() > 0) {
+				    keys.put(vn, key);
+				} else {
+				    keys.remove(vn);
+				}
+				if (link.length() > 0) {
+				    links.put(vn, link);
+				} else {
+				    links.remove(vn);
+				}
+				if (descr.length() > 0) {
+				    descriptions.put(vn, descr);
+				} else {
+				    descriptions.remove(vn);
+				}
+			    }
+			}
+		    }
 		}
 	    });
 	toolMenu.add(menuItem);
