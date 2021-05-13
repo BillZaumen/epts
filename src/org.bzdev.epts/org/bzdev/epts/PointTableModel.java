@@ -67,6 +67,17 @@ public class
 	return results;
     }
 
+    int pathEndCount = 0;
+    int pathCloseCount = 0;
+
+    public boolean hasOpenPaths() {
+	int sz = pnames.size();
+	if (pathEndCount != sz) {
+	    return sz  > (pathCloseCount + 1);
+	}
+	return (pathEndCount - pathCloseCount) > 0;
+    }
+
     public Set<String> getVariableNames() {
 	return Collections.unmodifiableSet(names);
     }
@@ -74,6 +85,22 @@ public class
     public Set<String> getPathVariableNames() {
 	return Collections.unmodifiableSet(pnames);
     }
+
+    public Set<String> getOpenPathVariableNames() {
+	TreeSet<String> opnames =new TreeSet<>();
+	for (String vn: pnames) {
+	    int start = findStart(vn);
+	    int end = findEnd(start) - 1;
+	    if (end > start) {
+		if (rows.get(end).getMode()
+		    != SplinePathBuilder.CPointType.CLOSE) {
+		    opnames.add(vn);
+		}
+	    }
+	}
+	return opnames;
+    }
+
 
     public List<String> getPathVariableNamesInTableOrder() {
 	// order in which they
@@ -263,6 +290,12 @@ public class
 	if (n < 0) return;
 	PointTMR row = rows.get(n);
 	Enum rmode = row.getMode();
+	if (rmode != mode) {
+	    if (rmode == EPTS.Mode.PATH_END) pathEndCount--;
+	    if (rmode == SplinePathBuilder.CPointType.CLOSE) pathCloseCount--;
+	    if (mode == EPTS.Mode.PATH_END) pathEndCount++;
+	    if (mode == SplinePathBuilder.CPointType.CLOSE) pathCloseCount++;
+	}
 	String varname = row.getVariableName().trim();
 	if ((rmode == EPTS.Mode.PATH_START
 	     || rmode == EPTS.Mode.LOCATION)
@@ -328,7 +361,11 @@ public class
 		pnames.add(varname);
 	    }
 	}
+	if (mode == EPTS.Mode.PATH_END) pathEndCount++;
+	if (mode == SplinePathBuilder.CPointType.CLOSE) pathCloseCount++;
+	int ind = rows.size();
 	rows.add(row);
+	fireTableChanged(ind, ind, Mode.ADDED);
     }
 
     public void insertRow(int index, String varname,
@@ -348,6 +385,8 @@ public class
 	    }
 	}
 	rows.add(index, new PointTMR(varname, mode, x, y, xp, yp));
+	if (mode == EPTS.Mode.PATH_END) pathEndCount++;
+	if (mode == SplinePathBuilder.CPointType.CLOSE) pathCloseCount++;
 	if (!(mode instanceof EPTS.Mode)) {
 	    pane.repaint();
 	}
@@ -377,6 +416,8 @@ public class
 	    }
 	}
 	rows.add(new PointTMR(varname, mode, x, y, xp, yp));
+	if (mode == EPTS.Mode.PATH_END) pathEndCount++;
+	if (mode == SplinePathBuilder.CPointType.CLOSE) pathCloseCount++;
 	if (!(mode instanceof EPTS.Mode)) {
 	    pane.repaint();
 	}
@@ -389,6 +430,10 @@ public class
 	Enum rmode = row.getMode();
 	if (rmode == mode) return; // nothing to do
 	String varname = row.getVariableName();
+	if (rmode == EPTS.Mode.PATH_END) pathEndCount--;
+	if (rmode == SplinePathBuilder.CPointType.CLOSE) pathCloseCount--;
+	if (mode == EPTS.Mode.PATH_END) pathEndCount++;
+	if (mode == SplinePathBuilder.CPointType.CLOSE) pathCloseCount++;
 	if ((rmode == EPTS.Mode.PATH_START || rmode == EPTS.Mode.LOCATION )
 	    && varname != null && varname.length() != 0) {
 	    names.remove(varname);
@@ -563,6 +608,8 @@ public class
     {
 	PointTMR row = rows.remove(index);
 	Enum mode = (row == null)? null: row.getMode();
+	if (mode == EPTS.Mode.PATH_END) pathEndCount--;
+	if (mode == SplinePathBuilder.CPointType.CLOSE) pathCloseCount--;
 	if (mode == EPTS.Mode.PATH_START || mode == EPTS.Mode.LOCATION) {
 	    String varname = row.getVariableName();
 	    names.remove(varname);
@@ -588,6 +635,8 @@ public class
 	    PointTMR row = rows.remove(fromIndex);
 	    if (row == null) continue;
 	    Enum mode = row.getMode();
+	    if (mode == EPTS.Mode.PATH_END) pathEndCount--;
+	    if (mode == SplinePathBuilder.CPointType.CLOSE) pathCloseCount--;
 	    if (mode == EPTS.Mode.PATH_START || mode == EPTS.Mode.LOCATION) {
 		String varname = row.getVariableName();
 		names.remove(varname);
