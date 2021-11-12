@@ -2295,7 +2295,11 @@ public class TemplateSetup {
 			    if (n < 15) {
 				tm.setRowCount(16);
 			    } else {
-				tm.setRowCount(n+2);
+				int nn = n + 4;
+				if (nn > initialPaths.length) {
+				    nn = initialPaths.length;
+				}
+				tm.setRowCount(nn);
 			    }
 			    subpathLabel.setText(localeString("subpathTbl2"));
 			    subpathTable.setRowSelectionAllowed(true);
@@ -2343,6 +2347,20 @@ public class TemplateSetup {
 			val = val.trim();
 			if (val.length() != 0) {
 			    values.add((String)subpathTable.getValueAt(i, 0));
+			}
+		    }
+		    if (name != null && name.length() > 0
+			&& values.size() == n) {
+			// we filled up the table, so add some rows
+			int nn = n + 4;
+			if (nn > initialPaths.length) {
+			    nn = initialPaths.length;
+			}
+			System.out.format("n = %d, nn = %d, ilen = %d\n",
+					  n,  nn, initialPaths.length);
+			if (n != nn) {
+			    ((DefaultTableModel)(subpathTable.getModel()))
+				.setRowCount(nn);
 			}
 		    }
 		    pathmap.put(name, values);
