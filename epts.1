@@ -547,9 +547,18 @@ section.
 Template options are used when the points and paths created by
 EPTS should be written to a text file in a format determined by
 a template. The option
-.B \- o
+.B \-o
 must be present and will provide the name of the output file.
-An option indicating the template must also be present: either
+If the sole argument is a saved template (the filename extension should
+be
+.BR eptt ),
+then the options are read from the saved template (without the
+.B \-o
+option, a window will appear allowing the saved template to be edited)
+and the generated file name will be given by the
+.B \-o
+option's argument.  Otherwise an option indicating the template must
+also be present: either
 .B \-\-template
 or
 .BR \-\-svg .
@@ -558,7 +567,8 @@ files to be created.  There are two types of templates: table templates
 and path templates. Table templates are assumed by default. For a path
 template, a
 .B \-\-pname
-option must be present. For table templates, a
+option must be present, which also indicates that the template is a
+path template in addition to naming paths. For table templates, a
 .B \-\-tname
 option may be present (if missing, all points and paths will be
 processed). Templates are described in the manual page
@@ -1873,7 +1883,7 @@ file override those in the system configuration file.
 \"  LocalWords:  config conf VNAME SOPTION SFILE TOPTION ETPS DVALUE
 \"  LocalWords:  fIDVALUE fIIVALUE iVALUE fISVALUE SVALUE pname CSS
 \"  LocalWords:  RGB rgb fIR fIG fIB rull evenodd svg gcs keymap NaN
-\"  LocalWords:  EPTS's fillRule Scaleable  ECMAScriptLayers
+\"  LocalWords:  EPTS's fillRule Scaleable  ECMAScriptLayers TQ
 \"  LocalWords:  ECMAScriptLayerPaths EMCAScriptLocations pathlength
 \"  LocalWords:  EMCAScriptPaths SegmentsCSV tname TNAME windingRule
 \"  LocalWords:  BZDev ECMAScriptLocations ECMAScriptPaths CSV LINETO
@@ -1897,4 +1907,4 @@ file override those in the system configuration file.
 \"  LocalWords:  templateConfig TCFILE eptc eptt hasFillColor tdef
 \"  LocalWords:  fIDEFNAME DEFVALUE DEFNAME hasCount endCount subpath
 \"  LocalWords:  hasPackage optSpace YAMLLayers YAMLLocations YAML
-\"  LocalWords:  YAMLPaths anim
+\"  LocalWords:  YAMLPaths anim mapName HTMLImageMap

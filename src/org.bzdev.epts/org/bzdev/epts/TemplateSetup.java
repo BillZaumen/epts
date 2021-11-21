@@ -638,8 +638,13 @@ public class TemplateSetup {
     }
 
     static void restoreFromGlobalData() {
-	packageNameTF.setText(globalData.packageName);
-	classNameTF.setText(globalData.className);
+	if (packageNameTF == null) {
+	    createGlobalPanel();
+	}
+	packageNameTF.setText((globalData.packageName == null)? "":
+			      globalData.packageName);
+	classNameTF.setText((globalData.className == null)? "":
+			    globalData.className);
 	publicClassCheckBox.setSelected(globalData.isPublic);
 	switch(globalData.fmode) {
 	case NORMAL:
