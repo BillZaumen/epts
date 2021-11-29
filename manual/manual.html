@@ -395,7 +395,7 @@ These panes are used as follows.
     useful if EPTS is started from the command line.
 </UL>
 
-<H2><A name="usingEPTS">Using EPTS</A></H2>
+<H2><A name="usingEPTS">Using the EPTS graphics editor</A></H2>
 
 Because EPTS is designed to support a specific set of tasks, there are
 a large number of <A href="#shortcuts">keyboard shortcuts</A>.  It
@@ -1226,7 +1226,8 @@ Some saved-state shortcuts apply regardless of the current mode:
     string <CODE>path</CODE> and ends with a positive integer.  The
     text field in the dialog box accepts parameters separated from the
     variable name and each other by semicolons. Each parameter
-    consists of a key and a value, separated by an "=" symbol.  The
+    consists of a key and a value, separated by an "=" symbol. Leading
+    and trailing whitespace is ignored for both keys and values.  The
     keys are any of the following:
     <UL>
       <LI><A name="keyParameter"><B>key</B></A>. The value is an
@@ -1238,7 +1239,9 @@ Some saved-state shortcuts apply regardless of the current mode:
 	assumed to be a reference to some associated object.
       <LI><A name= "descrParameter"><B>descr</B></A>. The value is an
 	arbitrary (but typically short) string containing text
-	describing the path.
+	describing the path, except that the string may not contain a
+	semicolon. The string should not be quoted as quotes will be
+	part of the value.
     </UL>
     EPTS treats these parameters as purely annotative, but they will
     be accessible in templates. The use in these cases is template
@@ -1260,7 +1263,8 @@ Some saved-state shortcuts apply regardless of the current mode:
     string <CODE>pt</CODE> and ends with a positive integer. The
     text field in the dialog box accepts parameters separated from the
     variable name and each other by semicolons. Each parameter
-    consists of a key and a value, separated by an "=" symbol.  The
+    consists of a key and a value, separated by an "=" symbol.  Leading
+    and trailing whitespace is ignored for both keys and values. The
     keys are any of the following:
     <UL>
       <LI><B>key</B>. The value is an identifier used to classify
@@ -1270,7 +1274,9 @@ Some saved-state shortcuts apply regardless of the current mode:
 	any text is allowed. A link is assumed to be a reference to some
 	associated object.
       <LI><B>descr</B>. The value is an arbitrary (but typically short)
-	string containing text describing the point.
+	string containing text describing the point but may not contain
+	a semicolon. The string should not be quoted as quotes will be
+	part of the value.
     </UL>
     EPTS treats these parameters as purely annotative, but they will
     be accessible in templates. The use in these cases is template
@@ -1395,7 +1401,7 @@ argument to the <CODE>-o</CODE> option will be used as the output file.
 
 <H2><A name="builtins">Built-in templates</A></H2>
 
-The built-in templates can be accessed via URLs whose protocol field
+The built-in templates can be accessed via URLs whose scheme field
 is <CODE>resource</CODE>. For convenience there is a shortcut: if
 the templates option includes a colon followed by a template name,
 a built-in template with that name will be used. For  example,
@@ -1952,10 +1958,11 @@ directives:
     </UL>
     When the type is <CODE>CLOSE</CODE>, the <CODE>xy</CODE> directive
     is not defined.
-  <LI><B><CODE>hasParameterInfo</B>. This is an iterative directive  with
-    0 or 1 iterations. It will have a single iteration when the type
-    is <CODE>MOVE_TO</CODE>, <CODE>SEG_END</CODE>, <CODE>SPLINE</CODE>,
-    or <CODE>CLOSE</CODE>. An iteration defines the following directives:
+  <LI><B><CODE>hasParameterInfo</CODE></B>. This is an iterative
+    directive with 0 or 1 iterations. It will have a single iteration
+    when the type is <CODE>MOVE_TO</CODE>, <CODE>SEG_END</CODE>,
+    <CODE>SPLINE</CODE>, or <CODE>CLOSE</CODE>. An iteration defines
+    the following directives:
     <UL>
       <LI> <B><CODE>hasSubvarname</CODE></B>. This is an iterative
 	directive with a 0 or 1 iterations. When it has 1 iteration,
@@ -2556,7 +2563,7 @@ The options specific to the EPTS command when templates are used are:
     number in the range [0%, 100%]. With an alpha channel, the HSL syntax
     is <CODE>hsl(</CODE><U>H</U><CODE>,</CODE><U>S</U><CODE>,</CODE><U>L</U><CODE>,</CODE><U>A</U><CODE>)</CODE>, where <U>A</U> is a real number
     in the range [0, 1].
-  <LI><B><CODE>--stroke-cap</CODE> <U>VALUE</U>.  This option is
+  <LI><B><CODE>--stroke-cap</CODE></B> <U>VALUE</U>.  This option is
     used for table templates and applies to the path specified by the
     following <CODE>--tname</CODE> option. Its values can be one of
     the following: <B><CODE>butt</CODE></B>, which ends enclosed
@@ -3788,21 +3795,14 @@ the following:
     The web page for the BZDev class library&#39;s factories and their
     parameters. This is usually sufficient for determining how to to
     configure a factory.
-  <LI><B><CODE>/usr/share/doc/libbzdev-doc/ByExample.pdf</CODE></B>.
-    This is a copy of
-    <EM>An Introduction to the BZDev Java Class Library with Examples</EM>.
-  <LI><B><CODE>/usr/share/doc/libbzdev-doc/SimScript.pdf</CODE></B>.
-    This is a copy of
-    <EM>Simulation Scripting Guide for the BZDev class library</EM>.
-    It describes how to create factories.
-  <LI><B><CODE>/usr/share/doc/libbzdev-doc/Factories.pdf</CODE></B>.
-    This is a copy of
-    <EM>Programming Named-Objects and their Factories</EM>.  This
-    guide concentrates on how to create new objects and their
-    factories.
+  <LI><EM>An Introduction to the BZDev Java Class Library</EM>
+    (to be published)
+  <LI><EM>The ESP scripting language and its use with factories</EM>.
+    (to be published)
+  <LI><EM>Programming BZDEvNamed-Objects and their Factories</EM>.
+    (to be published)
 </UL>
 The path names for these documents, of course, is system dependent.
-
 </BODY>
 </HTML>
 <!--  LocalWords:  EPTS PoinTS BZDev anim zier ECMA GCS JRE Runtime
