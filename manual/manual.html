@@ -18,9 +18,16 @@ system.  The points and paths can then be written to an output stream
 in a variety of text formats, each specified by a template, for use
 by other programs. EPTS can also be used to measure the distance
 between two points on an image, with options to measure the distance
-in "image space", where one unit distance is the width or height of a
-pixel, and  in "graph coordinate space", where units appropriate to an
-application are used (these terms are described in more detail below).
+in <A HREF="#userspace">user space</A> or
+<A HREF="#gcs">graph coordinate space</A>:
+<UL>
+  <LI>for <A HREF="#userspace">user space</A>, the unit distance is
+  1/72 of an inch.
+  <LI>for <A HREF="#gcs">graph coordinate space</A>, a unit distance is
+    application specific, but for physical objects, the default unit
+    is a meter.
+</UL>
+these terms are described in more detail below.
 <P>
 While there are many command-line options, mostly used to configure
 templates and scripts, there are some GUI-specific options that are
@@ -99,24 +106,28 @@ selected will be shown:
 <BR>
 These actions behave as follows:
 <UL>
-  <LI><B>New Window</B> This opens a new EPTS window and is equivalent to
-    the default behavior (double clicking the icon).
-  <LI><B>New Window, Stacktraces Enabled</B>. This opens a new EPTS
-    window and is equivalent to the default behavior but with stack traces
-    enabled, which prints additional information in some cases when
-    errors occur.
-  <LI><B>Configure Session</B>. This opens a dialog box that allows
-    the user to configure a new session. The user can optionally save
-    the session configuration in a session-configuration file. Unless
-    the user cancels the operation, this option effectively sets the
-    appropriate command-line options and uses those.
-  <LI><B>Configure Session, Stacktraces Enabled</B>. This is equivalent
-    to the configure-session action, but with stack-traces enabled.
-  <LI><B>Template Processing</B>. This opens a dialog box for setting
-    up template-related options and saving them in a template-processing
-    file.
-  <LI><B>Template Processing with Stacktraces</B>. This is equivalent
-    to the template-processing action but with stack-traces enabled.
+  <LI><A HREF="#imageBackground"><B>New Window</B></A>. This opens a
+    new EPTS window and is equivalent to the default behavior (double
+    clicking the icon).
+  <LI><A HREF="#imageBackground"><B>New Window, Stacktraces
+    Enabled</B></A>. This opens a new EPTS window and is equivalent to
+    the default behavior but with stack traces enabled, which prints
+    additional information in some cases when errors occur.
+  <LI><A HREF="#enhancedBackground"><B>Configure Session</B></A>. This
+    opens a dialog box that allows the user to configure a new
+    session. The user can optionally save the session configuration in
+    a session-configuration file. Unless the user cancels the
+    operation, this option effectively sets the appropriate
+    command-line options and uses those.
+  <LI><A HREF="#enhancedBackground"><B>Configure Session, Stacktraces Enabled</B></A>.
+    This is equivalent to the configure-session action, but with
+    stack-traces enabled.
+  <LI><A HREF="#templateSetup"><B>Template Processing</B></A>. This
+    opens a dialog box for setting up template-related options and
+    saving them in a template-processing file.
+  <LI><A HREF="#templateSetup"><B>Template Processing with Stacktraces</B></A>.
+    This is equivalent to the template-processing action but with
+    stack-traces enabled.
 </UL>
 <P>
 For the case of an image file, or when a saved EPTS file exists (one
@@ -156,8 +167,8 @@ the EPTS icon), or following the procedure above to open an image file
 using EPTS. EPTS will then start and display a file-chooser dialog
 requesting an input file if an input file was not provided. After an
 image file is chosen, EPTS will continue by displaying a window
-containing the image.  If no image is selected, EPTS will ask for an
-image size and create a blank image of that size.
+containing the image.  As an alternative, one may create a blank
+background by providing the height and width of the background.
 
 In some unusual cases, one might use the <B>Configure Session</B>
 desktop action. This will allow one to request additional code bases
@@ -181,7 +192,7 @@ One of the design goals for EPTS is to simplify creating animations
 using the BZDev class library&#39;s
 package <CODE>org.bzdev.anim2d</CODE>. Manuals describing this
 software is listed in the
-<A href="#guides">Additional Documentation</A> section below.
+<A href="#guides">additional documentation</A> section below.
 Typically, one will want some animation objects as a background, and
 will then use EPTS to create a series of paths. These will be written
 to a file in a scripting-language compatible format.  The scrunner
@@ -202,11 +213,14 @@ To set up EPTS for more complex cases supporting animations, use the
 <BR><BR>
 <CENTER><IMG src="configSession1.png"></CENTER>
 <BR>
-One may have to select a scripting language if additional languages are
-available, but the default, ESP, is always available and
-is the preferred choice.  The default value for the scripting-language
-variable representing an animation is <CODE>a2d</CODE>, but this can
-be changed if desired.  
+This will handle cases in which animation scripts generate a
+background image.  One may have to select a scripting language if
+additional languages are available, but the default, ESP, is always
+available and is the preferred choice. The
+<A HREF="#guides">additional documentation</A> section indicates were
+to find documentation for ESP. The default value for the
+scripting-language variable representing an animation
+is <CODE>a2d</CODE>, but this can be changed if desired.
 
 The next step is to bring up the <CODE>Scripts</CODE> pane using the tab
 on the top of the of the dialog box, and insert names of the files
@@ -296,12 +310,19 @@ file-manager window.
 
 <H3><A name="templateSetup">Configuring templates</A></H3>
 
+Templates-configuration files (the extension is "eptt") are typically
+generated after a saved state file is created and
+<A HREF="#usingEPTS">edited</A>.  These files will in
+effect generate the series of command-line options needed to use
+templates.  When EPTS opens a template-configuration file, a dialog
+box will appear that will allow one to edit the available options.
+
 EPTS uses templates to export data in various formats.  Templates
 exist for creating SVG files, for listing paths&#39; control points in
-formats that can be used by the scripting-language API for the
-BZDev animation package, and for providing useful information about
-paths such as path lengths and the area enclosed by closed paths.
-Templates are describe in detail in the section
+formats that can be used by the scripting-language API for the BZDev
+animation package, and for providing useful information about paths
+such as path lengths and the area enclosed by closed paths.  Templates
+are describe in detail in the section
 <A href="#templates">Templates</A>, and that section can be summarized
 as follows:
 <UL>
@@ -408,28 +429,29 @@ Makefiles).
 <P>
 EPTS makes use of three coordinate systems, one indirectly:
 <UL>
-  <LI> Java user-space coordinates, which is display-centric where
-    distances are in units of "points" (1/72 inches) and where the
-    positive X direction points left and the positive Y direction
-    points down. Without any explicit scaling, the JRE (Java Runtime
-    Environment) will scale images so that one pixel covers a square
-    that is 1 point by 1 point in size. This may represent several
-    pixels on a display or output device (e.g., a high-resolution
-    printer).  User-space coordinates are floating point numbers.  As
-    a result, if an output device contains 4 pixels for each 1x1 point
-    square, and the image is scaled down by a factor of 2, there will
-    be no degradation in image quality.
-  <LI> image space coordinates, in which one unit corresponds to a
-    pixel of an image. If an image is used directly, one pixel in the
-    image will take up 1 unit in user space. When scripts are used
-    to create the background image, however, an image can be scaled
-    and incorporated in the background image. Image-space coordinates,
-    however, are not used for any other purposes and can be ignored
-    except when images are being added to a background by using a script.
-    The procedure for adding an image using a script is provided in the
-    BZDev library documentation for the package
+  <LI> <A NAME="userspace"></A>Java user-space coordinates, which is
+    display-centric where distances are in units of "points" (1/72
+    inches) and where the positive X direction points left and the
+    positive Y direction points down. Without any explicit scaling,
+    the JRE (Java Runtime Environment) will scale images so that one
+    pixel covers a square that is 1 point by 1 point in size. This may
+    represent several pixels on a display or output device (e.g., a
+    high-resolution printer).  User-space coordinates are floating
+    point numbers.  As a result, if an output device contains 4 pixels
+    for each 1x1 point square, and the image is scaled down by a
+    factor of 2, there will be no degradation in image quality.
+  <LI> <A NAME="gcs"></A>image space coordinates, in which one unit
+    corresponds to a pixel of an image. If an image is used directly,
+    one pixel in the image will take up 1 unit in user space. When
+    scripts are used to create the background image, however, an image
+    can be scaled and incorporated in the background
+    image. Image-space coordinates, however, are not used for any
+    other purposes and can be ignored except when images are being
+    added to a background by using a script.  The procedure for adding
+    an image using a script is provided in the BZDev library
+    documentation for the package
     <CODE>org.bzdev.anim2d.AnimationLayer2DFactory</CODE> (the
-    <A href="#guides">Additional Documentation</A> section provides citations
+    <A href="#guides">additional documentation</A> section provides citations
     to the documentation.
   <LI> GCS (Graph Coordinate Space) coordinates, in which distances are
     measured in application-specific coordinates (e.g., meters) and
@@ -443,7 +465,7 @@ EPTS makes use of three coordinate systems, one indirectly:
 EPTS will display an image and allow one to overlay this image with
 points and B&eacute;zier curves, expressing their locations and control
 points in graph coordinate space units. It will also allow one to measure
-the distance between points in either image space or graph coordinate space
+the distance between points in either user space or graph coordinate space
 units.
 <P>
 EPTS users should be familiar with several computer-graphics concepts when
@@ -485,6 +507,10 @@ templates are used.
     dash pattern for its starting point.  The dash width, dash
     increment and the dash phase can be expressed using either
     user-space units or GCS units.
+</UL>
+For editing paths, the following concepts should be understood in
+addition to concepts such as control points used in computer graphics:
+<UL>
   <LI> <A name="splines">Splines</A> can be used to define portions of
     curves. These avoid the need to provide control points explicitly.
     Splines in EPTS are built from cubic B&eacute;zier curve segments.  A
@@ -1551,7 +1577,7 @@ The built-in table templates are the following:
     name.  An AREA&#39;s SHAPE attribute will have the values
     <B>circle</B>, <B>rect</B>, or <B>poly</B>, which will also be the
     value of a variable name&#39;s
-    <A HREF="#keyParameter"><B>key</B> parameter</A>.  When the key's
+    <A HREF="#keyParameter"><B>key</B> parameter</A>.  When the key&#39;s
     value is <B>circle</B>, <B>rect</B>, or <B>poly</B>, a
     template-processor directive with the same name will also exist
     (i.e., if the value of <B>key</B> is <B>circle</B>, then a
@@ -3782,7 +3808,7 @@ library class <CODE>org.bzdev.io.ZipDocFile</CODE>, using Java method
     option.
 </UL>
 
-<H1><A name="guides">Additional Documentation</A></H1>
+<H1><A NAME="guides">Additional documentation</A></H1>
 
 API documentation and several user guides are useful when creating
 scripts or using the files generated by some of the templates.
@@ -3791,6 +3817,7 @@ the following:
 <UL>
   <LI><B><CODE>/usr/share/doc/libbzdev-doc/api/index.html</CODE></B>.
     The web page for the API documentation for the BZDev class library.
+    A link on this page provides a description of the ESP scripting language.
   <LI><B><CODE>/usr/share/doc/libbzdev-doc/factories-api/index.html</CODE></B>.
     The web page for the BZDev class library&#39;s factories and their
     parameters. This is usually sufficient for determining how to to
