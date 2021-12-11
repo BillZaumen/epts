@@ -183,7 +183,8 @@ public class EPTSParser {
 		BufferedImage bi = new
 		    BufferedImage(width,height,BufferedImage.TYPE_INT_ARGB_PRE);
 		Graphics2D g2d = bi.createGraphics();
-		g2d.setBackground(Color.WHITE);
+		// g2d.setBackground(Color.WHITE);
+		g2d.setBackground(EPTS.stdBackgroundColor);
 		g2d.clearRect(0, 0, width, height);
 		g2d.dispose();
 		image = bi;
@@ -194,7 +195,8 @@ public class EPTSParser {
 	    BufferedImage bi = new
 		BufferedImage(width,height,BufferedImage.TYPE_INT_ARGB_PRE);
 	    Graphics2D g2d = bi.createGraphics();
-	    g2d.setBackground(Color.WHITE);
+	    // g2d.setBackground(Color.WHITE);
+	    g2d.setBackground(EPTS.stdBackgroundColor);
 	    g2d.clearRect(0, 0, width, height);
 	    g2d.dispose();
 	    image = bi;

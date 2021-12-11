@@ -1641,7 +1641,7 @@ public class Setup {
 				    arglist.add("--stackTrace");
 				}
 				String lang = (String)langCB.getSelectedItem();
-				if (lang != null || !lang.equals(defaultSL)) {
+				if (lang != null && !lang.equals(defaultSL)) {
 				    arglist.add("-L");
 				    arglist.add(lang);
 				}

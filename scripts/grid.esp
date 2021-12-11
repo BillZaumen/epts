@@ -66,6 +66,9 @@
 //    * gridZorder - an integer giving the z-order to use for the object
 //                   that creates the grid. The default is the javascript
 //                   value java.lang.Long.MAX_VALUE (2^53 - 1).
+//    * plainBackgroundColor - a color specification for the background
+//                   color to use if no image was provided, provided as
+//                   a CSS string.
 //
 // The variable a2d is expected to be the variable name for an
 // animation. The animation is expected to be configured: in
@@ -112,6 +115,8 @@ var yorigin ??= (!var.epts || epts == null)? 0.0: epts.getYOrigin();
 var xfract ??= (!var.epts || epts == null)? 0.0: epts.getXFract();
 
 var yfract ??= (!var.epts || epts == null)? 0.0: epts.getYFract();
+
+var plainBackgroundColor ??= "white";
 
 var spacing ?= null;
 
@@ -169,8 +174,8 @@ function() {
 			  height: (yupper-ylower),
 			  fill: true, draw: true,
 			  "stroke.width": 1.0,
-			  "fillColor.css": "white",
-			  "drawColor.css": "white"}]}];
+			  "fillColor.css": plainBackgroundColor,
+			  "drawColor.css": plainBackgroundColor}]}];
 	alf.configure(spec);
 	alf.createObject();
 	void

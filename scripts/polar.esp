@@ -70,6 +70,9 @@
 //    * gridZorder - an integer giving the z-order to use for the object
 //                   that creates the grid. The default is the javascript
 //                   value java.lang.Long.MAX_VALUE (2^53 - 1).
+//    * plainBackgroundColor - a color specification for the background
+//                   color to use if no image was provided, provided as
+//                   a CSS string.
 
 import(org.bzdev.anim2d, [Animation2D,
 			  AnimationLayer2DFactory,
@@ -110,6 +113,8 @@ var yfract ??= (!var.epts || epts == null || !epts.hasDistances())?
 var fractional ??= true;
 (fractional != true && fractional != false)
     &&  throw "The variable 'fractional' is not a boolean";
+
+var plainBackgroundColor ??= "white";
 
 var gridXOrigin ??= fractional? 0.5: 0.0;
 
@@ -155,8 +160,8 @@ function() {
 			  height: (yupper-ylower),
 			  fill: true, draw: true,
 			  "stroke.width": 1.0,
-			  "fillColor.css": "white",
-			  "drawColor.css": "white"}]}];
+			  "fillColor.css": plainBackgroundColor,
+			  "drawColor.css": plainBackgroundColor}]}];
 	alf.configure(spec);
 	alf.createObject();
 	void

@@ -149,9 +149,12 @@ CRLF_TEMPLATES = templates/SegmentsCSV.tpl
 
 RESOURCES = manual/manual.xml \
 	manual/manual.xsl \
+	manual/manual.dm.xsl \
 	manual/index.html \
 	manual/manual.html \
 	manual/manual.css \
+	manual/manual.dm.css \
+	manual/print.css \
 	manual/DesktopIcons.png \
 	manual/OpeningDialog.png \
 	manual/desktop.png \
@@ -252,6 +255,12 @@ $(JROOT_JARDIR)/epts.jar: $(FILES) $(TEMPLATES) $(CRLF_TEMPLATES)\
 		cp $$i $(EPTS_JDIR)/$$sname; done
 	mkdir -p $(EPTS_JDIR)/manual
 	for i in $(RESOURCES) ; do cp $$i $(EPTS_JDIR)/$$i ; done
+	sed -e s/manual.css/manual.dm.css/ manual/manual.html > \
+		$(EPTS_JDIR)/manual/manual.dm.html
+	grep -v '<LINK' manual/manual.html > $(EPTS_JDIR)/manual/print.html
+	sed -e s/manual.html/manual.dm.html/ manual/manual.xml \
+		| sed -e s/manual.xsl/manual.dm.xsl/ > \
+		$(EPTS_JDIR)/manual/manual.dm.xml
 	jar cfe $(JROOT_JARDIR)/epts.jar org.bzdev.epts.EPTS \
 		-C $(EPTS_DIR) .
 

@@ -67,6 +67,9 @@
 //    * gridZorder - an integer giving the z-order to use for the object
 //                   that creates the grid. The default is the javascript
 //                   value java.lang.Long.MAX_VALUE (2^53 - 1).
+//    * plainBackgroundColor - a color specification for the background
+//                   color to use if no image was provided, provided as
+//                   a CSS string.
 //
 // The variable a2d is expected to be the variable name for an animation.
 // It will be created if it does not already exist, but an existing one
@@ -183,6 +186,11 @@ if (typeof strokeWidth === 'undefined') {
     var strokeWidth = null;
 }
 
+if (typeof plainBackgroundColor == 'undefined'
+   || plainBackgroundColor == null) {
+    var plainBackgroundColor = "white";
+}
+
 
 // Use a function because the 'let' keyword is not recognized
 // by Nashorn and we want any variable not defined above  (and
@@ -239,8 +247,8 @@ var a2d;
 			  height: (yupper-ylower),
 			  fill: true, draw: true,
 			  "stroke.width": 1.0,
-			  "fillColor.css": "white",
-			  "drawColor.css": "white"}]}];
+			  "fillColor.css": plainBackgroundColor,
+			  "drawColor.css": plainBackgroundColor}]}];
 	alf.configure(spec);
 	alf.createObject();
     }

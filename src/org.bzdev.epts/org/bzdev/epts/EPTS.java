@@ -62,6 +62,8 @@ import org.bzdev.util.TemplateProcessor;
 
 public class EPTS {
 
+    static final Color stdBackgroundColor = new Color(128, 212, 181);
+
     public enum Mode {
 	LOCATION, PATH_START, PATH_END
     }
@@ -3328,7 +3330,8 @@ public class EPTS {
 				BufferedImage(width,height,
 					      BufferedImage.TYPE_INT_ARGB_PRE);
 			    Graphics2D g2d = bi.createGraphics();
-			    g2d.setBackground(Color.WHITE);
+			    // g2d.setBackground(Color.WHITE);
+			    g2d.setBackground(stdBackgroundColor);
 			    g2d.clearRect(0, 0, width, height);
 			    imageMode = true;
 			    imageURI = null;
@@ -3599,7 +3602,8 @@ public class EPTS {
 			BufferedImage(width,height,
 				      BufferedImage.TYPE_INT_ARGB_PRE);
 		    Graphics2D g2d = bi.createGraphics();
-		    g2d.setBackground(Color.WHITE);
+		    // g2d.setBackground(Color.WHITE);
+		    g2d.setBackground(stdBackgroundColor);
 		    g2d.clearRect(0, 0, width, height);
 		    image = bi;
 		}
@@ -4101,6 +4105,11 @@ public class EPTS {
 
     public static void main(String argv[]) {
 	try {
+	    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+	} catch (Exception e) {
+	}
+	try {
+
 	    String url  = (new File(ourCodebase)).toURI().toURL().toString();
 	    String path = url + "|jar:" + url + "!/org/bzdev/epts/";
 	   System.setProperty("org.bzdev.protocols.resource.path", path);

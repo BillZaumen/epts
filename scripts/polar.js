@@ -70,6 +70,9 @@
 //    * gridZorder - an integer giving the z-order to use for the object
 //                   that creates the grid. The default is the javascript
 //                   value java.lang.Long.MAX_VALUE (2^53 - 1).
+//    * plainBackgroundColor - a color specification for the background
+//                   color to use if no image was provided, provided as
+//                   a CSS string.
 
 scripting.importClass("org.bzdev.anim2d.Animation2D");
 scripting.importClass("org.bzdev.anim2d.AnimationLayer2DFactory");
@@ -166,6 +169,12 @@ if (typeof gridZorder === 'undefined' || gridZorder == null) {
     var gridZorder = java.lang.Long.MAX_VALUE;
 }
 
+if (typeof plainBackgroundColor == 'undefined'
+    || plainBackgroundColor == null) {
+    var plainBackgroundColor = "white";
+}
+
+
 if (typeof radialSpacing === 'undefined') {
     var radialSpacing = null;
 }
@@ -221,8 +230,8 @@ var a2d;
 			height: (yupper-ylower),
 			fill: true, draw: true,
 			"stroke.width": 1.0,
-			"fillColor.css": "white",
-			"drawColor.css": "white"}}]);
+			"fillColor.css": plainBackgroundColor,
+			"drawColor.css": plainBackgroundColor}}]);
 	alf.createObject();
     }
     var i = 1;

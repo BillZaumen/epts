@@ -119,7 +119,7 @@ public class ScriptingEnv {
     public ScriptingEnv(String languageName, String a2dName)
 	throws SecurityException
     {
-	System.out.println("ScriptingEnv: languageName = " + languageName);
+	// System.out.println("ScriptingEnv: languageName = " + languageName);
 	this.a2dName = a2dName;
 	this.languageName = languageName;
 	scripting = new ExtendedScriptingContext

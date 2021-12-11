@@ -61,6 +61,7 @@ import org.bzdev.util.CopyUtilities;
 import org.bzdev.util.TemplateProcessor;
 import org.bzdev.util.TemplateProcessor.KeyMap;
 import org.bzdev.util.TemplateProcessor.KeyMapList;
+import org.bzdev.swing.DarkmodeMonitor;
 import org.bzdev.swing.SwingErrorMessage;
 import org.bzdev.swing.HtmlWithTocPane;
 import org.bzdev.swing.PortTextField;
@@ -2371,14 +2372,48 @@ public class EPTSWindow {
     JFrame manualFrame = null;
     HtmlWithTocPane manualPane = null;
 
+    // Color tocBackgroundColor = new Color(20,20,50);
+    // Color tocForegroundColor = Color.WHITE;
+    // Color tocFrameBackgroundColor = new Color(196,196,196);
+
+    // for manual
+    /*
+    private boolean darkmode = false;
+
+    boolean darkmodeChanged() {
+	Color c = manualFrame.getContentPane().getBackground();
+	boolean dm =
+	    ((c.getRed() < 128 && c.getGreen() < 128 && c.getBlue() < 128));
+	try {
+	    return (dm != darkmode);
+	} finally {
+	    darkmode = dm;
+	}
+    }
+    */
+
     private void showManual() {
 	if (manualFrame == null) {
 	    manualFrame = new JFrame("Manual");
 	    manualFrame.setIconImages(EPTS.getIconList());
 
+
 	    Container pane = manualFrame.getContentPane();
 	    manualPane = new HtmlWithTocPane();
+	    // darkmodeChanged();
+	    /*
+	    manualPane.setBackground(tocBackgroundColor);
+	    manualPane.setSplitterBackground(tocBackgroundColor
+					     .brighter().brighter());
+	    manualPane.setTocBackground(tocBackgroundColor);
+	    manualPane.setTocForeground(tocForegroundColor);
+	    manualPane.setHtmlButtonBackground(tocBackgroundColor
+					       .brighter(), true);
+	    manualPane.setHtmlPaneBackground(tocBackgroundColor);
+	    */
 	    manualFrame.setSize(920, 700);
+	    // manualFrame.setBackground(tocFrameBackgroundColor);
+	    // pane.setBackground(tocFrameBackgroundColor);
 	    manualFrame.addWindowListener(new WindowAdapter() {
 		    public void windowClosing(WindowEvent e) {
 			manualFrame.setVisible(false);
@@ -2400,7 +2435,9 @@ public class EPTSWindow {
 	    fileMenu.add(menuItem);
 	    manualFrame.setJMenuBar(menubar);
 	    URL url = ClassLoader.getSystemClassLoader()
-		.getResource("org/bzdev/epts/manual/manual.xml");
+		.getResource(DarkmodeMonitor.getDarkmode()?
+			     "org/bzdev/epts/manual/manual.dm.xml":
+			     "org/bzdev/epts/manual/manual.xml");
 	    if (url != null) {
 		try {
 		    manualPane.setToc(url, true, false);
@@ -2422,13 +2459,37 @@ public class EPTSWindow {
 		    return;
 		}
 	    } else {
-		SwingErrorMessage.display("cannot load manual/manual.xml");
+		SwingErrorMessage.display("cannot load manual");
 		    manualFrame.dispose();
 		    manualFrame = null;
 		    return;
 	    }
 	    pane.setLayout(new BorderLayout());
 	    pane.add(manualPane, "Center");
+	    /*
+	    manualPane.addPropertyChangeListener(evt -> {
+		    // The property name we get on a PopOS system is "name"
+		    // but we don't know if all pluggable look and feels
+		    // will generate that, so we'll check regardless
+		    if (darkmodeChanged()) {
+			System.out.println("darkMode = " + darkmode);
+		    }
+		});
+	    */
+	    DarkmodeMonitor.addPropertyChangeListener(evt -> {
+		    try {
+			URL u = ClassLoader.getSystemClassLoader()
+			    .getResource(DarkmodeMonitor.getDarkmode()?
+					 "org/bzdev/epts/manual/manual.dm.xml":
+					 "org/bzdev/epts/manual/manual.xml");
+			if (url != null) {
+			    manualPane.setToc(u, true, false);
+			    manualPane.setSelectionWithAction(0);
+			}
+		    } catch(Exception epchl) {
+		    }
+		    System.out.println("darkmode = " + evt.getNewValue());
+		});
 	}
 	manualFrame.setVisible(true);
     }
@@ -2436,7 +2497,7 @@ public class EPTSWindow {
     private void printManual() {
 	try {
 	    URL url = ClassLoader.getSystemClassLoader()
-		.getResource("org/bzdev/epts/manual/manual.html");
+		.getResource("org/bzdev/epts/manual/print.html");
 	    if (url != null) {
 		JEditorPane pane = new JEditorPane();
 		pane.setPage(url);
@@ -2447,15 +2508,19 @@ public class EPTSWindow {
 		    StyleSheet oursheet = new StyleSheet();
 		    StringBuilder sb = new StringBuilder(512);
 		    CopyUtilities.copyResource
-			("org/bzdev/epts/manual/manual.css", sb,
+			("org/bzdev/epts/manual/print.css", sb,
 			 Charset.forName("UTF-8"));
 		    oursheet.addRule(sb.toString());
 		    stylesheet.addStyleSheet(oursheet);
 		}
 		pane.print(null, new MessageFormat("- {0} -"));
 	    }
-	} catch  (PrinterException e) {
-	} catch (IOException e) {
+	} catch (Exception e) {
+	    JOptionPane.showMessageDialog(frame,
+					  errorMsg("printFailed",
+						   e.getMessage()),
+					  localeString("errorTitle"),
+					  JOptionPane.ERROR_MESSAGE);
 	}
     }
 
@@ -2475,7 +2540,7 @@ public class EPTSWindow {
 		wmap.addMapping("html", "text/html; charset=utf-8");
 	    }
 	    manualURI = new URL("http://localhost:"
-				+ port +"/manual.html").toURI();
+				+ port +"/index.html").toURI();
 	    ews.start();
 	}
     }
