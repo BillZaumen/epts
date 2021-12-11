@@ -1,0 +1,45 @@
+H1 {
+    font-weight: bold;
+    font-size: 16pt;
+    font-family: helvetica, sans-serif;
+    font-variant: normal;
+    font-style: normal;
+}
+
+H2 {
+    font-weight: bold;
+    font-size: 14pt;
+    font-family: helvetica, sans-serif;
+    font-variant: normal;
+    font-style: normal;
+}
+
+H3 {
+    font-weight: bold;
+    font-size: 12pt;
+    font-family: helvetica, sans-serif;
+    font-variant: normal;
+    font-style: normal;
+}
+
+BODY {
+    font-weight: normal;
+    font-size: 12pt;
+    font-family: times, serif;
+    font-variant: normal;
+    font-style: normal;
+}
+
+P {
+    font-weight: normal;
+    font-size: 12pt;
+    font-family: times, serif;
+    font-variant: normal;
+    font-style: normal;
+}
+
+CODE {
+    font-weight: normal;
+    font-size: 12pt
+    font-family: courier, monospace
+}
