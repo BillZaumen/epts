@@ -72,8 +72,11 @@ public class EPTSParser {
     LinkedList<String>codebase = new LinkedList<>();
     LinkedList<String>classpath = new LinkedList<>();
     LinkedList<String>modules = new LinkedList<>();
+    String resourcePath = null;
 
     public boolean hasScripts() {return scriptSeen;}
+    public String getResourcePath() {return resourcePath;}
+
     public int getWidth() {return width;}
     public int getHeight() {return height;}
     public boolean imageURIExists() {return imageURIExists;}
@@ -356,6 +359,7 @@ public class EPTSParser {
 	    } else if (qName.equals("scripting")) {
 		 language = attr.getValue("language");
 		 animation = attr.getValue("animation");
+		 resourcePath = attr.getValue("resourcePath");
 		 bindings = new ArrayList<EPTS.NameValuePair>();
 		 scriptSeen = true;
 	    } else if (qName.equals("binding")) {

@@ -101,6 +101,53 @@ public class
 	return opnames;
     }
 
+    private TreeSet<String> tcnames = new TreeSet<>();
+
+    private String isToCirc(int index1, int index2) {
+	int start = findStart(index1);
+	int end = findEnd(index2);
+	if (start == -1 || end == -1 || (end - start) != 3) {
+	    return null;
+	}
+	if (getRowMode(start) != EPTS.Mode.PATH_START) {
+	    return null;
+	}
+	if (getRowMode(end) != EPTS.Mode.PATH_END) {
+	    return null;
+	}
+	if (getRowMode(start+1) != SplinePathBuilder.CPointType.MOVE_TO
+	    || getRowMode(end-1) != SplinePathBuilder.CPointType.SEG_END) {
+	    return null;
+	}
+	return rows.get(start).getVariableName();
+    }
+
+
+    public Set<String> getToCircleVariableNames() {
+	return Collections.unmodifiableSet(tcnames);
+	/*
+	TreeSet<String> tcnames = new TreeSet<>();
+	for (String vn: pnames) {
+	    int start = findStart(vn);
+	    int end = findEnd(start) - 1;
+	    if (end != start + 2) {
+		continue;
+	    }
+	    PointTMR startRow = rows.get(start+1);
+	    PointTMR endRow = rows.get(end);
+	    Enum startMode = startRow.getMode();
+	    Enum endMode = endRow.getMode();
+	    if (!startMode.equals(SplinePathBuilder.CPointType.MOVE_TO)) {
+		continue;
+	    }
+	    if (!endMode.equals(SplinePathBuilder.CPointType.SEG_END)) {
+		    continue;
+	    }
+	    tcnames.add(vn);
+	}
+	return tcnames;
+	*/
+    }
 
     public List<String> getPathVariableNamesInTableOrder() {
 	// order in which they
@@ -780,6 +827,13 @@ public class
      */
     protected void fireTableChanged(int start, int end, Mode mode) {
 	TableModelEvent event;
+	String circName = isToCirc(start,end);
+	if (circName == null) {
+	    String vname = getVariableName(findStart(start));
+	    tcnames.remove(vname);
+	} else {
+	    tcnames.add(circName);
+	}
 	switch(mode) {
 	case ADDED:
 	    event = new TableModelEvent(this, start, end,

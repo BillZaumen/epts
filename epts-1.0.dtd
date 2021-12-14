@@ -23,6 +23,7 @@
 
 <!ELEMENT scripting (binding*)>
 <!ATTLIST scripting
+	  resourcePath CDATA #IMPLIED
 	  language CDATA #IMPLIED
 	  animation CDATA #REQUIRED>
 

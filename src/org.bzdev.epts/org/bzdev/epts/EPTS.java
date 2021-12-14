@@ -1,5 +1,4 @@
 package org.bzdev.epts;
-
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
@@ -41,6 +40,7 @@ import javax.imageio.*;
 import javax.script.ScriptException;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.plaf.ColorUIResource;
 import org.bzdev.graphs.Colors;
 import org.bzdev.graphs.Graph;
 import org.bzdev.graphs.RefPointName;
@@ -53,6 +53,7 @@ import org.bzdev.obnaming.misc.BasicStrokeParm;
 import org.bzdev.obnaming.misc.BasicStrokeParm.Cap;
 import org.bzdev.obnaming.misc.BasicStrokeParm.Join;
 import org.bzdev.scripting.Scripting;
+import org.bzdev.swing.DarkmodeMonitor;
 import org.bzdev.swing.SwingErrorMessage;
 import org.bzdev.swing.SimpleConsole;
 import org.bzdev.swing.WholeNumbTextField;
@@ -160,6 +161,8 @@ public class EPTS {
 
     private static LinkedList<String> addedModules = new LinkedList<>();
 
+    private static HashSet<String> resourcePathSet = new HashSet<>();
+
 
     public static List<String> getCodebase() {
 	return Collections.unmodifiableList(codebase);
@@ -183,6 +186,10 @@ public class EPTS {
     private static Map<String,Boolean> urlMap = new HashMap<>();
 
     private static StringBuilder sbcp = new StringBuilder();
+
+    // EPTSWindow needs this for state saving.
+    static StringBuilder sbrp = new StringBuilder();
+
     /*
     static {
 	sbcp.append(ourCodebase);
@@ -297,6 +304,34 @@ public class EPTS {
 	}
     }
     
+    static void extendResourcePath(String entry, Appendable err)
+	throws Exception
+    {
+	String url;
+	try {
+	    if (entry.startsWith("file:")
+		|| entry.startsWith("jar:")
+		|| entry.startsWith("http:")
+		|| entry.startsWith("https:")
+		|| entry.startsWith("ftp:")) {
+		url = entry;
+	    } else {
+		url = new File(entry).getCanonicalFile().toURI().toURL()
+		    .toString();
+	    }
+
+	    if (sbrp.length() > 0) {
+		sbrp.append("|");
+	    }
+	    sbrp.append(url);
+	} catch (Exception e) {
+	    err.append
+		(errorMsg("resourcePathError", e.getMessage()) + "\n");
+	    // System.exit(1);
+	    throw e;
+	}
+    }
+
     private static boolean classpathExtended = false;
 
     private static String MODULE_NAME_RE =
@@ -1639,6 +1674,10 @@ public class EPTS {
 	    jargsList.add(0, sbcp.toString());
 	    jargsList.add(0, "-classpath");
 	}
+	if (sbrp.length() > 0) {
+	    jargsList.add(0, "-Dorg.bzdev.protocols.resource.path="
+			  +sbrp.toString());
+	}
 
 	jargsList.add(0, "-Depts.fdrUsed="+(fdrUsed? "true": "false"));
 	jargsList.add(0, "-Depts.alreadyforked=true");
@@ -2187,6 +2226,7 @@ public class EPTS {
 	Map<String,String> map = null;
 	boolean jcontinue = true;
 	boolean hasCodebase = false;
+	boolean hasResourcePath = false;
 	boolean webserverOnly = false;
 	ArrayList<String> argsList = new ArrayList<>();
 	OutputStream out = null;
@@ -2335,6 +2375,26 @@ public class EPTS {
 					       + addedModules.size());
 			    */
 			    modSet.add(mod);
+			}
+		    }
+		} else if (argv[index].equals("--resourcePath")) {
+		    if (!alreadyForked) {
+			argsList.add(argv[index]);
+		    }
+		    index++;
+		    if (index == argv.length) {
+			displayError
+			    (errorMsg("missingArg", argv[--index]));
+			System.exit(1);
+		    }
+		    if (!alreadyForked) {
+			argsList.add(argv[index]);
+		    }
+		    hasResourcePath = true;
+		    for (String rp: URLPathParser.split(argv[index]) ){
+			if (!resourcePathSet.contains(rp)) {
+			    extendResourcePath(rp, System.err);
+			    resourcePathSet.add(rp);
 			}
 		    }
 		} else if (argv[index].equals("--codebase")) {
@@ -3202,6 +3262,23 @@ public class EPTS {
 		    // we only run the scripts if there is no
 		    // output file as the output file simply
 		    // formats the tables.
+		    String rpath = parser.getResourcePath();
+		    if (rpath != null && rpath.length() > 0) {
+			if (resourcePathSet.size() > 0) {
+			    String title = errorMsg("errorTitle");
+			    String msg =
+				errorMsg("resourcePathNotAllowed", filename);
+			    SwingErrorMessage.display(null, title, msg);
+			    System.exit(1);
+			}
+			// do the same thing we'd do on the command line.
+			for (String rp: URLPathParser.split(rpath) ){
+			    if (!resourcePathSet.contains(rp)) {
+				extendResourcePath(rp, System.err);
+				resourcePathSet.add(rp);
+			    }
+			}
+		    }
 		    for (String name: parser.getCodebase()) {
 			StringBuilder sb = new StringBuilder();
 			URL[] urls = null;
@@ -4102,17 +4179,23 @@ public class EPTS {
 	}
     }
 
-
     public static void main(String argv[]) {
-	try {
-	    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-	} catch (Exception e) {
-	}
+	DarkmodeMonitor.setSystemPLAF();
+	DarkmodeMonitor.init();
 	try {
 
 	    String url  = (new File(ourCodebase)).toURI().toURL().toString();
 	    String path = url + "|jar:" + url + "!/org/bzdev/epts/";
+	    String origpath =
+		System.getProperty("org.bzdev.protocols.resource.path", null);
+	    if (origpath != null) {
+		path = path + "|" + origpath;
+	    }
+	    /*
 	   System.setProperty("org.bzdev.protocols.resource.path", path);
+	   System.out.println
+	       (System.getProperty("org.bzdev.protocols.resource.path", null));
+	    */
 	   org.bzdev.protocols.Handlers.enable();
 	   init(argv);
 	} catch (Exception e) {

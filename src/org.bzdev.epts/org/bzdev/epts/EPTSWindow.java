@@ -1471,6 +1471,7 @@ class ArcPane extends JPanel {
     }
 }
 
+
 abstract class TransformPane extends JPanel {
     static String errorMsg(String key, Object... args) {
 	return EPTS.errorMsg(key, args);
@@ -1613,12 +1614,26 @@ abstract class TransformPane extends JPanel {
 	this.ptmodel = ptmodel;
 	oldpath = ptmodel.getPath(name);
 	ref = Path2DInfo.centerOfMassOf(oldpath);
-	double[][] moments = Path2DInfo.momentsOf(ref, oldpath);
-	double[] principalMoments = Moments.principalMoments(moments);
-	double mean = (principalMoments[0] + principalMoments[1])/2;
+	double[][] moments = (ref == null)? null:
+	    Path2DInfo.momentsOf(ref, oldpath);
+	double[] principalMoments = (moments == null)? null:
+	    Moments.principalMoments(moments);
+	double mean = (moments == null)? 0.0:
+	    (principalMoments[0] + principalMoments[1])/2;
 	if (mean == 0.0) {
 	    // punt - the area must be zero.
-	    principalAngle = 0.0;
+	    if (principalMoments == null) {
+		if (ref == null) {
+		    double[] ar = EPTSWindow
+			.getDefaultPrincipalAngleAndRef(oldpath);
+		    principalAngle = ar[0];
+		    ref = new Point2D.Double(ar[1], ar[2]);
+		} else {
+		    principalAngle = 0.0;
+		}
+	    } else {
+		principalAngle = 0.0;
+	    }
 	} else if (Math.abs((principalMoments[0]
 			     - principalMoments[1])/mean) < 0.01) {
 	    // we can't see the difference so use X and Y axes
@@ -2038,6 +2053,84 @@ public class EPTSWindow {
 	return EPTS.localeString(key);
     }
 
+    // called when Path2DInfo.centerOfMassOf returned null,
+    // which probably means all the points are colinear.
+    static double[] getDefaultPrincipalAngleAndRef(Path2D path) {
+	double xmean = 0.0;
+	double ymean = 0.0;
+
+	double[] coords = new double[6];
+	double x, y;
+	double n = 0;
+	PathIterator pi = path.getPathIterator(null);
+	while (!pi.isDone()) {
+	    switch(pi.currentSegment(coords)) {
+	    case PathIterator.SEG_MOVETO:
+	    case PathIterator.SEG_LINETO:
+		x = coords[0];
+		y = coords[1];
+		break;
+	    case PathIterator.SEG_QUADTO:
+		x = coords[2];
+		y = coords[3];
+		break;
+	    case PathIterator.SEG_CUBICTO:
+		x = coords[4];
+		y = coords[5];
+		break;
+	    case PathIterator.SEG_CLOSE:
+		pi.next();
+		continue;
+	    default:
+		throw new UnexpectedExceptionError();
+	    }
+	    xmean += x;
+	    ymean += y;
+	    n++;
+	    pi.next();
+	}
+	xmean /= n;
+	ymean /= n;
+	pi = path.getPathIterator(null);
+	double distsq = 0.0;
+	double vx = 0.0; double vy = 0.0;
+	while (!pi.isDone()) {
+	    switch(pi.currentSegment(coords)) {
+	    case PathIterator.SEG_MOVETO:
+	    case PathIterator.SEG_LINETO:
+		x = coords[0] - xmean;
+		y = coords[1] - ymean;
+		break;
+	    case PathIterator.SEG_QUADTO:
+		x = coords[2] - xmean;
+		y = coords[3] - ymean;
+		break;
+	    case PathIterator.SEG_CUBICTO:
+		x = coords[4] - xmean;
+		y = coords[5] - ymean;
+		break;
+	    case PathIterator.SEG_CLOSE:
+		pi.next();
+		continue;
+	    default:
+		throw new UnexpectedExceptionError();
+	    }
+	    double dsq = x*x + y*y;
+	    if (dsq > distsq) {
+		distsq = dsq;
+		vx = x;
+		vy = y;
+	    }
+	    pi.next();
+	}
+	double angle =  (vx == 0.0 && vy == 0.0)? 0.0: Math.atan2(vy,vx);
+	double[] results = {
+	    angle, xmean, ymean
+	};
+	return results;
+    }
+
+
     static Map<String,String> keys = new HashMap<String,String>();
     static Map<String,String> links = new HashMap<String,String>();
     static Map<String,String> descriptions = new HashMap<String,String>();
@@ -2104,6 +2197,9 @@ public class EPTSWindow {
 	    // tlist.add(map);
 	}
 	// System.out.println("scriptMode = "  + scriptMode);
+	if (EPTS.sbrp.length() > 0) {
+	    keymap.put("resourcePath", EPTS.sbrp.toString());
+	}
 	if (/*scriptMode && */ shouldSaveScripts) {
 	    TemplateProcessor.KeyMapList hasScriptList =
 		new TemplateProcessor.KeyMapList();
@@ -2325,6 +2421,8 @@ public class EPTSWindow {
     TableModelListener tmlistener = new TableModelListener() {
 	    public void tableChanged(TableModelEvent e) {
 		needSave = true;
+		toCircleMenuItem.setEnabled
+		    (!ptmodel.getToCircleVariableNames().isEmpty());
 	    }
 	};
 
@@ -2488,7 +2586,6 @@ public class EPTSWindow {
 			}
 		    } catch(Exception epchl) {
 		    }
-		    System.out.println("darkmode = " + evt.getNewValue());
 		});
 	}
 	manualFrame.setVisible(true);
@@ -2743,6 +2840,7 @@ public class EPTSWindow {
     JMenuItem mpMenuItem;	   // for Edit Menu (move a path)
     JMenuItem rotMenuItem;	   // for Edit Menu (rotate a path)
     JMenuItem scaleMenuItem;	   // for Edit Menu (scale a path)
+    JMenuItem toCircleMenuItem;	   // for Edit Menu (turn a line into a circle)
 
     JMenuItem offsetPathMenuItem; // for Tools menu
 
@@ -3242,6 +3340,140 @@ public class EPTSWindow {
     }
     */
 
+    private int circleMaxDeltaDivisor = 2;
+
+    private void toCircleAction() {
+	String oldPathName = null;
+	if (selectedRow == -1) {
+	    Set<String> vnameSet = ptmodel.getToCircleVariableNames();
+	    if (vnameSet.isEmpty()) return;
+	    String[] vnames =
+		vnameSet.toArray(new String[vnameSet.size()]);
+	    for (String nm: vnames) {
+		System.out.println("nm = " + nm);
+	    }
+	    String vname;
+	    if (vnames.length == 1) {
+		vname = vnames[0];
+	    } else {
+		vname = (String)JOptionPane.showInputDialog
+		    (frame, localeString("toCircle1"),
+		     localeString("toCircle2"),
+		     JOptionPane.PLAIN_MESSAGE, null,
+		     vnames, vnames[0]);
+	    }
+	    if (vname == null || vname.length() == 0) return;
+	    oldPathName = vname;
+	} else {
+	    int index = ptmodel.findStart(selectedRow);
+	    if (ptmodel.getRowMode(index) == EPTS.Mode.LOCATION) {
+		return;
+	    } else {
+		if (ptmodel.getRowMode(index+3) != EPTS.Mode.PATH_END) {
+		    return;
+		}
+		if (ptmodel.getRowMode(index+2) != SplinePathBuilder
+		    .CPointType.SEG_END) {
+		    return;
+		}
+		if (ptmodel.getRowMode(index+1) != SplinePathBuilder
+		    .CPointType.MOVE_TO) {
+		    return;
+		}
+		oldPathName = ptmodel.getVariableName(index);
+	    }
+	}
+	// complete the current path.
+	if (nextState != null) {
+	    PointTMR lastrow = ptmodel.getLastRow();
+	    Enum lrmode = lastrow.getMode();
+	    if (lrmode == SplinePathBuilder.CPointType
+		.CONTROL || lrmode == SplinePathBuilder.CPointType.SPLINE) {
+		ptmodel.setLastRowMode(SplinePathBuilder.CPointType.SEG_END);
+	    }
+	    // This can call a radio-button menu item's
+	    // action listener's actionPeformed
+	    // method, and that sets the
+	    // nextState variable.
+	    ttable.nextState(EPTS.Mode.PATH_END);
+	    ptmodel.addRow("", EPTS.Mode.PATH_END, 0.0, 0.0, 0.0, 0.0);
+	}
+	resetState();
+	// We have found a line segment.
+	int start = ptmodel.findStart(oldPathName);
+	ptmodel.moveToEnd(start);
+	int end = ptmodel.getRowCount() - 1;
+	start = end-2;
+	PointTMR row1 = ptmodel.getRow(end-2);
+	PointTMR row2 = ptmodel.getRow(end-1);
+	double x1 = row1.getX();
+	double y1 = row1.getY();
+	double x2 = row2.getX();
+	double y2 = row2.getY();
+	double maxDelta = Math.PI/4;
+	int n = 2;
+	maxDelta /= circleMaxDeltaDivisor;
+	Path2D circle = Paths2D.createArc(x1, y1, x2, y2, 2*Math.PI,
+					  maxDelta);
+	circle.closePath();
+	PathIterator pi = circle.getPathIterator(null);
+	double[] coords = new double[6];
+	int i = 1;
+	while (!pi.isDone()) {
+	    switch(pi.currentSegment(coords)) {
+	    case PathIterator.SEG_MOVETO:
+		row1.setX(coords[0], (coords[0] - xrefpoint) / scaleFactor);
+		row1.setY(coords[1], height
+			  - (coords[1] - yrefpoint)/scaleFactor);
+		break;
+	    case PathIterator.SEG_CUBICTO:
+		double nx, ny, nxp, nyp;
+		for (int j = 0; j < 4; j += 2) {
+		    nx = coords[j];
+		    ny = coords[j+1];
+		    nxp = (nx - xrefpoint) / scaleFactor;
+		    nyp = (ny - yrefpoint) / scaleFactor;
+		    nyp = height - nyp;
+		    if (i < 3) {
+			PointTMR row = ptmodel.getRow(start + i);
+			row.setX(nx, nxp);
+			row.setY(ny, nyp);
+			row.setMode(SplinePathBuilder.CPointType.CONTROL);
+		    } else {
+			ptmodel.addRow("",
+				       SplinePathBuilder.CPointType.CONTROL,
+				       nx, ny, nxp, nyp);
+		    }
+		    i++;
+		}
+		nx = coords[4];
+		ny = coords[5];
+		nxp = (nx - xrefpoint) / scaleFactor;
+		nyp = (ny - yrefpoint) / scaleFactor;
+		nyp = height - nyp;
+		ptmodel.addRow("", SplinePathBuilder.CPointType.SEG_END,
+			       nx, ny, nxp, nyp);
+		i++;
+		break;
+	    case PathIterator.SEG_CLOSE:
+		nxp = (x2 - xrefpoint) / scaleFactor;
+		nyp = (y2 - yrefpoint) / scaleFactor;
+		nyp = height - nyp;
+		ptmodel.addRow("", SplinePathBuilder.CPointType.CLOSE,
+			       x2, y2, nxp, nyp);
+		break;
+	    default:
+		throw new UnexpectedExceptionError();
+	    }
+	    pi.next();
+	    i++;
+	}
+	ptmodel.addRow("", EPTS.Mode.PATH_END, 0.0, 0.0, 0.0, 0.0);
+	toCircleMenuItem.setEnabled
+	    (!ptmodel.getToCircleVariableNames().isEmpty());
+    }
+
+
     private void transformPathAction(boolean copyMode) {
 	// select a path.
 	String oldPathName = null;
@@ -3288,6 +3520,7 @@ public class EPTSWindow {
 	resetState();
 	onNewTransformedPath(oldPathName, copyMode);
     }
+
 
 
     private void setMenus(JFrame frame, double w, double h) {
@@ -3721,6 +3954,46 @@ public class EPTSWindow {
 	    });
 	editMenu.add(scaleMenuItem);
 
+	menuItem = new JMenuItem(localeString("circleMaxDeltaDivisor"));
+	menuItem.setEnabled(true);
+	menuItem.addActionListener(cmdevt -> {
+		Object[] options = {
+		    Integer.valueOf(1),
+		    Integer.valueOf(2),
+		    Integer.valueOf(4),
+		    Integer.valueOf(8),
+		    Integer.valueOf(16),
+		    Integer.valueOf(32),
+		    Integer.valueOf(64)
+		};
+		Object obj = JOptionPane
+		    .showInputDialog(frame,
+				      localeString("circMaxDeltaDiv2"),
+				      localeString("circMaxDeltaDiv"),
+				      JOptionPane.QUESTION_MESSAGE,
+				      null, options, options[1]);
+		if  (obj != null) {
+		    circleMaxDeltaDivisor = ((Integer)obj).intValue();
+		}
+	    });
+	editMenu.add(menuItem);
+
+
+	toCircleMenuItem = new JMenuItem(localeString("toCircle"),
+					 KeyEvent.VK_C);
+	toCircleMenuItem.setAccelerator(KeyStroke.getKeyStroke
+					(KeyEvent.VK_C,
+					 (InputEvent.ALT_DOWN_MASK
+					  | InputEvent.CTRL_DOWN_MASK)));
+	toCircleMenuItem.setEnabled(false);
+
+	toCircleMenuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    toCircleAction();
+		}
+	    });
+	editMenu.add(toCircleMenuItem);
+
 	editMenu.addSeparator();
 	editMenu.add(new JLabel(localeString("DialogBased")));
 
@@ -3753,6 +4026,7 @@ public class EPTSWindow {
 	    });
 	editMenu.add(newTFMenuItem);
 
+
 	editMenu.addSeparator();
 
 	menuItem = new JMenuItem(localeString("DeleteBezier"), KeyEvent.VK_D);
@@ -3774,7 +4048,7 @@ public class EPTSWindow {
 			    vname = vnames[0];
 			} else {
 			    vname = (String)JOptionPane.showInputDialog
-				(frame, localeString("SelectPathExtend"),
+				(frame, localeString("SelectPathDelete"),
 				 localeString("SelectPath"),
 				 JOptionPane.PLAIN_MESSAGE, null,
 				 vnames, vnames[0]);
@@ -4516,7 +4790,6 @@ public class EPTSWindow {
 				// setModeline("Path Complete");
 				resetState();
 				setModeline(localeString("LoopComplete"));
-
 			    } else {
 				JRadioButtonMenuItem rbmi =
 				    (JRadioButtonMenuItem)
@@ -5249,6 +5522,10 @@ public class EPTSWindow {
 	    // CM is in the view.
 	    JViewport vp = scrollPane.getViewport();
 	    Point2D newCM = Path2DInfo.centerOfMassOf(newpath);
+	    if (newCM == null) {
+		double[] ar = getDefaultPrincipalAngleAndRef(newpath);
+		newCM = new Point2D.Double(ar[1], ar[2]);
+	    }
 	    AffineTransform af =(zoom == 1.0)? new AffineTransform():
 		AffineTransform.getScaleInstance(zoom, zoom);
 	    af.translate(-xrefpoint/scaleFactor, height+yrefpoint/scaleFactor);

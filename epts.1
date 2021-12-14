@@ -1147,8 +1147,14 @@ background is an image.  The
 .B scrunner
 options that are supported are:
 .TP
+.BI \-\-classpathCodebase\ URLPATH
+.TQ
 .BI \-\-codebase\  URLPATH
-Defines directories and jar files to a class path.
+Specifies directories and jar files for the class path (for the
+.B \-\-classpathCodebase
+option) andthe module path (for the
+.B \-\-codebase
+option).
 .I URLPATH
 may be a URL giving the location of the classes or a path name in the
 local file system.  The character "|" is used as a path separator, with
@@ -1197,6 +1203,7 @@ shell script (or alternatively, create a new script).
 .B \-\-dryrun
 Prints the java command that would be executed but does not actually
 execute it.
+.TP
 .BI \-J \-JOPTION
 Causes a single-argument option
 .I \-JOPTION

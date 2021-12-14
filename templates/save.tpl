@@ -14,7 +14,7 @@ $(endclp)  </classpath>
 $(endClasspath)$(hasAddedModules:endhsa)  <modules>
 $(moduleslist:endml)     <module>$(module)</module>
 $(endml)  </modules>
-$(endhsa)$(hasScript:endScript)  <scripting language="$(language)" animation="$(animation)">
+$(endhsa)$(hasScript:endScript)  <scripting language="$(language)" animation="$(animation)"$(+resourcePath:endRP) resourcePath="$(resourcePath)"$(endRP)>
 $(hasBindings:endBindings)      <binding name="$(bindingName)" type="$(bindingType)">$(bindingValue)</binding>
 $(endBindings)  </scripting>
 $(endScript)  <targetList>$(arglist:arglistEnd)
