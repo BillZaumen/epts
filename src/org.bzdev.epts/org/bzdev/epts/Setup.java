@@ -18,6 +18,7 @@ import java.util.TreeSet;
 import java.util.Vector;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import java.util.zip.ZipEntry;
 import javax.imageio.*;
 import javax.swing.*;
 import javax.swing.event.*;
@@ -41,8 +42,8 @@ public class Setup {
 	return EPTS.localeString(key);
     }
 
- static enum ControlType {
-	JARFILE, SCRIPTFILE, VALUE, MODULE_NAME
+    static enum ControlType {
+	JARFILE, JARFILE_CWD, SCRIPTFILE, VALUE, MODULE_NAME
     }
     static final String blankRow1[] = {""};
     static final String blankRow4[] = {"", "", "", ""};
@@ -458,7 +459,9 @@ public class Setup {
     {
 	JPanel ourPanel = new JPanel();
 	ourPanel.setLayout(new FlowLayout());
-	if (type == ControlType.JARFILE || type == ControlType.SCRIPTFILE) {
+	if (type == ControlType.JARFILE
+	    || type == ControlType.JARFILE_CWD
+	    || type == ControlType.SCRIPTFILE) {
 	    JButton fileButton = new JButton(localeString("insertFileButton"));
 
 	    fileButton.addActionListener((e) -> {
@@ -476,9 +479,12 @@ public class Setup {
 			String cd;
 			String[] extensions;
 			switch(type) {
+			case JARFILE_CWD:
 			case JARFILE:
-			    cd = EPTS.ourCodebaseDir;
-			    fname = "JAR files";
+			    cd = (type == ControlType.JARFILE)?
+				EPTS.ourCodebaseDir:
+				System.getProperty("user.dir");
+			    fname = "Directories and JAR Files";
 			    extensions = new String[2];
 			    extensions[0] = "jar";
 			    extensions[1] = "JAR";
@@ -497,6 +503,11 @@ public class Setup {
 			FileNameExtensionFilter filter =
 			    new FileNameExtensionFilter(fname, extensions);
 			fc.addChoosableFileFilter(filter);
+			if (type == ControlType.JARFILE
+			    || type == ControlType.JARFILE_CWD) {
+			    fc.setFileSelectionMode
+				(JFileChooser.FILES_AND_DIRECTORIES);
+			}
 			int status = fc.showOpenDialog(pane);
 			if (status == JFileChooser.APPROVE_OPTION) {
 			    try {
@@ -815,6 +826,9 @@ public class Setup {
 					      Object[] columnNames) 
     {
 	try {
+	    ZipEntry ze = f.getEntry(name);
+	    // resourcepath is optional for backwards compatibility
+	    if (ze == null && name.equals("resourcepath")) return null;
 	    InputStream is = f.getInputStream(f.getEntry(name));
 	    XMLDecoder d = new XMLDecoder(is);
 	    Vector<Object> cnv = new Vector<Object>(columnNames.length);
@@ -851,6 +865,7 @@ public class Setup {
     static Object[] options = {
 	localeString("Save"),
 	localeString("SaveAs"),
+	localeString("dryrun"),
 	localeString("Accept"),
 	localeString("Exit")
     };
@@ -868,6 +883,7 @@ public class Setup {
 					final JTable codebaseTable,
 					final JTable modulesTable,
 					final JTable classpathTable,
+					final JTable resourcepathTable,
 					final JTable scriptTable,
 					final JTable varTable)
     {
@@ -882,6 +898,10 @@ public class Setup {
 			ce.stopCellEditing();
 		    }
 		    ce = codebaseTable.getCellEditor();
+		    if (ce != null) {
+			ce.stopCellEditing();
+		    }
+		    ce = resourcepathTable.getCellEditor();
 		    if (ce != null) {
 			ce.stopCellEditing();
 		    }
@@ -901,7 +921,7 @@ public class Setup {
 		    if (ce != null) {
 			ce.stopCellEditing();
 		    }		    
-		    if (status != 3 && varTable.getSelectedRowCount() > 0) {
+		    if (status != 4 && varTable.getSelectedRowCount() > 0) {
 			int[] rows = varTable.getSelectedRows();
 			for (int j: rows) {
 			    adjustVarTable(j, varTable);
@@ -909,7 +929,7 @@ public class Setup {
 		    }
 		    status = index;
 		    Window w = SwingUtilities.windowForComponent(panel);
-		    if (status != 3) {
+		    if (status != 4) {
 			if (usesImageFile && tmlCanEnable) {
 			    JOptionPane.showMessageDialog
 				(tabpane, errorMsg("imageFileWithScript"),
@@ -933,7 +953,8 @@ public class Setup {
 	    panel.add(b);
 	    buttons[i] = b;
 	    buttonActionListeners[i] = al;
-	    if (i < 3) b.setEnabled(false);
+	    // was 3 but we added a button
+	    if (i < 4) b.setEnabled(false);
 	}
 	return panel;
     }
@@ -944,6 +965,7 @@ public class Setup {
 	    buttons[0].setEnabled(true);
 	    buttons[1].setEnabled(true);
 	    buttons[2].setEnabled(true);
+	    buttons[3].setEnabled(true);
 	}
 	disabled = false;
     }
@@ -960,6 +982,7 @@ public class Setup {
     private static TableModel codebaseModel = null;
     private static TableModel modulesModel = null;
     private static TableModel classpathModel = null;
+    private static TableModel resourcepathModel = null;
     private static TableModel scriptModel = null;
     private static TableModel varModel = null;
 
@@ -1245,6 +1268,37 @@ public class Setup {
 				ControlType.JARFILE);
 		    tabpane.addTab(localeString("Classpath"), classpathPanel);
 
+		    JPanel resourcepathPanel = new JPanel();
+		    resourcepathPanel.setLayout(new BorderLayout());
+
+		    Object cpcolnames1[] = {
+			localeString("resourcepathHeader")
+		    };
+		    resourcepathModel = (zf == null)? null:
+			getZDFTM(zf, "resourcepath", cpcolnames1);
+		    if (resourcepathModel == null) {
+			// Older versions of EPTS do not have this
+			// entry in the configuration file so
+			// getZDFTM might return null.
+			resourcepathModel =
+			    new DefaultTableModel(cpcolnames, 32) {
+				public Class<?> getColumnClass(int col) {
+				    return String.class;
+				}
+			    };
+		    }
+		    JTable resourcepathTable = new JTable();
+		    resourcepathTable.setModel(resourcepathModel);
+		    JScrollPane resourcepathScrollPane =
+			new JScrollPane(resourcepathTable);
+		    resourcepathTable.setFillsViewportHeight(true);
+		    configTable(resourcepathTable);
+		    resourcepathPanel.add(resourcepathScrollPane);
+		    addControls(resourcepathPanel, resourcepathTable,
+				ControlType.JARFILE_CWD);
+		    tabpane.addTab(localeString("Resourcepath"),
+				   resourcepathPanel);
+
 		    JPanel scriptPanel = new JPanel();
 		    scriptPanel.setLayout(new BorderLayout());
 		    Object colnames2[] = {
@@ -1361,6 +1415,10 @@ public class Setup {
 			    if (tce != null) {
 				tce.stopCellEditing();
 			    }
+			    tce = resourcepathTable.getCellEditor();
+			    if (tce != null) {
+				tce.stopCellEditing();
+			    }
 			    tce = scriptTable.getCellEditor();
 			    if (tce != null) {
 				tce.stopCellEditing();
@@ -1382,6 +1440,7 @@ public class Setup {
 					       codebaseTable,
 					       modulesTable,
 					       classpathTable,
+					       resourcepathTable,
 					       scriptTable,
 					       varTable),
 				 "South");
@@ -1511,6 +1570,16 @@ public class Setup {
 					     enc.writeObject(v1b);
 					     enc.close();
 					     os.close();
+					     os = zdw.nextOutputStream
+						 ("resourcepath", true, 9);
+					     enc = new XMLEncoder(os);
+					     Vector v1c =
+						 ((DefaultTableModel)
+						  resourcepathTable.getModel())
+						 .getDataVector();
+					     enc.writeObject(v1c);
+					     enc.close();
+					     os.close();
 					     Vector v2 =
 						 ((DefaultTableModel)
 						  scriptTable.getModel())
@@ -1601,7 +1670,7 @@ public class Setup {
 			*/
 			dialogButtonPushed = false;
 			dialog.setVisible(true);
-			if (status == 2) {
+			if (status == 2 || status == 3) {
 			    CellEditor ce = javaOptionTable.getCellEditor();
 			    if (ce != null) {
 				ce.stopCellEditing();
@@ -1615,6 +1684,10 @@ public class Setup {
 				ce.stopCellEditing();
 			    }
 			    ce = classpathTable.getCellEditor();
+			    if (ce != null) {
+				ce.stopCellEditing();
+			    }
+			    ce = resourcepathTable.getCellEditor();
 			    if (ce != null) {
 				ce.stopCellEditing();
 			    }
@@ -1639,6 +1712,9 @@ public class Setup {
 				arglist.add("--gui");
 				if (EPTS.stackTrace) {
 				    arglist.add("--stackTrace");
+				}
+				if (status == 2) {
+				    arglist.add("--dryrun");
 				}
 				String lang = (String)langCB.getSelectedItem();
 				if (lang != null && !lang.equals(defaultSL)) {
@@ -1701,7 +1777,18 @@ public class Setup {
 					}
 				    }
 				}
-
+				len = resourcepathTable.getRowCount();
+				for (int i = 0; i < len; i++) {
+				    String s = (String)
+					resourcepathTable.getValueAt(i, 0);
+				    if (s != null) {
+					s = s.trim();
+					if (s.length() > 0) {
+					    arglist.add("--resourcePath");
+					    arglist.add(s);
+					}
+				    }
+				}
 				if (usesImageFile == false) {
 				    String text = animTF.getText();
 				    if (text == null) text = "a2d";
@@ -1802,7 +1889,7 @@ public class Setup {
 			saveCallable.call(savedStateFile);
 		    }
 		    */
-		    if (status == 3) {
+		    if (status == 4) {
 			System.exit(0);
 		    }
 		});

@@ -189,8 +189,12 @@ RESOURCES = manual/manual.xml \
 
 FILES = $(JFILES) $(PROPERTIES)
 
-PROGRAM = $(JROOT_BIN)/epts $(JROOT_JARDIR)/epts.jar 
-ALL = $(PROGRAM) epts.desktop $(MANS) $(JROOT_BIN)/epts
+PROGRAM = $(JROOT_BIN)/epts $(JROOT_JARDIR)/epts.jar $(BLDPOLICY)
+ALL = $(PROGRAM) epts.desktop $(MANS)
+
+
+
+all: $(ALL)
 
 # program: $(JROOT_BIN)/epts $(JROOT_JARDIR)/epts-$(VERSION).jar 
 
@@ -208,8 +212,6 @@ $(BLDPOLICY): epts.policy
 #
 testversion:
 	make program EXTDIR=$(JROOT_JARDIR)
-
-all: $(ALL)
 
 
 #
@@ -234,7 +236,7 @@ org:
 # being installed.
 #
 $(JROOT_JARDIR)/epts.jar: $(FILES) $(TEMPLATES) $(CRLF_TEMPLATES)\
-	$(RESOURCES) $(BLDPOLICY) $(SCRIPTS)
+	$(RESOURCES) $(BLDPOLICY) $(SCRIPTS) $(ICONS)
 	mkdir -p $(EPTS_JDIR)
 	javac -Xlint:unchecked -Xlint:deprecation \
 		-d mods/org.bzdev.epts -p $(EXTLIBS) \

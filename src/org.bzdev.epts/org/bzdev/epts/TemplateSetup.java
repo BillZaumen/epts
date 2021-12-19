@@ -3152,7 +3152,7 @@ public class TemplateSetup {
 
 		    dialog.setModalityType
 			(Dialog.ModalityType.APPLICATION_MODAL);
-		    dialog.setTitle("EPTS Setup");
+		    dialog.setTitle(localeString("templateSetupTitle"));
 		    dialog.setContentPane(topPanel);
 		    dialog.pack();
 		    dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);

@@ -2490,6 +2490,9 @@ public class EPTSWindow {
     }
     */
 
+    static private Color contentBackground  = Color.WHITE;
+    static private Color contentBackgroundDM  = new Color(10, 10, 25);
+
     private void showManual() {
 	if (manualFrame == null) {
 	    manualFrame = new JFrame("Manual");
@@ -2498,6 +2501,12 @@ public class EPTSWindow {
 
 	    Container pane = manualFrame.getContentPane();
 	    manualPane = new HtmlWithTocPane();
+	    manualPane.setContentPaneBorder
+		(BorderFactory.createMatteBorder(0, 10, 0, 0,
+						DarkmodeMonitor.getDarkmode()?
+						contentBackgroundDM:
+						contentBackground));
+
 	    // darkmodeChanged();
 	    /*
 	    manualPane.setBackground(tocBackgroundColor);
@@ -2576,8 +2585,14 @@ public class EPTSWindow {
 	    */
 	    DarkmodeMonitor.addPropertyChangeListener(evt -> {
 		    try {
+			boolean darkmode = DarkmodeMonitor.getDarkmode();
+			manualPane.setContentPaneBorder
+			    (BorderFactory
+			     .createMatteBorder(0, 10, 0, 0, darkmode?
+						contentBackgroundDM:
+						contentBackground));
 			URL u = ClassLoader.getSystemClassLoader()
-			    .getResource(DarkmodeMonitor.getDarkmode()?
+			    .getResource(darkmode?
 					 "org/bzdev/epts/manual/manual.dm.xml":
 					 "org/bzdev/epts/manual/manual.xml");
 			if (url != null) {
@@ -4859,7 +4874,7 @@ public class EPTSWindow {
 			    public void ancestorRemoved(AncestorEvent e) {}
 			});
 		    int status = JOptionPane.showConfirmDialog
-			(frame, lpane, "Add Vector-Specified Line Segment",
+			(frame, lpane, localeString("moveToLocation"),
 			 JOptionPane.OK_CANCEL_OPTION,
 			 JOptionPane.QUESTION_MESSAGE);
 		    if (status == 0) {

@@ -829,8 +829,13 @@ public class
 	TableModelEvent event;
 	String circName = isToCirc(start,end);
 	if (circName == null) {
-	    String vname = getVariableName(findStart(start));
-	    tcnames.remove(vname);
+	    int startInd = findStart(start);
+	    if (startInd != -1) {
+		String vname = getVariableName(startInd);
+		if (vname != null) {
+		    tcnames.remove(vname);
+		}
+	    }
 	} else {
 	    tcnames.add(circName);
 	}

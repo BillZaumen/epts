@@ -1215,6 +1215,34 @@ invokes.
 Specifies the scripting language
 .I LANGUAGE
  in use.
+.TP
+.BI \-\-resourcePath\  URLPATH
+Specifies a search path for directories and jar files for URLs whose scheme is
+"resource". Such URLs will be resolved against each directory or jar
+file in the path, in the specified order, until a match is found.
+.I URLPATH
+may be a URL giving the location of the classes or a path name in the
+local file system.  The character "|" is used as a separator so that
+multiple URLs can appear in the same argument. 
+The sequence "||" is interpreted as a literal "|", so that for an
+odd number of "|" characters in a row, only the final one is treated
+as a path separator.  If file name must start with "|", use a "file"
+URL and encode the "|" as %7C.  If the starting sequence of a path
+component contains a ":" (the first one if there are more than one),
+and that sequence of characters is syntactically valid at the start of
+a URL, the path component is treated as a URL. Otherwise it is a file
+name.  This rule implies that Windows file names such as C:mycode.jar
+will be confused with a URL, so a URL should be used instead.  If a
+file name is not absolute, it is interpreted relative to the current
+working directory. Multiple
+.B \-\-resourcePath
+options may be provided (to improve readability).  For file names, a
+leading "~" followed by the name separator ("/" for Unix) is expanded
+to the user\'s home directory, a file name consisting of only "~" is
+replaced with the user\'s home directory, and a leading "~~" is
+replaced with "~". Finally, the substitutions for \'|\' and \'~\'
+(followed by the file-name separator) do not apply to file-name
+arguments that appear after the last option.
 .SH BUILT-IN TEMPLATES
 .PP
 EPTS includes several templates, which can be grouped into two categories:

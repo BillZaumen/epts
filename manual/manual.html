@@ -70,9 +70,11 @@ terminal:
 <BR>
 
 
-This will bring up a standard dialog:
+This will bring up a standard dialog (its appearance depends on
+operating system, window system, and JDK in use, as do most of the
+images in this manual):
 <BR><BR>
-<CENTER><IMG src="OpeningDialog.png"></CENTER>
+<CENTER><IMG src="OpeningDialog.png" WIDTH="600"></CENTER>
 <BR>
 In the figure above, a file was selected. Clicking the "Use File" button
 will start EPTS using the specified file. If the "Clear File" button is
@@ -137,17 +139,18 @@ whose extensions are <CODE>eptc</CODE>, <CODE>epts</CODE>, or
 <CODE>eptt</CODE>), a GNOME file manager can be used to start EPTS. For
 example, the following figure shows a file-manager window:
 <BR><BR>
-<CENTER><IMG src="inputfiles.png"></CENTER>
+<CENTER><IMG src="inputfiles.png" WIDTH="600"></CENTER>
 <BR>
 The procedure for opening these files depends on the file type:
 <UL>
   <LI> For the EPTS files (the last three in left to right order),
     EPTS will start by double-clicking one of these files.
   <LI> For the PNG file, or any other image file recognized by Java,
-    position the mouse over the file and click the right mouse button.    A popup-window will appear with various options. Select
-    "Open With Other Application":
+    position the mouse over the file and click the right mouse button.
+    A popup-window will appear with various options. Select "Open With
+    Other Application":
     <BR><BR>
-    <CENTER><IMG src="openfile.png"></CENTER>
+    <CENTER><IMG src="openfile.png" WIDTH="500"></CENTER>
     <BR>
     Then click this selection. A <CODE>Select Application</CODE> window
     will appear:
@@ -216,7 +219,7 @@ part of the BZDev library, which EPTS uses.
 To set up EPTS for more complex cases supporting animations, use the
 <B>Configure Session</B> desktop action:
 <BR><BR>
-<CENTER><IMG src="configSession1.png"></CENTER>
+<CENTER><IMG src="configSession1.png" WIDTH="600"></CENTER>
 <BR>
 This will handle cases in which animation scripts generate a
 background image.  One may have to select a scripting language if
@@ -232,7 +235,7 @@ on the top of the of the dialog box, and insert names of the files
 contains scripts that should be run in the table that makes up most of
 this pane (these scripts are run in the order shown):
 <BR><BR>
-<CENTER><IMG src="configSession2.png"></CENTER>
+<CENTER><IMG src="configSession2.png" WIDTH="600"></CENTER>
 <BR>
 The <CODE>Insert File</CODE> button can be used to display a file
 chooser that will insert the selected file at the selected row in the
@@ -281,21 +284,21 @@ step is to create a session-configuration file (e.g., by using the
 be a saved-state file with the file-name extension <CODE>epts</CODE>
 (e.g., test.epts):
 <BR><BR>
-<CENTER><IMG src="configSession3.png"></CENTER>
+<CENTER><IMG src="configSession3.png" WIDTH="600"></CENTER>
 <BR>
 When the input file name has an <CODE>epts</CODE>
 extension, the <CODE>Scripts</CODE> pane will be enabled and one can
 use this pane to add scripts.  The button <CODE>Insert Built-in</CODE>
 will allow one to use predefined scripts:
 <BR><BR>
-<CENTER><IMG src="configSession4.png"></CENTER>
+<CENTER><IMG src="configSession4.png" WIDTH="600"></CENTER>
 <BR>
 One of these will overlay
 a rectangular coordinate grid. While there are defaults, one can set
 scripting-language variables to control the grid&#39;s appearance. These
 are set using the <CODE>Variables</CODE> pane:
 <BR><BR>
-<CENTER><IMG src="configSession5.png"></CENTER>
+<CENTER><IMG src="configSession5.png" WIDTH="600"></CENTER>
 <BR>
 In this example, the Cartesian-coordinate script
 <CODE>resource:grid</CODE> uses a variable named <CODE>spacing</CODE>
@@ -313,7 +316,7 @@ configuration, run EPTS with the session-configuration file as its
 argument or double-click on the session-configuration file&#39;s icon in a
 file-manager window.
 
-<H3><A name="templateSetup"</A>>Configuring templates</H3>
+<H3><A name="templateSetup"></A>>Configuring templates</H3>
 
 Templates-configuration files (the extension is "eptt") are typically
 generated after a saved state file is created and
@@ -347,7 +350,7 @@ One can configure templates by using the EPTS <B>Template Processing</B>
 desktop action. This will open a dialog box containing six panes, only
 the first of which will be enabled:
 <BR><BR>
-<CENTER><IMG src="templateConfig1.png"></CENTER>
+<CENTER><IMG src="templateConfig1.png" WIDTH="600"></CENTER>
 <BR>
 These panes are used as follows.
 <UL>
@@ -386,7 +389,7 @@ These panes are used as follows.
     row in the subpath table will provide a menu with the names of the
     subpaths that may be added:
     <BR><BR>
-    <CENTER><IMG src="templateConfig2.png"></CENTER>
+    <CENTER><IMG src="templateConfig2.png" WIDTH="500"></CENTER>
     <BR>
   <LI> The <B><CODE>Global Parameters</CODE></B> pane. The use of this
     pane is optional and the fields it displays are dependent on the
@@ -400,7 +403,7 @@ These panes are used as follows.
     when a path is selected, various parameters for that path will be
     displayed. For example,
     <BR><BR>
-    <CENTER><IMG src="templateConfig3.png"></CENTER>
+    <CENTER><IMG src="templateConfig3.png" WIDTH="500"></CENTER>
     <BR>
     The <CODE>Stroke Width</CODE> parameter and the
     <CODE>Stoke in GCS units</CODE> checkbox will be used when
@@ -725,7 +728,7 @@ The <code>Edit</code> menu contains the following items:
     path and its <A href="#principalAxes">principal axes</A> are
     shown.  For example, the following dialog box
     <BR><BR>
-    <CENTER><IMG src="NTPDialog.png"></CENTER>
+    <CENTER><IMG src="NTPDialog.png" HEIGHT="400"></CENTER>
     <BR>
     chooses options for scaling the distances along the second
     principal axis by 1/2, then rotating by 20 degrees around the
@@ -751,14 +754,18 @@ The <code>Edit</code> menu contains the following items:
     shows the original shape in black, the
     <A href="#principalAxes">principal axes</A> (positive
     values only, with a length given by the square root of the
-    <A href="#principalMoments">principal moments</A>), and the new
-    transformed shape in red.  If the
-    <CODE>OK</CODE> button is pressed, the original shape will replace
-    the new shape at the new shape&#39;s position.  The <CODE>Cancel</CODE>
-    button will cancel this operation.  The EPTS window&#39;s controls are
-    disabled while this dialog box is visible.  The dialog box, however,
-    does provide buttons allowing one to zoom in or zoom out. This menu item
-    includes an option for reversing path.
+    <A href="#principalMoments">principal moments</A>) in yellow, and
+    the new transformed shape in red. In the dialog box, Principal
+    Axis 1 refers to the longer of the two principal axes and, for the
+    case where the principal axes have the same length, a 90%deg;
+    counterclockwise rotation of the first principal axis will result
+    in an axes parallel to the second. If the <CODE>OK</CODE> button
+    is pressed, EPTS will ask for a name for the new shape. The
+    <CODE>Cancel</CODE> button will cancel this operation.  The EPTS
+    window&#39;s controls are disabled while this dialog box is
+    visible.  The dialog box, however, does provide buttons allowing
+    one to zoom in or zoom out. This menu item includes an option for
+    reversing the path.
    <LI><B><CODE>New Transformed Path</CODE></B>. This option&#39;s behavior
     is nearly identical to the <CODE>Transform an Existing Path</CODE>
     option, but instead of altering the original shape, a new one is
@@ -2246,7 +2253,7 @@ Special cases that include an argument that may be a file name always
 include the option <CODE>--</CODE> before the file name so that file
 names that start with "<CODE>-</CODE>" will not be confused with
 options.
-<P> <A NAME="firstExamples"</A>
+<P> <A NAME="firstExamples"></A>
 If the epts command is run with multiple file-name arguments, the program&#39;s
 behavior depends on the file format for the first argument:
 <UL>
@@ -2828,29 +2835,30 @@ provided by the scrunner command. These are
     Any number of <CODE>--codebase</CODE> options may be
     provided, and each option can contain multiple code bases with the
     character &#39;|&#39; used as a separator. As a special case, if there are
-    n &#39;|&#39; characters in a row, they will be placed by floor(n/2) &#39;|&#39;
-    characters and when n is odd, the final &#39;|&#39; is used as a
-    separator.  As a result, except for the first component of a
-    code-base path, components may not start with a &#39;|&#39;.  A code base
-    is specified by either a URL or a path name of a file in (local)
-    file system.  If there is a &#39;:&#39; in the file name and the preceding
-    characters are consistent with a protocol name in a URL, the file
-    name will be treated as a URL. In this case, use a "file:" URL to
-    specify the code base.  Several characters are treated
-    specially. A leading "~" followed by the name separator ("/" for
-    Unix) is expanded to the user&#39;s home directory. A file name
-    consisting only of "~" is replaced with the user&#39;s home
-    directory. A leading "~~" is replaced with "~", and a leading
-    "..." followed by the name separator ("/" for Unix) is replaced by
-    the directory in which the BZDev class library&#39;s JAR file is
-    located. If an EPTS session is saved, the saved
-    file will contain the files and directories provided by
+    n &#39;|&#39; characters in a row, they will be placed by
+    floor(n/2) &#39;|&#39; characters and when n is odd, the final
+    &#39;|&#39; is used as a separator.  As a result, except for the
+    first component of a code-base path, components may not start with
+    a &#39;|&#39;.  A code base is specified by either a URL or a path
+    name of a file in (local) file system.  If there is a &#39;:&#39;
+    in the file name and the preceding characters are consistent with
+    a protocol name in a URL, the file name will be treated as a
+    URL. In this case, use a "file:" URL to specify the code base.
+    Several characters are treated specially. A leading "~" followed
+    by the name separator ("/" for Unix) is expanded to the user&#39;s
+    home directory. A file name consisting only of "~" is replaced
+    with the user&#39;s home directory. A leading "~~" is replaced
+    with "~", and a leading "..." followed by the name separator ("/"
+    for Unix) is replaced by the directory in which the BZDev class
+    library&#39;s JAR file is located. If an EPTS session is saved,
+    the saved file will contain the files and directories provided by
     the <CODE>--codebase</CODE> options, but for security reasons the
     user will be asked to confirm all codebases except those in the
-    same directory as the BZDev class library.
-    Finally, the substitutions for &#39;|&#39;, &#39;~&#39;, and &#39;...&#39; (followed by the
-    file-name separator) apply only to the <CODE>--codebase</CODE>
-    option, not to file-name arguments that appear after the last option.
+    same directory as the BZDev class library.  Finally, the
+    substitutions for &#39;|&#39;, &#39;~&#39;, and &#39;...&#39;
+    (followed by the file-name separator) apply only to
+    the <CODE>--codebase</CODE> option, not to file-name arguments
+    that appear after the last option.
   <LI><B><CODE>-D</CODE></B><U>NAME</U><B><CODE>=</CODE></B><U>VALUE</U>.
     This option defines a system property whose name is <U>NAME</U>
     and whose value is <U>VALUE</U>.
@@ -2866,6 +2874,22 @@ provided by the scrunner command. These are
     When scripting is used, this option explicitly indicates a
     scripting language. <CODE>ESP</CODE> (and currently
     <CODE>ECMAScript</CODE> are always supported.
+  <LI><B><CODE>--resourcePath</CODE></B><U>NAMES</U>. The string
+    <U>NAMES</U> is a series of URLS or file names separated by
+    the &#39;|&#39; charcter.  As a special case, if there are
+    n &#39;|&#39; characters in a row, they will be placed by
+    floor(n/2) &#39;|&#39; characters and when n is odd, the final
+    &#39;|&#39; is used as a separator.  As a result, except for the
+    first component of a code-base path, components may not start with
+    a &#39;|&#39;. If there is a &#39;:&#39;
+    in the file name and the preceding characters are consistent with
+    a protocol name in a URL, the file name will be treated as a
+    URL. In this case, use a "file:" URL to specify the resource.
+    In addition, if "~/" appears at the start of a file name, "~"
+    will be replaced with the user&#39;s home directory, a file
+    that is just "~" will be replaced with the user&#39;s home
+    directory, and a leading "~~" is replaced with one "~".
+    Multiple <CODE>--resourcePath</CODE> options can be used.
 </UL>
 
 <H2><A name="examples"></A>CLI examples</H2>
@@ -2894,7 +2918,46 @@ provided by the scrunner command. These are
     Start EPTS and run the script provided in commands.js to generate
     an image from an animation <CODE>anim</CODE> (an instance of
     <CODE>org.bzdev.anim2d.Animation2D</CODE>).  In this case, a
-    saved-state file will rerun the script when passed to epts.
+    saved-state file will rerun the script.
+  <LI><B><CODE>epts --resourcePath images commands.esp</CODE></B>
+    <BR>
+    Start EPTS and run the script provided in commands.js to generate
+    an image from an animation <CODE>a2d</CODE> (an instance of
+    <CODE>org.bzdev.anim2d.Animation2D</CODE>).  In this case, a
+    saved-state file will rerun the script.  The <CODE>--resourcePath</CODE>
+    option allows external images to be included. For example, the
+    following ESP script
+    <BLOCKQUOTE><CODE><PRE>
+import(org.bzdev.anim2d, [
+    Animation2D,
+    AnimationLayer2D, AnimationLayer2DFactory]);
+
+var frameWidth = 719;
+var frameHeight = 375;
+
+var a2d = new Animation2D(scripting, frameWidth,
+                          frameHeight, 1000.0, 40);
+a2d.setRanges(0.0, 0.0, 0.0, 0.0, 1.0, 1.0);
+
+a2d.createFactories("org.bzdev.anim2d", {
+    alf: "AnimationLayer2DFactory"});
+###
+alf.createObject("background", [
+    {visible: true},
+    {zorder: 0},
+    {withPrefix: "object", withIndex: [
+        {type: "IMAGE",
+         imageURL: "resource:background.png",
+         refPoint: "LOWER_LEFT",
+         x: 0.0, y: 0.0,
+         imageInGCS: false
+        }
+    ]}]);
+    </PRE></CODE></BLOCKQUOTE>
+    will include a copy of the image in the file
+    <CODE>background.png</CODE> from the <CODE>images</CODE>
+    directory.  Additional scripts such as <CODE>resource:grid.esp</CODE>
+    can be added as well.
   <LI><B><CODE>epts --codebase foo.jar --animation anim commands.js</CODE></B>
     <BR>
     Start EPTS and run the script provided in commands.js to generate
@@ -3873,7 +3936,8 @@ the following:
   <LI><EM>Programming BZDev Named-Objects and their Factories</EM>.
     (to be published)
 </UL>
-The path names for these documents, of course, is system dependent.
+The path names for these documents, of course, are system dependent.
+<BR><BR>
 </BODY>
 </HTML>
 <!--  LocalWords:  EPTS PoinTS BZDev anim zier ECMA GCS JRE Runtime

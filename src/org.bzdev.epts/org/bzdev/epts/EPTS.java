@@ -2391,11 +2391,17 @@ public class EPTS {
 			argsList.add(argv[index]);
 		    }
 		    hasResourcePath = true;
-		    for (String rp: URLPathParser.split(argv[index]) ){
-			if (!resourcePathSet.contains(rp)) {
-			    extendResourcePath(rp, System.err);
-			    resourcePathSet.add(rp);
+		    try {
+			for (URL rp: URLPathParser.getURLs(argv[index]) ){
+			    String rpname = rp.toString();
+			    if (!resourcePathSet.contains(rpname)) {
+				extendResourcePath(rpname, System.err);
+				resourcePathSet.add(rpname);
+			    }
 			}
+		    } catch (MalformedURLException urle) {
+			displayError(errorMsg("badPath", argv[index]));
+			System.exit(1);
 		    }
 		} else if (argv[index].equals("--codebase")) {
 		    hasCodebase = true;
@@ -2412,11 +2418,17 @@ public class EPTS {
 			argsList.add(argv[index]);
 		    }
 		    extendCodebase(argv[index], true);
-		    for (String cb: URLPathParser.split(argv[index])) {
-			if (!codebaseSet.contains(cb)) {
-			    codebase.add(argv[index]);
-			    codebaseSet.add(argv[index]);
+		    try {
+			for (URL cb: URLPathParser.getURLs(argv[index])) {
+			    String cbname = cb.toString();
+			    if (!codebaseSet.contains(cbname)) {
+				codebase.add(cbname);
+				codebaseSet.add(cbname);
+			    }
 			}
+		    } catch (MalformedURLException urle) {
+			displayError(errorMsg("badPath", argv[index]));
+			System.exit(1);
 		    }
 		} else if (argv[index].equals("--classpathCodebase")) {
 		    if (!alreadyForked) {
@@ -2432,11 +2444,17 @@ public class EPTS {
 			argsList.add(argv[index]);
 		    }
 		    extendCodebase(argv[index], false);
-		    for (String cb: URLPathParser.split(argv[index])) {
-			if (!classpathSet.contains(cb)) {
-			    classpath.add(argv[index]);
-			    classpathSet.add(argv[index]);
+		    try {
+			for (URL cb: URLPathParser.getURLs(argv[index])) {
+			    String cbname = cb.toString();
+			    if (!classpathSet.contains(cbname)) {
+				classpath.add(cbname);
+				classpathSet.add(cbname);
+			    }
 			}
+		    } catch (MalformedURLException urle) {
+			displayError(errorMsg("badPath", argv[index]));
+			System.exit(1);
 		    }
 		} else if (argv[index].equals("--animation")) {
 		    index++;
@@ -3272,10 +3290,13 @@ public class EPTS {
 			    System.exit(1);
 			}
 			// do the same thing we'd do on the command line.
-			for (String rp: URLPathParser.split(rpath) ){
-			    if (!resourcePathSet.contains(rp)) {
-				extendResourcePath(rp, System.err);
-				resourcePathSet.add(rp);
+			// but we don't have to handle errors in as much
+			// detail as the file being parsed should be correct.
+			for (URL rp: URLPathParser.getURLs(rpath) ){
+			    String rpname = rp.toString();
+			    if (!resourcePathSet.contains(rpname)) {
+				extendResourcePath(rpname, System.err);
+				resourcePathSet.add(rpname);
 			    }
 			}
 		    }
@@ -4191,11 +4212,12 @@ public class EPTS {
 	    if (origpath != null) {
 		path = path + "|" + origpath;
 	    }
-	    /*
+
 	   System.setProperty("org.bzdev.protocols.resource.path", path);
+	   /*
 	   System.out.println
 	       (System.getProperty("org.bzdev.protocols.resource.path", null));
-	    */
+	   */
 	   org.bzdev.protocols.Handlers.enable();
 	   init(argv);
 	} catch (Exception e) {
