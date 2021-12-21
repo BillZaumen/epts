@@ -89,20 +89,28 @@ public class EPTSParser {
     public String getUserSpaceDistance() {return userSpaceDistance;}
     public String getGcsDistance() {return gcsDistance;}
 
-    public double getUserSpaceDistanceMeters() {
+    public double getUserSpaceDistanceNumeric() {
 	return Double.parseDouble(userSpaceDistance);
     }
 
     public double getGcsDistanceMeters() {
 	try {
 	    // both meters and custom units do not scale the value
-	    // of gcsDistance.
+	    // of gcsDistance, but the others have to be scaled to
+	    // get the distance in meters..
 	    return ConfigGCSPane.getGCSDist(gcsDistance, unitIndex);
 	} catch (NumberFormatException e) {
 	    // should never happen as we'd through a  parser error
 	    // before the parser was ready to use this method.
 	    return 0.0;
 	}
+    }
+
+    public double getScaleFactor() {
+	double userspaceDistance = getUserSpaceDistanceNumeric();
+	double gcsDistance = getGcsDistanceMeters();
+	return (userspaceDistance == 0.0)? 1.0:
+	    gcsDistance / userspaceDistance;
     }
 
     public String getXRefpoint() {return xrefpoint;}

@@ -3921,6 +3921,7 @@ public class EPTSWindow {
 			// is a location instead of a path
 			if (rotPathSetup()) {
 			    setModeline(pathOpsModelineString());
+			    panel.repaint();
 			} else {
 			    selectedRow = -1;
 			    selectedClosedPath = false;
@@ -3957,6 +3958,7 @@ public class EPTSWindow {
 			    PointTMR row = ptmodel.getRow(selectedRow);
 			    initialX = row.getXP()*zoom;
 			    initialY = row.getYP()*zoom;
+			    panel.repaint();
 			} else {
 			    selectedRow = -1;
 			    selectedClosedPath = false;
@@ -7612,6 +7614,12 @@ public class EPTSWindow {
 			    // point is dragged.  We do it instead when
 			    // the mouse button is released.
 			} else if (rotatePath) {
+			    if (centerOfMass == null) {
+				JOptionPane.showMessageDialog
+				    (panel, localeString("noCenterOfMass"),
+				     localeString("errorTitle"),
+				     JOptionPane.ERROR_MESSAGE);
+			    }
 			    double cmxp = (centerOfMass.getX() - xrefpoint)
 				/scaleFactor;
 			    double cmyp = (centerOfMass.getY() - yrefpoint)

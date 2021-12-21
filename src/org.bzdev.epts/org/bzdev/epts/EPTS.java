@@ -2559,7 +2559,8 @@ public class EPTS {
 		} else if (argv[index].equals("--stackTrace")) {
 		    stackTrace = true;
 		    argsList.add(argv[index]);
-		} else if (argv[index].equals("--svg")) {
+		} else if (argv[index].equals("--svg")
+			   || argv[index].equals("--svg-mm")) {
 		    if (svg == false) {
 			if (flatness != 0.0 || templateURL != null
 			    || straight || elevate) {
@@ -2571,7 +2572,10 @@ public class EPTS {
 		    svg = true;
 		    limit = 0;
 		    flatness = 0.0;
-		    templateURL = new URL("resource:org/bzdev/epts/SVG");
+		    String svgurl = argv[index].equals("--svg")?
+			"resource:org/bzdev/epts/SVG":
+			"resource:org/bzdev/epts/SVGmm";
+		    templateURL = new URL(svgurl);
 		    argsList.add(argv[index]);
 		} else if (argv[index].equals("--stroke-color")) {
 		    index++;
@@ -3728,7 +3732,7 @@ public class EPTS {
 				   se, null,
 				   image, imageURI, null, null);
 		} else {
-		    double userDist = iparser.getUserSpaceDistanceMeters();
+		    double userDist = iparser.getUserSpaceDistanceNumeric();
 		    double gcsDist = iparser.getGcsDistanceMeters();
 		    RefPointName rpn = iparser.getRefPoint();
 		    double xo = iparser.getXRefpointDouble();
@@ -3820,7 +3824,7 @@ public class EPTS {
 			    double xo = parser.getXRefpointDouble();
 			    double yo = parser.getYRefpointDouble();
 			    double userdist =
-				parser.getUserSpaceDistanceMeters();
+				parser.getUserSpaceDistanceNumeric();
 			    double gcsdist = parser.getGcsDistanceMeters();
 			    if (image == null) {
 				se = new ScriptingEnv(languageName,
@@ -3877,7 +3881,7 @@ public class EPTS {
 				double xo = parser.getXRefpointDouble();
 				double yo = parser.getYRefpointDouble();
 				double userdist =
-				    parser.getUserSpaceDistanceMeters();
+				    parser.getUserSpaceDistanceNumeric();
 				double gcsdist = parser.getGcsDistanceMeters();
 				se = new ScriptingEnv(languageName,
 						      null,
@@ -3954,9 +3958,16 @@ public class EPTS {
 			} else if (svg) {
 			    TemplateProcessor.KeyMap svgmap =
 				new TemplateProcessor.KeyMap();
-			    svgmap.put("width", "" + parser.getWidth());
+			    double width = parser.getWidth();
+			    svgmap.put("width", "" + width);
 			    double height = parser.getHeight();
 			    svgmap.put("height", "" + height);
+			    double mmScaleFactor = parser.getScaleFactor()
+				* 1000.0;
+			    svgmap.put("widthMM", "" + (width * mmScaleFactor));
+			    svgmap.put("heightMM", "" +
+				       (height * mmScaleFactor));
+
 			    TemplateProcessor.KeyMapList kmaplist =
 				new TemplateProcessor.KeyMapList();
 			    TemplateProcessor.KeyMapList lkmaplist =

@@ -1677,9 +1677,10 @@ The built-in path-iterator templates are
     <CODE>x2</CODE>, and <CODE>y2</CODE>. The values for these are
     numbers or empty strings.
 </UL>
-Unlike table templates, for path templates precisely one <CODE>--pname</CODE>
-option is used (the last one provided). Multiple <CODE>--pname</CODE> options
-are used, however, with the <CODE>--svg</CODE> option.
+Unlike table templates, for path templates precisely
+one <CODE>--pname</CODE> option is used (the last one
+provided). Multiple <CODE>--pname</CODE> options are used, however,
+with the <CODE>--svg</CODE> or <CODE>--svg-mm</CODE> option.
 
 <H2><A name="templateSyntax"></A>Template syntax</H2>
 <P>
@@ -2567,9 +2568,9 @@ The options specific to the EPTS command when templates are used are:
     it is a relative file, it will be resolved against the current
     working directory that existed when EPTS was started.  If the file
     name is "-", the output will be sent to standard output. When a
-    <CODE>-o</CODE> is present (it is required by the <CODE>--svg</CODE>
-    and <CODE>--template</CODE> options), there must be a single
-    filename argument: the name of an EPTS file
+    <CODE>-o</CODE> is present (it is required by the <CODE>--svg</CODE>,
+    <CODE>--svg-mm</CODE>, and <CODE>--template</CODE> options), there
+    must be a single filename argument: the name of an EPTS file
     (e.g., <CODE>saved.epts</CODE>).
   <LI><B><CODE>--package</CODE></B> <U>PACKAGENAME</U>.
     This option applies when the <CODE>--tname</CODE> option is used,
@@ -2714,10 +2715,28 @@ The options specific to the EPTS command when templates are used are:
     the width in graph coordinate space when the option
     <CODE>--stroke-gcs-mode</CODE> is <CODE>true</CODE>; otherwise it is
     the width in user-space or image space units.
-  <LI><B><CODE>--svg</CODE></B>. This option indicates that the output
-    will be an SVG (Scaleable Vector Graphics) file. The
-    option <CODE>-o</CODE> is required and at least
-    one <CODE>--tname</CODE> option should be present. The
+  <LI><B><CODE>--svg</CODE></B> and <B><CODE>--svg-mm</CODE></B>.
+    Either of these options indicates that the output
+    will be an SVG (Scaleable Vector Graphics) file:
+    <UL>
+      <LI><B><CODE>--svg</CODE></B> is used for an SVG file in which
+	the image's width and height are in units of points (1/72
+	inches), the same units used in user space.
+      <LI><B><CODE>--svg-mm</CODE></B> is used for an SVG file in
+	which the image's width and height are in units of millimeters
+	(mm).  The width and height of the EPTS window, as viewed on a
+	screen, is scaled to the corresponding distance in graph
+	coordiante space, expressed in units of millimeters. For
+	example, if the height and width parameters when EPTS is
+	started are 1000, and graph coordinate space is configured so
+	that a distance of 5 in user space corresponds to 1 mm in
+	graph coordinate space, then the SVG image will have a
+	height and width of 200 mm. The <CODE>--svg-mm</CODE> option
+	is particularly useful when generating files for services
+	such as a laser-cutting service.
+    </UL>
+    In either case, the option <CODE>-o</CODE> is required and at
+    least one <CODE>--tname</CODE> option should be present. The
     options <CODE>--fill-color</CODE>, <CODE>--stroke-color</CODE>,
     <CODE>--stroke-cap</CODE>, <CODE>--stroke-dash-incr</CODE>,
     <CODE>--stroke-dash-phase</CODE>, <CODE>--stroke-dash-pattern</CODE>,

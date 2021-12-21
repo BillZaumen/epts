@@ -975,10 +975,21 @@ is
 otherwise it is specified in user-space or image-space units.
 .TP
 .B \-\-svg
-This option, if present, must precede all
+.TQ
+.B \-\-svg-mm
+These two options are mutually exclusive.
+Such an option, if present, must precede all
 .B \-\-pname
 options.  It indicates that the output will be an SVG (Scaleable
-Vector Graphics) file.  The
+Vector Graphics) file. For the
+.B \-\-svg
+option, the unit for the width and height is a pt (1/72 of an inch),
+whereas for the
+.B \-\-svg-mm
+option, the unit for the width and height is a mm, with scaling set up
+so that a millimeter on an SVG image corresponds to a millimeter in
+graph coordinate space.
+The
 .BR \-\-template ,
 .BR \-\-flatness ,
 .BR \-\-straight ,

@@ -160,11 +160,12 @@ public class TemplateSetup {
     private static String[] templateTypes = {
 	localeString("SVG"),
 	localeString("TableTemplate"),
-	localeString("PathIteratorTemplate")
+	localeString("PathIteratorTemplate"),
+	localeString("SVGmm")
     };
 
     public static enum TType {
-	SVG, TT, PIT
+	SVG, TT, PIT, SVG_MM
     }
 
     static TType templateType = null;
@@ -1743,6 +1744,9 @@ public class TemplateSetup {
 	String tname = (basicData.template == null)? "":
 	    basicData.template.trim();
 	switch(templateType) {
+	case SVG_MM:
+	    list.add("--svg-mm");
+	    break;
 	case SVG:
 	    list.add("--svg");
 	    break;
@@ -1801,6 +1805,7 @@ public class TemplateSetup {
 	    PathLocInfo pli = entry.getValue();
 	    if (pli.active == false) continue;
 	    switch(templateType) {
+	    case SVG_MM:
 	    case SVG:
 	    case TT:
 		if (pli.isPath) {
@@ -1898,6 +1903,8 @@ public class TemplateSetup {
 		case 2:
 		    templateType = TType.PIT;
 		    break;
+		case 3:
+		    templateType = TType.SVG_MM;
 		default:
 		    break;
 		}
@@ -2361,8 +2368,6 @@ public class TemplateSetup {
 			if (nn > initialPaths.length) {
 			    nn = initialPaths.length;
 			}
-			System.out.format("n = %d, nn = %d, ilen = %d\n",
-					  n,  nn, initialPaths.length);
 			if (n != nn) {
 			    ((DefaultTableModel)(subpathTable.getModel()))
 				.setRowCount(nn);
@@ -2439,6 +2444,7 @@ public class TemplateSetup {
 		tabpane.setEnabledAt(5, true);
 	    }
 	    switch(templateType) {
+	    case SVG_MM:
 	    case SVG:
 		if (tabpane != null) {
 		    tabpane.setEnabledAt(1, false);
@@ -2527,6 +2533,7 @@ public class TemplateSetup {
 		System.err.println(errorMsg("eptsFileExpected"));
 		System.exit(1);
 	    } else {
+		e.printStackTrace();
 		JOptionPane.showMessageDialog(panel,
 					      errorMsg("eptsFileExpected"),
 					      localeString("errorTitle"),
@@ -2733,6 +2740,8 @@ public class TemplateSetup {
 			    case 2:
 				templateType = TType.PIT;
 				break;
+			    case 3:
+				templateType = TType.SVG_MM;
 			    }
 			    mayNeedSave = true;
 			    doEnables(tabpane);

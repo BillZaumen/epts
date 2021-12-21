@@ -125,9 +125,10 @@ and
 elements, there is an an optional
 .B scripting
 element, whose attributes are
-.B language
+.BR language ,
+.BR animation ,
 and
-.BR animation .
+.BR resourcePath .
 The
 .B language
 element provides the standard name for a scripting language (e.g.,
@@ -137,6 +138,16 @@ and the
 element provides the name of a scripting-language variable that will
 be bound to an instance of
 .BR org.bzdev.anim2d.Animation2D .
+The attribute
+.B resourecePath
+provides a series of URLs, separated by '|' and used as a search
+path for resources referenced with a
+.B resource
+URL. An element in the list can be a jar file, a
+zip file, a directory, or an http, https, or ftp URL.  The
+.B resource
+protocol is described in the API documentation for the BZDev class
+library.
 .PP
 The next element, which is also optional, is the
 .B targetList
