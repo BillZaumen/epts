@@ -2107,6 +2107,7 @@ public class EPTS {
 	}
 	// special cases.
 	String outfile = null;
+
 	if (!alreadyForked) {
 	    if (argv.length == 0) {
 		argv = preprocessArgs(-1, argv, null);
@@ -2132,8 +2133,14 @@ public class EPTS {
 		if (infile.startsWith("file:")) {
 		    infile = (new File(new URI(infile))).getAbsolutePath();
 		}
-		ZipDocFile zdf = new ZipDocFile(infile,
-						Charset.forName("UTF-8"));
+		ZipDocFile zdf = null;
+		try {
+		    zdf = new ZipDocFile(infile, Charset.forName("UTF-8"));
+		} catch (IOException eio) {
+		    System.err.println
+			(errorMsg("cannotRead", infile));
+		    System.exit(1);
+		}
 		if (!zdf.getMimeType().equals
 		    ("application/vnd.bzdev.epts-template-config+zip")) {
 		    throw new IOException("notEPTTFile");
@@ -2216,6 +2223,7 @@ public class EPTS {
 		}
 	    }
 	}
+
 	int index = -1;
 	int port = 0;
 

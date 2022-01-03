@@ -3364,9 +3364,11 @@ public class EPTSWindow {
 	    if (vnameSet.isEmpty()) return;
 	    String[] vnames =
 		vnameSet.toArray(new String[vnameSet.size()]);
+	    /*
 	    for (String nm: vnames) {
 		System.out.println("nm = " + nm);
 	    }
+	    */
 	    String vname;
 	    if (vnames.length == 1) {
 		vname = vnames[0];
