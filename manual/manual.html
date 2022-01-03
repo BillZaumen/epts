@@ -1447,9 +1447,20 @@ command-line option.  If the argument to the <CODE>-o</CODE> option is
 "<CODE>-</CODE>", the output will be sent to standard output.  If the
 <CODE>-o</CODE> is not provided and the argument file is an <B>eptt</B> file,
 a GUI will be started to allow the <B>eptt</B> file to be edited. If the
-<CODE>-o</CODE> is provided with an <B>eptt</B> file, the template options
-will be recovered from the <B>eptt</B> and the file specified as the
-argument to the <CODE>-o</CODE> option will be used as the output file.
+<CODE>-o</CODE> is provided with an <B>eptt</B> file, the template
+options will be recovered from the <B>eptt</B> file and the file
+specified as the argument to the <CODE>-o</CODE> option will be used
+as the output file.  For this case, the <B>eptt</B> file must be in
+the current working directory. In practice, this is typically the case
+due to the use of tools such as <B>make</B>. For example, a <B>makefile</B>
+may contain the rule
+<BLOCKQUOTE><CODE><PRE>
+image.svg: image.epts image.eptt
+        epts -o image.svg image.eptt
+</PRE></CODE></BLOCKQUOTE>
+In this case, one can change the shape of paths by opening the file
+<CODE>image.epts</CODE> and can change the properties of paths such as
+line colors by opening the file <CODE>image.eptt</CODE>.
 
 <H2><A name="builtins"></A>Built-in templates</H2>
 
@@ -2916,6 +2927,10 @@ provided by the scrunner command. These are
   <LI><B><CODE>epts saved.epts</CODE></B>
     <BR>
     Start EPTS, restoring its state to one saved in a previous session.
+  <LI><B><CODE>epts tplate.eptt</CODE></B>
+    <BR>
+    Start EPTS, restoring the state for template processing that was
+    previously saved.
   <LI><B><CODE>epts saved.epts resource:grid.js</CODE></B>
     <BR>
     Start EPTS, restoring its state to one saved in a previous session
@@ -3001,6 +3016,13 @@ alf.createObject("background", [
     Run EPTS without a GUI to compute the area of a shape bounded
     by the curves <CODE>c1</CODE> and <CODE>c2</CODE>. The area is
     in GCS units.
+  <LI><B><CODE>epts -o output.svg tplate.eptt</CODE></B>
+    <BR>
+    Run EPTS, restoring the state for template processing (configured
+    for generating an SVG file) that was previously saved but
+    replacing the name of the output file.  The GUI will not be
+    started. For this option to work properly, the <B>eptt</B> file
+    must be in the current working directory.
 </UL>
 
 <H1><A name="scripting"></A>Scripting</H1>
