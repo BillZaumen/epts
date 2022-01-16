@@ -11,6 +11,7 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import javax.swing.*;
+import javax.swing.colorchooser.*;
 import javax.swing.event.*;
 import javax.swing.filechooser.*;
 import javax.swing.table.*;
@@ -582,6 +583,53 @@ public class TemplateSetup {
     static VTextField zorderTF = null;
 
     private static class ColorChooser {
+        JColorChooser cc;
+        JDialog dialog;
+        Color orig;
+        Color result;
+        public ColorChooser(Component parent, String title) {
+	    String swatchName =
+		UIManager.getString("ColorChooser.swatchesNameText",
+				    java.util.Locale.getDefault());
+	    AbstractColorChooserPanel swatchPanel = null;
+	    for (AbstractColorChooserPanel ccp:
+		     ColorChooserComponentFactory.getDefaultChooserPanels()) {
+		if(ccp.getDisplayName().equals(swatchName)) {
+		    swatchPanel = ccp;
+		    break;
+		}
+	    }
+
+            cc = new JColorChooser();
+	    boolean hasSwatch = false;
+	    for (AbstractColorChooserPanel ccp: cc.getChooserPanels()) {
+		if(ccp.getDisplayName().equals(swatchName)) {
+		    hasSwatch = true;
+		    break;
+		}
+	    }
+	    if (hasSwatch == false && swatchPanel != null) {
+		cc.addChooserPanel(swatchPanel);
+	    }
+            cc.addChooserPanel(new CSSColorChooserPanel());
+            dialog = JColorChooser.createDialog
+                (parent, title, true, cc,
+                 (e) -> {
+                    result = cc.getColor();
+                 },
+                 (e) -> {
+                     result = orig;
+                 });
+        }
+        public Color showDialog(Color c) {
+            orig = c;
+            cc.setColor(orig);
+            dialog.setVisible(true);
+            return result;
+        }
+    }
+    /*
+    private static class ColorChooser {
 	static JColorChooser cc;
 	static JDialog dialog;
 	static Color orig;
@@ -605,6 +653,7 @@ public class TemplateSetup {
 	    return result;
 	}
     }
+    */
 
     public enum FlatnessMode  {
 	NORMAL, STRAIGHT,  ELEVATE,
@@ -1103,9 +1152,11 @@ public class TemplateSetup {
 	drawColorExample = new JLabel("    ");
 	drawColorExample.setOpaque(true);
 	drawColorButton = new JButton(localeString("ChooseColor"));
+	final ColorChooser drawColorChooser = new
+	    ColorChooser(dataPanel, localeString("drawColorChooser"));
 	drawColorButton.addActionListener((ae) -> {
 		currentPLI.drawColor
-		    = ColorChooser.showDialog(currentPLI.drawColor);
+		    = drawColorChooser.showDialog(currentPLI.drawColor);
 		drawColorExample.setBackground(currentPLI.drawColor);
 	    });
 	fillColorCheckBox = new JCheckBox(localeString("FillColor"));
@@ -1115,9 +1166,11 @@ public class TemplateSetup {
 	fillColorExample = new JLabel("    ");
 	fillColorExample.setOpaque(true);
 	fillColorButton = new JButton(localeString("ChooseColor"));
+	final ColorChooser fillColorChooser = new
+	    ColorChooser(dataPanel, localeString("fillColorChooser"));
 	fillColorButton.addActionListener((ae) -> {
 		currentPLI.fillColor
-		    = ColorChooser.showDialog(currentPLI.fillColor);
+		    = fillColorChooser.showDialog(currentPLI.fillColor);
 		fillColorExample.setBackground(currentPLI.fillColor);
 	    });
 	capLabel = new JLabel(localeString("PathCap"));
