@@ -21,6 +21,7 @@ $(endScript)  <targetList>$(arglist:arglistEnd)
      <argument>$(arg)</argument>$(arglistEnd)
   </targetList>
   <gcsconfig unitIndex="$(unitIndex)" refPointIndex="$(refPointIndex)"
+          unitIndexRP="$(unitIndexRP)"
 	  userSpaceDistance="$(userSpaceDistance)"
 	  gcsDistance="$(gcsDistance)"
 	  xrefpointGCS="$(xrefpoint)" yrefpointGCS="$(yrefpoint)"/>

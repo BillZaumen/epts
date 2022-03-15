@@ -2340,6 +2340,8 @@ public class EPTSWindow {
 	keymap.put("arglist", tlist);
 	keymap.put("unitIndex",
 		   String.format("%d", configGCSPane.savedUnitIndex));
+	keymap.put("unitIndexRP",
+		   String.format("%d", configGCSPane.savedUnitIndexRP));
 	keymap.put("refPointIndex",
 		   String.format("%d", configGCSPane.savedRefPointIndex));
 	keymap.put("userSpaceDistance", configGCSPane.savedUsDistString);
@@ -8380,6 +8382,8 @@ public class EPTSWindow {
     private void setupGCSConfigPane(EPTSParser parser) {
 	configGCSPane.savedUnitIndex
 	    = parser.getUnitIndex();
+	configGCSPane.savedUnitIndexRP
+	    = parser.getUnitIndexRP();
 	configGCSPane.savedRefPointIndex
 	    = parser.getRefPointIndex();
 	configGCSPane.savedUsDistString =

@@ -18,6 +18,7 @@ public class ConfigGCSPane extends JPanel {
     // the user hits the 'cancel' button.
     int savedUnitIndex;
     int savedRefPointIndex;
+    int savedUnitIndexRP;	// reference-point unit index
     String savedXString;
     String savedYString;
     String savedUsDistString;
@@ -25,6 +26,7 @@ public class ConfigGCSPane extends JPanel {
 
     public void saveState() {
 	savedUnitIndex = unitComboBox.getSelectedIndex();
+	savedUnitIndexRP = unitComboBoxRP.getSelectedIndex();
 	savedRefPointIndex = rpComboBox.getSelectedIndex();
 	savedXString = xtf.getText().trim();
 	savedYString = ytf.getText().trim();
@@ -34,6 +36,7 @@ public class ConfigGCSPane extends JPanel {
     
     public void restoreState() {
 	unitComboBox.setSelectedIndex(savedUnitIndex);
+	unitComboBoxRP.setSelectedIndex(savedUnitIndexRP);
 	rpComboBox.setSelectedIndex(savedRefPointIndex);
 	xtf.setText(savedXString);
 	ytf.setText(savedYString);
@@ -122,9 +125,13 @@ public class ConfigGCSPane extends JPanel {
 	}
     }
 
-    public double getXRefpoint() {return x;}
+    public double getXRefpoint() {
+	return convert[unitComboBoxRP.getSelectedIndex()].valueAt(x);
+    }
     
-    public double getYRefpoint() {return y;}
+    public double getYRefpoint() {
+	return convert[unitComboBoxRP.getSelectedIndex()].valueAt(y);
+    }
 
     public RefPointName getRefPointName() {
 	return refpoints[rpComboBox.getSelectedIndex()];
@@ -195,6 +202,8 @@ public class ConfigGCSPane extends JPanel {
 	};
 
     JComboBox<String> unitComboBox = new JComboBox<>(units);
+    JComboBox<String> unitComboBoxRP = new JComboBox<>(units);
+
 
     JComboBox<String> rpComboBox = new JComboBox<>(refpointStrings);
 
@@ -285,8 +294,7 @@ public class ConfigGCSPane extends JPanel {
 	JLabel xl = new JLabel("Reference Point X (GCS)");
 	JLabel yl = new JLabel("Reference Point Y (GCS)");
 	JLabel xyul = new JLabel("Reference Point");
-	JLabel note =
-	    new JLabel("Coordinates are in GCS units (custom units or meters)");
+	JLabel rpUnitsLabel = new JLabel("Reference Point Units");
 
 	GridBagLayout gridbag = new GridBagLayout();
 	GridBagConstraints c = new GridBagConstraints();
@@ -312,9 +320,14 @@ public class ConfigGCSPane extends JPanel {
 	gridbag.setConstraints(unitComboBox, c);
 	add(unitComboBox);
 	unitComboBox.setSelectedIndex(0);
-	c.anchor = GridBagConstraints.CENTER;
-	gridbag.setConstraints(note, c);
-	add(note);
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = 1;
+	gridbag.setConstraints(rpUnitsLabel, c);
+	add(rpUnitsLabel);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(unitComboBoxRP, c);
+	add(unitComboBoxRP);
+	unitComboBoxRP.setSelectedIndex(0);
 	c.anchor = GridBagConstraints.LINE_START;
 	c.gridwidth = 1;
 	gridbag.setConstraints(xl, c);
@@ -338,6 +351,7 @@ public class ConfigGCSPane extends JPanel {
 
     public void setEditable(boolean editable) {
 	unitComboBox.setEnabled(editable);
+	unitComboBoxRP.setEnabled(editable);
 	rpComboBox.setEnabled(editable);
 	xtf.setEditable(editable);
 	ytf.setEditable(editable);

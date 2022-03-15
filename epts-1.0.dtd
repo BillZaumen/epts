@@ -42,6 +42,7 @@
 	  refPointIndex CDATA #REQUIRED
 	  userSpaceDistance CDATA #REQUIRED
 	  gcsDistance CDATA #REQUIRED
+	  unitIndexRP CDATA #IMPLIED
           xrefpointGCS CDATA #REQUIRED
 	  yrefpointGCS CDATA #REQUIRED>
 

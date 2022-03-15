@@ -183,7 +183,10 @@ The target-list is followed by a
 element:
 .IP
 .B
-<gcsconfig unitIndex="\fIIND1\B" refPointIndex="\fIIND2\fB"
+<gcsconfig unitIndex="\fIIND1\fB"
+unitIndexRP="\fIIND2\fB"
+.br
+\ \ \ \ \ \ \ refPointIndex="\fIIND3\fB"
 .br
 \ \ \ \ \ \ \ userSpaceDistance="\fIUDIST\fB"
 .br
@@ -193,10 +196,12 @@ element:
 .PP
 where
 .I IND1
-has values in the range [0, 10] corresponding to "custom units", "nm",
+and
+.I IND2
+have values in the range [0, 10] corresponding to "custom units", "nm",
 "um", "mm", "cm", "m", "km","inches", "feet", "yards", and "miles"
 respectively.  Similarly,
-.I IND2
+.I IND3
 has values in the range [0, 8] corresponding to "UPPER_LEFT",
 "UPPER_CENTER", "UPPER_RIGHT", "CENTER_LEFT", "CENTER",
 "CENTER_RIGHT", "LOWER_LEFT", "LOWER_CENTER", and "LOWER_RIGHT"
@@ -215,10 +220,9 @@ The values for
 and
 .I YORIGIN
 are the X-Y coordinates of the image\'s reference point
-in graph coordinate space units (custom units if
-.I IND1
-is 0; otherwise meters), so no unit conversion is used for these
-quantities.
+in graph coordinate space units in the units corresponding to the
+index
+.IR IND2.
 .PP
 The next element is a
 .B table

@@ -59,6 +59,7 @@ public class EPTSParser {
     boolean scriptSeen = false;
     URI imageURI = null;
     int unitIndex = 0;
+    int unitIndexRP = 0;
     int refPointIndex = 0;
     
     // These are strings because of the way the configuration pane
@@ -82,6 +83,7 @@ public class EPTSParser {
     public boolean imageURIExists() {return imageURIExists;}
     public URI getImageURI() {return imageURI;}
     public int getUnitIndex() {return unitIndex;}
+    public int getUnitIndexRP() {return unitIndexRP;}
     public int getRefPointIndex() {return refPointIndex;}
     public RefPointName getRefPoint() {
 	return RefPointName.values()[refPointIndex];
@@ -117,14 +119,24 @@ public class EPTSParser {
     public String getYRefpoint() {return yrefpoint;}
 
     public double getXRefpointDouble() {
-	return (xrefpoint == null)? 0.0: Double.parseDouble(xrefpoint);}
+	return (xrefpoint == null)? 0.0:
+	    ConfigGCSPane.convert[unitIndexRP]
+	    .valueAt(Double.parseDouble(xrefpoint));
+    }
     public double getYRefpointDouble() {
-	return (yrefpoint == null)? 0.0: Double.parseDouble(yrefpoint);
+	return (yrefpoint == null)? 0.0:
+	    ConfigGCSPane.convert[unitIndexRP]
+	    .valueAt(Double.parseDouble(yrefpoint));
     }
        
     public boolean usesCustom() {
 	return (unitIndex == 0);
     }
+
+    public boolean usesCustomRP() {
+	return (unitIndexRP == 0);
+    }
+
 
     String animation = null;
     String language = null;
@@ -399,6 +411,16 @@ public class EPTSParser {
 		} catch (Exception e) {
 		    throw new SAXException
 			(errorMsg("attrError", "unitIndex", e.getMessage()));
+		}
+		String unitIndexRPStr = attr.getValue("unitIndexRP");
+		if (unitIndexRPStr != null) {
+		    try {
+			unitIndexRP = Integer.parseInt(unitIndexRPStr);
+		    } catch (Exception e) {
+			String msg = e.getMessage();
+			throw new SAXException
+			    (errorMsg("attrError", "unitIndexRP", msg));
+		    }
 		}
 		try {
 		    refPointIndex =

@@ -3468,10 +3468,10 @@ The one used is followed by a colon.
 <H2><A name="gcsconfigElement"></A>The gcsconfig element</H2>
 
 The <CODE>gcsconfig</CODE> element has the following attributes, all of
-which are required:
+which are required except for <CODE>unitIndexRP</CODE>:
 <UL>
   <LI><B><CODE>unitIndex</CODE></B>. The value is an integer indicating
-    the type of units:
+    the type of units for GCS distances:
     <UL>
       <LI> <B><CODE>0</CODE></B>. Distances are in custom units.
       <LI> <B><CODE>1</CODE></B>. Distances are in nanometers (nm).
@@ -3485,6 +3485,23 @@ which are required:
       <LI> <B><CODE>9</CODE></B>. Distances are in yards
       <LI> <B><CODE>10</CODE></B>. Distances are in miles.
     </UL>
+  <LI><B><CODE>unitIndexRP</CODE></B>. The value is an integer indicating
+    the type of units for reference-point X-Y coordinates:
+    <UL>
+      <LI> <B><CODE>0</CODE></B>. Distances are in custom units.
+      <LI> <B><CODE>1</CODE></B>. Distances are in nanometers (nm).
+      <LI> <B><CODE>2</CODE></B>. Distances are in micrometers (um).
+      <LI> <B><CODE>3</CODE></B> Distances are in millimeters (mm).
+      <LI> <B><CODE>4</CODE></B>. Distances are in centimeters (cm).
+      <LI> <B><CODE>5</CODE></B>. Distances are in meters (m).
+      <LI> <B><CODE>6</CODE></B>. Distances are in kilometers (km).
+      <LI> <B><CODE>7</CODE></B>. Distances are in inches.
+      <LI> <B><CODE>8</CODE></B>. Distances are in feet.
+      <LI> <B><CODE>9</CODE></B>. Distances are in yards
+      <LI> <B><CODE>10</CODE></B>. Distances are in miles.
+    </UL>
+    This attribute is optional for backwards-compatibility reasons. The
+    default is 0.
   <LI><B><CODE>refPointIndex</CODE></B>. The value is an integer indicating
     the reference point:
     <UL>
@@ -3513,11 +3530,12 @@ which are required:
     space corresponding to the user-space distance, measured in the
     units specified by the <CODE>unitIndex</CODE> attribute.
   <LI><B><CODE>xrefpointGCS</CODE></B>. The X coordinate of the
-    reference point in graph coordinate space, given in either custom
-    units or meters.
+    reference point in graph coordinate space, given in the units
+    specified by the <CODE>unitIndexRP</CODE> attribute.
+
   <LI><B><CODE>yrefpointGCS</CODE></B>. The Y coordinate of the
-    reference point in graph coordinate space, given in either custom
-    units or meters.
+    reference point in graph coordinate space, given in the units
+    specified by the <CODE>unitIndexRP</CODE> attribute.
 </UL>
 
 <H2><A name="tableElement"></A>The table element</H2>
