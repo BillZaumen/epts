@@ -8427,6 +8427,14 @@ public class EPTSWindow {
 			    // addToPathMenuItem.setEnabled
 			    // (ptmodel.pathVariableNameCount() > 0);
 			    addToPathMenuItem.setEnabled(canAddToBezier());
+			    if (ptmodel.getRowCount() > 0) {
+				makeCurrentMenuItem.setEnabled(true);
+				mpMenuItem.setEnabled(true);
+			    }
+			    if (ptmodel.pathVariableNameCount() > 0) {
+				rotMenuItem.setEnabled(true);
+				scaleMenuItem.setEnabled(true);
+			    }
 			    deletePathMenuItem.setEnabled
 				(ptmodel.pathVariableNameCount() > 0);
 			    offsetPathMenuItem.setEnabled
@@ -8506,6 +8514,14 @@ public class EPTSWindow {
 			// addToPathMenuItem.setEnabled
 			//    (ptmodel.pathVariableNameCount() > 0);
 			addToPathMenuItem.setEnabled(canAddToBezier());
+			if (ptmodel.getRowCount() > 0) {
+			    makeCurrentMenuItem.setEnabled(true);
+			    mpMenuItem.setEnabled(true);
+			}
+			if (ptmodel.pathVariableNameCount() > 0) {
+			    rotMenuItem.setEnabled(true);
+			    scaleMenuItem.setEnabled(true);
+			}
 			deletePathMenuItem.setEnabled
 			    (ptmodel.pathVariableNameCount() > 0);
 			offsetPathMenuItem.setEnabled
