@@ -1721,7 +1721,17 @@ public class TemplateSetup {
 				     red, green, blue, dalpha);
 	    }
 	} else {
-	    return name;
+	    int alpha = c.getAlpha();
+	    if (alpha == 255) {
+		return name;
+	    } else {
+		int red = c.getRed();
+		int green = c.getGreen();
+		int blue = c.getBlue();
+		double dalpha = alpha / 255.0;
+		return String.format("rgba(%d,%d,%d,%g)",
+				     red, green, blue, dalpha);
+	    }
 	}
     }
 

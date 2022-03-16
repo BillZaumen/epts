@@ -1422,11 +1422,11 @@ public class EPTS {
 				 components[1],
 				 components[2]);
 	} else if (components.length == 4) {
-	    return String.format((Locale)null, "rgba(%d,%d,%d,%d)",
+	    return String.format((Locale)null, "rgba(%d,%d,%d,%g)",
 				 components[0],
 				 components[1],
 				 components[2],
-				 components[3]);
+				 components[3]/255.0);
 	} else {
 	    return null;
 	}
@@ -3997,8 +3997,32 @@ public class EPTS {
 							       elevate,
 							       gcs);
 				kmap.put("fillRule", info.fillRule);
-				kmap.put("stroke", info.stroke);
-				kmap.put("fill", info.fillSVG);
+				String stroke = info.stroke;
+				if (stroke != null) stroke = stroke.trim();
+				if (stroke != null
+				    && stroke.startsWith("rgba(")) {
+				    int ind1 = stroke.lastIndexOf(",");
+				    int ind2 = stroke.lastIndexOf(")");
+				    String opacity = stroke.substring(ind1+1,
+								      ind2);
+				    stroke = "rgb" + stroke.substring(5, ind1)
+					+ ")";
+				    kmap.put("strokeOpacity", opacity);
+				}
+				kmap.put("stroke", stroke);
+				String fill = info.fillSVG;
+				if (fill != null) fill = fill.trim();
+				if (fill != null
+				    && fill.startsWith("rgba(")) {
+				    int ind1 = fill.lastIndexOf(",");
+				    int ind2 = fill.lastIndexOf(")");
+				    String opacity = fill.substring(ind1+1,
+								     ind2);
+				    fill = "rgb" + fill.substring(5, ind1)
+					+ ")";
+				    kmap.put("fillOpacity", opacity);
+				}
+				kmap.put("fill", fill);
 				if (info.strokeCap != null) {
 				    kmap.put("strokeCap",
 					     info.strokeCap.toLowerCase());
