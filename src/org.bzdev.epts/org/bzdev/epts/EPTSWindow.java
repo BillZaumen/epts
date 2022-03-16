@@ -2428,15 +2428,12 @@ public class EPTSWindow {
 	    }
 	};
 
-    void setupTable(JComponent pane) {
-	ptmodel = new PointTableModel(pane);
-	ptmodel.addTableModelListener(tmlistener);
-	ptable = new JTable(ptmodel);
-	ptable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-	ptable.setRowSelectionAllowed(true);
-	ptable.setCellSelectionEnabled(false);
-	ptable.setColumnSelectionAllowed(false);
-	TableCellRenderer tcr = ptable.getDefaultRenderer(String.class);
+    void setupTableAux(JTable tbl) {
+	tbl.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+	tbl.setRowSelectionAllowed(true);
+	tbl.setCellSelectionEnabled(false);
+	tbl.setColumnSelectionAllowed(false);
+	TableCellRenderer tcr = tbl.getDefaultRenderer(String.class);
 	int w0 = 200;
 	int w1 = 100;
 	int w2 = 175;
@@ -2449,7 +2446,7 @@ public class EPTSWindow {
 	    w2 = 10 + fm.stringWidth("mmmmmmmmmm");
 	    w3 = w2;
 	}
-	TableColumnModel cmodel = ptable.getColumnModel();
+	TableColumnModel cmodel = tbl.getColumnModel();
 	TableColumn column = cmodel.getColumn(0);
 	column.setPreferredWidth(w0);
 	column = cmodel.getColumn(1);
@@ -2458,7 +2455,13 @@ public class EPTSWindow {
 	column.setPreferredWidth(w2);
 	column = cmodel.getColumn(3);
 	column.setPreferredWidth(w3);
+    }
 
+    void setupTable(JComponent pane) {
+	ptmodel = new PointTableModel(pane);
+	ptmodel.addTableModelListener(tmlistener);
+	ptable = new JTable(ptmodel);
+	setupTableAux(ptable);
 	tableFrame = new JFrame();
 	tableFrame.setIconImages(EPTS.getIconList());
 	tableFrame.setPreferredSize(new Dimension(800,600));
@@ -2467,6 +2470,30 @@ public class EPTSWindow {
 	ptable.setFillsViewportHeight(true);
 	tableFrame.setContentPane(tableScrollPane);
   	tableFrame.pack();
+    }
+
+    static JFrame printTableFrame = null;
+    JTable createPrintTable() {
+	JPanel ourPane = new JPanel();
+	PointTableModel ourModel = new PointTableModel(ourPane);
+	for (PointTMR row: ptmodel.getRows()) {
+	    ourModel.addRow(row);
+	}
+	JFrame ourFrame = new JFrame();
+	JTable table = new JTable(ptmodel);
+	setupTableAux(table);
+	table.setGridColor(Color.BLUE);
+	table.setBackground(Color.WHITE);
+	table.setForeground(Color.BLACK);
+	ourPane.add(table);
+	ourFrame.setContentPane(ourPane);
+	ourFrame.pack();
+	if (printTableFrame != null) {
+	    printTableFrame.dispose();
+	    printTableFrame = null;
+	}
+	printTableFrame = ourFrame;
+	return table;
     }
 
     JFrame manualFrame = null;
@@ -3692,10 +3719,19 @@ public class EPTSWindow {
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    try {
+			/*
 			ptable.print(JTable.PrintMode.FIT_WIDTH,
 				     null,
 				     new MessageFormat("- {0} -"));
+			*/
+			createPrintTable().print(JTable.PrintMode.FIT_WIDTH,
+				     null,
+				     new MessageFormat("- {0} -"));
 		    } catch (PrinterException ee) {
+			ee.printStackTrace();
+		    } finally {
+			printTableFrame.dispose();
+			printTableFrame = null;
 		    }
 		}
 	    });
