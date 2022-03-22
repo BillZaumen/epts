@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="manual.dm.xsl"?>
+<toc>
+  <node title="The EPTS manual"
+	uri="resource:org/bzdev/epts/manual/manual.dm.html"
+	href="manual.dm.html">
+    <node title="Introduction"
+	  uri="resource:org/bzdev/epts/manual/manual.dm.html#intro"
+	  href="manual.dm.html#intro">
+      <node title="Starting EPTS"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#startingEPTS"
+	    href="manual.dm.html#startingEPTS">
+	<node title="Image background"
+	      uri="resource:org/bzdev/epts/manual/manual.dm.html#imageBackground"
+	      href="manual.dm.html#imageBackground" />
+	<node title="Script background"
+	      uri="resource:org/bzdev/epts/manual/manual.dm.html#scriptBackground"
+	      href="manual.dm.html#scriptBackground" />
+	<node title="Enhanced background"
+	  uri="resource:org/bzdev/epts/manual/manual.dm.html#enhancedBackground"
+	  href="manual.dm.html#enhancedBackgroung" />
+	<node title="Configuring templates"
+	      uri="resource:org/bzdev/epts/manual/manual.dm.html#templateSetup"
+	      href="manual.dm.html#templateSetup" />
+      </node>
+      <node title="Using EPTS"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#usingEPTS"
+	    href="manual.dm.html#usingEPTS"/>
+    </node>
+    <node title="The menu bar"
+	  uri="resource:org/bzdev/epts/manual/manual.dm.html#menus"
+	href="manual.dm.html#menus">
+      <node title="The File menu"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#fileMenu"
+	    href="manual.dm.html#fileMenu"/>
+      <node title="The Edit menu"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#editMenu"
+	    href="manual.dm.html#editMenu"/>
+      <node title="The Zoom menu"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#zoomMenu"
+	    href="manual.dm.html#zoomMenu"/>
+      <node title="The Measure-Distance menu"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#measureMenu"
+	    href="manual.dm.html#measureMenu"/>
+      <node title="The Tools menu"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#toolsMenu"
+	    href="manual.dm.html#toolsMenu"/>
+      <node title="The Filters menu"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#filtersMenu"
+	    href="manual.dm.html#filtersMenu"/>
+      <node title="The Help menu"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#helpMenu"
+	    href="manual.dm.html#helpMenu"/>
+    </node>
+    <node title="Using the mouse"
+	  uri="resource:org/bzdev/epts/manual/manual.dm.html#mouse"
+	  href="manual.dm.html#mouse">
+      <node title="Popup menus"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#popup"
+	    href="manual.dm.html#popup"/>
+    </node>
+    <node title="Keyboard shortcuts"
+	  uri="resource:org/bzdev/epts/manual/manual.dm.html#shortcuts"
+	  href="manual.dm.html#shortcuts"/>
+    <node title="Templates"
+	  uri="resource:org/bzdev/epts/manual/manual.dm.html#templates"
+	  href="manual.dm.html#templates" >
+      <node title="Built-in Templates"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#builtins"
+	    href="manual.dm.html#builtins"/>
+      <node title="Template Syntax"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#templateSyntax"
+	    href="manual.dm.html#templateSyntax"/>
+      <node title="Table Templates"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#tbltemplates"
+	    href="manual.dm.html#tbltemplates"/>
+      <node title="Path-Iterator Templates"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#pitemplates"
+	    href="manual.dm.html#pitemplates"/>
+    </node>
+    <node title="The CLI" uri="resource:org/bzdev/epts/manual/manual.dm.html#cli"
+	  href="manual.dm.html#cli">
+      <node title="Units"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#units"
+	    href="manual.dm.html#units"/>
+      <node title="Scripting Options"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#scriptOptions"
+	    href="manual.dm.html#scriptOptions"/>
+      <node title="Template Options"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#templateOptions"
+	    href="manual.dm.html#templateOptions"/>
+      <node title="Scrunner Options"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#scrunner"
+	    href="manual.dm.html#scrunner"/>
+      <node title="CLI Examples"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#examples"
+	    href="manual.dm.html#examples"/>
+    </node>
+    <node title="Scripting"
+	  uri="resource:org/bzdev/epts/manual/manual.dm.html#scripting"
+	  href="manual.dm.html#scripting"/>
+    <node title="Built-in Scripts"
+	  uri="resource:org/bzdev/epts/manual/manual.dm.html#scripts"
+	  href="manual.dm.html#scripts">
+      <node title="Cartesian-Grid Script"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#cartesian"
+	    href="manual.dm.html#cartesian"/>
+      <node title="Polar-Grid Script"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#polar"
+	    href="manual.dm.html#polar"/>
+    </node>
+    <node title="Saved-file format"
+	  uri="resource:org/bzdev/epts/manual/manual.dm.html#savedFormat"
+	  href="manual.dm.html#savedFormat">
+      <node title="The image element"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#imageElement"
+	    href="manual.dm.html#imageElement"/>
+      <node title="The codebase element"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#codebaseElement"
+	    href="manual.dm.html#codebaseElement"/>
+      <node title="The modules element"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#modulesElement"
+	    href="manual.dm.html#modulesElement"/>
+      <node title="The classpath element"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#classpathElement"
+	    href="manual.dm.html#classpathElement"/>
+      <node title="The scripting element"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#scriptingElement"
+	    href="manual.dm.html#scriptingElement"/>
+      <node title="The targetList element"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#targetListElement"
+	    href="manual.dm.html#targetListElement"/>
+      <node title="The gcsconfig element"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#gcsconfigElement"
+	    href="manual.dm.html#gcsconfigElement"/>
+      <node title="The table element"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#tableElement"
+	    href="manual.dm.html#tableElement"/>
+      <node title="The filters element"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#filtersElement"
+	    href="manual.dm.html#filtersElement"/>
+      <node title="The offsets element"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#offsetsElement"
+	    href="manual.dm.html#offsetsElement"/>
+    </node>
+    <node title="Saved-configuration format"
+	  uri="resource:org/bzdev/epts/manual/manual.dm.html#configFormat"
+	  href="manual.dm.html#configFormat"/>
+    <node title="Template-processing format"
+	  uri="resource:org/bzdev/epts/manual/manual.dm.html#templateConfig"
+	  href="manual.dm.html#templateConfig"/>
+    <node title="AdditionalDocumentation"
+	  uri="resource:org/bzdev/epts/manual/manual.dm.html#guides"
+	  href="manual.dm.html#guides"/>
+  </node>
+</toc>

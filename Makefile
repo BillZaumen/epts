@@ -149,49 +149,49 @@ CRLF_TEMPLATES = templates/SegmentsCSV.tpl
 
 RESOURCES = manual/manual.xml \
 	manual/manual.xsl \
-	manual/manual.dm.xsl \
-	manual/index.html \
+	docs/manual/manual.dm.xsl \
+	docs/manual/index.html \
 	manual/manual.html \
 	manual/manual.css \
-	manual/manual.dm.css \
-	manual/print.css \
-	manual/DesktopIcons.png \
-	manual/OpeningDialog.png \
-	manual/desktop.png \
-	manual/inputfiles.png \
-	manual/openfile.png \
-	manual/selectapp.png \
-	manual/configSession1.png \
-	manual/configSession2.png \
-	manual/configSession3.png \
-	manual/configSession4.png \
-	manual/configSession5.png \
-	manual/templateConfig1.png \
-	manual/templateConfig2.png \
-	manual/templateConfig3.png \
-	manual/dialog.png \
-	manual/drawing1.png \
-	manual/drawing2.png \
-	manual/drawing3.png \
-	manual/drawing4.png \
-	manual/drawing5.png \
-	manual/filewindow.png \
-	manual/menubar.png \
-	manual/offsetPane.png \
-	manual/table2.png \
-	manual/terminal.png \
-	manual/LocationDialog.png \
-	manual/NTPDialog.png \
-	manual/NTPWindow.png \
-	manual/AddVector.png \
-	manual/AddArc.png \
-	epts-1.0.dtd
+	docs/manual/manual.dm.css \
+	docs/manual/print.css \
+	docs/manual/DesktopIcons.png \
+	docs/manual/OpeningDialog.png \
+	docs/manual/desktop.png \
+	docs/manual/inputfiles.png \
+	docs/manual/openfile.png \
+	docs/manual/selectapp.png \
+	docs/manual/configSession1.png \
+	docs/manual/configSession2.png \
+	docs/manual/configSession3.png \
+	docs/manual/configSession4.png \
+	docs/manual/configSession5.png \
+	docs/manual/templateConfig1.png \
+	docs/manual/templateConfig2.png \
+	docs/manual/templateConfig3.png \
+	docs/manual/dialog.png \
+	docs/manual/drawing1.png \
+	docs/manual/drawing2.png \
+	docs/manual/drawing3.png \
+	docs/manual/drawing4.png \
+	docs/manual/drawing5.png \
+	docs/manual/filewindow.png \
+	docs/manual/menubar.png \
+	docs/manual/offsetPane.png \
+	docs/manual/table2.png \
+	docs/manual/terminal.png \
+	docs/manual/LocationDialog.png \
+	docs/manual/NTPDialog.png \
+	docs/manual/NTPWindow.png \
+	docs/manual/AddVector.png \
+	docs/manual/AddArc.png
+
+DTD = epts-1.0.dtd
 
 FILES = $(JFILES) $(PROPERTIES)
 
 PROGRAM = $(JROOT_BIN)/epts $(JROOT_JARDIR)/epts.jar $(BLDPOLICY)
-ALL = $(PROGRAM) epts.desktop $(MANS)
-
+ALL = $(PROGRAM) epts.desktop $(MANS) docs
 
 
 all: $(ALL)
@@ -229,14 +229,19 @@ include MajorMinor.mk
 org:
 	ln -s src/org.bzdev.epts/org org
 
+NOSCRIPT=<NOSCRIPT><FONT size="-2"> \
+	(When viewed from a browser with Javascript turned \
+	off, the table of contents in the other frame may not have any \
+	contents.)</FONT></NOSCRIPT>
 
-
+nst:
+	echo '<!-- NOSCRIPT -->' | sed -e 's%<!-- NOSCRIPT -->%$(NOSCRIPT)%'
 # The action for this rule removes all the epts-*.jar files
 # because the old ones would otherwise still be there and end up
 # being installed.
 #
 $(JROOT_JARDIR)/epts.jar: $(FILES) $(TEMPLATES) $(CRLF_TEMPLATES)\
-	$(RESOURCES) $(BLDPOLICY) $(SCRIPTS) $(ICONS)
+	$(RESOURCES) $(DTD) $(BLDPOLICY) $(SCRIPTS) $(ICONS)
 	mkdir -p $(EPTS_JDIR)
 	javac -Xlint:unchecked -Xlint:deprecation \
 		-d mods/org.bzdev.epts -p $(EXTLIBS) \
@@ -256,15 +261,31 @@ $(JROOT_JARDIR)/epts.jar: $(FILES) $(TEMPLATES) $(CRLF_TEMPLATES)\
 	for i in $(SCRIPTS) ; do sname=`basename $$i` ; \
 		cp $$i $(EPTS_JDIR)/$$sname; done
 	mkdir -p $(EPTS_JDIR)/manual
-	for i in $(RESOURCES) ; do cp $$i $(EPTS_JDIR)/$$i ; done
-	sed -e s/manual.css/manual.dm.css/ manual/manual.html > \
-		$(EPTS_JDIR)/manual/manual.dm.html
+	cp $(DTD) $(EPTS_JDIR)/$(DTD)
+	for i in $(RESOURCES) ; do \
+		j=manual/`basename $$i` ; \
+		cp $$i $(EPTS_JDIR)/$$j ; done
+	sed -e s/manual.css/manual.dm.css/ manual/manual.html \
+		| sed -e 's%<!-- NOSCRIPT -->%$(NOSCRIPT)%' \
+		> $(EPTS_JDIR)/manual/manual.dm.html
 	grep -v '<LINK' manual/manual.html > $(EPTS_JDIR)/manual/print.html
 	sed -e s/manual.html/manual.dm.html/ manual/manual.xml \
 		| sed -e s/manual.xsl/manual.dm.xsl/ > \
 		$(EPTS_JDIR)/manual/manual.dm.xml
 	jar cfe $(JROOT_JARDIR)/epts.jar org.bzdev.epts.EPTS \
 		-C $(EPTS_DIR) .
+
+docs:  docs/manual/manual.dm.html docs/manual/manual.dm.xml
+
+docs/manual/manual.dm.html: manual/manual.html Makefile
+	sed -e s/manual.css/manual.dm.css/ manual/manual.html \
+	| sed -e 's%<!-- NOSCRIPT -->%$(NOSCRIPT)%' \
+	> docs/manual/manual.dm.html
+
+docs/manual/manual.dm.xml:  manual/manual.xml Makefile
+	sed -e s/manual.html/manual.dm.html/ manual/manual.xml \
+		| sed -e s/manual.xsl/manual.dm.xsl/ \
+		> docs/manual/manual.dm.xml
 
 
 $(JROOT_BIN)/epts: epts.sh MAJOR MINOR \
@@ -292,9 +313,7 @@ clean:
 	rm -f $(JROOT_JARDIR)/epts.jar \
 	$(JROOT_MANDIR)/man1/* \
 	$(JROOT_MANDIR)/man5/* \
-	$(JROOT_BIN)/epts \
-	$(CLASSES)/*.dtd
-	[ -d $(CLASSES)/epts ] && rmdir $(CLASSES)/epts || true
+	$(JROOT_BIN)/epts;
 	[ -d man/man1 ] && rmdir man/man1 || true
 	[ -d man/man5 ] && rmdir man/man5 || true
 	[ -d man ] && rmdir man || true

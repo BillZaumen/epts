@@ -7,8 +7,9 @@
 </HEAD>
 <BODY>
   <CENTER><FONT size="+3"><B>EPTS Manual</B></FONT></CENTER>
-<BR>
-<BR>
+  <BR>
+  <!-- NOSCRIPT -->
+  <BR>
 <H1><A name="intro"></A>Introduction</H1>
 
 EPTS (Edit PoinTS) is a special-purpose graphics editor. Its purpose
@@ -18,7 +19,23 @@ translate the positions of the points and curves so that the locations
 of the points or control points are expressed in a specific coordinate
 system.  The points and paths can then be written to an output stream
 in a variety of text formats, each specified by a template, for use
-by other programs. EPTS can also be used to measure the distance
+by other programs.  A unique feature of EPTS is that it will typically
+be run in two phases:
+<UL>
+  <LI> the first phase uses a graphics editor for creating and editing
+    paths.  Each path is given a name.
+  <LI> the second phase uses the command line or a series of dialogs
+    to group paths and assign properties to paths such as winding rules,
+    strokes and colors. The output is in text-based formats defined by
+    either built-in templates or user-defined templates. While SVG is
+    supported, most of the templates generate scripting-language files
+    or various tables.
+</UL>
+Each phase has its own saved-state format and corresponding file-name
+extension, and these files can be easily incorporated in build
+environments.
+<P>
+EPTS can also be used to measure the distance
 between two points on an image, with options to measure the distance
 in <A HREF="#userspace">user space</A> or
 <A HREF="#gcs">graph coordinate space</A>:
@@ -712,7 +729,7 @@ The <code>Edit</code> menu contains the following items:
     dialog box that will allow one to chose an integer that determines
     how many control points are used to draw a circle. Increasing the
     number improves accuracy, but one will be hard pressed to distinguish
-    the differnece visually.
+    the difference visually.
   <LI><B><CODE>Convert a Line to a Circle</CODE></B>. This option applies
     to paths that represent a single straight-line segment. It treats the
     start of the line as the center of a circle and the end of the line
@@ -2737,7 +2754,7 @@ The options specific to the EPTS command when templates are used are:
 	which the image's width and height are in units of millimeters
 	(mm).  The width and height of the EPTS window, as viewed on a
 	screen, is scaled to the corresponding distance in graph
-	coordiante space, expressed in units of millimeters. For
+	coordinate space, expressed in units of millimeters. For
 	example, if the height and width parameters when EPTS is
 	started are 1000, and graph coordinate space is configured so
 	that a distance of 5 in user space corresponds to 1 mm in
@@ -2906,7 +2923,7 @@ provided by the scrunner command. These are
     <CODE>ECMAScript</CODE> are always supported.
   <LI><B><CODE>--resourcePath</CODE></B><U>NAMES</U>. The string
     <U>NAMES</U> is a series of URLS or file names separated by
-    the &#39;|&#39; charcter.  As a special case, if there are
+    the &#39;|&#39; character.  As a special case, if there are
     n &#39;|&#39; characters in a row, they will be placed by
     floor(n/2) &#39;|&#39; characters and when n is odd, the final
     &#39;|&#39; is used as a separator.  As a result, except for the
@@ -4053,5 +4070,7 @@ The path names for these documents, of course, are system dependent.
  -->
 <!--  LocalWords:  pathmapEntry yrunner crosshairs descr mapName HREF
  -->
-<!--  LocalWords:  Javadoc optcomma endOC
+<!--  LocalWords:  Javadoc optcomma endOC dialogs JDK Nashorn
+ -->
+<!--  LocalWords:  makefile
  -->

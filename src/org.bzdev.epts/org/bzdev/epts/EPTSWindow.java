@@ -2428,7 +2428,7 @@ public class EPTSWindow {
 	    }
 	};
 
-    void setupTableAux(JTable tbl) {
+    void setupTableAux(JTable tbl, boolean mode) {
 	tbl.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 	tbl.setRowSelectionAllowed(true);
 	tbl.setCellSelectionEnabled(false);
@@ -2441,9 +2441,15 @@ public class EPTSWindow {
 	if (tcr instanceof DefaultTableCellRenderer) {
 	    DefaultTableCellRenderer dtcr = (DefaultTableCellRenderer) tcr;
 	    FontMetrics fm = dtcr.getFontMetrics(dtcr.getFont());
-	    w0 = 10 + fm.stringWidth("mmmmmmmmmmmmmmmmmmmm");
-	    w1 = 10 + fm.stringWidth("CONTROL_POINT");
-	    w2 = 10 + fm.stringWidth("mmmmmmmmmm");
+	    if (mode) {
+		w0 = 10 + fm.stringWidth("mmmmmmmmmmmmmmmmmmmm");
+		w1 = 40 + fm.stringWidth("mmmmmmmmmmmm");
+		w2 = 40 + fm.stringWidth("mmmmmmmmmmmmmmmmmmmmm");
+	    } else {
+		w0 = 10 + fm.stringWidth("MMMMMMMMMMMM");
+		w1 = 10 + fm.stringWidth("MMMMMMMMMMMM");
+		w2 = 10 + fm.stringWidth("777777777777777777777");
+	    }
 	    w3 = w2;
 	}
 	TableColumnModel cmodel = tbl.getColumnModel();
@@ -2461,7 +2467,7 @@ public class EPTSWindow {
 	ptmodel = new PointTableModel(pane);
 	ptmodel.addTableModelListener(tmlistener);
 	ptable = new JTable(ptmodel);
-	setupTableAux(ptable);
+	setupTableAux(ptable, true);
 	tableFrame = new JFrame();
 	tableFrame.setIconImages(EPTS.getIconList());
 	tableFrame.setPreferredSize(new Dimension(800,600));
@@ -2480,18 +2486,22 @@ public class EPTSWindow {
 	    ourModel.addRow(row);
 	}
 	JFrame ourFrame = new JFrame();
-	JTable table = new JTable(ptmodel);
-	setupTableAux(table);
+	JTable table = new JTable(ourModel);
+	setupTableAux(table, false);
 	table.setGridColor(Color.BLUE);
 	table.setBackground(Color.WHITE);
 	table.setForeground(Color.BLACK);
-	ourPane.add(table);
-	ourFrame.setContentPane(ourPane);
+	JScrollPane tableScrollPane = new JScrollPane(table);
+	ourFrame.setPreferredSize(new Dimension(800,600));
+	tableScrollPane.setOpaque(true);
+	table.setFillsViewportHeight(true);
+	ourFrame.setContentPane(tableScrollPane);
 	ourFrame.pack();
 	if (printTableFrame != null) {
 	    printTableFrame.dispose();
 	    printTableFrame = null;
 	}
+	
 	printTableFrame = ourFrame;
 	return table;
     }
@@ -2641,6 +2651,8 @@ public class EPTSWindow {
 		.getResource("org/bzdev/epts/manual/print.html");
 	    if (url != null) {
 		JEditorPane pane = new JEditorPane();
+		pane.setBackground(Color.WHITE);
+		pane.setForeground(Color.BLACK);
 		pane.setPage(url);
 		EditorKit ekit = pane.getEditorKit();
 		if (ekit instanceof HTMLEditorKit) {
@@ -2652,6 +2664,11 @@ public class EPTSWindow {
 			("org/bzdev/epts/manual/print.css", sb,
 			 Charset.forName("UTF-8"));
 		    oursheet.addRule(sb.toString());
+		    oursheet.addRule("A {color: rbg(0,0,0);}");
+		    oursheet.addRule("A:link {color: rbg(0,0,0);}");
+		    oursheet.addRule("A:visited {color: rbg(0,0,0);}");
+		    oursheet.addRule("BLOCKQUOTE {background-color: "
+				     + "rgb(200,200,200);}");
 		    stylesheet.addStyleSheet(oursheet);
 		}
 		pane.print(null, new MessageFormat("- {0} -"));
@@ -8489,6 +8506,14 @@ public class EPTSWindow {
 		    });
 	    }
 	}
+	// this gets set to true whenever the table is modified, which
+	// will happen when loading an existing table. We use invoke
+	// later because when a table-change event is fired, that is
+	// queued and we have to set needSave to false after all those
+	// events are processed.
+	SwingUtilities.invokeLater(() -> {
+		needSave = false;
+	    });
     }
 
     public EPTSWindow(Image image, URI imageURI)
@@ -8575,6 +8600,15 @@ public class EPTSWindow {
 			setupFilters(parser);
 			parser.configureOffsetPane();
 		    }
+		    // this gets set to true whenever the table is
+		    // modified, which will happen when loading an
+		    // existing table. We use invoke later because
+		    // when a table-change event is fired, that is
+		    // queued and we have to set needSave to false
+		    // after all those events are processed.
+		    SwingUtilities.invokeLater( () -> {
+			    needSave = false;
+			});
 		}
 	    });
     }

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<HTML>
+<HEAD>
+    <STYLE TYPE="text/css">
+      .frame {
+	  float:left; margin-right:8px; margin-left:8px;
+	  padding-top:0px; padding-bottom:0px;
+	  padding-left:0px; padding-right:0px;
+	  marging-top:8px;
+	  margin-bottom:8px;
+	  vertical-align:top;
+	  white-space:nowrap;
+      }
+      body {
+	  margin: 8px;
+	  padding: 0px;
+	  background-color:#4D7A97;
+	  color:#2E1319;
+      }
+      iframe {
+	  border: 4pt solid #000000;
+      }
+    </STYLE>
+    <SCRIPT>
+      function doResize() {
+	  var menuWidth = 26;
+	  var width = window.innerWidth - 32 ;
+	  var height = window.innerHeight - 32;
+	  if (width < 300) width = 300;
+	  if (height < 300) height = 300;
+	  // var tocWidth = Math.floor(width/5)-8;
+	  var tocWidth = menuWidth*10 + 20;
+	  // if (tocWidth < 256) tocWidth = 256;
+	  var contentWidth = width - tocWidth - 24;
+	  var toc = document.getElementById("tocID");
+	  var contents = document.getElementById("contentsID");
+	  toc.width = tocWidth;
+	  toc.height = height;
+	  contents.width = contentWidth;
+	  contents.height = height;
+      }
+      window.addEventListener("resize", doResize);
+    </SCRIPT>
+
+</HEAD>
+  <BODY onload="doResize()">
+    <div class="frame">
+      <IFRAME SRC="manual.dm.xml" NAME="toc" WIDTH="325"
+	      ID="tocID" HEIGHT="600" SCROLLING="auto">
+      </IFRAME>
+      <IFRAME SRC="manual.dm.html" NAME="manual" width="700"
+	      ID="contentsID" HEIGHT="600" SCROLLING="auto">
+      </IFRAME>
+      </div>
+  </BODY>
+</HTML>
