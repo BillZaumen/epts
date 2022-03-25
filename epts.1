@@ -273,8 +273,10 @@ that the file manual.html is available. The URL for this file will be
 <http://\fIHOST\fR:\fIPORT\fR/manual.html>, where
 .I HOST
 is the host name (or IP address) of the system on which EPTS is running.
-Valid port numbers range from 1 to 65535 inclusive, although many are
-reserved for other purposes or require system privileges.
+Valid port numbers range from 1 to 65535 inclusive, although some are
+reserved for other purposes or require system privileges. For Firefox,
+if the NoScript extension is used, scripting must be enabled: otherwise
+the table of contents will not be shown due to its use of XSL.
 .TP
 .BI \-\-animation\  VNAME
 The argument

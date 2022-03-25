@@ -1153,10 +1153,11 @@ manual. This menu contains the following items:
     other with the manual itself.
   <LI><B><CODE>Print Manual</CODE></B>. This option opens a printer dialog
     box and allows the user to produce a printed copy of the manual.
-  <LI><B><CODE>Browser</CODE></B>. This option opens the system&#39;s default
-    browser and displays the manual in it. As a side effect, an embedded
-    web server will also be started, and that web server can be accessed
-    by other users.
+  <LI><B><CODE>Browser</CODE></B>. This option opens the system&#39;s
+    default browser and displays the manual in it. As a side effect,
+    an embedded web server will also be started, and that web server
+    can be accessed by other users.  If the port number is not set or
+    is set to zero, the system will choose the port to use.
   <LI><B><CODE>Port for Manual`s Webserver</CODE></B>. When a TCP port
     was not specified on the command line, this option gives the user
     a chance to change the port number until the web server is started.
@@ -2395,12 +2396,12 @@ There are five options that do not fit into well-defined categories:
     for a saved state that is the argument for an <CODE>--image</CODE>
     option, paths and locations recorded in the saved state will be
     ignored.
-  <LI><B><CODE>--port</CODE></B> <U>PORT</U>.  When this flag
-    is used, it sets the TCP port number for an embedded web server
-    that will provide the on-line manual. The port
-    number <U>PORT</U> must be a valid TCP port number (1 to 65535
-    inclusive, but some ports are reserved or require system
-    privileges).
+  <LI><B><CODE>--port</CODE></B> <U>PORT</U>.  When this flag is used,
+    it sets the TCP port number for an embedded web server that will
+    provide the on-line manual. The port number <U>PORT</U> must be a
+    valid TCP port number (1 to 65535 inclusive, but some ports are
+    reserved or require system privileges). If the port is 0 or if
+    this option is not provided, the system will provide a port.
   <LI><B><CODE>--animation</CODE></B> <U>A2D</U>. This option
     indicates that scripts will use the variable <U>A2D</U> to
     store the animation used to reference an image. The
