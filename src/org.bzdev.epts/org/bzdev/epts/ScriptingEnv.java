@@ -134,7 +134,7 @@ public class ScriptingEnv {
 			int width, int height)
 	throws SecurityException
     {
-	System.out.println("ScriptingEnv: languageName = " + languageName);
+	// System.out.println("ScriptingEnv: languageName = " + languageName);
 	this.a2dName = a2dName;
 	this.languageName = languageName;
 	scripting = new ExtendedScriptingContext
@@ -152,7 +152,7 @@ public class ScriptingEnv {
 			RefPointName rpn, double xorigin, double yorigin)
 	throws SecurityException
     {
-	System.out.println("ScriptingEnv: languageName = " + languageName);
+	// System.out.println("ScriptingEnv: languageName = " + languageName);
 	this.a2dName = a2dName;
 	this.languageName = languageName;
 	scripting = new ExtendedScriptingContext

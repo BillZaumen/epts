@@ -2200,7 +2200,7 @@ public class EPTSWindow {
 	if (EPTS.sbrp.length() > 0) {
 	    keymap.put("resourcePath", EPTS.sbrp.toString());
 	}
-	if (/*scriptMode && */ shouldSaveScripts) {
+	if (shouldSaveScripts) {
 	    TemplateProcessor.KeyMapList hasScriptList =
 		new TemplateProcessor.KeyMapList();
 	    TemplateProcessor.KeyMap smap = new TemplateProcessor.KeyMap();
@@ -2669,6 +2669,8 @@ public class EPTSWindow {
 		    oursheet.addRule("A:visited {color: rbg(0,0,0);}");
 		    oursheet.addRule("BLOCKQUOTE {background-color: "
 				     + "rgb(200,200,200);}");
+		    oursheet.addRule("DIV.bodybg {background-color: "
+				     + "rbg(255,255,255);}");
 		    stylesheet.addStyleSheet(oursheet);
 		}
 		pane.print(null, new MessageFormat("- {0} -"));
@@ -8432,7 +8434,7 @@ public class EPTSWindow {
 	    });
     }
 
-    private void setupGCSConfigPane(EPTSParser parser) {
+    void setupGCSConfigPane(EPTSParser parser) {
 	configGCSPane.savedUnitIndex
 	    = parser.getUnitIndex();
 	configGCSPane.savedUnitIndexRP
@@ -8545,11 +8547,12 @@ public class EPTSWindow {
 	this.bindings = bindings;
 	this.targetList = targetList;
 	this.se = se;
-	if (se != null) {
+	if (se != null && targetList.size() > 0) {
 	    this.languageName = se.getLanguageName();
 	    this.animationName = se.getAnimationName();
 	    scriptMode = true;
-	    shouldSaveScripts = (parser == null) || (image == null);
+	    // shouldSaveScripts = (parser == null) || (image == null);
+	    shouldSaveScripts = true;
 	}
 	if (parser != null) {
 	    savedStateCodebase = parser.getCodebase();

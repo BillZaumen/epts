@@ -819,6 +819,27 @@ public class Setup {
 	}
     }
 
+    // Unlike the other methods to read the configuration file,
+    // this one returns false if an entry does not exist. The
+    // reason is backwards compatibility for configuration files
+    // that do not use boolean options.
+    private static boolean getZDFBoolean(ZipDocFile f, String name) {
+	try {
+	    ZipEntry ze = f.getEntry(name);
+	    if (ze == null) return false;
+	    InputStream is = f.getInputStream(ze);
+	    XMLDecoder d = new XMLDecoder(is);
+	    Boolean result  = (Boolean) d.readObject();
+	    d.close();
+	    is.close();
+	    return result;
+	} catch (Exception e) {
+	    System.err.println(errorMsg("eptcfmt", name, e.getMessage()));
+	    System.exit(1);
+	    return false;
+	}
+    }
+
     // private static class OVect extends Vector{}
 
     @SuppressWarnings("unchecked")
@@ -1107,6 +1128,7 @@ public class Setup {
     static private File savedStateFile = null;
 
     static JComboBox<String> langCB;
+    static boolean imageFlag = false;
 
     public static String[] getSetupArgs(ZipDocFile zf, File zfile) {
 	try {
@@ -1119,10 +1141,29 @@ public class Setup {
 		    JLabel inputFileLabel =
 			new JLabel(localeString("inputFileLabel"));
 		    JTextField inputFileTF = new JTextField(32);
+		    JLabel spacer = new JLabel(" ");
+		    JCheckBox saveScriptsCheckBox =
+			new JCheckBox(localeString("saveScripts"));
 		    inputFileTF.addFocusListener(new FocusAdapter() {
 			    public void focusLost(FocusEvent e) {
 				usesImageFile =
 				    EPTS.isImagePath(inputFileTF.getText());
+				if (inputFileTF.getText().trim()
+				    .endsWith(".epts")) {
+				    saveScriptsCheckBox.setEnabled(true);
+				    imageFlag =
+					saveScriptsCheckBox.isSelected();
+				} else {
+				    imageFlag = false;
+				}
+			    }
+			});
+		    saveScriptsCheckBox.addActionListener((ea) -> {
+			    if (inputFileTF.getText().trim()
+				.endsWith(".epts")) {
+				imageFlag = saveScriptsCheckBox.isSelected();
+			    } else {
+				imageFlag = false;
 			    }
 			});
 		    JLabel animLabel =
@@ -1137,11 +1178,22 @@ public class Setup {
 		    };
 		    TableModel javaOptionsTM;
 		    if (zf != null) {
-			inputFileTF.setText(getZDFString(zf, "inputfile"));
-			usesImageFile = EPTS.isImagePath(inputFileTF.getText());
-			if (inputFileTF.getText().trim().length() > 0) {
+			String inputFile = getZDFString(zf, "inputfile");
+			inputFileTF.setText(inputFile);
+			usesImageFile = EPTS.isImagePath(inputFile);
+			imageFlag = getZDFBoolean(zf, "imageFlag");
+			if (inputFile.length() > 0) {
 			    dlCanEnable = true;
+			    if (inputFile.endsWith("epts")) {
+				saveScriptsCheckBox.setEnabled(true);
+				saveScriptsCheckBox.setSelected(imageFlag);
+			    } else {
+				saveScriptsCheckBox.setEnabled(false);
+				saveScriptsCheckBox.setSelected(false);
+				imageFlag = false; // just in case
+			    }
 			}
+			saveScriptsCheckBox.setSelected(imageFlag);
 			animTF.setText(getZDFString(zf, "animation"));
 			String lang = getZDFString(zf, "scriptingLang");
 			if (lang.equals(DEFAULT_LANG)) {
@@ -1176,6 +1228,12 @@ public class Setup {
 		    c.anchor = GridBagConstraints.LINE_START;
 		    c.gridwidth = GridBagConstraints.REMAINDER;
 		    addComponent(subPanel, inputFileTF, gridbag, c);
+		    c.anchor  = GridBagConstraints.LINE_END;
+		    c.gridwidth = 1;
+		    addComponent(subPanel, spacer, gridbag, c);
+		    c.anchor = GridBagConstraints.LINE_START;
+		    c.gridwidth = GridBagConstraints.REMAINDER;
+		    addComponent(subPanel, saveScriptsCheckBox, gridbag, c);
 		    c.anchor  = GridBagConstraints.LINE_END;
 		    c.gridwidth = 1;
 		    addComponent(subPanel, animLabel, gridbag, c);
@@ -1510,6 +1568,12 @@ public class Setup {
 						 XMLEncoder(os);
 					     enc.writeObject
 						 (inputFileTF.getText());
+					     enc.close(); os.close();
+					     os =
+						 zdw.nextOutputStream
+						 ("imageFlag", false, 0);
+					     enc = new XMLEncoder(os);
+					     enc.writeObject(imageFlag);
 					     enc.close(); os.close();
 					     os =
 						 zdw.nextOutputStream
@@ -1857,13 +1921,20 @@ public class Setup {
 					arglist.add(v+"="+val+u);
 				    }
 				}
-				arglist.add("--");
+				if (imageFlag) {
+				    arglist.add("--image");
+				} else {
+				    arglist.add("--");
+				}
 				String text = inputFileTF.getText();
 				if (text != null) {
 				    text = text.trim();
 				    if (text.length() > 0) {
 					arglist.add(text);
 				    }
+				}
+				if (imageFlag) {
+				    arglist.add("--");
 				}
 				if (!usesImageFile) {
 				    len = scriptTable.getRowCount();

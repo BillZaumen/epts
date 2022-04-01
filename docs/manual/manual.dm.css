@@ -50,3 +50,7 @@ A {color: rgb(65,225,128);}
 A:link {color: rgb(65,225,128);}
 A:visited {color: rgb(65,164,128);}
 BLOCKQUOTE {background-color: rgb(50,50,50);}
+
+.example {background-color: rgb(50,50,50);}
+
+DIV.bodybg {background-color: rgb(10,10,25);}

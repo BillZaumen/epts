@@ -47,3 +47,6 @@ CODE {
 NOSCRIPT {
     color: rgb(255,255,255);
 }
+
+.example {background-color: rgb(255,255,255);}
+DIV.bodybg {background-color: rgb(255,255,255);

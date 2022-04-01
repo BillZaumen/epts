@@ -3621,7 +3621,7 @@ public class EPTS {
 	if (!imageMode && scriptMode && targetList.size() > 1 &&
 	    targetList.get(0).endsWith(".epts") && outName == null) {
 	    // if the EPTS saved state includes an image file,
-	    // treat this as if the --image argument was used, but
+	    // treat this as if the --image argument was used
 	    String fileArg = targetList.remove(0);
 	    if (fileArg.startsWith("file")) {
 		eptsFile = new File(new URI(fileArg));
@@ -3636,7 +3636,8 @@ public class EPTS {
 	    iparser.setXMLFilename(fileArg);
 	    iparser.parse(new FileInputStream(eptsFile));
 	    if (iparser.hasScripts()) {
-		throw new Exception(errorMsg("parserHasScripts"));
+		System.out.println("suppressing error message for testing");
+		// throw new Exception(errorMsg("parserHasScripts"));
 	    }
 	    custom = iparser.usesCustom();
 	    if (iparser.imageURIExists()) {
@@ -3749,7 +3750,16 @@ public class EPTS {
 						       width, height,
 						       userDist, gcsDist,
 						       rpn, xo, yo);
-		    Graph graph = doScripts(se, bindings, targetList, null);
+		    ArrayList<String> cmdlineTargetList = targetList;
+		    ArrayList<String> tl = new ArrayList<String>();
+		    tl.addAll(iparser.getTargetList());
+		    tl.addAll(cmdlineTargetList);
+		    List<EPTS.NameValuePair> cmdlineBindings = bindings;
+		    bindings = new ArrayList<EPTS.NameValuePair>();
+		    bindings.addAll(iparser.getBindings());
+		    bindings.addAll(cmdlineBindings);
+
+		    Graph graph = doScripts(se, bindings, tl, null);
 		    // null returned only if a console was shown.
 		    // so we print a message to stderr just in case
 		    // and then return. The application will exit when
@@ -3758,24 +3768,89 @@ public class EPTS {
 			appendFinalMsg();
 			return;
 		    }
-		    // If no eptsFile, we are just reading a saved state
-		    // to copy the image.
-		    PointTMR rows[] = (eptsFile == null)? null:
-			iparser.getRows();
-		    new EPTSWindow(graph, bindings, targetList, custom,
-				   se, rows,
-				   image, imageURI, iparser, eptsFile);
+		    if (imageMode == false) {
+			// Unless we are creating a script-enhanced image,
+			// just keep the bindings and scripts from the parser.
+			// We have to get the image from an epts file so we
+			// will keep the GCS configuration, which the scripts
+			// typically need.
+			bindings = new ArrayList<EPTS.NameValuePair>();
+			bindings.addAll(iparser.getBindings());
+			tl = iparser.getTargetList();
+		    }
+		    PointTMR rows[] = iparser.getRows();
+		    // System.out.println("got here 1");
+		    new EPTSWindow(graph, bindings, tl, custom,
+				   se, (imageMode? null: rows),
+				   image, imageURI, iparser,
+				   (imageMode? null: eptsFile));
 		}
 	    } else if (iparser != null) {
-		new EPTSWindow(null, null, null, iparser.usesCustom(),
-			       null, null,
-			       image, imageURI, iparser, null);
+		ArrayList<String> tl = iparser.getTargetList();
+		boolean tlok = tl.size() > 0;
+		width = iparser.getWidth();
+		height = iparser.getHeight();
+		double userDist = iparser.getUserSpaceDistanceNumeric();
+		double gcsDist = iparser.getGcsDistanceMeters();
+		RefPointName rpn = iparser.getRefPoint();
+		double xo = iparser.getXRefpointDouble();
+		double yo = iparser.getYRefpointDouble();
+		custom = iparser.usesCustom();
+		ScriptingEnv se = tlok?
+		    new ScriptingEnv(languageName, a2dName, width, height,
+				     userDist, gcsDist, rpn, xo, yo):
+		    null;
+		List<NameValuePair> b = tlok? iparser.getBindings(): null;
+		Graph graph = tlok? doScripts(se, b, tl, null): null;
+
+		// System.out.println("got here 2, imageMode = " + imageMode);
+		new EPTSWindow(graph, b, tl, custom,
+			       se, (tlok? iparser.getRows(): null),
+			       image, imageURI, iparser,
+			       eptsFile);
 	    } else {
 		new EPTSWindow(image, imageURI);
 	    }
 	} else if (scriptMode) {
-	    ScriptingEnv se = new ScriptingEnv(languageName, a2dName);
-	    Graph graph = doScripts(se, bindings, targetList, null);
+	    ScriptingEnv se;
+	    ArrayList<String> iparserTargetList = (iparser == null)?
+		(new ArrayList<String>()): iparser.getTargetList();
+	    int tlsz = iparserTargetList.size() + targetList.size();
+	    boolean itest = iparser != null && tlsz >= 1;
+	    // use tl to avoid a local variables in inner class issue.
+	    ArrayList<String> tl = targetList;
+	    if (itest) {
+		width = iparser.getWidth();
+		height = iparser.getHeight();
+		double userDist = iparser.getUserSpaceDistanceNumeric();
+		double gcsDist = iparser.getGcsDistanceMeters();
+		RefPointName rpn = iparser.getRefPoint();
+		double xo = iparser.getXRefpointDouble();
+		double yo = iparser.getYRefpointDouble();
+		custom = iparser.usesCustom();
+		se = new ScriptingEnv(languageName, a2dName,
+				      width, height,
+				      userDist, gcsDist,
+				      rpn, xo, yo);
+		ArrayList<String> cmdlineTargetList = targetList;
+		tl = new ArrayList<String>();
+		tl.addAll(iparser.getTargetList());
+		tl.addAll(cmdlineTargetList);
+		List<EPTS.NameValuePair> cmdlineBindings = bindings;
+		bindings = new ArrayList<EPTS.NameValuePair>();
+		bindings.addAll(iparser.getBindings());
+		bindings.addAll(cmdlineBindings);
+	    } else {
+	       se = new ScriptingEnv(languageName, a2dName);
+	    }
+	    Graph graph = doScripts(se, bindings, tl, null);
+	    if (iparser != null) {
+		// If we read a saved state file, reset bindings and
+		// targetList to what the saved-state file provides.
+		bindings = new ArrayList<EPTS.NameValuePair>();
+		bindings.addAll(iparser.getBindings());
+		tl = iparser.getTargetList();
+	    }
 	    // null returned only if a console was shown.
 	    // so we print a message to stderr just in case
 	    // and then return. The application will exit when
@@ -3785,12 +3860,25 @@ public class EPTS {
 		return;
 	    }
 	    EPTSWindow.setPort(port);
-	    new EPTSWindow(graph, bindings, targetList, custom, se, null,
-			   null, null, null, null);
+	    // System.out.println("got here 3");
+	    EPTSWindow w = new EPTSWindow(graph, bindings, tl,
+					  custom, se,
+					  (itest? iparser.getRows(): null),
+					  null, null,
+					  (itest? iparser: null),
+					  (itest? eptsFile: null));
+	    if (itest) {
+		// Delay so the the config GCS pane will be created first
+		EPTSParser theParser = iparser;
+		SwingUtilities.invokeLater(() -> {
+			w.setupGCSConfigPane(theParser);
+		    });
+	    }
 	    //			   languageName, a2dName, null);
 	} else if (targetList.size() >= 1) {
 	    // EPTSParser parser = new EPTSParser();
 	    String filename = targetList.get(0);
+	    // System.out.println("got here, filename = " + filename);
 	    if (filename.endsWith(".epts")) {
 		try {
 		    if (parser == null) {
@@ -3872,6 +3960,7 @@ public class EPTS {
 				appendFinalMsg();
 				return;
 			    }
+			    //  System.out.println("got here 4");
 			    new EPTSWindow(graph, pbindings, ptargetList,
 					   parser.usesCustom(),
 					   se,
@@ -3882,6 +3971,9 @@ public class EPTS {
 			} else {
 			    if (targetList.size() > 1) {
 				// image with scripts embellishing it.
+				// This is probably covered in preceding
+				// cases as tests don't seem to trigger this,
+				// but it was added just in case.
 				imageURI = parser.getImageURI();
 				image = parser.getImage();
 				ScriptingEnv se;
@@ -3908,6 +4000,7 @@ public class EPTS {
 				    appendFinalMsg();
 				    return;
 				}
+				// System.out.println("got here 5");
 				new EPTSWindow(graph, bindings, targetList,
 					       parser.usesCustom(),
 					       se,

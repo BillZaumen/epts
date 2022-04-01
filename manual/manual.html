@@ -10,6 +10,18 @@
   <BR>
   <!-- NOSCRIPT -->
   <BR>
+  <P>
+    Links:
+    <UL>
+      <LI> The <A HREF="#examples">examples section</A> contains
+	examples of typical command-line arguments.
+      <LI> <A HREF="#userspace">User
+      space</A>, <A HREF="#ispace">image space</A> and
+	<A HREF="#gcs">GCS</A> (<A HREF="#gcs">Graph Coordinate Space</A>)
+	for basic concepts.
+      <LI> <A HREF="#startingEPTS">Starting EPTS</A> from a desktop.
+    </UL>
+
 <H1><A name="intro"></A>Introduction</H1>
 
 EPTS (Edit PoinTS) is a special-purpose graphics editor. Its purpose
@@ -167,12 +179,12 @@ The procedure for opening these files depends on the file type:
     A popup-window will appear with various options. Select "Open With
     Other Application":
     <BR><BR>
-    <CENTER><IMG src="openfile.png" WIDTH="500"></CENTER>
+    <CENTER><IMG src="openfile.png" WIDTH="396"></CENTER>
     <BR>
     Then click this selection. A <CODE>Select Application</CODE> window
     will appear:
     <BR><BR>
-    <CENTER><IMG src="selectapp.png"></CENTER>
+    <CENTER><IMG src="selectapp.png" WIDTH="360"></CENTER>
     <BR>
     Move the mouse pointer to select EPTS and click the left mouse
     button.
@@ -239,9 +251,16 @@ To set up EPTS for more complex cases supporting animations, use the
 <CENTER><IMG src="configSession1.png" WIDTH="600"></CENTER>
 <BR>
 This will handle cases in which animation scripts generate a
-background image.  One may have to select a scripting language if
-additional languages are available, but the default, ESP, is always
-available and is the preferred choice. The
+background image. It will also handle the case where scripts are used
+to enhance an image provided by a saved-state file (e.g., by
+overlaying a grid).  When a saved-state file is used, a checkbox
+"<CODE>Save scripts in new saved-state file</CODE>" is enabled. When
+this checkbox is selected, the <CODE>Accept</CODE>button will start
+EPTS and configure it so that the scripts provided will be saved when
+an EPTS file is created. This cannot be done with an image because GCS
+has to be configured before the scripts are run.  One may have to
+select a scripting language if additional languages are available, but
+the default, ESP, is always available and is the preferred choice. The
 <A HREF="#guides">additional documentation</A> section indicates were
 to find documentation for ESP. The default value for the
 scripting-language variable representing an animation
@@ -333,7 +352,7 @@ configuration, run EPTS with the session-configuration file as its
 argument or double-click on the session-configuration file&#39;s icon in a
 file-manager window.
 
-<H3><A name="templateSetup"></A>>Configuring templates</H3>
+<H3><A name="templateSetup"></A>Configuring templates</H3>
 
 Templates-configuration files (the extension is "eptt") are typically
 generated after a saved state file is created and
@@ -406,7 +425,7 @@ These panes are used as follows.
     row in the subpath table will provide a menu with the names of the
     subpaths that may be added:
     <BR><BR>
-    <CENTER><IMG src="templateConfig2.png" WIDTH="500"></CENTER>
+    <CENTER><IMG src="templateConfig2.png" WIDTH="360"></CENTER>
     <BR>
   <LI> The <B><CODE>Global Parameters</CODE></B> pane. The use of this
     pane is optional and the fields it displays are dependent on the
@@ -420,7 +439,7 @@ These panes are used as follows.
     when a path is selected, various parameters for that path will be
     displayed. For example,
     <BR><BR>
-    <CENTER><IMG src="templateConfig3.png" WIDTH="500"></CENTER>
+    <CENTER><IMG src="templateConfig3.png" WIDTH="360"></CENTER>
     <BR>
     The <CODE>Stroke Width</CODE> parameter and the
     <CODE>Stoke in GCS units</CODE> checkbox will be used when
@@ -441,7 +460,7 @@ These panes are used as follows.
     useful if EPTS is started from the command line.
 </UL>
 
-<H2><A name="usingEPTS"></A>Using the EPTS graphics editor</H2>
+<H1><A name="usingEPTS"></A>EPTS concepts</H1>
 
 Because EPTS is designed to support a specific set of tasks, there are
 a large number of <A href="#shortcuts">keyboard shortcuts</A>.  It
@@ -465,7 +484,7 @@ EPTS makes use of three coordinate systems, one indirectly:
     point numbers.  As a result, if an output device contains 4 pixels
     for each 1x1 point square, and the image is scaled down by a
     factor of 2, there will be no degradation in image quality.
-  <LI> <A NAME="gcs"></A>image space coordinates, in which one unit
+  <LI> <A NAME="ispace"></A>Java image space coordinates, in which one unit
     corresponds to a pixel of an image. If an image is used directly,
     one pixel in the image will take up 1 unit in user space. When
     scripts are used to create the background image, however, an image
@@ -478,13 +497,14 @@ EPTS makes use of three coordinate systems, one indirectly:
     <CODE>org.bzdev.anim2d.AnimationLayer2DFactory</CODE> (the
     <A href="#guides">additional documentation</A> section provides citations
     to the documentation.
-  <LI> GCS (Graph Coordinate Space) coordinates, in which distances are
-    measured in application-specific coordinates (e.g., meters) and
-    where the positive X direction points left and the positive Y
-    direction points up. EPTS allows distances to be specified in either
-    custom units or meters.  If custom units are not used, all other
-    units will be converted to meters.  Graph coordinate space is define
-    by the BZDev class library, specifically the class
+  <LI> <A NAME="gcs"></A>GCS (Graph Coordinate Space) coordinates, in
+    which distances are measured in application-specific coordinates
+    (e.g., meters) and where the positive X direction points left and
+    the positive Y direction points up. EPTS allows distances to be
+    specified in either custom units or meters.  If custom units are
+    not used, all other units will be converted to meters.  Graph
+    coordinate space is define by the BZDev class library,
+    specifically the class
     <CODE>org.bzdev.graphs.Graph</CODE>.
 </UL>
 EPTS will display an image and allow one to overlay this image with
@@ -622,7 +642,7 @@ The <code>File</code> menu contains the following items:
     of 12 feet (converted to meters) in graph coordinate space:
     <BR>
     <BR>
-    <CENTER><IMG src="drawing5.png"></CENTER>
+    <CENTER><IMG src="drawing5.png" WIDTH="360"></CENTER>
     <BR>
     The coordinates - (0.0, 0.0) in the figure above - are in graph
     coordinate space and correspond to the lower-left corner of an
@@ -745,7 +765,7 @@ The <code>Edit</code> menu contains the following items:
     path and its <A href="#principalAxes">principal axes</A> are
     shown.  For example, the following dialog box
     <BR><BR>
-    <CENTER><IMG src="NTPDialog.png" HEIGHT="400"></CENTER>
+    <CENTER><IMG src="NTPDialog.png" HEIGHT="360"></CENTER>
     <BR>
     chooses options for scaling the distances along the second
     principal axis by 1/2, then rotating by 20 degrees around the
@@ -766,7 +786,7 @@ The <code>Edit</code> menu contains the following items:
     showing the position of the transformed shape. The corresponding
     EPTS window
     <BR><BR>
-    <CENTER><IMG src="NTPWindow.png"></CENTER>
+    <CENTER><IMG src="NTPWindow.png" WIDTH="360"></CENTER>
     <BR>
     shows the original shape in black, the
     <A href="#principalAxes">principal axes</A> (positive
@@ -876,7 +896,7 @@ displayed in textual form. This menu contains the following items:
     following:
     <BR>
     <BR>
-    <CENTER><IMG src="table2.png"></CENTER>
+    <CENTER><IMG src="table2.png" WIDTH="360"></CENTER>
     <BR>
   <LI><B><CODE>Edit Variable Parameters</CODE></B>. Show a table listing
     variable names for locations and paths, plus their <B>key</B>,
@@ -914,7 +934,7 @@ displayed in textual form. This menu contains the following items:
   <LI><B><CODE>Offset Path</CODE></B>. This option will allow one to
     create offset paths by bringing up a dialog box:
     <BR>
-    <CENTER><IMG src="offsetPane.png"></CENTER>
+    <CENTER><IMG src="offsetPane.png" WIDTH="360"></CENTER>
     <BR>
     Pull-down menus (Java combo boxes) describing units allow distances
     to be expressed in a variety of units.  These will be converted to
@@ -998,7 +1018,7 @@ displayed in textual form. This menu contains the following items:
 	below):
 	<BR>
 	<BR>
-	<CENTER><IMG src="drawing1.png"></CENTER>
+	<CENTER><IMG src="drawing1.png" WIDTH="360"></CENTER>
 	<BR>
       <LI><B><CODE>Control Point(s)</CODE></B>. This option indicates that
 	the next point is a control point. There can be at most two
@@ -1008,7 +1028,10 @@ displayed in textual form. This menu contains the following items:
 	internal control points:
 	<BR>
 	<BR>
-	<A name="drawing2"></A><CENTER><IMG src="drawing2.png"></CENTER>
+	<A name="drawing2"></A>
+	<CENTER>
+	  <IMG src="drawing2.png" WIDTH="360">
+	</CENTER>
 	<BR>
 	<BR>
 	In the figure, the tangent lines leading to the control points
@@ -1037,7 +1060,7 @@ displayed in textual form. This menu contains the following items:
 	will open a dialog box that will ask for the X and Y
 	coordinates of a point specified in GCS units:
 	<BR><BR>
-	<CENTER><IMG src="LocationDialog.png"></CENTER>
+	<CENTER><IMG src="LocationDialog.png" WIDTH="360"></CENTER>
 	<BR>
 	It is equivalent to positioning the mouse at that point and
 	clicking the left-mouse button when the cross-hair cursor is
@@ -1046,7 +1069,7 @@ displayed in textual form. This menu contains the following items:
       <LI><B><CODE>Add Vector</CODE></B>. This menu item will open a
 	dialog box that will ask for a length and an angle:
 	<BR><BR>
-	<CENTER><IMG src="AddVector.png"></CENTER>
+	<CENTER><IMG src="AddVector.png" WIDTH="360"></CENTER>
 	<BR>
 	The angle is measured counterclockwise with 0 corresponding to
 	the direction of the positive X axis. A straight-line segment
@@ -1068,7 +1091,7 @@ displayed in textual form. This menu contains the following items:
 	dialog box that will ask for a radius, angle, angle direction,
 	and arc-accuracy level:
 	<BR><BR>
-	<CENTER><IMG src="AddArc.png"></CENTER>
+	<CENTER><IMG src="AddArc.png" WIDTH="360"></CENTER>
 	<BR>
 	The <B><CODE>Radius</CODE></B> field
 	provides the radius of the arc in GCS units.
@@ -2383,21 +2406,24 @@ There are five options that do not fit into well-defined categories:
   <LI><B><CODE>--</CODE></B>. This option simply indicates the end of
     options, and is provided in case a file name starts with a
     "<CODE>-</CODE>".
-  <LI><B><CODE>--image</CODE></B> <U>IFILE</U>. This option
-    implies that a background image will be displayed.  This option is
-    not needed unless <U>IFILE</U> is either <B><CODE>-</CODE></B>
-    or a saved-state file, but may be used to specify an image file if
+  <LI><B><CODE>--image</CODE></B> <U>IFILE</U>. This option implies
+    that a background image will be displayed.  This option is not
+    needed unless <U>IFILE</U> is either <B><CODE>-</CODE></B> or a
+    saved-state file, but may be used to specify an image file if
     desired (a URI referencing an image can be used as well). When
-    used, no arguments after the last option are allowed.  The most
-    common image formats are PNG and JPEG. These can use the file-name
-    extensions "png" and "jpg" respectively.  If the file name is
-    literally "-", EPTS will prompt for an image size and will create
-    an image containing a white background. The <CODE>--animation</CODE>
-    option may not be used with this option if <U>IFILE</U> is not
-    an EPTS saved state.  When <U>IFILE</U> is an EPTS saved state
-    for a saved state that is the argument for an <CODE>--image</CODE>
-    option, paths and locations recorded in the saved state will be
-    ignored.
+    used with an image file, no arguments after the last option are
+    allowed.  The most common image formats are PNG and JPEG. These
+    can use the file-name extensions "png" and "jpg" respectively.  If
+    the file name is literally "-", EPTS will create an image
+    containing a solid background (the <STRONG>-w</STRONG> and
+    <STRONG>-h</STRONG> options can be used to set the image width and
+    height). The <CODE>--animation</CODE> option may not be used with
+    this option if <U>IFILE</U> is not an EPTS saved state.
+    When <U>IFILE</U> is an EPTS saved state for a saved state that is
+    the argument for an <CODE>--image</CODE> option, paths and
+    locations recorded in the saved state will be ignored, but additional
+    scripts can be added so as to be saved if a saved-state file is
+    created.
   <LI><B><CODE>--port</CODE></B> <U>PORT</U>.  When this flag is used,
     it sets the TCP port number for an embedded web server that will
     provide the on-line manual. The port number <U>PORT</U> must be a
@@ -2923,7 +2949,7 @@ provided by the scrunner command. These are
   <LI><B><CODE>-L</CODE></B> <U>LNAME</U>.
     When scripting is used, this option explicitly indicates a
     scripting language. <CODE>ESP</CODE> (and currently
-    <CODE>ECMAScript</CODE> are always supported.
+    <CODE>ECMAScript</CODE>) are always supported.
   <LI><B><CODE>--resourcePath</CODE></B><U>NAMES</U>. The string
     <U>NAMES</U> is a series of URLS or file names separated by
     the &#39;|&#39; character.  As a special case, if there are
@@ -2943,55 +2969,84 @@ provided by the scrunner command. These are
 </UL>
 
 <H2><A name="examples"></A>CLI examples</H2>
+<P>
+  The following examples illustrate common cases.
 <UL>
-  <LI><B><CODE>epts saved.epts</CODE></B>
-    <BR>
-    Start EPTS, restoring its state to one saved in a previous session.
-  <LI><B><CODE>epts tplate.eptt</CODE></B>
-    <BR>
+  <LI><B CLASS="example"><CODE>epts saved.epts</CODE></B>
+    <DIV CLASS="bodybg">
+      Start EPTS, restoring its state to one saved in a previous session.
+    </DIV>
+  <LI><B CLASS="example"><CODE>epts tplate.eptt</CODE></B>
+    <DIV CLASS="bodybg">
     Start EPTS, restoring the state for template processing that was
     previously saved.
-  <LI><B><CODE>epts saved.epts resource:grid.js</CODE></B>
-    <BR>
+    </DIV>
+  <LI><B CLASS="example"><CODE>epts saved.epts resource:grid.js</CODE></B>
+    <DIV CLASS="bodybg">
     Start EPTS, restoring its state to one saved in a previous session
     and use a script to overlay a grid on top of the image. Points and
     paths will be placed over the grid. The image in this case must be
     created by a script, and the built-in script grid.js assumes that
     the animation used to create the grid is named a2d.  The grid will
     not be part of the saved-state file if the session is saved.
-  <LI><B><CODE>epts --codebase foo.jar saved.epts</CODE></B>
-    <BR>
+    </DIV>
+  <LI><B CLASS="example"><CODE>epts --double spacing=10ft --image s.epts
+	resource:grid.js</CODE></B>
+    <DIV CLASS="bodybg">
+    Start EPTS, generating the background image specified by the
+    saved-state file <CODE>saved.epts</CODE>, but not restoring paths
+    and points created in previous sessions due to the presence of
+    the <STRONG>--image</STRONG> argument.  The background image will
+    be augmented with additional scripts specified on the command
+    line, in this case the build-in script (<CODE>grid.js</CODE>) that
+    adds a grid overlaying the image.  The grid spacing corresponds to
+    10 feet in graph coordinate space.  If the session is saved, the
+    new saved-state file will include the previously defined scripts,
+    the new script defined on the command line, and the value for the
+    variable <CODE>spacing</CODE> (the value used is the distance in
+    meters corresponding to 10 feet).
+    </DIV>
+  <LI><B CLASS="example"><CODE>epts --codebase foo.jar saved.epts</CODE></B>
+    <DIV CLASS="bodybg">
     Start EPTS, restoring its state to one saved in a previous session,
     adding a jar file <CODE>foo.jar</CODE> to EPTS&#39;s code base.
-  <LI><B><CODE>epts image.png</CODE></B>
-    <BR>
+    </DIV>
+  <LI><B CLASS="example"><CODE>epts image.png</CODE></B>
+    <DIV CLASS="bodybg">
     Start EPTS with an image preloaded as its
     background.
-  <LI><B><CODE>epts --animation anim commands.js</CODE></B>
-    <BR>
+    </DIV>
+  <LI><B CLASS="example"><CODE>epts --animation anim commands.js</CODE></B>
+    <DIV CLASS="bodybg">
     Start EPTS and run the script provided in commands.js to generate
     an image from an animation <CODE>anim</CODE> (an instance of
     <CODE>org.bzdev.anim2d.Animation2D</CODE>).  In this case, a
     saved-state file will rerun the script.
-  <LI><B><CODE>epts --resourcePath images commands.esp</CODE></B>
-    <BR>
+    </DIV>
+  <LI><B CLASS="example"><CODE>epts --resourcePath images commands.esp</CODE></B>
+    <DIV CLASS="bodybg">
     Start EPTS and run the script provided in commands.js to generate
     an image from an animation <CODE>a2d</CODE> (an instance of
     <CODE>org.bzdev.anim2d.Animation2D</CODE>).  In this case, a
     saved-state file will rerun the script.  The <CODE>--resourcePath</CODE>
     option allows external images to be included. For example, the
     following ESP script
+    </DIV>
     <BLOCKQUOTE><CODE><PRE>
 import(org.bzdev.anim2d, [
     Animation2D,
-    AnimationLayer2D, AnimationLayer2DFactory]);
+    AnimationLayer2D,
+    AnimationLayer2DFactory]);
 
 var frameWidth = 719;
 var frameHeight = 375;
 
-var a2d = new Animation2D(scripting, frameWidth,
-                          frameHeight, 1000.0, 40);
-a2d.setRanges(0.0, 0.0, 0.0, 0.0, 1.0, 1.0);
+var a2d = new Animation2D(scripting,
+                          frameWidth,
+                          frameHeight,
+                          1000.0, 40);
+a2d.setRanges(0.0, 0.0, 0.0, 0.0,
+              1.0, 1.0);
 
 a2d.createFactories("org.bzdev.anim2d", {
     alf: "AnimationLayer2DFactory"});
@@ -3001,48 +3056,56 @@ alf.createObject("background", [
     {zorder: 0},
     {withPrefix: "object", withIndex: [
         {type: "IMAGE",
-         imageURL: "resource:background.png",
+         imageURL:
+             "resource:background.png",
          refPoint: "LOWER_LEFT",
          x: 0.0, y: 0.0,
          imageInGCS: false
         }
     ]}]);
     </PRE></CODE></BLOCKQUOTE>
+    <DIV CLASS="bodybg">
     will include a copy of the image in the file
     <CODE>background.png</CODE> from the <CODE>images</CODE>
     directory.  Additional scripts such as <CODE>resource:grid.esp</CODE>
     can be added as well.
+    </DIV>
   <LI><B><CODE>epts --codebase foo.jar --animation anim commands.js</CODE></B>
-    <BR>
+    <DIV CLASS="bodybg">
     Start EPTS and run the script provided in commands.js to generate
     an image from an animation <CODE>a2d</CODE> (an instance of
     <CODE>org.bzdev.anim2d.Animation2D</CODE>). The file foo.jar contains
     additional classes needed by the script. The <CODE>--codebase</CODE>
     option will be needed when restarting EPTS using a saved state
     created when this command is being run.
+    </DIV>
   <LI><B><CODE>epts -o out.js --template:ECMAScript saved.epts</CODE></B>
-    <BR>
+    <DIV CLASS="bodybg">
     Run EPTS without a GUI to generate a file <CODE>out.js</CODE>
     containing a series of ESP or ECMAScript statements containing the contents
     of the EPTS table.
+    </DIV>
   <LI><B><CODE>epts -o out.svg --svg --fill red --pname s:c1,c2 saved.epts</CODE></B>
-    <BR>
+    <DIV CLASS="bodybg">
     Run EPTS without a GUI to generate an SVG file <CODE>out.svg</CODE>
     containing a shape <CODE>s</CODE>consisting of two curves
     (<CODE>c1</CODE> and <CODE>c2</CODE>) defined in the EPTS table.
     The table is the one defined by the file <CODE>saved.epts</CODE>
+    </DIV>
   <LI><B><CODE>epts -o - --gcs --template:area -pname s:c1,c2</CODE></B>
-    <BR>
+    <DIV CLASS="bodybg">
     Run EPTS without a GUI to compute the area of a shape bounded
     by the curves <CODE>c1</CODE> and <CODE>c2</CODE>. The area is
     in GCS units.
+    </DIV>
   <LI><B><CODE>epts -o output.svg tplate.eptt</CODE></B>
-    <BR>
+    <DIV CLASS="bodybg">
     Run EPTS, restoring the state for template processing (configured
     for generating an SVG file) that was previously saved but
     replacing the name of the output file.  The GUI will not be
     started. For this option to work properly, the <B>eptt</B> file
     must be in the current working directory.
+    </DIV>
 </UL>
 
 <H1><A name="scripting"></A>Scripting</H1>
@@ -3102,14 +3165,14 @@ non-null value and will provide several methods:
 These methods should be used to configure the width and height of an
 animation&#39;s frame. For example,
 <BLOCKQUOTE><PRE><CODE>
-      if (typeof epts === &#39;undefined&#39; || epts == null) {
-          var frameWidth = 1024;
-          var frameHeight = 1024;
-      } else {
-          var frameWidth = epts.getWidth();
-          var frameHeight = epts.getHeight();
-      }
-      var a2d = new Animation2D(scripting, frameWidth, frameHeight);
+if (typeof epts === &#39;undefined&#39; || epts == null) {
+    var frameWidth = 1024;
+    var frameHeight = 1024;
+} else {
+    var frameWidth = epts.getWidth();
+    var frameHeight = epts.getHeight();
+}
+var a2d = new Animation2D(scripting, frameWidth, frameHeight);
 </CODE></PRE></BLOCKQUOTE>
 When there is no image, the variable <CODE>epts</CODE> will still be
 defined, but its value will be null (when defined, that is an indication
@@ -3759,6 +3822,9 @@ using the Java method <CODE>java.beans.XMLEncoder</CODE>:
   <LI> The media type is <CODE>application/vnd.bzdev.epts-config+zip</CODE>.
   <LI> The ZIP-file entry <CODE>inputfile</CODE> contains an XML-encoded
     <CODE>String</CODE> providing a file name.
+  <LI>The ZIP-file entry <CODE>imageFlag</CODE> contains an XML-encoded
+    <CODE>Boolean</CODE>indicating if EPTS should be started using an
+    <CODE>--image</CODE> argument.
   <LI> The ZIP-file entry <CODE>animation</CODE> contains an XML-encoded
     <CODE>String</CODE> giving the name of the scripting-language variable
     whose value will be an instance of <CODE>org.bzdev.anim2d.Animation</CODE>
@@ -3824,14 +3890,14 @@ library class <CODE>org.bzdev.io.ZipDocFile</CODE>, using Java method
     <CODE>TemplateSetup.BasicData</CODE> object. The inner class
     <CODE>BasicData</CODE> is defined as follows:
     <BLOCKQUOTE><PRE><CODE>
-    public static class BasicData {
-	public int templateTypeInd = -1;
-	public boolean useBuiltins = false;
-	public String template = null;
-	public String savedState = null;
-	public String mapName = null;
-    }
-    </CODE></PRE></BLOCKQUOTE>
+public static class BasicData {
+    public int templateTypeInd = -1;
+    public boolean useBuiltins = false;
+    public String template = null;
+    public String savedState = null;
+    public String mapName = null;
+}
+</CODE></PRE></BLOCKQUOTE>
     The field <CODE>templateTypeInd</CODE> sets the selected index of
     a <CODE>javax.swing.JComboBox</CODE> whose values are "SVG",
     "Table Template", or "PI Template". The field <CODE>useBuiltins</CODE>
@@ -3869,10 +3935,12 @@ library class <CODE>org.bzdev.io.ZipDocFile</CODE>, using Java method
     <CODE>TemplateSetup.PathMap</CODE> object. The inner class
     <CODE>PathMap</CODE> is defined as follows:
     <BLOCKQUOTE><PRE><CODE>
-    public static class PathMap extends LinkedHashMap<String,Vector<String>> {
-	    public PathMap() {super();}
-    }
-    </CODE></PRE></BLOCKQUOTE>
+public static class PathMap extends
+    LinkedHashMap&lt;String,Vector&lt;String&gt;&gt;
+{
+    public PathMap() {super();}
+}
+</CODE></PRE></BLOCKQUOTE>
     This table is used to generate <CODE>--tname</CODE> and
     <CODE>--pname</CODE> options for the case in which a path is
     defined as a concatenation of paths in the EPTS table.  The key is
@@ -3883,20 +3951,19 @@ library class <CODE>org.bzdev.io.ZipDocFile</CODE>, using Java method
     <CODE>TemplateSetup.GlobalData</CODE> object. The inner class
     <CODE>GlobalData</CODE> is defined as follows:
     <BLOCKQUOTE><PRE><CODE>
-    public static class GlobalData {
-	public boolean usesTableTemplate;
-        // Table Template options
-	public String packageName;
-	public String className;
-	public boolean isPublic;
-        // Path-Iterator Template (--pname) options
-	public FlatnessMode fmode = FlatnessMode.NORMAL;
-	public double flatness;
-	public int limit = 10;
-	public boolean gcs;
-    }
-    </CODE></PRE></BLOCKQUOTE>
-
+public static class GlobalData {
+    public boolean usesTableTemplate;
+    // Table Template options
+    public String packageName;
+    public String className;
+    public boolean isPublic;
+    // Path-Iterator Template (--pname) options
+    public FlatnessMode fmode = FlatnessMode.NORMAL;
+    public double flatness;
+    public int limit = 10;
+    public boolean gcs;
+}
+</CODE></PRE></BLOCKQUOTE>
     The field <CODE>usesTableTemplate</CODE> is true if options for
     table templates should be generated and false if options for path
     templates should be generated.  The field <CODE>packageName</CODE>
@@ -3919,36 +3986,38 @@ library class <CODE>org.bzdev.io.ZipDocFile</CODE>, using Java method
     <CODE>TemplateSetup.PathLocMap</CODE> object.  The inner class
     <CODE>PathLocMap</CODE> is defined as follows:
     <BLOCKQUOTE><PRE><CODE>
-     public static class PathLocMap extends TreeMap<String,PathLocInfo> {
-	public PathLocMap() {super();}
-    }
-    </CODE></PRE></BLOCKQUOTE>
+public static class PathLocMap
+    extends TreeMap&lt;String,PathLocInfo&gt;
+{
+    public PathLocMap() {super();}
+}
+</CODE></PRE></BLOCKQUOTE>
     where the inner class <CODE>TemplateSetup.PathLocInfo</CODE> is defined by
     <BLOCKQUOTE><PRE><CODE>
-    public static class PathLocInfo {
-	public boolean isPath;
-	public boolean active = false;
-	public double strokeWidth = 1.0;
-	public boolean strokeGCS = false;
-	public boolean draw = false;
-	public Color drawColor = Color.BLACK;
-	public boolean fill = false;
-	public Color fillColor = Color.BLACK;
-	public int capIndex = 0;
-	public double dashIncr = 10.0;
-	public String dashPattern = "-";
-	public double dashPhase = 0.0;
-	public int joinIndex = 0;
-	public double miterLimit = 10.0;
-	public int windingRuleInd = 0;
-	public long zorder = 0;
+public static class PathLocInfo {
+    public boolean isPath;
+    public boolean active = false;
+    public double strokeWidth = 1.0;
+    public boolean strokeGCS = false;
+    public boolean draw = false;
+    public Color drawColor = Color.BLACK;
+    public boolean fill = false;
+    public Color fillColor = Color.BLACK;
+    public int capIndex = 0;
+    public double dashIncr = 10.0;
+    public String dashPattern = "-";
+    public double dashPhase = 0.0;
+    public int joinIndex = 0;
+    public double miterLimit = 10.0;
+    public int windingRuleInd = 0;
+    public long zorder = 0;
 
-	public PathLocInfo() {isPath = false;}
+    public PathLocInfo() {isPath = false;}
 
-	public PathLocInfo(boolean isPath) {
-	    this.isPath = isPath;
-	}
-    </CODE></PRE></BLOCKQUOTE>
+    public PathLocInfo(boolean isPath) {
+        this.isPath = isPath;
+    }
+</CODE></PRE></BLOCKQUOTE>
     This table sets parameters associated with paths and locations,
     including paths that are defined in the PathMap table.  The
     entries are ignored if the fields <CODE>isPath</CODE> and

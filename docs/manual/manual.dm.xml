@@ -23,9 +23,9 @@
 	      uri="resource:org/bzdev/epts/manual/manual.dm.html#templateSetup"
 	      href="manual.dm.html#templateSetup" />
       </node>
-      <node title="Using EPTS"
-	    uri="resource:org/bzdev/epts/manual/manual.dm.html#usingEPTS"
-	    href="manual.dm.html#usingEPTS"/>
+    <node title="EPTS concepts"
+	  uri="resource:org/bzdev/epts/manual/manual.dm.html#usingEPTS"
+	  href="manual.dm.html#usingEPTS"/>
     </node>
     <node title="The menu bar"
 	  uri="resource:org/bzdev/epts/manual/manual.dm.html#menus"

@@ -30,7 +30,7 @@ epts \- create points and Bezier curves/splines
 [\fI\,SCROPTION\/\fR]... [\fB\-\-animation \fI VNAME\fR] [\fI\,SOPTION\/\fR]... [\fI\,SFILE\/\fR]...
 .br
 .B epts
-[\fI\,SCROPTION\/\fR]... [\fB\-\-animation \fI VNAME\fR] [\fI\,SOPTION\/\fR]... \fIEFILE\fR [\fI\,SFILE\/\fR]...
+[\fI\,SCROPTION\/\fR]... [\fB\-\-animation \fI VNAME\fR] [\fI\,SOPTION\/\fR]... [\fB\-\-image\fR] \fIEFILE\fR [\fI\,SFILE\/\fR]...
 .br
 .B epts
 [\fI\,SCROPTION\/\fR]... [\fI\,TOPTION\/\fR]... [\fI\,EFILE\/\fR]
@@ -232,7 +232,11 @@ file will be ignored and only the image will be used.
 To show these points and paths, the EPTS
 saved-state file must be the first file-name argument (the first
 argument after the final option) and the
-.B \-\- image options must not be used.
+.B \-\-image
+options must not be used. When the
+.B \-\-image
+option is used with an saved-state file, variables and scripts
+will be included in  a newly generated saved-state file.
 .TP
 .BI \-w\  WIDTH
 This option is an alternative to the
@@ -1825,7 +1829,26 @@ Start EPTS, restoring its state to one saved in a previous session.
 The saved state uses a script to create the image and an additional
 build-in script (grid.js) is used to add a grid overlaying that image
 but not overlaying points or paths. The grid spacing corresponds to
-10 feet in graph coordinate space.
+10 feet in graph coordinate space.  The grid will not be added to
+.B saved.epts
+when the session is saved.
+.TP
+.B epts\ \-\-double\ spacing=10ft\ --image saved.epts\ resource:grid.js
+Start EPTS, generating the background image specified by the saved-state
+file
+.BR saved.epts ,
+but not restoring paths and points created in previous sessions due to the
+presence of the
+.B \-\-image
+argument.  The background image will be augmented with additional
+scripts specified on the command line, in this case the build-in
+script (grid.js) that adds a grid overlaying the image.  The grid
+spacing corresponds to 10 feet in graph coordinate space.  If the
+session is saved, the new saved-state file will include the previously
+defined scripts, the new script defined on the command line, and the
+value for the variable
+.B spacing
+(the value used is the distance in meters corresponding to 10 feet).
 .TP
 .B epts\ \-\-animation a2d\ \-\-double\ spacing=10ft\ saved.epts\ resource:grid.js
 Start EPTS, restoring its state to one saved in a previous session.
@@ -1916,7 +1939,7 @@ entries, and property definitions to be used. The form starting with
 .TP
 .B ~/.config/bzdev/scrunner.conf
 User configuration file that allows a specific Java launcher, class-path
-entries, and property definitions to be used.  property definitions in this
+entries, and property definitions to be used.  Property definitions in this
 file override those in the system configuration file.
 .SH SEE ALSO
 .BR scrunner (1)
@@ -1924,6 +1947,11 @@ file override those in the system configuration file.
 .BR scrunner.conf (5)
 .br
 .BR epts (5)
+.br
+.B https://billzaumen.github.io/epts/manual/index.html
+for the manual shown by the EPTS "help" menu item.  Javascript will
+have to be enabled for the manual to be properly displayed.
+
 \"  LocalWords:  EPTS epts Bezier SYNOPTSIS fI SCROPTION fR EFILE br
 \"  LocalWords:  IFILE PoinTS scrunner TP html MAPFILE SEG whitespace
 \"  LocalWords:  atype TFILE formated OUTFILE codebase URLPATH fB SVG

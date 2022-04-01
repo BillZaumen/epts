@@ -593,6 +593,7 @@ public class EPTSParser {
 		processingClasspath = false;
 	    } else if (qName.equals("binding")) {
 		String value = text.toString();
+		text.setLength(0);
 		switch(btype) {
 		case BOOLEAN:
 		    {
@@ -627,8 +628,10 @@ public class EPTSParser {
 	    } else if (qName.equals("targetList")) {
 		argArray = new String[argList.size()];
 	    } else if (qName.equals("imageURI")) {
-		if (text.length() <= 1 && text.charAt(0) == '-') {
+		if (text.length() == 0 ||
+		    (text.length() == 1 && text.charAt(0) == '-')) {
 		    imageURI = null;
+		    text.setLength(0);
 		} else {
 		    try {
 			imageURI = new URI(text.toString());
@@ -636,10 +639,13 @@ public class EPTSParser {
 			String msg = errorMsg("badURI", text.toString());
 			error(msg);
 			throw new SAXException(msg);
+		    } finally {
+			text.setLength(0);
 		    }
 		}
 	    } else if (qName.equals("argument")) {
 		String nm = text.toString();
+		text.setLength(0);
 		if (EPTS.maybeURL(nm)) {
 		    argList.add(nm);
 		} else {
