@@ -69,6 +69,7 @@ import org.bzdev.swing.SwingOps;
 import org.bzdev.swing.InputTablePane;
 import org.bzdev.swing.InputTablePane.ColSpec;
 import org.bzdev.swing.VTextField;
+import org.bzdev.swing.VTextFieldMenuItem;
 import org.bzdev.swing.text.CharDocFilter;
 
 /**
@@ -3587,6 +3588,9 @@ public class EPTSWindow {
     }
 
 
+    JMenuItem zoomOutMI;
+    JMenuItem zoomInMI;
+
 
     private void setMenus(JFrame frame, double w, double h) {
 	JMenuBar menubar = new JMenuBar();
@@ -4268,47 +4272,134 @@ public class EPTSWindow {
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    int lastIndex = zoomIndex;
+		    double lastZoom = zoom;
 		    zoomIndex = initialZoomIndex;
+		    zoom = zoomTable[initialZoomIndex];
+		    if (zoom != lastZoom) {
+			rezoom(zoom, lastZoom);
+		    }
+		    /*
 		    if (lastIndex != zoomIndex) {
 			rezoom();
 		    }
+		    */
 		}
 	    });
 	zoomMenu.add(menuItem);
 
-	menuItem = new JMenuItem(localeString("ZoomIn"));
-	menuItem.setAccelerator(KeyStroke.getKeyStroke
+	zoomInMI = new JMenuItem(localeString("ZoomIn"));
+	zoomInMI.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_EQUALS,
 				 InputEvent.CTRL_DOWN_MASK));
-	menuItem.addActionListener(new ActionListener() {
+	zoomInMI.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    int lastIndex = zoomIndex;
-		    zoomIndex++;
-		    if (zoomIndex >= zoomTable.length) {
-			zoomIndex = zoomTable.length -1;
+		    double lastZoom = zoom;
+		    if (zoom < zoomTable[zoomTable.length - 1]) {
+			zoomIndex++;
+			if (zoomIndex >= zoomTable.length) {
+			    zoomIndex = zoomTable.length -1;
+			}
+			zoom = zoomTable[zoomIndex];
 		    }
+		    if (zoom != lastZoom) {
+			rezoom(zoom, lastZoom);
+		    }
+		    /*
 		    if (lastIndex != zoomIndex) {
 			rezoom();
 		    }
+		    */
 		}
 	    });
-	zoomMenu.add(menuItem);
+	zoomMenu.add(zoomInMI);
 
-	menuItem = new JMenuItem(localeString("ZoomOut"));
-	menuItem.setAccelerator(KeyStroke.getKeyStroke
+	zoomOutMI = new JMenuItem(localeString("ZoomOut"));
+	zoomOutMI.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_MINUS, InputEvent.CTRL_DOWN_MASK));
-	menuItem.addActionListener(new ActionListener() {
+	zoomOutMI.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    int lastIndex = zoomIndex;
-		    zoomIndex--;
-		    if (zoomIndex < 0) {
-			zoomIndex = 0;
+		    double lastZoom = zoom;
+		    if (zoom <= zoomTable[0]) {
+			// no change
+		    } else if (zoom == zoomTable[zoomIndex]) {
+			zoomIndex--;
+			if (zoomIndex < 0) {
+			    zoomIndex = 0;
+			}
+			zoom = zoomTable[zoomIndex];
+		    } else {
+			zoom = zoomTable[zoomIndex];
 		    }
+		    if (zoom != lastZoom) {
+			rezoom(zoom, lastZoom);
+		    }
+		    /*
 		    if (lastIndex != zoomIndex) {
 			rezoom();
 		    }
+		    */
 		}
 	    });
+	zoomMenu.add(zoomOutMI);
+
+	CharDocFilter cdf = new CharDocFilter();
+	cdf.setAllowedChars("09..,,");
+	InputVerifier iv = new InputVerifier() {
+		public boolean verify(JComponent input) {
+		    VTextField tf = (VTextField)input;
+		    String string = tf.getText();
+		    try {
+			double value = Double.valueOf(string);
+			if (value > 0.0) return true;
+			else return false;
+		    } catch (Exception e) {
+			return false;
+		    }
+		}
+	    };
+	VTextField vtf = new VTextField("1.0", 6) {
+		@Override
+		protected void onAccepted() {
+		    try {
+			double z = Double.valueOf(getText());
+			int maxzi = zoomTable.length - 1;
+			if (z <= zoomTable[0]) {
+			    zoomIndex = 0;
+			} else {
+			    for (int i = 0; i <= maxzi; i++) {
+				if (z >= zoomTable[i]) {
+				    zoomIndex = i;
+				}
+			    }
+			}
+			if (zoom != z) {
+			    double oldzoom =zoom;
+			    zoom = z;
+			    rezoom(zoom, oldzoom);
+			}
+		    } catch (Exception e) {
+			return;
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    JOptionPane.showMessageDialog
+			(this, localeString("notPositive"),
+			 localeString("Error"), JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+        ((AbstractDocument)vtf.getDocument()).setDocumentFilter(cdf);
+	vtf.setInputVerifier(iv);
+	vtf.setAllowEmptyTextField(false);
+	menuItem = new VTextFieldMenuItem(vtf,
+					  localeString("ZoomTo"),
+					  frame,
+					  localeString("ZoomTo"),
+					  localeString("ZoomFactor"),
+					  true);
 	zoomMenu.add(menuItem);
 
 	zoomMenu.addSeparator();
@@ -4345,10 +4436,17 @@ public class EPTSWindow {
 	    menuItem.addActionListener(new ActionListener() {
 		    public void actionPerformed(ActionEvent e) {
 			int lastIndex = zoomIndex;
+			double lastZoom = zoom;
 			zoomIndex = index;
+			zoom = zoomTable[zoomIndex];
+			if (zoom != lastZoom) {
+			    rezoom(zoom, lastZoom);
+			}
+			/*
 			if (zoomIndex != lastIndex) {
 			    rezoom();
 			}
+			*/
 		    }
 		});
 	    zoomMenu.add(menuItem);
@@ -5664,12 +5762,18 @@ public class EPTSWindow {
 
 		public void doZoomIn() {
 		    int lastIndex = zoomIndex;
-		    zoomIndex++;
-		    if (zoomIndex >= zoomTable.length) {
-			zoomIndex = zoomTable.length -1;
+		    double lastZoom = zoom;
+		    if (zoom > zoomTable[zoomTable.length - 1]) {
+			// no change
+		    } else if (zoom >= zoomTable[zoomIndex]) {
+			zoomIndex++;
+			if (zoomIndex >= zoomTable.length) {
+			    zoomIndex = zoomTable.length - 1;
+			}
+			zoom = zoomTable[zoomIndex];
 		    }
-		    if (lastIndex != zoomIndex) {
-			rezoom();
+		    if (zoom != lastZoom /*lastIndex != zoomIndex*/) {
+			rezoom(zoom, lastZoom);
 			if (getStatus()) {
 			    accept();
 			} else {
@@ -5681,12 +5785,21 @@ public class EPTSWindow {
 		}
 		public void doZoomOut() {
 		    int lastIndex = zoomIndex;
-		    zoomIndex--;
-		    if (zoomIndex < 0) {
-			zoomIndex = 0;
+		    double lastZoom = zoom;
+		    if (zoom < zoomTable[0]) {
+			// no change
+		    } else if (zoom == zoomTable[zoomIndex]) {
+			zoomIndex--;
+			if (zoomIndex < 0) {
+			    zoomIndex = 0;
+			}
+			zoom = zoomTable[zoomIndex];
+		    } else {
+			// no change to the index.
+			zoom = zoomTable[zoomIndex];
 		    }
-		    if (lastIndex != zoomIndex) {
-			rezoom();
+		    if (zoom != lastZoom /*lastIndex != zoomIndex*/) {
+			rezoom(zoom, lastZoom);
 			if (getStatus()) {
 			    accept();
 			} else {
@@ -5697,8 +5810,10 @@ public class EPTSWindow {
 		    }
 		}
 		protected void setZoomEnabled() {
-		    enableIn(zoomIndex < zoomTable.length - 1);
-		    enableOut(zoomIndex > 0);
+		    enableIn(zoom < zoomTable[zoomTable.length - 1]);
+		    enableOut(zoom > zoomTable[0]);
+		    // enableIn(zoomIndex < zoomTable.length - 1);
+		    // enableOut(zoomIndex > 0);
 		}
 	    };
 	paxis1 = tfpane.principalAxis1();
@@ -6595,6 +6710,13 @@ public class EPTSWindow {
 	}
     }
 
+    /*
+    private void rezoom() {
+	double lastZoom = zoom;
+	zoom = zoomTable[zoomIndex];
+	rezoom(zoom, lastZoom);
+    }
+
     private void rezoom() {
 	JViewport vp = scrollPane.getViewport();
 	int vpw = vp.getWidth();
@@ -6622,6 +6744,44 @@ public class EPTSWindow {
 	vp.setViewPosition(new Point(x, y));
 	scrollPane.repaint();
     }
+    */
+
+    private void rezoom(double zoom, double oldzoom) {
+	JViewport vp = scrollPane.getViewport();
+	int vpw = vp.getWidth();
+	int vph = vp.getHeight();
+	Point p = vp.getViewPosition();
+	int x = (int)Math.round((p.x  + vpw/2)/oldzoom);
+	int y = (int)Math.round((p.y + vph/2)/oldzoom);
+	x = (int)Math.round(zoom*x) - vpw/2;
+	y = (int)Math.round(zoom*y) - vph/2;
+	Dimension d = new Dimension((int)Math.round(zoom*width),
+				    (int)Math.round(zoom*height));
+	panel.setPreferredSize(d);
+	panel.setSize(d);
+	int pw = (int)Math.round(d.getWidth());
+	int ph = (int)Math.round(d.getHeight());
+	if (x > (pw - vpw)) {
+	    x = pw - vpw;
+	}
+	if (y > (ph - vph)) {
+	    y = ph - vph;
+	}
+	if (x < 0) x = 0;
+	if (y < 0) y = 0;
+	vp.setViewPosition(new Point(x, y));
+	scrollPane.repaint();
+	if (zoom <= zoomTable[0]) {
+	    zoomInMI.setEnabled(true);
+	    zoomOutMI.setEnabled(false);
+	} else if (zoom >= zoomTable[zoomTable.length-1]) {
+	    zoomInMI.setEnabled(false);
+	    zoomOutMI.setEnabled(true);
+	} else {
+	    zoomInMI.setEnabled(true);
+	    zoomOutMI.setEnabled(true);
+	}
+    }
 
     private static int CTRL_SHIFT =
 	InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK;
@@ -6637,6 +6797,7 @@ public class EPTSWindow {
     KeyAdapter kba = new KeyAdapter() {
 	    public void keyTyped(KeyEvent e) {
 		int lastZoomInd = zoomIndex;
+		double lastZoom = zoom;
 		switch(e.getKeyChar()) {
 		case KeyEvent.VK_ENTER:
 		    if (locState) {
@@ -6779,6 +6940,7 @@ public class EPTSWindow {
 		    // in addition to the control key, so the menu-item
 		    // accelerator won't notice it.
 		    int lastZoomInd = zoomIndex;
+		    double lastZoom = zoom;
 		    switch (e.getKeyCode()) {
 		    case KeyEvent.VK_EQUALS:
 			zoomIndex++;
@@ -6788,18 +6950,24 @@ public class EPTSWindow {
 			break;
 		    case KeyEvent.VK_MINUS:
 			if (e.isControlDown()) {
-			    zoomIndex--;
-			    if (zoomIndex < 0) zoomIndex = 0;
+			    if (zoom < zoomTable[0]) {
+				// nothing to do
+			    } else {
+				zoomIndex--;
+				if (zoomIndex < 0) zoomIndex = 0;
+				zoom = zoomTable[zoomIndex];
+			    }
 			}
 			break;
 		    case KeyEvent.VK_0:
 			if (e.isControlDown()) {
 			    zoomIndex = initialZoomIndex;
+			    zoom = zoomTable[zoomIndex];
 			}
 			break;
 		    }
-		    if (lastZoomInd != zoomIndex) {
-			rezoom();
+		    if (zoom != lastZoom/*lastZoomInd != zoomIndex*/) {
+			rezoom(zoom, lastZoom);
 		    }
 		} else if ((modifiers&KEY_MASK) == InputEvent.CTRL_DOWN_MASK) {
 		    JViewport vp = scrollPane.getViewport();
