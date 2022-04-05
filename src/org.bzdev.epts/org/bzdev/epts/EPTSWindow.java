@@ -4400,6 +4400,7 @@ public class EPTSWindow {
 					  localeString("ZoomTo"),
 					  localeString("ZoomFactor"),
 					  true);
+	menuItem.setMnemonic(KeyEvent.VK_Z);
 	zoomMenu.add(menuItem);
 
 	zoomMenu.addSeparator();
