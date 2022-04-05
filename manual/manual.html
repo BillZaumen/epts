@@ -680,7 +680,9 @@ The <code>Edit</code> menu contains the following items:
     a previous path is extended via the <CODE>Edit</CODE> menu&#39;s
     <CODE>Add to a B&eacute;zier Path</CODE> item, that path will be
     moved to the end of the table. While creating a path, this option
-    undoes the last change.
+    undoes the last change. The same is true when the menu item
+    <CODE>Set Current Path/Location</CODE> is used: the point or path
+    selected will be the last one in the table.
   <LI><B><CODE>Append to a B&eacute;zier Path</CODE></B>. This option
     will extend a B&eacute;zier path.  If one of a path&#39;s nodes has
     been selected, that path will be extended. Otherwise a dialog box
@@ -811,15 +813,18 @@ The <code>Edit</code> menu contains the following items:
     option will delete a location or path. If a location or one of a path&#39;s
     nodes has been selected, that location or path will be deleted. Otherwise
     a dialog box will allow one to select the desired location or path.
-  <LI><B><CODE>Set Current Path/Location</CODE></B>. Set the table so that
-    a specific path or location is the preferred one when selecting points.
-    When locations or control points from different paths overlap, the
-    most recently added path or location will be preferred in resolving a
-    conflict.  This menu item makes a specified path or location the
-    most recently added path or location.  If there is no selected point,
-    a dialog box will prompt for a path or location by name.  If there is
-    a selected point, the point or location associated with that choice is
-    used to determine the path or location&#39;s name.
+  <LI><B><CODE>Set Current Path/Location</CODE></B>. Set the table so
+    that a specific path or location is the preferred one when
+    selecting points.  When locations or control points from different
+    paths overlap, the most recently added path or location will be
+    preferred in resolving a conflict.  This menu item makes a
+    specified path or location the most recently added path or
+    location.  If there is no selected point, a dialog box will prompt
+    for a path or location by name.  If there is a selected point, the
+    point or location associated with that choice is used to determine
+    the path or location&#39;s name.  This option reorders the table
+    so that the selected path or location is at its end.  Undoing the
+    last operation will then affect this path or location.
   <LI><B><CODE>Copy table as ECMAScript or ESP</CODE></B>. This option
     copies the table to the clipboard after formatting it as a series
     of ESP or ECMAScript statements (the syntax is identical in this
@@ -849,18 +854,22 @@ The <code>Edit</code> menu contains the following items:
 The <code>Zoom</code> menu contains the following items:
 <UL>
   <LI><B><CODE>Reset</CODE></B>. This option resets the image size so that
-    one pixel on the image takes up one point on the screen.
-  <LI><B><CODE>Zoom in</CODE></B>. This option increases the zoom factor by a
-  factor of 2.
-  <LI><B><CODE>Zoom out</CODE></B>. This option decreases the zoom factor by a
-    factor of 2.
+    one pixel on the image takes up one point on the screen, corresponding
+    to a zoom factor of 1.
+  <LI><B><CODE>Zoom In</CODE></B>. This option increases the zoom factor by a
+  factor of 2 when the zoom factor is 1 or a multiple of either 2 or 1/2.
+  <LI><B><CODE>Zoom Out</CODE></B>. This option decreases the zoom factor by a
+    factor of 2 when the zoom factor is 1 or a multiple of either 2 or 1/2.
   <LI><B><CODE>Zoom To</CODE></B>. This option sets the zoom factor to a
     user-specified value.
 </UL>
 The remaining items represent specific zoom factors numerically. The
 number of these entries depends on the image size. While the maximum zoom
 factor is 16, the minimum occurs when the drawing area would fit inside the
-EPTS window based on its initial dimensions.
+EPTS window based on its initial dimensions. The <CODE>Zoom In</CODE> and
+<CODE>Zoom Out</CODE> controls are disabled when the use of the control
+would lead to a zoom factor outside of this range shown as explicit values
+on the menu.
 
 <H2><A name="measureMenu"></A>The Measure-Distance menu</H2>
 The <CODE>Measure Distance</CODE> menu contains the following items:

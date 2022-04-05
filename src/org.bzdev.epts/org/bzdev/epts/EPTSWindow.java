@@ -197,6 +197,7 @@ class AnglePane extends JPanel {
     static String localeString(String key) {
 	return EPTS.localeString(key);
     }
+
     VTextField atf;		// angle text field
     static Vector<String> av = new Vector<>(2);
     static {
@@ -2054,6 +2055,10 @@ public class EPTSWindow {
 	return EPTS.localeString(key);
     }
 
+    static int vk(String key) {
+	return org.bzdev.swing.keys.VirtualKeys.lookup(localeString(key));
+    }
+
     // called when Path2DInfo.centerOfMassOf returned null,
     // which probably means all the points are colinear.
     static double[] getDefaultPrincipalAngleAndRef(Path2D path) {
@@ -2568,10 +2573,10 @@ public class EPTSWindow {
 		});
 	    JMenuBar menubar = new JMenuBar();
 	    JMenu fileMenu = new JMenu(localeString("File"));
-	    fileMenu.setMnemonic(KeyEvent.VK_F);
+	    fileMenu.setMnemonic(vk("VK_FILE"));
 	    menubar.add(fileMenu);
 	    JMenuItem menuItem = new JMenuItem(localeString("Close"),
-					       KeyEvent.VK_C);
+					       vk("VK_CLOSE"));
 	    menuItem.setAccelerator(KeyStroke.getKeyStroke
 				    (KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK));
 	    menuItem.addActionListener(new ActionListener() {
@@ -3596,14 +3601,14 @@ public class EPTSWindow {
 	JMenuBar menubar = new JMenuBar();
 	JMenuItem menuItem;
 	JMenu fileMenu = new JMenu(localeString("File"));
-	fileMenu.setMnemonic(KeyEvent.VK_F);
+	fileMenu.setMnemonic(vk("VK_FILE"));
 	menubar.add(fileMenu);
-	quitMenuItem = new JMenuItem(localeString("Quit"), KeyEvent.VK_Q);
+	quitMenuItem = new JMenuItem(localeString("Quit"), vk("VK_QUIT"));
 	quitMenuItem.setAccelerator(KeyStroke.getKeyStroke
 				    (KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK));
 	quitMenuItem.addActionListener(quitListener);
 	fileMenu.add(quitMenuItem);
-	saveMenuItem = new JMenuItem(localeString("Save"), KeyEvent.VK_S);
+	saveMenuItem = new JMenuItem(localeString("Save"), vk("VK_SAVE"));
 	saveMenuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
 	saveMenuItem.addActionListener(new ActionListener() {
@@ -3613,7 +3618,8 @@ public class EPTSWindow {
 	    });
 	fileMenu.add(saveMenuItem);
 
-	saveAsMenuItem = new JMenuItem(localeString("SaveAs"), KeyEvent.VK_A);
+	saveAsMenuItem = new JMenuItem(localeString("SaveAs"),
+				       vk("VK_SAVE_AS"));
 	saveAsMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    doSave(true);
@@ -3622,7 +3628,8 @@ public class EPTSWindow {
 	fileMenu.add(saveAsMenuItem);
 
 
-	menuItem = new JMenuItem(localeString("ConfigureGCS"), KeyEvent.VK_C);
+	menuItem = new JMenuItem(localeString("ConfigureGCS"),
+				 vk("VK_ConfigureGCS"));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    configGCSPane.saveState();
@@ -3736,7 +3743,8 @@ public class EPTSWindow {
 	configMenuItem = menuItem;
 	fileMenu.add(menuItem);
 
-	menuItem = new JMenuItem(localeString("PrintTable"), KeyEvent.VK_P);
+	menuItem = new JMenuItem(localeString("PrintTable"),
+				 vk("VK_PrintTable"));
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK));
 	menuItem.addActionListener(new ActionListener() {
@@ -3761,7 +3769,8 @@ public class EPTSWindow {
 	fileMenu.add(menuItem);
 
 
-	menuItem = new JMenuItem(localeString("createTemplate"), KeyEvent.VK_T);
+	menuItem = new JMenuItem(localeString("createTemplate"),
+				 vk("VK_CreateTemplate"));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    try {
@@ -3788,11 +3797,11 @@ public class EPTSWindow {
 	createTemplateMenuItem = menuItem;
 
 	JMenu editMenu = new JMenu(localeString("Edit"));
-	editMenu.setMnemonic(KeyEvent.VK_E);
+	editMenu.setMnemonic(vk("VK_EDIT"));
 	menubar.add(editMenu);
 
 	menuItem = new JMenuItem(localeString("UndoPointInsertion"),
-				 KeyEvent.VK_U);
+				 vk("VK_UndoPointInsertion"));
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_Z, InputEvent.CTRL_DOWN_MASK));
 	menuItem.addActionListener(new ActionListener() {
@@ -3863,7 +3872,8 @@ public class EPTSWindow {
 	    });
 	editMenu.add(menuItem);
 
-	menuItem = new JMenuItem(localeString("AppendBezier"), KeyEvent.VK_A);
+	menuItem = new JMenuItem(localeString("AppendBezier"),
+				 vk("VK_AppendBezier"));
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_A, InputEvent.ALT_DOWN_MASK));
 	addToPathMenuItem = menuItem;
@@ -4060,7 +4070,7 @@ public class EPTSWindow {
 
 
 	toCircleMenuItem = new JMenuItem(localeString("toCircle"),
-					 KeyEvent.VK_C);
+					 vk("VK_toCircle"));
 	toCircleMenuItem.setAccelerator(KeyStroke.getKeyStroke
 					(KeyEvent.VK_C,
 					 (InputEvent.ALT_DOWN_MASK
@@ -4078,7 +4088,7 @@ public class EPTSWindow {
 	editMenu.add(new JLabel(localeString("DialogBased")));
 
 	tfMenuItem = new JMenuItem(localeString("TransformedPath"),
-				      KeyEvent.VK_T);
+				   vk("VK_TransformedPath"));
 	tfMenuItem.setAccelerator (KeyStroke.getKeyStroke
 				      (KeyEvent.VK_T,
 				       (InputEvent.ALT_DOWN_MASK
@@ -4093,7 +4103,8 @@ public class EPTSWindow {
 
 
 	newTFMenuItem = new JMenuItem(localeString("newTransformedPath"),
-				      KeyEvent.VK_N);
+				      vk("VK_newTransformedPath")
+				      );
 	newTFMenuItem.setAccelerator (KeyStroke.getKeyStroke
 				      (KeyEvent.VK_N,
 				       (InputEvent.ALT_DOWN_MASK
@@ -4109,7 +4120,8 @@ public class EPTSWindow {
 
 	editMenu.addSeparator();
 
-	menuItem = new JMenuItem(localeString("DeleteBezier"), KeyEvent.VK_D);
+	menuItem = new JMenuItem(localeString("DeleteBezier"),
+				 vk("VK_DeleteBezier"));
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_X, InputEvent.ALT_DOWN_MASK));
 	deletePathMenuItem = menuItem;
@@ -4164,7 +4176,7 @@ public class EPTSWindow {
 	editMenu.add(menuItem);
 
 	menuItem = new JMenuItem(localeString("MakeCurrent"),
-				 KeyEvent.VK_S);
+				 vk("VK_MakeCurrent"));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    int index = -1;
@@ -4201,7 +4213,7 @@ public class EPTSWindow {
 	editMenu.add(menuItem);
 
 	menuItem = new JMenuItem(localeString("CopyTableECMAScript"),
-				 KeyEvent.VK_E);
+				 vk("VK_CopyTableECMAScript"));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    try {
@@ -4251,7 +4263,7 @@ public class EPTSWindow {
 	editMenu.add(menuItem);
 	editMenu.addSeparator();
 	menuItem = new JCheckBoxMenuItem(localeString("dragImageMode"), true);
-	menuItem.setMnemonic(KeyEvent.VK_D);
+	menuItem.setMnemonic(vk("VK_dragImageMode"));
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_D, InputEvent.ALT_DOWN_MASK));
 	menuItem.addActionListener(new ActionListener() {
@@ -4263,7 +4275,7 @@ public class EPTSWindow {
 	editMenu.add(menuItem);
 
 	JMenu zoomMenu = new JMenu(localeString("Zoom"));
-	zoomMenu.setMnemonic(KeyEvent.VK_Z);
+	zoomMenu.setMnemonic(vk("VK_Zoom"));
 	menubar.add(zoomMenu);
 
 	menuItem = new JMenuItem(localeString("Reset"));
@@ -4400,7 +4412,7 @@ public class EPTSWindow {
 					  localeString("ZoomTo"),
 					  localeString("ZoomFactor"),
 					  true);
-	menuItem.setMnemonic(KeyEvent.VK_Z);
+	menuItem.setMnemonic(vk("VK_ZoomTo"));
 	zoomMenu.add(menuItem);
 
 	zoomMenu.addSeparator();
@@ -4455,10 +4467,10 @@ public class EPTSWindow {
 	}
 
 	JMenu measureMenu = new JMenu(localeString("MeasureDistance"));
-	measureMenu.setMnemonic(KeyEvent.VK_M);
+	measureMenu.setMnemonic(vk("VK_MeasureDistance"));
 	menubar.add(measureMenu);
 	menuItem = new JMenuItem(localeString("ImageSpaceDistance"),
-				 KeyEvent.VK_I);
+				 vk("VK_ImageSpaceDistance"));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    measureDistance(false);
@@ -4469,7 +4481,7 @@ public class EPTSWindow {
 	measureMenu.add(menuItem);
 
 	menuItem = new JMenuItem(localeString("GCSDistance"),
-				 KeyEvent.VK_G);
+				 vk("VK_GCSDistance"));
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_G, InputEvent.ALT_DOWN_MASK));
 	menuItem.addActionListener(new ActionListener() {
@@ -4480,10 +4492,11 @@ public class EPTSWindow {
 	measureMenu.add(menuItem);
 
 	JMenu toolMenu = new JMenu(localeString("Tools"));
-	toolMenu.setMnemonic(KeyEvent.VK_T);
+	toolMenu.setMnemonic(vk("VK_Tools"));
 	menubar.add(toolMenu);
  
-	menuItem = new JMenuItem(localeString("ShowPointTable"), KeyEvent.VK_S);
+	menuItem = new JMenuItem(localeString("ShowPointTable"),
+				 vk("VK_ShowPointTable"));
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK));
 	menuItem.addActionListener(new ActionListener() {
@@ -4494,7 +4507,7 @@ public class EPTSWindow {
 	toolMenu.add(menuItem);
 
 	menuItem = new JMenuItem(localeString("EditVarParameters"),
-				 KeyEvent.VK_E);
+				 vk("VK_EditVarParameters"));
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_E, InputEvent.CTRL_DOWN_MASK));
 	menuItem.addActionListener(new ActionListener() {
@@ -4570,7 +4583,8 @@ public class EPTSWindow {
 	    });
 	toolMenu.add(menuItem);
 
-	menuItem = new JMenuItem(localeString("setMaxDelta"), KeyEvent.VK_G);
+	menuItem = new JMenuItem(localeString("setMaxDelta"),
+				 vk("VK_SetMaxDelta"));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    Integer newlevel = (Integer) JOptionPane.showInputDialog
@@ -4587,7 +4601,8 @@ public class EPTSWindow {
 	    });
 	toolMenu.add(menuItem);
 
-	menuItem = new JMenuItem(localeString("CreatePoint"), KeyEvent.VK_P);
+	menuItem = new JMenuItem(localeString("CreatePoint"),
+				 vk("VK_CreatePoint"));
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_P, InputEvent.ALT_DOWN_MASK));
 	menuItem.addActionListener(new ActionListener() {
@@ -4660,7 +4675,7 @@ public class EPTSWindow {
 	toolMenu.add(menuItem);
 
 	menuItem = new JMenuItem(localeString("CreateBezierPath"),
-				 KeyEvent.VK_B);
+				 vk("VK_CreateBezierPath"));
 	menuItem.setAccelerator(KeyStroke.getKeyStroke
 				(KeyEvent.VK_B, InputEvent.ALT_DOWN_MASK));
 	menuItem.addActionListener(new ActionListener() {
@@ -5486,10 +5501,11 @@ public class EPTSWindow {
 	toolMenu.add(menuItem);
 
 	final JMenu filterMenu = new JMenu(localeString("Filters"));
-	filterMenu.setMnemonic(KeyEvent.VK_L);
+	filterMenu.setMnemonic(vk("VK_Filters"));
 	menubar.add(filterMenu);
 	ptfilters = new PTFilters(frame, filterMenu, ptmodel);
-	menuItem = new JMenuItem(localeString("newFilter"), KeyEvent.VK_N);
+	menuItem = new JMenuItem(localeString("newFilter"),
+				 vk("VK_newFilter"));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    // create a new menu item.
@@ -5518,7 +5534,8 @@ public class EPTSWindow {
 		}
 	    });
 	filterMenu.add(menuItem);
-	menuItem = new JMenuItem(localeString("clearFilter"), KeyEvent.VK_C);
+	menuItem = new JMenuItem(localeString("clearFilter"),
+				 vk("VK_clearFilter"));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    ptfilters.clear();
@@ -5530,9 +5547,10 @@ public class EPTSWindow {
 	filterMenu.addSeparator();
 
 	JMenu helpMenu = new JMenu(localeString("Help"));
-	helpMenu.setMnemonic(KeyEvent.VK_H);
+	helpMenu.setMnemonic(vk("VK_Help"));
 	menubar.add(helpMenu);
-	menuItem = new JMenuItem(localeString("Manual"), KeyEvent.VK_M);
+	menuItem = new JMenuItem(localeString("Manual"),
+				 vk("VK_Manual"));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    showManual();
@@ -5540,7 +5558,8 @@ public class EPTSWindow {
 	    });
 	helpMenu.add(menuItem);
 
-	menuItem = new JMenuItem(localeString("PrintManual"), KeyEvent.VK_P);
+	menuItem = new JMenuItem(localeString("PrintManual"),
+				 vk("VK_PrintManual"));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    printManual();
@@ -5548,7 +5567,8 @@ public class EPTSWindow {
 	    });
 	helpMenu.add(menuItem);
 
-	menuItem = new JMenuItem(localeString("Browser"), KeyEvent.VK_B);
+	menuItem = new JMenuItem(localeString("Browser"),
+				 vk("VK_Browser"));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    showManualInBrowser();
@@ -5558,7 +5578,8 @@ public class EPTSWindow {
 	if (port == 0) {
 	    helpMenu.addSeparator();
 	    portMenuItem =
-		new JMenuItem(localeString("TCPPort"), KeyEvent.VK_T);
+		new JMenuItem(localeString("TCPPort"),
+			      vk("VK_TCPPort"));
 	    portTextField = new PortTextField(5);
 	    portTextField.setTCP(true);
 	    portTextField.setPortName(localeString("mwebserver"));
@@ -5587,7 +5608,8 @@ public class EPTSWindow {
 	    portMenuItem.setEnabled(true);
 	    helpMenu.add(portMenuItem);
 	    webMenuItem =
-		new JMenuItem(localeString("StartWebserver"), KeyEvent.VK_W);
+		new JMenuItem(localeString("StartWebserver"),
+			      vk("VK_StartWebserver"));
 	    webMenuItem.setEnabled(true);
 	    webMenuItem.addActionListener(new ActionListener() {
 		    public void actionPerformed(ActionEvent e) {
