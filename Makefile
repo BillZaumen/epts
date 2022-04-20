@@ -388,6 +388,17 @@ install-pop: all
 	install -d $(APP_POPICON_DIR)
 	install -d $(MIME_POPICON_DIR)
 	install -m 0644 -T $(SOURCEICON) $(APP_POPICON_DIR)/$(TARGETICON)
+	install -m 0644 -T $(SOURCE_FILE_ICON) \
+		$(MIME_POPICON_DIR)/$(TARGET_FILE_ICON)
+	install -m 0644 -T $(SOURCE_CFILE_ICON) \
+		$(MIME_POPICON_DIR)/$(TARGET_CFILE_ICON)
+	install -m 0644 -T $(SOURCE_TCFILE_ICON) \
+		$(MIME_POPICON_DIR)/$(TARGET_TCFILE_ICON)
+
+# Save these until we are sure we don't need them. The actions
+# were part of install-pop but were deleted because the PNG files
+# ssem to be causing a problem when installed in the Pop icon directory
+install-pop-saved-actions:
 	for i in $(POPICON_WIDTHS) ; do \
 	    install -d $(POPICON_DIR)/$${i}x$${i}/$(APPS_DIR) ; \
 	    inkscape -w $$i --export-filename=tmp.png $(SOURCEICON) ; \
@@ -403,12 +414,6 @@ install-pop: all
 		$(POPICON_DIR)/$${i}x$${i}@2x/$(APPS_DIR)/$(TARGETICON_PNG); \
 	    rm tmp.png ; \
 	done
-	install -m 0644 -T $(SOURCE_FILE_ICON) \
-		$(MIME_POPICON_DIR)/$(TARGET_FILE_ICON)
-	install -m 0644 -T $(SOURCE_CFILE_ICON) \
-		$(MIME_POPICON_DIR)/$(TARGET_CFILE_ICON)
-	install -m 0644 -T $(SOURCE_TCFILE_ICON) \
-		$(MIME_POPICON_DIR)/$(TARGET_TCFILE_ICON)
 	for i in $(POPICON_WIDTHS) ; do \
 	    inkscape -w $$i --export-filename=tmp.png $(SOURCE_FILE_ICON) ; \
 	    dir=$(POPICON_DIR)/$${i}x$${i}/$(MIMETYPES_DIR) ; \
@@ -434,6 +439,7 @@ install-pop: all
 	    install -m 0644 -T tmp.png $$dir/$(TARGET_TCFILE_ICON_PNG);\
 	    rm tmp.png ; \
 	done
+
 
 install-links:
 	 [ -h $(BZDEVDIR)/libbzdev.jar ] || \
