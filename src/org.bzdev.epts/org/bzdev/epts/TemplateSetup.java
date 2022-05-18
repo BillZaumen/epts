@@ -2817,7 +2817,7 @@ public class TemplateSetup {
 			    basicData.useBuiltins =
 				useBuiltinCheckBox.isSelected();
 			    templateLabel.setEnabled(false);
-			    // templateTF.setEnabled(false);
+			    templateTF.setEnabled(false);
 			    basicData.template = templateTF.getText().trim();
 			    if (basicData.template
 				.equals("resource:HTMLImageMap")) {
@@ -2900,7 +2900,17 @@ public class TemplateSetup {
 		    templateLabel =
 			new JLabel(localeString("templateTF"));
 		    templateTF = new JTextField(32);
-		    templateTF.setDisabledTextColor(Color.BLACK);
+		    boolean darkmode = DarkmodeMonitor.getDarkmode();
+		    /*
+		     * We don't want to 'dim' this control because users
+		     * should be able to read the value easily: the control
+		     * is disabled because it cannot be modified, not because
+		     * it is not in use. The color is slightly different than
+		     * pure white or pure black, but not by much.
+		     */
+		    templateTF.setDisabledTextColor(darkmode?
+						    Color.WHITE.darker():
+						    Color.BLACK.brighter());
 		    templateTF.addKeyListener(new KeyAdapter() {
 			    @Override
 			    public void keyReleased(KeyEvent ke) {
@@ -2970,7 +2980,29 @@ public class TemplateSetup {
 		    savedStateLabel =
 			new JLabel(localeString("savedState"));
 		    savedStateTF = new JTextField(32);
-		    savedStateTF.setDisabledTextColor(Color.BLACK);
+		    /*
+		     * We don't want to 'dim' this control because users
+		     * should be able to read the value easily: the control
+		     * is disabled because it cannot be modified, not because
+		     * it is not in use. The color is slightly different than
+		     * pure white or pure black, but not by much.
+		     */
+		    savedStateTF.setDisabledTextColor(darkmode?
+						      Color.WHITE.darker():
+						      Color.BLACK.brighter());
+		    DarkmodeMonitor.addPropertyChangeListener(evt -> {
+			    boolean dm = DarkmodeMonitor.getDarkmode();
+			    templateTF.setDisabledTextColor(dm?
+							    Color.WHITE
+							    .darker():
+							    Color.BLACK
+							    .brighter());
+			    savedStateTF.setDisabledTextColor(dm?
+							      Color.WHITE
+							      .darker():
+							      Color.BLACK
+							      .brighter());
+			});
 		    savedStateTF.addKeyListener(new KeyAdapter() {
 			    @Override
 			    public void keyReleased(KeyEvent ke) {
@@ -3099,7 +3131,7 @@ public class TemplateSetup {
 			    templateTypeCB.setEnabled(false);
 			    setupAllowedSubpaths();
 			    setupCompoundPaths();
-			    // templateLabel.setEnabled(false);
+			    templateLabel.setEnabled(false);
 			    templateTF.setEnabled(false);
 			    templateButton.setEnabled(false);
 			    savedStateButton.setEnabled(false);
