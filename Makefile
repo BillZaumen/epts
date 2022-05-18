@@ -1,5 +1,5 @@
 #
-# GNU Make file.
+# GNU Make file for epts.
 #
 
 DATE = $(shell date -R)
