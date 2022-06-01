@@ -127,7 +127,9 @@ public class ScriptingEnv {
 	ScriptingSecurityManager sm = new ScriptingSecurityManager();
 	scripting.putScriptObject("scripting", scripting);
 	scripting.putScriptObject("epts", epts);
-	System.setSecurityManager(sm);
+	try {
+	    System.setSecurityManager(sm);
+	} catch(UnsupportedOperationException eu) {}
     }
 
     public ScriptingEnv(String languageName, String a2dName,
@@ -143,7 +145,9 @@ public class ScriptingEnv {
 	scripting.putScriptObject("scripting", scripting);
 	epts = new EPTSInfo(width, height);
 	scripting.putScriptObject("epts", epts);
-	System.setSecurityManager(sm);
+	try {
+	    System.setSecurityManager(sm);
+	} catch(UnsupportedOperationException eu) {}
     }
 
     public ScriptingEnv(String languageName, String a2dName,
@@ -162,7 +166,9 @@ public class ScriptingEnv {
 	epts = new EPTSInfo(width, height, userDist, gcsDist,
 			    rpn, xorigin, yorigin);
 	scripting.putScriptObject("epts", epts);
-	System.setSecurityManager(sm);
+	try {
+	    System.setSecurityManager(sm);
+	} catch(UnsupportedOperationException eu) {}
     }
 
     public boolean canRescale() {
