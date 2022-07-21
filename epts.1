@@ -772,11 +772,7 @@ may consist of an identifier, immediately followed by a ":", in turn
 followed by a series of comma-separated path names.  This in effect
 creates a path with a new name that is a concatenation of paths specified
 in EPTS's table. The main use of this variant is to create shapes that
-may have holes in them.  If a
-.B \-\-pname
-option is present, no
-.B \-\-tname
-options are allowed. Template options used with the
+may have holes in them. Template options used with the
 .B \-\-pname
 option are
 .BR \-\-elevate ,
@@ -789,7 +785,10 @@ The
 .B \-\-pname
 and
 .B \-\-tname
-options are mutually exclusive.
+options are mutually exclusive.  For templates that use path-iterator
+keymaps, at least one
+.B \-\- pname
+option must be present.
 .TP
 .B \-\-public
 This option applies when the
