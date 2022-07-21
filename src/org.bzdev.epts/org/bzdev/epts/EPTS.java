@@ -4045,11 +4045,16 @@ public class EPTS {
 			    TemplateProcessor.KeyMapList kmaplist =
 				new TemplateProcessor.KeyMapList();
 			    for (PnameInfo info: pnameInfoList) {
-				kmaplist.add(EPTSWindow.getPathKeyMap
-					     (ptmodel,
-					      info.name, info.nameArray,
-					      flatness, limit, straight,
-					      elevate, gcs));
+				TemplateProcessor.KeyMap km =
+				    EPTSWindow.getPathKeyMap
+				    (ptmodel, info.name, info.nameArray,
+				     flatness, limit, straight, elevate, gcs);
+				if (km == null) {
+				    displayError
+					(errorMsg("noPathFor", info.name));
+				    System.exit(1);
+				}
+				kmaplist.add(km);
 			    }
 			    kmap.put("paths", kmaplist);
 			    kmap.put("width", "" + parser.getWidth());

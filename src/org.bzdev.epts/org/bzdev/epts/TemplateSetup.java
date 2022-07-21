@@ -294,7 +294,8 @@ public class TemplateSetup {
     };
 
     private static String chooseTemplateOptions2[] = {
-	"area", "circumference", "pathlength", "SegmentsCSV"
+	"area", "areaVars", "circumference", "circumferenceVars",
+	"pathlength", "pathlengthVars", "SegmentsCSV"
     };
 
     // Following so the GUI will be localized

@@ -1,2 +1,2 @@
-$(paths)circumference for $(varname) = $(circumference)
+$(paths:endPaths)circumference for $(varname) = $(circumference)
 $(endPaths)

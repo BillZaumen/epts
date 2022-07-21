@@ -772,9 +772,11 @@ may consist of an identifier, immediately followed by a ":", in turn
 followed by a series of comma-separated path names.  This in effect
 creates a path with a new name that is a concatenation of paths specified
 in EPTS's table. The main use of this variant is to create shapes that
-may have holes in them.  Only one
+may have holes in them.  If a
 .B \-\-pname
-option may appear. Template options used with the
+option is present, no
+.B \-\-tname
+options are allowed. Template options used with the
 .B \-\-pname
 option are
 .BR \-\-elevate ,
@@ -783,6 +785,11 @@ option are
 .BR \-\-limit ,
 and
 .BR \-\-straight .
+The
+.B \-\-pname
+and
+.B \-\-tname
+options are mutually exclusive.
 .TP
 .B \-\-public
 This option applies when the
@@ -1084,11 +1091,13 @@ from the protocol by a ":") are
 .BR YAMLPaths ,
 and
 .BR YAML .
-
 For path-iterator templates, the pathname component of the URLs are
 .BR area ,
+.BR areaVars ,
 .BR circumference ,
+.BR circumferenceVars ,
 .BR pathlength ,
+.BR pathlengthVars ,
 and
 .BR SegmentsCSV .
 These templates are described below.
@@ -1117,7 +1126,11 @@ option, there may be a
 option. Multiple
 .B \-\-tname
 options may be used. If any are present, only the specified portions of
-the EPTS table will appear in the output.
+the EPTS table will appear in the output.  The
+.B \-\-tname
+option and the
+.B \-\-pname
+option are mutually exclusive.
 .TP
 .B \-\-web
 This option indicates that a web server will be started and the GUI will
@@ -1446,6 +1459,23 @@ the command was run with the
 option, the units are graph-coordinate-space units; otherwise they are
 user-space units.
 .TP
+.B resource:areaVars
+This template requires the use of a
+.B \-\-pname
+option to specify a path name, or to create a new path that is the
+concatenation of several existing paths.  It provides the area
+enclosed by the path; "NaN" if the path contains any open segments. If
+the command was run with the
+.B \-\-gcs
+option, the units are graph-coordinate-space units; otherwise they are
+user-space units.  The output will be
+formatted as one or more 'var' statements, with
+.B _area
+appended to the names provided at the start of each
+.B \-\-pname
+option. The variables will be suitable for use by the scripting
+languages ECMAScript and ESP.
+.TP
 .B resource:circumference
 This template requires the use of a
 .B \-\-pname
@@ -1457,15 +1487,50 @@ contains any open segments. If the command was run with the
 option, the units are graph-coordinate-space units; otherwise they are
 user-space units.
 .TP
-.B resource:pathlength
+.B resource:circumferenceVars
 This template requires the use of a
 .B \-\-pname
 option to specify a path name, or to create a new path that is the
 concatenation of several existing paths.  It provides the
-path length, summed over all segments making up the path. If the command was run with the
+circumference of the area enclosed by the path; "NaN" if the path
+contains any open segments. If the command was run with the
+.B \-\-gcs
+option, the units are graph-coordinate-space units; otherwise they are
+user-space units. The output will be
+formatted as one or more 'var' statements, with
+.B _circumference
+appended to the name provided at the start of each
+.B \-\-pname
+option.  The variables will be suitable for use by the scripting
+languages ECMAScript and ESP.
+.TP
+.B resource:pathlength
+This template requires the use of a
+.B \-\-pname
+option to specify a path name, or to create a new path that is the
+concatenation of several existing paths.  It provides the path length,
+summed over all segments making up the path. If the command was run
+with the
 .B \-\-gcs
 option, the units are graph-coordinate-space units; otherwise they are
 user-space units.
+.TP
+.B resource:pathlengthVars
+This template requires the use of a
+.B \-\-pname
+option to specify a path name, or to create a new path that is the
+concatenation of several existing paths.  It provides the path length,
+summed over all segments making up the path. If the command was run
+with the
+.B \-\-gcs
+option, the units are graph-coordinate-space units; otherwise they are
+user-space units. The output will be formatted as one or more 'var'
+statements, with
+.B _length
+appended to the name provided at the start of each
+.B \-\-pname
+option. The variables will be suitable for use by the scripting
+languages ECMAScript and ESP.
 .TP
 .B resource:SegmentsCSV
 This template requires the use of a

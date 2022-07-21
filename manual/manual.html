@@ -1714,6 +1714,17 @@ The built-in path-iterator templates are
     any open segments. If the command was run with the
     <CODE>--gcs</CODE> option, the units are graph-coordinate-space
     units; otherwise they are user-space units.
+  <LI><B><CODE>resource:areaVars</CODE></B>. This template requires the use of
+    a <CODE>--pname</CODE> option to specify a path name, or to create a
+    new path that is the concatenation of several existing paths.  It
+    provides the area enclosed by the path; "NaN" if the path contains
+    any open segments. If the command was run with the
+    <CODE>--gcs</CODE> option, the units are graph-coordinate-space
+    units; otherwise they are user-space units.  The output will be
+    formatted as one or more 'var' statements, with "_area" appended
+    to the name provided at the start of each <CODE>--pname</CODE>
+    option.  The variables will be suitable for use by the scripting
+    languages ECMAScript and ESP.
   <LI><B><CODE>resource:circumference</CODE></B>. This template requires
     the use of a <CODE>--pname</CODE> option to specify a path name, or
     to create a new path that is the concatenation of several existing
@@ -1721,6 +1732,17 @@ The built-in path-iterator templates are
     contains any open segments. If the command was run with the
     <CODE>--gcs</CODE> option, the units are graph-coordinate-space
     units; otherwise they are user-space units.
+  <LI><B><CODE>resource:circumferenceVars</CODE></B>. This template requires
+    the use of a <CODE>--pname</CODE> option to specify a path name, or
+    to create a new path that is the concatenation of several existing
+    paths.  It provides the circumference the path; "NaN" if the path
+    contains any open segments. If the command was run with the
+    <CODE>--gcs</CODE> option, the units are graph-coordinate-space
+    units; otherwise they are user-space units.  The output will be
+    formatted as one or more 'var' statements, with "_circumference"
+    appended to the name provided at the start of
+    each <CODE>--pname</CODE> option.  The variables will be suitable
+    for use by the scripting languages ECMAScript and ESP.
   <LI><B><CODE>resource:pathlength</CODE></B>. This template requires
     the use of a <CODE>--pname</CODE> option to specify a path name, or
     to create a new path that is the concatenation of several existing
@@ -1728,6 +1750,17 @@ The built-in path-iterator templates are
     of all its segments). If the command was run with the
     <CODE>--gcs</CODE> option, the units are graph-coordinate-space
     units; otherwise they are user-space units.
+  <LI><B><CODE>resource:pathlengthVars</CODE></B>. This template requires
+    the use of a <CODE>--pname</CODE> option to specify a path name, or
+    to create a new path that is the concatenation of several existing
+    paths.  It provides the length of the path (the sum of the lengths
+    of all its segments). If the command was run with the
+    <CODE>--gcs</CODE> option, the units are graph-coordinate-space
+    units; otherwise they are user-space units.  The output will be
+    formatted as one or more 'var' statements, with "_length" appended
+    to the name provided at the start of each <CODE>--pname</CODE>
+    option. The variables will be suitable for use by the scripting
+    languages ECMAScript and ESP.
   <LI><B><CODE>resource:SegmentsCSV</CODE></B>.
     This template requires the use of a
     <CODE>--pname</CODE> option to specify a path name, or to create a
@@ -2650,8 +2683,7 @@ The options specific to the EPTS command when templates are used are:
     package.
   <LI><B><CODE>--pname</CODE></B> <U>PNAME</U>. This option
     selects a variable name, <U>PNAME</U>, that must match the name
-    of a path.  There may be at most one <CODE>--pname</CODE>
-    option. It is used with templates that use the
+    of a path. It is used with templates that use the
     <A href="#pitemplates">path-iterator format</A>. <U>PNAME</U>
     may also consist of an identifier providing a variable name,
     immediately followed by a ":", in turn followed by a series of
@@ -2661,7 +2693,9 @@ The options specific to the EPTS command when templates are used are:
     have holes in them. The options <CODE>--elevate</CODE>,
     <CODE>flatness</CODE>, <CODE>--gcs</CODE>,  <CODE>limit</CODE>,
     and/or <CODE>--straight</CODE> may be used when a
-    <CODE>--pname</CODE> option is present.
+    <CODE>--pname</CODE> option is present.  The options
+    <CODE>--pname</CODE> and <CODE>--tname</CODE> are mutually
+    exclusive.
   <LI><B><CODE>--public</CODE></B>. This option applies when the
     <CODE>--tname</CODE> option is used and indicates that any Java
     class being defined by a template should be a public class.
@@ -2863,8 +2897,11 @@ The options specific to the EPTS command when templates are used are:
     <CODE>resource:ECMAScriptPaths</CODE>, and
     <CODE>resource:ECMAScript</CODE>. These must be used without
     the <CODE>--pname</CODE> option. Supported path-iterator templates
-    are <CODE>resource:area</CODE>, <CODE>resource:circumference</CODE>,
-    <CODE>resource:pathlength</CODE>, and <CODE>resource:SegmentsCSV</CODE>.
+    are <CODE>resource:area</CODE>, <CODE>resource:areaVars</CODE>,
+    <CODE>resource:circumference</CODE>,
+    <CODE>resource:circumferenceVars</CODE>
+    <CODE>resource:pathlength</CODE>, <CODE>resource:pathlengthVars</CODE>,
+    and <CODE>resource:SegmentsCSV</CODE>.<
     These must be used with the <CODE>--pname</CODE> option.
   <LI><B><CODE>--tname</CODE></B> <U>TNAME</U>. This option&#39;s
     argument <U>TNAME</U> provides the name of a variable that names
@@ -2877,7 +2914,9 @@ The options specific to the EPTS command when templates are used are:
     series of comma-separated path names.  This in effect creates a
     path with a new name that is a concatenation of paths specified
     in EPTS&#39;s table. Before each <CODE>--tname</CODE> option, there
-    may be a <CODE>--winding-rule</CODE> option.
+    may be a <CODE>--winding-rule</CODE> option.   The options
+    <CODE>--pname</CODE> and <CODE>--tname</CODE> are mutually
+    exclusive.
   <LI><B><CODE>--web</CODE></B>. The <CODE>--port</CODE> option should
     also be used to provide a non-zero port number. This option will
     start an embedded web server allowing the manual to be shown.
