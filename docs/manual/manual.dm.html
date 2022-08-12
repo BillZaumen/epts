@@ -767,7 +767,7 @@ The <code>Edit</code> menu contains the following items:
     path and its <A href="#principalAxes">principal axes</A> are
     shown.  For example, the following dialog box
     <BR><BR>
-    <CENTER><IMG src="NTPDialog.png" HEIGHT="360"></CENTER>
+    <CENTER><IMG src="TPDialog.png" HEIGHT="360"></CENTER>
     <BR>
     chooses options for scaling the distances along the second
     principal axis by 1/2, then rotating by 20 degrees around the
@@ -799,12 +799,13 @@ The <code>Edit</code> menu contains the following items:
     case where the principal axes have the same length, a 90%deg;
     counterclockwise rotation of the first principal axis will result
     in an axes parallel to the second. If the <CODE>OK</CODE> button
-    is pressed, EPTS will ask for a name for the new shape. The
-    <CODE>Cancel</CODE> button will cancel this operation.  The EPTS
-    window&#39;s controls are disabled while this dialog box is
-    visible.  The dialog box, however, does provide buttons allowing
-    one to zoom in or zoom out. This menu item includes an option for
-    reversing the path.
+    is pressed, EPTS will complete the operation. If the
+    <CODE>Apply</CODE> button is pressed, a bounding box showing
+    the new location The <CODE>Cancel</CODE> button will cancel this
+    operation.  The EPTS window&#39;s controls are disabled while this
+    dialog box is visible.  The dialog box, however, does provide
+    buttons allowing one to zoom in or zoom out. This dialog box
+    includes an option for reversing the path.
    <LI><B><CODE>New Transformed Path</CODE></B>. This option&#39;s behavior
     is nearly identical to the <CODE>Transform an Existing Path</CODE>
     option, but instead of altering the original shape, a new one is
@@ -1069,6 +1070,14 @@ displayed in textual form. This menu contains the following items:
   <LI>Three Menu items provide explicit coordinates by opening a dialog
     box with fields containing various coordinates, lengths, and angles:
     <UL>
+      <LI><B><CODE>Get X-Y Coordinates (GCS)</CODE></B>. This menu item
+	will configure EPTS so that the X and Y coordinates of a point
+	(specified in GCS units), will be determined by clicking an
+	existing point.  This can be used to arrange for lines to
+	meet at points with exactly the same coordinates.  The existing
+	points are shown as filled circles (black surrounded by a white
+	ring). These points are not linked in any way so that transforming
+	one path will not transform another.
       <LI><B><CODE>Set X-Y Coordinates (GCS)</CODE></B>. This menu item
 	will open a dialog box that will ask for the X and Y
 	coordinates of a point specified in GCS units:

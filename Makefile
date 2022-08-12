@@ -183,6 +183,7 @@ RESOURCES = manual/manual.xml \
 	docs/manual/table2.png \
 	docs/manual/terminal.png \
 	docs/manual/LocationDialog.png \
+	docs/manual/TPDialog.png \
 	docs/manual/NTPDialog.png \
 	docs/manual/NTPWindow.png \
 	docs/manual/AddVector.png \

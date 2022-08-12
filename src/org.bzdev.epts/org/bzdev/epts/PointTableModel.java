@@ -832,7 +832,9 @@ public class
 	    int startInd = findStart(start);
 	    if (startInd != -1) {
 		String vname = getVariableName(startInd);
-		if (vname != null) {
+		int endInd = findEnd(startInd);
+		if (vname != null && endInd != -1 &&
+		    isToCirc(startInd, endInd) == null) {
 		    tcnames.remove(vname);
 		}
 	    }

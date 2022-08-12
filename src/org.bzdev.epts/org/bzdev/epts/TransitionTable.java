@@ -54,6 +54,8 @@ public class TransitionTable {
     private static JMenuItem vectorMenuItem =
 	new JMenuItem(localeString("Vector"));
     private static JMenuItem arcMenuItem = new JMenuItem(localeString("Arc"));
+    private static JMenuItem gotoMenuItem =
+	new JMenuItem(localeString("GotoExistingPoint"));
     private static JMenuItem locMenuItem = new JMenuItem(localeString("Loc"));
     private static JMenuItem offsetMenuItem =
 	new JMenuItem(localeString("OffsetMenuItem"));
@@ -63,6 +65,8 @@ public class TransitionTable {
 	vectorMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, 0));
 	arcMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, 0));
 	arcMenuItem.setEnabled(false);
+	gotoMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, 0));
+	gotoMenuItem.setEnabled(false);
 	locMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, 0));
 	locMenuItem.setEnabled(false);
 	offsetMenuItem.setAccelerator
@@ -76,6 +80,7 @@ public class TransitionTable {
 
     static JMenuItem getVectorMenuItem() {return vectorMenuItem;}
     static JMenuItem getArcMenuItem() {return arcMenuItem;}
+    static JMenuItem getGotoMenuItem() {return gotoMenuItem;}
     static JMenuItem getLocMenuItem() {return locMenuItem;}
     static JMenuItem getOffsetMenuItem() {return offsetMenuItem;}
 
@@ -177,6 +182,7 @@ public class TransitionTable {
 	}
 	vectorMenuItem.setEnabled(false);
 	arcMenuItem.setEnabled(false);
+	gotoMenuItem.setEnabled(false);
 	locMenuItem.setEnabled(false);
     }
 
@@ -322,6 +328,7 @@ public class TransitionTable {
 	    currentState = newState;
 	    if (currentState == SplinePathBuilder.CPointType.MOVE_TO) {
 		vectorMenuItem.setEnabled(true);
+		gotoMenuItem.setEnabled(true);
 		arcMenuItem.setEnabled(true);
 	    } else if (currentState == SplinePathBuilder.CPointType.SEG_END) {
 		vectorMenuItem.setEnabled(true);
@@ -331,8 +338,10 @@ public class TransitionTable {
 		arcMenuItem.setEnabled(false);
 	    }
 	    if (currentState != EPTS.Mode.PATH_END) {
+		gotoMenuItem.setEnabled(true);
 		locMenuItem.setEnabled(true);
 	    } else {
+		gotoMenuItem.setEnabled(false);
 		locMenuItem.setEnabled(false);
 	    }
 	    return result; 

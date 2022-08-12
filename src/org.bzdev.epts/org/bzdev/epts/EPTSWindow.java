@@ -1610,7 +1610,9 @@ abstract class TransformPane extends JPanel {
 	zoomOut.setEnabled(enabled);
     }
 
-    public TransformPane(PointTableModel ptmodel, String name) {
+    public TransformPane(PointTableModel ptmodel, String name,
+			 double scaleFactor)
+    {
 	super();
 	oldName = name;
 	this.ptmodel = ptmodel;
@@ -1636,6 +1638,12 @@ abstract class TransformPane extends JPanel {
 	    } else {
 		principalAngle = 0.0;
 	    }
+	    double dx =  20*scaleFactor*Math.cos(principalAngle);
+	    double dy =  20*scaleFactor*Math.sin(principalAngle);
+	    paline1 = new Line2D.Double(ref.getX(), ref.getY(),
+					ref.getX() + dx, ref.getY() + dy);
+	    paline2 = new Line2D.Double(ref.getX(), ref.getY(),
+					ref.getX() - .3*dy, ref.getY() + .3*dx);
 	} else if (Math.abs((principalMoments[0]
 			     - principalMoments[1])/mean) < 0.01) {
 	    // we can't see the difference so use X and Y axes
@@ -2124,6 +2132,12 @@ public class EPTSWindow {
 	    double dsq = x*x + y*y;
 	    if (dsq > distsq) {
 		distsq = dsq;
+		vx = x;
+		vy = y;
+	    } else if (dsq > 0.999 *dsq) {
+		// If close to a tie, prefer the one closest to the
+		// end of the path.  This happens regularly with
+		// a single straight-line segment.
 		vx = x;
 		vy = y;
 	    }
@@ -2738,8 +2752,17 @@ public class EPTSWindow {
     int initialZoomIndex = -1;
 
 
+    private String prevModeline = "";
     public void setModeline(String line) {
+	if (!line.equals(prevModeline)) {
+	    if (locState == false) {
+		// when locState is true, the prevModeline test
+		// doesn't work
+		endGotoMode();
+	    }
+	}
 	modeline.setText(" " + line);
+	prevModeline = line;
     }
 
     ActionListener createLMIActionListener(final LocationFormat fmt) {
@@ -3426,6 +3449,14 @@ public class EPTSWindow {
 	    String vname;
 	    if (vnames.length == 1) {
 		vname = vnames[0];
+		if (JOptionPane.OK_OPTION !=
+		    JOptionPane.showConfirmDialog
+		    (frame, String.format(localeString("toCircQ"), vname),
+		     localeString("toCircQTitle"),
+		     JOptionPane.OK_CANCEL_OPTION,
+		     JOptionPane.QUESTION_MESSAGE)) {
+		    return;
+		}
 	    } else {
 		vname = (String)JOptionPane.showInputDialog
 		    (frame, localeString("toCircle1"),
@@ -3540,6 +3571,10 @@ public class EPTSWindow {
 	    i++;
 	}
 	ptmodel.addRow("", EPTS.Mode.PATH_END, 0.0, 0.0, 0.0, 0.0);
+	end = ptmodel.getRowCount() - 1;
+	ptmodel.fireTableChanged(start, end, PointTableModel.Mode.MODIFIED);
+	selectedRow = -1;
+	setModeline(errorMsg("lineChangedToCircle", oldPathName));
 	toCircleMenuItem.setEnabled
 	    (!ptmodel.getToCircleVariableNames().isEmpty());
     }
@@ -5026,6 +5061,13 @@ public class EPTSWindow {
 	}
 	toolMenu.addSeparator();
 	toolMenu.add(new JLabel(localeString("bezierOps")));
+	menuItem = TransitionTable.getGotoMenuItem();
+	menuItem.addActionListener( new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    startGotoMode();
+		}
+	    });
+	toolMenu.add(menuItem);
 	menuItem = TransitionTable.getLocMenuItem();
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
@@ -5082,6 +5124,7 @@ public class EPTSWindow {
 			    }
 			    locState = false;
 			    setModeline("");
+			    TransitionTable.getGotoMenuItem().setEnabled(false);
 			    TransitionTable.getLocMenuItem().setEnabled(false);
 			    resetState ();
 			} else {
@@ -5108,6 +5151,8 @@ public class EPTSWindow {
 				rbmi.setSelected(true);
 			    } else {
 				resetState();
+				TransitionTable.getGotoMenuItem()
+				    .setEnabled(false);
 				TransitionTable.getLocMenuItem()
 				    .setEnabled(false);
 			    }
@@ -5766,7 +5811,8 @@ public class EPTSWindow {
     }
 
     private void onNewTransformedPath(String oldPathName, boolean copyMode) {
-	final TransformPane tfpane = new TransformPane(ptmodel, oldPathName) {
+	final TransformPane tfpane = new
+	    TransformPane(ptmodel, oldPathName, scaleFactor) {
 		Point vpp = scrollPane.getViewport().getViewPosition();
 		public void accept(){
 		    tmpTransformedPath = getNewPath();
@@ -5841,15 +5887,19 @@ public class EPTSWindow {
 	    };
 	paxis1 = tfpane.principalAxis1();
 	paxis2 = tfpane.principalAxis2();
+	if (paxis1 == null) System.out.println("paxis1 = null");
 	panel.repaint();
 	// panel.getToolkit().sync();
+	String title = copyMode? localeString("newTransformedPath"):
+	    localeString("TransformedPath");
 	final JDialog dialog = new JDialog(frame,
-				    localeString("newTransformedPath"),
+				    title,
 				    true);
 	dialog.setLocationRelativeTo(frame);
 	dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 	dialog.add(tfpane);
 	dialog.pack();
+	tmpTransformedPath = null;
 	dialog.setVisible(true);
 	paxis1 = null;
 	paxis2 = null;
@@ -6024,6 +6074,19 @@ public class EPTSWindow {
 		    }
 		}
 	    }
+	    selectedRow = -1;
+	    resetState();
+	    if (copyMode) {
+		String fmt = localeString("tformNew");
+		setModeline(String.format(fmt, newPathName, oldPathName));
+	    } else {
+		String fmt = localeString("tformExisting");
+		setModeline(String.format(fmt, oldPathName));
+	    }
+	} else {
+	    selectedRow = -1;
+	    resetState();
+	    setModeline("");
 	}
 	panel.repaint();
     }
@@ -6441,6 +6504,7 @@ public class EPTSWindow {
 	    }
 	    ttable.setState(ptmodel, endIndex);
 	    TransitionTable.getLocMenuItem().setEnabled(true);
+	    TransitionTable.getGotoMenuItem().setEnabled(true);
 	} else {
 	    endIndex = ptmodel.getRowCount()-1;
 	    ptmodel.deleteRow(endIndex--);
@@ -6459,6 +6523,7 @@ public class EPTSWindow {
 	    }
 	    ttable.setState(ptmodel, endIndex);
 	    TransitionTable.getLocMenuItem().setEnabled(true);
+	    TransitionTable.getGotoMenuItem().setEnabled(true);
 	}
 	if (nextState != null) {
 	    saveMenuItem.setEnabled(false);
@@ -6856,6 +6921,9 @@ public class EPTSWindow {
 			default:
 			    throw new UnexpectedExceptionError();
 			}
+			// Need to fix this up - this is the only relevant
+			// case where setModeline changes the text.
+			System.out.println("case 1");
 			setModeline(String.format
 				    (localeString("LocationCopied"), location));
 			Clipboard cb = panel.getToolkit().getSystemClipboard();
@@ -7024,6 +7092,10 @@ public class EPTSWindow {
 		    scrollPane.repaint();
 		} else {
 		    if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+			if (gotoMode) {
+			    endGotoMode();
+			    return;
+			}
 			String frameText = localeString("CancelCurrentOps");
 			String frameTitle = localeString("Cancel");
 			if (insertRowIndex != -1) {
@@ -7295,6 +7367,7 @@ public class EPTSWindow {
 
 
     private void resetState() {
+	endGotoMode();
 	if (savedCursorDist != null) {
 	    panel.setCursor(savedCursorDist);
 	    savedCursorDist = null;
@@ -7311,6 +7384,7 @@ public class EPTSWindow {
 		savedCursorPath = null;
 	    }
 	    nextState = null;
+	    TransitionTable.getGotoMenuItem().setEnabled(false);
 	    TransitionTable.getLocMenuItem().setEnabled(false);
 	    saveMenuItem.setEnabled(true);
 	    saveAsMenuItem.setEnabled(true);
@@ -7357,6 +7431,7 @@ public class EPTSWindow {
 	rotMenuItem.setEnabled(false);
 	scaleMenuItem.setEnabled(false);
 	setModeline(localeString("LeftClickCreate"));
+	TransitionTable.getGotoMenuItem().setEnabled(true);
 	TransitionTable.getLocMenuItem().setEnabled(true);
 	distState = 0; 
 	locState = true;
@@ -7440,6 +7515,7 @@ public class EPTSWindow {
 	ttable = new TransitionTable();
 	setModeline(SplinePathBuilder.CPointType.MOVE_TO);
 	nextState = SplinePathBuilder.CPointType.MOVE_TO;
+	TransitionTable.getGotoMenuItem().setEnabled(true);
 	TransitionTable.getLocMenuItem().setEnabled(true);
 	// addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	addToPathMenuItem.setEnabled(canAddToBezier());
@@ -7453,6 +7529,23 @@ public class EPTSWindow {
 
     boolean mouseMoved = false;
     int selectedRow = -1;
+    boolean gotoMode = false;	// true to choose an existing point
+
+    private void startGotoMode() {
+	if (!gotoMode) {
+	    modeline.setText(" " + localeString("gotoModeline"));
+	}
+	gotoMode = true;
+    }
+
+    private void endGotoMode() {
+	if (gotoMode) {
+	    gotoMode = false;
+	    modeline.setText(prevModeline);
+	}
+    }
+
+
     // boolean selectedRowClick = false;
     double lastXSelected = 0.0;
     double lastYSelected = 0.0;
@@ -7495,6 +7588,24 @@ public class EPTSWindow {
 		    int modifiers = e.getModifiersEx();
 		    if ((modifiers & KEY_MASK) == InputEvent.CTRL_DOWN_MASK) {
 			return;
+		    }
+		    if (gotoMode) {
+			int ind = ptmodel.findRowXPYP(p.x/zoom, p.y/zoom, zoom);
+			if (ind == -1) return;
+			PointTMR row = ptmodel.getRow(ind);
+			long lx = Math.round(row.getXP()*zoom);
+			long ly = Math.round(row.getYP()*zoom);
+			if (lx < Integer.MIN_VALUE || lx > Integer.MAX_VALUE
+			    || ly < Integer.MIN_VALUE
+			    || ly > Integer.MAX_VALUE) {
+			    JOptionPane.showMessageDialog
+				(frame, localeString("PointRange"),
+				 localeString("errorTitle"),
+				 JOptionPane.ERROR_MESSAGE);
+			    return;
+			}
+			p = new Point((int)lx, (int)ly);
+			endGotoMode();
 		    }
 		    if (insertRowIndex != -1) {
 			double xp =(p.x/zoom);
@@ -7675,6 +7786,8 @@ public class EPTSWindow {
 			    if (hasPathOps()) {
 				setModeline(pathOpsModelineString());
 				if (moveLocOrPath) {
+				    TransitionTable.getGotoMenuItem()
+					.setEnabled(true);
 				    TransitionTable.getLocMenuItem()
 					.setEnabled(true);
 				} else if (rotatePath) {
@@ -7719,6 +7832,8 @@ public class EPTSWindow {
 				setModeline(String.format
 					    (localeString("SelectedPoint"),
 					     selectedRow, vn, row.getMode()));
+				TransitionTable.getGotoMenuItem()
+				    .setEnabled(true);
 				TransitionTable.getLocMenuItem()
 				    .setEnabled(true);
 			    }
@@ -7808,6 +7923,7 @@ public class EPTSWindow {
 			ptmodel.fireRowsChanged(selectedRow);
 		    }
 		    if (selectedRow != -1 && nextState == null) {
+			TransitionTable.getGotoMenuItem().setEnabled(false);
 			TransitionTable.getLocMenuItem().setEnabled(false);
 		    }
 		    selectedRow = -1;
@@ -7815,7 +7931,9 @@ public class EPTSWindow {
 		    addToPathMenuItem.setEnabled(canAddToBezier());
 		    // selectedRowClick = false;
 		    if (nextState == null) {
-			setModeline("");
+			if (locState == false) {
+			    setModeline("");
+			}
 		    } else if (nextState instanceof
 			       SplinePathBuilder.CPointType) {
 			SplinePathBuilder.CPointType pstate =
@@ -8530,6 +8648,25 @@ public class EPTSWindow {
 						g2d2.draw(scaleLine);
 						g2d.draw(scaleLine);
 					    }
+					} else if (tmpTransformedPath != null) {
+					    AffineTransform af2 =
+						(zoom == 1.0)?
+						new AffineTransform():
+						AffineTransform
+						.getScaleInstance
+						(zoom, zoom);
+
+					    af2.translate
+						(-xrefpoint/scaleFactor,
+						 height+yrefpoint/scaleFactor);
+					    af2.scale(1.0/scaleFactor,
+						      -1.0/scaleFactor);
+					    g2d.setColor(Color.RED);
+					    Path2D tmpPath = new
+						Path2D.Double
+						(tmpTransformedPath, af2);
+					    g2d2.draw(tmpPath);
+					    g2d.draw(tmpPath);
 					}
 				    } finally {
 					g2d2.dispose();
