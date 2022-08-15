@@ -2222,6 +2222,12 @@ public class EPTS {
 		    */
 		}
 	    }
+	    /*
+	    System.out.println("arguments:");
+	    for (String s: argv) {
+		System.out.println("    " + s);
+	    }
+	    */
 	}
 
 	int index = -1;
@@ -2243,7 +2249,9 @@ public class EPTS {
 	String[] pnameArray = null;
 	URL templateURL = null;
 
+	boolean flatnessSet = false;
 	double flatness = 0.0;
+	boolean limitSet = false;
 	int limit = 10;
 	boolean straight = false;
 	boolean elevate = false;
@@ -2810,6 +2818,7 @@ public class EPTS {
 			    (errorMsg("missingArg", argv[--index]));
 			System.exit(1);
 		    }
+		    flatnessSet = true;
 		    flatness = convert(argv[index]);
 		    if (flatness < 0)  {
 			throw new IllegalArgumentException
@@ -2830,6 +2839,7 @@ public class EPTS {
 			System.exit(1);
 		    }
 		    limit = Integer.parseInt(argv[index]);
+		    limitSet = true;
 		    if (limit < 0) {
 			throw new IllegalArgumentException
 			    (errorMsg("negative", argv[index]));
@@ -3219,6 +3229,10 @@ public class EPTS {
 		    targetList.add(argv[index]);
 		}
 	    }
+	}
+
+	if (!flatnessSet && !limitSet) {
+	    limit = 0;
 	}
 
 	if ((imageMode ^ scriptMode) == false) {

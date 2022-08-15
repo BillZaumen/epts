@@ -644,7 +644,7 @@ The <code>File</code> menu contains the following items:
     <BR>
     <CENTER><IMG src="drawing5.png" WIDTH="360"></CENTER>
     <BR>
-    The coordinates - (0.0, 0.0) in the figure above - are in graph
+    The coordinates&mdash;(0.0, 0.0) in the figure above&mdash;are in graph
     coordinate space and correspond to the lower-left corner of an
     image, with the positive X axis pointing towards the lower-right
     corner of the image and the positive Y axis pointing towards the
@@ -760,6 +760,21 @@ The <code>Edit</code> menu contains the following items:
     will have the same name as the original line.  Circles produced in this
     way have a counterclockwise orientation.  To get a clockwise orientation,
     simply reverse the path by using the next item in the menu.
+  <LI><B><CODE>Insert an Arc into a Path</COdE></B>. This option
+    inserts an arc into a selected point on a path. The segments
+    adjacent to that point must be straight-line segments, and for
+    open paths, the point must not start or terminate the path.  A
+    dialog box will allow one to specify a radius in GCS coordinates,
+    the units for the radius, and whether the arc should go clockwise
+    or counterclockwise relative to the path's direction. Whan a point
+    on a path has not been selected, this option will provide a hint
+    on the line just below the menus, and will ignore any points that
+    are are not part of path. When a point (which is denoted by a
+    round black circle) has been selected, that point will be used,
+    but this option will be disabled if the point's adjacent segments
+    are not straight lines.  One use of this option occurs when
+    specifying a path to be cut in a metal sheet&mdash;it can be used
+    to add "relief notches" at points where the metal should be bent.
   <LI><B><CODE>Transform an Existing Path</CODE></B>. This option will
     scale, rotate, and/or translate an existing path. The
     transformation is specified by a dialog box.  As with the previous
@@ -774,7 +789,7 @@ The <code>Edit</code> menu contains the following items:
     center of mass, and finally translating by 200 units in the X
     direction and 50 units in the Y direction (in this example custom
     units are user-space units). The <CODE>Reverse Path</CODE> option
-    is not used in this example - when checked, it does not change the
+    is not used in this example&mdash;when checked, it does not change the
     path but does change the order in which the points along the path
     are displayed in the table by listing the points in the reverse
     order. Reversing a path is useful in cases where a
@@ -940,7 +955,7 @@ displayed in textual form. This menu contains the following items:
     created. A dialog box will ask for a variable name for the path,
     and the cursor will change to a cross-hair cursor, and the user
     should select the initial point on the curve.  The point type
-    shown in the table is <CODE>MOVE_TO</CODE> - only one such point
+    shown in the table is <CODE>MOVE_TO</CODE>&mdash;only one such point
     is allowed for each curve. If a variable name is requested and the
     variable name is left as an empty string, a new variable name will
     be generated, starting the string "path" and followed by a number
@@ -3324,41 +3339,41 @@ Cartesian (rectilinear) grid consisting of parallel, evenly spaced
 lines in both the X and Y directions.  The variables that configure
 Cartesian grids are the following:
 <UL>
-  <LI><B><CODE>frameWidth</CODE></B> - an integer giving the width of
+  <LI><B><CODE>frameWidth</CODE></B>&mdash;an integer giving the width of
     the background image that will be created. The default is
     1920. The value is ignored if the animation was created by another
     script.
-  <LI><B><CODE>frameHeight</CODE></B> - an integer giving the height
+  <LI><B><CODE>frameHeight</CODE></B>&mdash;an integer giving the height
     of the background image that will be created. The default is
     1080. The value is ignored if the animation was created by another
     script.
-  <LI><B><CODE>userdist</CODE></B> - a double giving a reference
+  <LI><B><CODE>userdist</CODE></B>&mdash;a double giving a reference
     distance in user space. The default is 1.0. The ratio
     userdist/gcsdist is the scaling factor for converting distances in
     graph coordinate space to user space. The value is ignored if the
     animation was created by another script.
-  <LI><B><CODE>gcsdist</CODE></B> - a double giving a reference
+  <LI><B><CODE>gcsdist</CODE></B>&mdash;a double giving a reference
     distance in graph coordinate space. The default is 1.0. The ratio
     userdist/gcsdist is the scaling factor for converting distances in
     graph coordinate space to user space. The value is ignored if the
     animation was created by another script.
-  <LI><B><CODE>xorigin</CODE></B> - a double giving the X coordinate
+  <LI><B><CODE>xorigin</CODE></B>&mdash;a double giving the X coordinate
     in graph coordinate space for the frame&#39;s reference point. The
     default is 0.0.  The value is ignored if the animation was created
     by another script.
-  <LI><B><CODE>yorigin</CODE></B> - a double giving the Y coordinate
+  <LI><B><CODE>yorigin</CODE></B>&mdash;a double giving the Y coordinate
     in graph coordinate space for the frame&#39;s reference point. The
     default is 0.0.  The value is ignored if the animation was created
     by another script.
-  <LI><B><CODE>xfract</CODE></B> - a double giving the fraction of the
+  <LI><B><CODE>xfract</CODE></B>&mdash;a double giving the fraction of the
     frame width at which the reference point appears (0.0 is the left
     edge and 1.0 is the right edge). The default is 0.0. The value is
     ignored if the animation was created by another script.
-  <LI><B><CODE>yfract</CODE></B> - a double giving the fraction of the
+  <LI><B><CODE>yfract</CODE></B>&mdash;a double giving the fraction of the
     frame height at which the reference point appears (0.0 is the
     lower edge and 1.0 is the upper edge). The default is 0.0. The
     value is ignored if the animation was created by another script.
-  <LI><B><CODE>spacing</CODE></B> - a double giving the grid spacing
+  <LI><B><CODE>spacing</CODE></B>&mdash;a double giving the grid spacing
     in graph-coordinate space units. If not provided explicitly or if
     the value is null, 0.0, or negative, the default is computed by
     taking the minimum of the frame width and frame height, converting
@@ -3366,24 +3381,24 @@ Cartesian grids are the following:
     and finally finding the largest power of 10 that is not larger
     than this value. The grid lines will appear at X or Y coordinates
     that are an integral multiple of the spacing.
-  <LI><B><CODE>subspacing</CODE></B> - the number of subspacings per
+  <LI><B><CODE>subspacing</CODE></B>&mdash;the number of subspacings per
     spacing for a finer grid.  if undefined or 1, the value is
     ignored. In practice, values that create a subgrid are either 2,
     4, 5, or 10.  The value must be an integer.
-  <LI><B><CODE>axisColor</CODE></B> - the axis color provided as a CSS
+  <LI><B><CODE>axisColor</CODE></B>&mdash;the axis color provided as a CSS
     string, null or undefined for the default.
-  <LI><B><CODE>spacingColor</CODE></B> - the spacing color provided as
+  <LI><B><CODE>spacingColor</CODE></B>&mdash;the spacing color provided as
     a CSS string, null or undefined for the default.
-  <LI><B><CODE>subspacingColor</CODE></B> - the subspacing color
+  <LI><B><CODE>subspacingColor</CODE></B>&mdash;the subspacing color
     provided as a CSS string, null or undefined for the default.
-  <LI><B><CODE>strokeWidth</CODE></B> - a double giving the width of
+  <LI><B><CODE>strokeWidth</CODE></B>&mdash;a double giving the width of
     the stroke used to create grid lines; undefined or null for a
     default.
-  <LI><B><CODE>gridZorder</CODE></B> - an integer giving the
+  <LI><B><CODE>gridZorder</CODE></B>&mdash;an integer giving the
     <A href="#zorder">Z-order</A>
     to use for the object that creates the grid. The default is the
     javascript value java.lang.Long.MAX_VALUE (2<SUP>53</SUP> - 1).
-  <LI><B><CODE>plainBackgroundColor</CODE></B> - a string providing CSS
+  <LI><B><CODE>plainBackgroundColor</CODE></B>&mdash;a string providing CSS
     the color for the background when no image or animation is provided.
     The default value is <CODE>"white"</CODE>.
 </UL>
@@ -3398,77 +3413,77 @@ spacing, excluding areas near the origin where some lines may be
 eliminated in order to prevent them from running together.  The
 variables that configure polar grids are the following:
 <UL>
-  <LI><B><CODE>frameWidth</CODE></B> - an integer giving the width of
+  <LI><B><CODE>frameWidth</CODE></B>&mdash;an integer giving the width of
     the background image that will be created. The default is
     1920. The value is ignored if the animation was created by another
     script. If undefined or null, the default will be used.
-  <LI><B><CODE>frameHeight</CODE></B> - an integer giving the height
+  <LI><B><CODE>frameHeight</CODE></B>&mdash;an integer giving the height
     of the background image that will be created. The default is
     1080. The value is ignored if the animation was created by another
     script. If undefined or null, the default will be used.
-  <LI><B><CODE>userdist</CODE></B> - a double giving a reference
+  <LI><B><CODE>userdist</CODE></B>&mdash;a double giving a reference
     distance in user space. The default is 1.0. The ratio
     userdist/gcsdist is the scaling factor for converting distances in
     graph coordinate space to user space. if undefined or null, the
     default will be used.
-  <LI><B><CODE>gcsdist</CODE></B> - a double giving a reference
+  <LI><B><CODE>gcsdist</CODE></B>&mdash;a double giving a reference
     distance in graph coordinate space. The default is 1.0. The ratio
     userdist/gcsdist is the scaling factor for converting distances in
     graph coordinate space to user space. If undefined or null, the
     default will be used.
-  <LI><B><CODE>xorigin</CODE></B> - a double giving the X coordinate
+  <LI><B><CODE>xorigin</CODE></B>&mdash;a double giving the X coordinate
     in graph coordinate space for a reference point in the frame. The
     default is 0.0.  The value is ignored if the animation was created
     by another script. if undefined or null, the default will be used.
-  <LI><B><CODE>yorigin</CODE></B> - a double giving the Y coordinate
+  <LI><B><CODE>yorigin</CODE></B>&mdash;a double giving the Y coordinate
     in graph coordinate space for a reference point in the frame. The
     default is 0.0.  The value is ignored if the animation was created
     by another script. If undefined or null, the default will be used.
-  <LI><B><CODE>xfract</CODE></B> - a double giving the fraction of the
+  <LI><B><CODE>xfract</CODE></B>&mdash;a double giving the fraction of the
     frame width at which the reference point appears (0.0 is the left
     edge and 1.0 is the right edge). The default is 0.0. The value is
     ignored if the animation was created by another script.  If
     undefined or null, the default will be used.
-  <LI><B><CODE>yfract</CODE></B> - a double giving the fraction of the
+  <LI><B><CODE>yfract</CODE></B>&mdash;a double giving the fraction of the
     frame height at which the reference point appears (0.0 is the
     lower edge and 1.0 is the upper edge). The default is 0.0. The
     value is ignored if the animation was created by another script.
     If undefined or null, the default will be used.
-  <LI><B><CODE>fractional</CODE></B> - true if the grid origin&#39;s
+  <LI><B><CODE>fractional</CODE></B>&mdash;true if the grid origin&#39;s
     coordinates (gridXOrigin, gridYOrigin) are a fraction of the
     position in the frame (excluding offsets); false if absolute
     values in graph coordinate space are used. If undefined or null, a
     default will be used.
-  <LI><B><CODE>gridXOrigin</CODE></B> - a double giving the X
+  <LI><B><CODE>gridXOrigin</CODE></B>&mdash;a double giving the X
     component of the grid&#39;s origin.  When fractional is true, the
     value is a fraction of the position in the frame, excluding
     offsets, in the X direction. When false, it is the X coordinate of
     the origin for a polar coordinate grid, given in
     graph-coordinate-space units. If undefined or null, a default
     value will be used.
-  <LI><B><CODE>gridXOrigin</CODE></B> - a double giving the Y
+  <LI><B><CODE>gridXOrigin</CODE></B>&mdash;a double giving the Y
     component of the grid&#39;s origin.  When fractional is true, the
     value is a fraction of the position in the frame, excluding
     offsets, in the Y direction. When false, it is the Y coordinate of
     the origin for a polar coordinate grid, given in
     graph-coordinate-space units. If undefined or null, a default
     value will be used.
-  <LI><B><CODE>radialSpacing</CODE></B> - a double giving the radial
+  <LI><B><CODE>radialSpacing</CODE></B>&mdash;a double giving the radial
     spacing for concentric circles; null, undefined, 0.0 or negative
     for a default.
-  <LI><B><CODE>angularSpacing</CODE></B> - the angular spacing in
+  <LI><B><CODE>angularSpacing</CODE></B>&mdash;the angular spacing in
     degrees for radial lines.  The value should be a divisor of 90
     degrees or either null or undefined for a default.
-  <LI><B><CODE>gridColor</CODE></B> - the grid-line color provided as
+  <LI><B><CODE>gridColor</CODE></B>&mdash;the grid-line color provided as
     a CSS string, undefined or null for the default.
-  <LI><B><CODE>strokeWidth</CODE></B> - a double giving the width of
+  <LI><B><CODE>strokeWidth</CODE></B>&mdash;a double giving the width of
     the stroke used to create grid lines; undefined or null for a
     default.
-  <LI><B><CODE>gridZorder</CODE></B> - an integer giving the
+  <LI><B><CODE>gridZorder</CODE></B>&mdash;an integer giving the
     <A href="#zorder">Z-order</A>
     to use for the object that creates the grid. The default is the
     javascript value java.lang.Long.MAX_VALUE (2<SUP>53</SUP> - 1).
-  <LI><B><CODE>plainBackgroundColor</CODE></B> - a string providing CSS
+  <LI><B><CODE>plainBackgroundColor</CODE></B>&mdash;a string providing CSS
     the color for the background when no image or animation is provided.
     The default value is <CODE>"white"</CODE>.
 </UL>

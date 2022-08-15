@@ -1474,6 +1474,245 @@ class ArcPane extends JPanel {
 }
 
 
+abstract class InsertArcPane extends JPanel {
+    static String errorMsg(String key, Object... args) {
+	return EPTS.errorMsg(key, args);
+    }
+    static String localeString(String key) {
+	return EPTS.localeString(key);
+    }
+    PointTMR prev;
+    PointTMR current;
+    PointTMR next;
+    static boolean savedCCW = false;
+    boolean counterclockwise = savedCCW;
+    static double savedRadius = 0.0;
+    double radius = savedRadius;
+
+    public boolean isCounterClockwise() {
+	return counterclockwise;
+    }
+
+    private JCheckBox ccwCB = new JCheckBox(localeString("arcCCW"),
+					    savedCCW);
+    private CharDocFilter cdf;
+    private VTextField radiusTF;
+
+    static int rindexSaved = 0;
+    int rindex = rindexSaved;
+    JLabel runitsLabel = new JLabel(localeString("radiusUnits"));
+    JComboBox<String> runits = new JComboBox<>(ConfigGCSPane.units);
+
+    boolean status =  false;
+    public boolean getStatus() {return status;}
+
+    Path2D arc = null;
+    public Path2D getArc(AffineTransform af) {
+	if (arc == null) computeArc();
+	if (af == null) {
+	    return arc;
+	} else {
+	    return new Path2D.Double(arc, af);
+	}
+    }
+
+    double maxRadius;
+    double dist1;
+    double dist2;
+    private void computeArc() {
+	double r = ConfigGCSPane.convert[rindex].valueAt(radius);
+	if (r >= maxRadius) {
+	    arc = null;
+	    JOptionPane
+		.showMessageDialog(this,
+				   errorMsg("maxRadiusErr", r, maxRadius),
+				   localeString("errorTitle"),
+				   JOptionPane.ERROR_MESSAGE);
+	    return;
+	}
+	double t = r/dist1;
+	double x1 = prev.getX()*t + current.getX()*(1-t);
+	double y1 = prev.getY()*t + current.getY()*(1-t);
+	t = r/dist2;
+	double uv1x = (current.getX() - prev.getX())/dist1;
+	double uv1y = (current.getY() - prev.getY())/dist1;
+	double un1y = uv1x;
+	double un1x = -uv1y;
+	double uv2x = (next.getX() - current.getX())/dist2;
+	double uv2y = (next.getY() - current.getY())/dist2;
+
+	double dx = uv1x*uv2x + uv1y*uv2y;
+	double dy = un1x*uv2x + un1y*uv2y;
+	double theta = Math.atan2(dy, dx);
+	if (counterclockwise) {
+	    if (theta == -Math.PI) theta = Math.PI;
+	} else {
+	    if (theta == Math.PI) theta = -Math.PI;
+	}
+	if (Math.abs(theta) != Math.PI) {
+	    if (counterclockwise) {
+		theta = Math.PI + theta;
+	    } else {
+		theta -= Math.PI;
+	    }
+	}
+	arc = Paths2D.createArc(current.getX(), current.getY(),
+				x1, y1, theta);
+    }
+
+    void saveState() {
+	rindexSaved = rindex;
+	savedRadius = radius;
+	savedCCW = counterclockwise;
+    }
+
+
+    public InsertArcPane(PointTMR prev, PointTMR current, PointTMR next) {
+	super();
+	this.prev = prev;
+	this.current = current;
+	this.next = next;
+
+	double prevX = prev.getX();
+	double currentX = current.getX();
+	double nextX = next.getX();
+	double prevY = prev.getY();
+	double currentY = current.getY();
+	double nextY = next.getY();
+
+	dist1 = Point2D.distance(prevX, prevY, currentX, currentY);
+	dist2 = Point2D.distance(nextX, nextY, currentX, currentY);
+	maxRadius = Math.min(dist1, dist2);
+
+	cdf  = new CharDocFilter();
+	cdf.setAllowedChars("09..,,++--eE");
+	InputVerifier iv = new InputVerifier() {
+		public boolean verify(JComponent input) {
+		    VTextField tf = (VTextField)input;
+		    String string = tf.getText();
+		    try {
+			if (string.length() == 0) string = "0.0";
+			double value = Double.valueOf(string);
+			if (value >= 0.0 && value < maxRadius) {
+			    return true;
+			} else {
+			    return false;
+			}
+		    } catch (Exception e) {
+			return false;
+		    }
+		}
+	    };
+
+	radiusTF = new VTextField(""+radius, 20) {
+		@Override
+		protected void onAccepted() {
+		    try {
+			String txt = getText();
+			if (txt.length()  == 0.0) txt = "0.0";
+			radius = Double.valueOf(txt);
+		    } catch (Exception e) {
+			return;
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    JOptionPane.showMessageDialog
+			(this, localeString("notNonNegative"),
+			 localeString("Error"), JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+	((AbstractDocument)radiusTF.getDocument()).setDocumentFilter(cdf);
+	radiusTF.setInputVerifier(iv);
+	radiusTF.setAllowEmptyTextField(false);
+	runits.setSelectedIndex(rindex);
+	runits.addActionListener((e) -> {
+		rindex = runits.getSelectedIndex();
+	    });
+	ccwCB.addActionListener((e) -> {
+		counterclockwise = ccwCB.isSelected();
+	    });
+
+	JButton okButton = new JButton(localeString("okButton"));
+	JButton acceptButton = new JButton(localeString("acceptButton"));
+	JButton cancelButton = new JButton(localeString("cancelButton"));
+
+	acceptButton.addActionListener((e) -> {
+		computeArc();
+		if (arc == null) {
+		    return;
+		}
+		status = true;
+		accept();
+	    });
+	cancelButton.addActionListener((e) -> {
+		status = false;
+		Window w = SwingUtilities.getWindowAncestor(InsertArcPane.this);
+		w.setVisible(false);
+		cancel();
+	    });
+	okButton.addActionListener((e) -> {
+		computeArc();
+		if (arc == null) {
+		    return;
+		}
+		status = true;
+		saveState();
+		Window w = SwingUtilities.getWindowAncestor(InsertArcPane.this);
+		w.setVisible(false);
+		ok();
+	    });
+	GridBagLayout gridbag = new GridBagLayout();
+	GridBagConstraints c = new GridBagConstraints();
+	setLayout(gridbag);
+	c.insets = new Insets(5, 5, 5, 5);
+	c.ipadx = 5;
+	c.ipady = 5;
+	c.anchor  = GridBagConstraints.LINE_START;
+	c.gridwidth = 1;
+
+	JLabel label = new JLabel(localeString("radiusUnits"));
+	gridbag.setConstraints(label, c);
+	add(label);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(runits, c);
+	add(runits);
+	c.gridwidth = 1;
+	label = new JLabel(localeString("Radius"));
+	gridbag.setConstraints(label, c);
+	add(label);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(radiusTF, c);
+	add(radiusTF);
+	gridbag.setConstraints(ccwCB, c);
+	add(ccwCB);
+	JPanel buttonPane = new JPanel();
+	GridBagLayout gridbag2 = new GridBagLayout();
+	buttonPane.setLayout(gridbag2);
+	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.CENTER;
+	gridbag2.setConstraints(okButton, c);
+	buttonPane.add(okButton);
+	// c.anchor = GridBagConstraints.CENTER;
+	gridbag2.setConstraints(acceptButton, c);
+	buttonPane.add(acceptButton);
+	// c.anchor  = GridBagConstraints.LINE_END;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag2.setConstraints(cancelButton, c);
+	buttonPane.add(cancelButton);
+	c.anchor = GridBagConstraints.CENTER;
+	gridbag.setConstraints(buttonPane, c);
+	add(buttonPane);
+    }
+
+    public abstract void accept();
+    public abstract void cancel();
+    public abstract void ok();
+
+}
+
+
 abstract class TransformPane extends JPanel {
     static String errorMsg(String key, Object... args) {
 	return EPTS.errorMsg(key, args);
@@ -2858,7 +3097,7 @@ public class EPTSWindow {
 	}
 	// addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	addToPathMenuItem.setEnabled(canAddToBezier());
-	deletePathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
+	deletePathMenuItem.setEnabled(ptmodel.variableNameCount() > 0);
 	offsetPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	tfMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	newTFMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
@@ -2915,7 +3154,7 @@ public class EPTSWindow {
 	}
 	// addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	addToPathMenuItem.setEnabled(canAddToBezier());
-	deletePathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
+	deletePathMenuItem.setEnabled(ptmodel.variableNameCount() > 0);
 	offsetPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	tfMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	newTFMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
@@ -2933,6 +3172,7 @@ public class EPTSWindow {
     JMenuItem rotMenuItem;	   // for Edit Menu (rotate a path)
     JMenuItem scaleMenuItem;	   // for Edit Menu (scale a path)
     JMenuItem toCircleMenuItem;	   // for Edit Menu (turn a line into a circle)
+    JMenuItem insertArcMenuItem;   // insert an arc into an existing path
 
     JMenuItem offsetPathMenuItem; // for Tools menu
 
@@ -3579,6 +3819,133 @@ public class EPTSWindow {
 	    (!ptmodel.getToCircleVariableNames().isEmpty());
     }
 
+    private boolean insertingArc = false;
+    Path2D tmpArcPath = null;
+    private void insertArcAction() {
+	if (selectedRow == -1) {
+	    insertingArc = true;
+	    setModeline(localeString("insertingArc"));
+	    panel.setCursor(Cursor.getPredefinedCursor
+			    (Cursor.CROSSHAIR_CURSOR));
+	} else {
+	    PointTMR row = ptmodel.getRow(selectedRow);
+	    int prevIndex = selectedRow-1;
+	    PointTMR prev = ptmodel.getRow(prevIndex);
+	    PointTMR next = ptmodel.getRow(selectedRow+1);
+	    if (row.getMode() == SplinePathBuilder.CPointType.MOVE_TO) {
+		int ind = ptmodel.findEnd(selectedRow) - 2;
+		prevIndex = ind;
+		prev = ptmodel.getRow(prevIndex);
+		double delta = 1.e-10;
+		if (Math.abs(prev.getXP() - row.getXP()) < delta
+		    && Math.abs(prev.getYP() - row.getYP()) < delta) {
+		    prevIndex = ind - 1;
+		    prev = ptmodel.getRow(prevIndex);
+		}
+	    } else if (next.getMode() == SplinePathBuilder.CPointType.CLOSE) {
+		next = ptmodel.getRow(ptmodel.findStart(selectedRow) + 1);
+	    }
+
+	    InsertArcPane iapane = new InsertArcPane(prev, row, next) {
+		    public void accept() {
+			AffineTransform af =
+			    (zoom == 1.0)? new AffineTransform():
+			    AffineTransform.getScaleInstance(zoom, zoom);
+			af.translate(-xrefpoint/scaleFactor,
+				     height+yrefpoint/scaleFactor);
+			af.scale(1.0/scaleFactor, -1.0/scaleFactor);
+			tmpArcPath = getArc(af);
+			panel.repaint();
+		    }
+		    public void cancel() {
+			tmpArcPath = null;
+		    }
+		    public void ok() {
+			tmpArcPath = null;
+		    }
+		};
+	    JDialog dialog = new JDialog(frame,
+					 localeString("insertArcTitle"),
+					 true);
+	    dialog.setLocationRelativeTo(frame);
+	    dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+	    dialog.add(iapane);
+	    dialog.pack();
+	    tmpArcPath = null;
+	    dialog.setVisible(true);
+	    if (iapane.getStatus()) {
+		Path2D arcPath = iapane.getArc(null);
+		int start = ptmodel.findStart(selectedRow);
+		int penultimateIndex = ptmodel.findEnd(selectedRow) - 2;
+		PointTMR penultimate = ptmodel.getRow(penultimateIndex);
+		// adjust is true if the end of a closed curve is the
+		// same point as the start (we don't allow a MOVE_TO as
+		// the start of an arc for the case where the path is open).
+		boolean adjust =
+		    row.getMode() == SplinePathBuilder.CPointType.MOVE_TO
+		    && Math.abs(row.getXP() - penultimate.getXP()) < 1.e-10
+		    && Math.abs(row.getYP() - penultimate.getYP()) < 1.e-10;
+		PathIterator pi = arcPath.getPathIterator(null);
+		double[] coords = new double[6];
+		int index = selectedRow;
+		while (!pi.isDone()) {
+		    switch(pi.currentSegment(coords)) {
+		    case PathIterator.SEG_MOVETO:
+			row.setX(coords[0],
+				 (coords[0] - xrefpoint) / scaleFactor);
+			row.setY(coords[1],
+				 height
+				 - (coords[1] - yrefpoint) / scaleFactor);
+			break;
+		    case PathIterator.SEG_CUBICTO:
+			ptmodel
+			    .insertRow(index, "",
+				       SplinePathBuilder.CPointType.CONTROL,
+				       coords[0],
+				       coords[1],
+				       (coords[0] - xrefpoint) / scaleFactor,
+				       height
+				       - (coords[1] - yrefpoint) / scaleFactor);
+			index++;
+			ptmodel
+			    .insertRow(index, "",
+				       SplinePathBuilder.CPointType.CONTROL,
+				       coords[2],
+				       coords[3],
+				       (coords[2] - xrefpoint) / scaleFactor,
+				       height
+				       - (coords[3] - yrefpoint) / scaleFactor);
+			index++;
+			ptmodel
+			    .insertRow(index, "",
+				       SplinePathBuilder.CPointType.SEG_END,
+				       coords[4],
+				       coords[5],
+				       (coords[4] - xrefpoint) / scaleFactor,
+				       height
+				       - (coords[5] - yrefpoint) / scaleFactor);
+			break;
+		    default:
+			throw new UnexpectedExceptionError();
+		    }
+		    index++;
+		    pi.next();
+		}
+		if (adjust) {
+		    penultimate.setX(row.getX(), row.getXP());
+		    penultimate.setY(row.getY(), row.getYP());
+		}
+	    }
+
+	    insertingArc = false;
+	    tmpArcPath = null;
+	    panel.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+	    selectedRow = -1;
+	    setModeline("");
+	    resetState();
+	    panel.repaint();
+	}
+    }
 
     private void transformPathAction(boolean copyMode) {
 	// select a path.
@@ -3938,6 +4305,7 @@ public class EPTSWindow {
 			selectedRow = -1;
 			selectedClosedPath = false;
 			addToPathMenuItem.setEnabled(canAddToBezier());
+			insertArcMenuItem.setEnabled(true);
 			index = ptmodel.findStart(vname);
 		    }
 		    // complete the current path.
@@ -4033,6 +4401,7 @@ public class EPTSWindow {
 			} else {
 			    selectedRow = -1;
 			    selectedClosedPath = false;
+			    insertArcMenuItem.setEnabled(true);
 			    addToPathMenuItem.setEnabled(canAddToBezier());
 			    setModeline("Rotate: select a point (not the "
 					+ "center of mass) on a path; "
@@ -4070,6 +4439,7 @@ public class EPTSWindow {
 			} else {
 			    selectedRow = -1;
 			    selectedClosedPath = false;
+			    insertArcMenuItem.setEnabled(true);
 			    addToPathMenuItem.setEnabled(canAddToBezier());
 			    setModeline("Scale: select a point on a path; "
 					+ "then drag to scale");
@@ -4118,6 +4488,21 @@ public class EPTSWindow {
 		}
 	    });
 	editMenu.add(toCircleMenuItem);
+
+	insertArcMenuItem = new JMenuItem(localeString("insertArc"),
+					 vk("VK_insertArc"));
+	insertArcMenuItem.setAccelerator(KeyStroke.getKeyStroke
+					 (KeyEvent.VK_I,
+					  (InputEvent.ALT_DOWN_MASK
+					   | InputEvent.CTRL_DOWN_MASK)));
+
+	insertArcMenuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    insertArcAction();
+		}
+	    });
+
+	editMenu.add(insertArcMenuItem);
 
 	editMenu.addSeparator();
 	editMenu.add(new JLabel(localeString("DialogBased")));
@@ -4549,7 +4934,7 @@ public class EPTSWindow {
 		public void actionPerformed(ActionEvent e) {
 		    InputTablePane.ColSpec colspec[] = {
 			new InputTablePane.ColSpec
-			(localeString("Variable"),
+			(localeString("VariableOrIndex"),
 			 "MMMMMMMMMMMMMMMM",
 			 String.class, null, null),
 			new InputTablePane.ColSpec
@@ -5121,6 +5506,7 @@ public class EPTSWindow {
 			    } else {
 				ptmodel.addRow(varname, EPTS.Mode.LOCATION,
 					       x, y, xp, yp);
+				deletePathMenuItem.setEnabled(true);
 			    }
 			    locState = false;
 			    setModeline("");
@@ -5139,6 +5525,7 @@ public class EPTSWindow {
 				}
 				selectedRow = -1;
 				selectedClosedPath = false;
+				insertArcMenuItem.setEnabled(true);
 				addToPathMenuItem.setEnabled(canAddToBezier());
 			    } else {
 				ptmodel.addRow("", nextState, x, y, xp, yp);
@@ -5887,7 +6274,7 @@ public class EPTSWindow {
 	    };
 	paxis1 = tfpane.principalAxis1();
 	paxis2 = tfpane.principalAxis2();
-	if (paxis1 == null) System.out.println("paxis1 = null");
+	// if (paxis1 == null) System.out.println("paxis1 = null");
 	panel.repaint();
 	// panel.getToolkit().sync();
 	String title = copyMode? localeString("newTransformedPath"):
@@ -6166,7 +6553,9 @@ public class EPTSWindow {
 	if (mode == EPTS.Mode.LOCATION) {
 	    ptmodel.deleteRow(selectedRow);
 	    selectedRow = -1;
+	    insertArcMenuItem.setEnabled(true);
 	    selectedClosedPath = false;
+	    deletePathMenuItem.setEnabled(ptmodel.variableNameCount() > 0);
 	    addToPathMenuItem.setEnabled(canAddToBezier());
 	} else 	if (mode instanceof SplinePathBuilder.CPointType) {
 	    int prevRowInd = selectedRow - 1;
@@ -6256,9 +6645,10 @@ public class EPTSWindow {
 	    }
 	    // addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount()>0);
 	    selectedRow = -1;
+	    insertArcMenuItem.setEnabled(true);
 	    selectedClosedPath = false;
 	    addToPathMenuItem.setEnabled(canAddToBezier());
-	    deletePathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
+	    deletePathMenuItem.setEnabled(ptmodel.variableNameCount() > 0);
 	    offsetPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	    tfMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	    newTFMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
@@ -6467,6 +6857,7 @@ public class EPTSWindow {
 	if (endIndex == n) {
 	    selectedRow = -1;
 	    selectedClosedPath = false;
+	    insertArcMenuItem.setEnabled(true);
 	    addToPathMenuItem.setEnabled(canAddToBezier());
 	    return;
 	}
@@ -6486,6 +6877,7 @@ public class EPTSWindow {
 	    ptmodel.deleteRow(endIndex--);
 	    selectedRow = -1;
 	    selectedClosedPath = false;
+	    insertArcMenuItem.setEnabled(true);
 	    addToPathMenuItem.setEnabled(canAddToBezier());
 	    // This calls ttable.nextState,
 	    // which calls a menu item's
@@ -6510,6 +6902,7 @@ public class EPTSWindow {
 	    ptmodel.deleteRow(endIndex--);
 	    selectedRow = -1;
 	    selectedClosedPath = false;
+	    insertArcMenuItem.setEnabled(true);
 	    addToPathMenuItem.setEnabled(canAddToBezier());
 	    if (ttable == null) {
 		// reconstruct the last path up to
@@ -6914,6 +7307,7 @@ public class EPTSWindow {
 				double yp = (p.y/zoom);
 				ptmodel.addRow(varname, EPTS.Mode.LOCATION,
 					       x, y, xp, yp);
+				deletePathMenuItem.setEnabled(true);
 				location = String.format("%s = {x: %g, y: %g};",
 							 varname, x, y);
 			    }
@@ -6923,7 +7317,6 @@ public class EPTSWindow {
 			}
 			// Need to fix this up - this is the only relevant
 			// case where setModeline changes the text.
-			System.out.println("case 1");
 			setModeline(String.format
 				    (localeString("LocationCopied"), location));
 			Clipboard cb = panel.getToolkit().getSystemClipboard();
@@ -6993,6 +7386,7 @@ public class EPTSWindow {
 			}
 			selectedRow = -1;
 			selectedClosedPath = false;
+			insertArcMenuItem.setEnabled(true);
 			addToPathMenuItem.setEnabled(canAddToBezier());
 		    } else if (nextState != null
 			       && nextState instanceof
@@ -7092,6 +7486,16 @@ public class EPTSWindow {
 		    scrollPane.repaint();
 		} else {
 		    if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+			if (insertingArc) {
+			    insertingArc = false;
+			    resetState();
+			    panel.setCursor
+				(Cursor.getPredefinedCursor
+				 (Cursor.DEFAULT_CURSOR));
+			    setModeline("");
+			    panel.repaint();
+			    return;
+			}
 			if (gotoMode) {
 			    endGotoMode();
 			    return;
@@ -7102,6 +7506,7 @@ public class EPTSWindow {
 			    insertRowIndex = -1;
 			    selectedRow = -1;
 			    selectedClosedPath = false;
+			    insertArcMenuItem.setEnabled(true);
 			    addToPathMenuItem.setEnabled(canAddToBezier());
 			    resetState();
 			    setModeline("");
@@ -7169,6 +7574,7 @@ public class EPTSWindow {
 			    }
 			    selectedRow = -1;
 			    selectedClosedPath = false;
+			    insertArcMenuItem.setEnabled(true);
 			    addToPathMenuItem.setEnabled(canAddToBezier());
 			    setModeline("");
 			    panel.repaint();
@@ -7267,6 +7673,7 @@ public class EPTSWindow {
 			if (row == null) {
 			    selectedRow = -1;
 			    selectedClosedPath = false;
+			    insertArcMenuItem.setEnabled(true);
 			    addToPathMenuItem.setEnabled(canAddToBezier());
 			    resetState();
 			    setModeline("");
@@ -7367,7 +7774,9 @@ public class EPTSWindow {
 
 
     private void resetState() {
+	insertingArc = false;
 	endGotoMode();
+	insertArcMenuItem.setEnabled(true);
 	if (savedCursorDist != null) {
 	    panel.setCursor(savedCursorDist);
 	    savedCursorDist = null;
@@ -7519,7 +7928,7 @@ public class EPTSWindow {
 	TransitionTable.getLocMenuItem().setEnabled(true);
 	// addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	addToPathMenuItem.setEnabled(canAddToBezier());
-	deletePathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
+	deletePathMenuItem.setEnabled(ptmodel.variableNameCount() > 0);
 	offsetPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	tfMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	newTFMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
@@ -7589,6 +7998,13 @@ public class EPTSWindow {
 		    if ((modifiers & KEY_MASK) == InputEvent.CTRL_DOWN_MASK) {
 			return;
 		    }
+		    if (insertingArc) {
+			int ind = ptmodel.findRowIA(p.x/zoom, p.y/zoom, zoom);
+			if (ind == -1) return;
+			selectedRow = ind;
+			insertArcAction();
+			return;
+		    }
 		    if (gotoMode) {
 			int ind = ptmodel.findRowXPYP(p.x/zoom, p.y/zoom, zoom);
 			if (ind == -1) return;
@@ -7652,6 +8068,7 @@ public class EPTSWindow {
 				double yp = (p.y/zoom);
 				ptmodel.addRow(varname, EPTS.Mode.LOCATION,
 					       x, y, xp, yp);
+				deletePathMenuItem.setEnabled(true);
 				location = String.format("%s = {x: %g, y: %g};",
 							 varname, x, y);
 			    }
@@ -7750,6 +8167,9 @@ public class EPTSWindow {
 			double yp = (p.y/zoom);
 			selectedRow = ptmodel.findRowXPYP(xp, yp, zoom);
 			if (selectedRow != -1) {
+			    if (ptmodel.findRowIA(xp, yp, zoom) == -1) {
+				insertArcMenuItem.setEnabled(false);
+			    }
 			    PointTMR row = ptmodel.getRow(selectedRow);
 			    if (rotatePath) {
 				if (row.getMode() == EPTS.Mode.LOCATION) {
@@ -7759,6 +8179,7 @@ public class EPTSWindow {
 				    // single point.
 				    selectedRow = -1;
 				    selectedClosedPath = false;
+				    insertArcMenuItem.setEnabled(true);
 				    addToPathMenuItem.setEnabled
 					(canAddToBezier());
 				    return;
@@ -7797,6 +8218,7 @@ public class EPTSWindow {
 				    if (rotPathSetup() == false) {
 					selectedRow = -1;
 					selectedClosedPath = false;
+					insertArcMenuItem.setEnabled(true);
 					addToPathMenuItem.setEnabled
 					    (canAddToBezier());
 					setModeline("Rotate: select a point "
@@ -7808,6 +8230,7 @@ public class EPTSWindow {
 				    if (scalePathSetup() == false) {
 					selectedRow = -1;
 					selectedClosedPath = false;
+					insertArcMenuItem.setEnabled(true);
 					cancelPathOps();
 				    } else {
 					/*
@@ -7839,6 +8262,7 @@ public class EPTSWindow {
 			    }
 			} else {
 			    selectedClosedPath = false;
+			    insertArcMenuItem.setEnabled(true);
 			    if (hasPathOps()) {
 				cancelPathOps();
 			    } else {
@@ -7883,6 +8307,7 @@ public class EPTSWindow {
 			e.translatePoint(-p.x, -p.y);
 			vp.dispatchEvent(e);
 		    } else {
+			if (insertingArc) return;
 			Point p = panel.getMousePosition();
 			double xp =(p.x/zoom);
 			double yp = (p.y/zoom);
@@ -7899,6 +8324,7 @@ public class EPTSWindow {
 			    }
 			    selectedRow = -1;
 			    selectedClosedPath = false;
+			    insertArcMenuItem.setEnabled(true);
 			    addToPathMenuItem.setEnabled(canAddToBezier());
 			    setModeline("");
 			}
@@ -7911,6 +8337,7 @@ public class EPTSWindow {
 	    boolean pointDragged = false;
 	    public void mouseReleased(MouseEvent e) {
 		if (mouseButton == MouseEvent.BUTTON1) {
+		    if (insertingArc) return;
 		    altReallyPressed = false;
 		    if (altPressed) {
 			JViewport vp = scrollPane.getViewport();
@@ -7928,6 +8355,7 @@ public class EPTSWindow {
 		    }
 		    selectedRow = -1;
 		    selectedClosedPath = false;
+		    insertArcMenuItem.setEnabled(true);
 		    addToPathMenuItem.setEnabled(canAddToBezier());
 		    // selectedRowClick = false;
 		    if (nextState == null) {
@@ -8668,6 +9096,11 @@ public class EPTSWindow {
 					    g2d2.draw(tmpPath);
 					    g2d.draw(tmpPath);
 					}
+					if (tmpArcPath != null) {
+					    g2d.setColor(Color.RED);
+					    g2d2.draw(tmpArcPath);
+					    g2d.draw(tmpArcPath);
+					}
 				    } finally {
 					g2d2.dispose();
 					g2d.setStroke(savedStroke);
@@ -8823,7 +9256,7 @@ public class EPTSWindow {
 				scaleMenuItem.setEnabled(true);
 			    }
 			    deletePathMenuItem.setEnabled
-				(ptmodel.pathVariableNameCount() > 0);
+				(ptmodel.variableNameCount() > 0);
 			    offsetPathMenuItem.setEnabled
 				(ptmodel.pathVariableNameCount() > 0);
 			    tfMenuItem.setEnabled
@@ -8919,7 +9352,7 @@ public class EPTSWindow {
 			    scaleMenuItem.setEnabled(true);
 			}
 			deletePathMenuItem.setEnabled
-			    (ptmodel.pathVariableNameCount() > 0);
+			    (ptmodel.variableNameCount() > 0);
 			offsetPathMenuItem.setEnabled
 			    (ptmodel.pathVariableNameCount() > 0);
 			tfMenuItem.setEnabled

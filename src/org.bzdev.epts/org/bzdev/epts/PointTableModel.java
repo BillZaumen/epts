@@ -47,6 +47,8 @@ public class
     
     public int pathVariableNameCount() {return pnames.size();}
 
+    public int variableNameCount() {return names.size();}
+
     public List<PointTMR> getRows() {
 	return Collections.unmodifiableList(rows);
     }
@@ -867,7 +869,7 @@ public class
     public String getColumnName(int columnIndex) {
 	switch(columnIndex) {
 	case 0:
-	    return localeString("Variable");
+	    return localeString("VariableOrIndex");
 	case 1:
 	    return localeString("Mode");
 	case 2:
@@ -893,7 +895,12 @@ public class
 	Enum mode = row.getMode();
 	switch (columnIndex) {
 	case 0:
-	    return row.getVariableName();
+	    // return row.getVariableName();
+	    if (mode instanceof EPTS.Mode) {
+		return row.getVariableName();
+	    } else {
+		return String.format("%20d", rowIndex);
+	    }
 	case 1:
 	    return row.getMode();
 	case 2:
@@ -945,6 +952,75 @@ public class
 	    i++;
 	}
 	return result;
+    }
+
+    public int findRowIA(double xp, double yp, double zoom) {
+	int i = 0;
+	double limit = 7.0/zoom;
+	// compare square of distances to avoid having to
+	// compute a square root
+	limit *= limit;
+	int result = -1;
+	for (PointTMR row: rows) {
+	    Enum<?> mode = row.getMode();
+	    if (!row.isSelectable() || mode instanceof EPTS.Mode
+		|| mode == SplinePathBuilder.CPointType.SPLINE
+		|| mode == SplinePathBuilder.CPointType.CONTROL
+		|| mode == SplinePathBuilder.CPointType.CLOSE) {
+		i++;
+		continue;
+	    }
+	    double d = Point2D.distanceSq(xp, yp, row.getXP(), row.getYP());
+	    if (d < limit) {
+		// We previously returned the first match. Returning
+		// the last match is better because the last path or
+		// point edited will be at the end of the list. Users
+		// will frequently create a path and then try to edit
+		// their newly created points in order to fix up any
+		// errors.
+		result = i;
+		// return i;
+	    }
+	    i++;
+	}
+	if (result < 2 || result > rows.size()-2) return -1;
+	int prev = result-1;
+	int next = result+1;
+	PointTMR prevRow = rows.get(prev);
+	PointTMR nextRow = rows.get(next);
+	Enum<?> prevMode = prevRow.getMode();
+	Enum<?> nextMode = nextRow.getMode();
+	if (nextMode == SplinePathBuilder.CPointType.CLOSE) {
+	    nextRow = rows.get(findStart(next) + 1);
+	    nextMode = nextRow.getMode();
+	} else if (rows.get(result).getMode()
+		   == SplinePathBuilder.CPointType.MOVE_TO) {
+	    int ind = findEnd(result);
+	    prevRow = rows.get(ind-1);
+	    if (prevRow.getMode() == SplinePathBuilder.CPointType.CLOSE) {
+		prevRow = rows.get(ind-2);
+		prevMode = prevRow.getMode();
+		double delta = 1.e-10;
+		PointTMR crow = rows.get(result);
+		if (prevMode == SplinePathBuilder.CPointType.SEG_END
+		    && Math.abs(prevRow.getXP() - crow.getXP()) < delta
+		    && Math.abs(prevRow.getYP() - crow.getYP()) < delta) {
+		    prevRow = rows.get(ind-3);
+		    prevMode = prevRow.getMode();
+		}
+	    } else {
+		prevRow = rows.get(ind);
+		prevMode = prevRow.getMode();
+	    }
+	}
+	if ((prevMode == SplinePathBuilder.CPointType.MOVE_TO
+	     || prevMode == SplinePathBuilder.CPointType.SEG_END)
+	    && (nextMode == SplinePathBuilder.CPointType.MOVE_TO
+		|| nextMode == SplinePathBuilder.CPointType.SEG_END)) {
+	    return result;
+	} else {
+	    return -1;
+	}
     }
 
     /**

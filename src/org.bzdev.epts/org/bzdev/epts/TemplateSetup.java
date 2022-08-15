@@ -1863,6 +1863,9 @@ public class TemplateSetup {
 		list.add("--elevate");
 		break;
 	    }
+	    if (globalData.gcs) {
+		list.add("--gcs");
+	    }
 	}
 	for (Map.Entry<String,PathLocInfo> entry: pathLocMap.entrySet())  {
 	    String name = entry.getKey();
