@@ -49,8 +49,6 @@ public class PTFilters {
 	    PTFilter filter = entry.getValue();
 	    filterMap.put("filterName", filterName);
 	    filterMap.put("filterMode", filter.getMode().name());
-	    System.out.println("... filterName = "+filterMap.get("filterName"));
-	    System.out.println("... filterMode = "+filterMap.get("filterMode"));
 	    filterMap.put("filterRows", filter.getModel().getKeyMapList());
 	    list.add(filterMap);
 	}

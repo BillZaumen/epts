@@ -1493,6 +1493,15 @@ abstract class InsertArcPane extends JPanel {
 	return counterclockwise;
     }
 
+    public static boolean savedKeepCenter = false;
+    public boolean  keepCenter = savedKeepCenter;
+    private JCheckBox keepCenterCB = new
+	JCheckBox(localeString("keepCenter"), savedKeepCenter);
+
+    public boolean keepCenter() {
+	return keepCenter;
+    }
+
     private JCheckBox ccwCB = new JCheckBox(localeString("arcCCW"),
 					    savedCCW);
     private CharDocFilter cdf;
@@ -1564,6 +1573,7 @@ abstract class InsertArcPane extends JPanel {
 	rindexSaved = rindex;
 	savedRadius = radius;
 	savedCCW = counterclockwise;
+	savedKeepCenter = keepCenter;
     }
 
 
@@ -1634,6 +1644,10 @@ abstract class InsertArcPane extends JPanel {
 		counterclockwise = ccwCB.isSelected();
 	    });
 
+	keepCenterCB.addActionListener((e) -> {
+		keepCenter = keepCenterCB.isSelected();
+	    });
+
 	JButton okButton = new JButton(localeString("okButton"));
 	JButton acceptButton = new JButton(localeString("acceptButton"));
 	JButton cancelButton = new JButton(localeString("cancelButton"));
@@ -1687,6 +1701,8 @@ abstract class InsertArcPane extends JPanel {
 	add(radiusTF);
 	gridbag.setConstraints(ccwCB, c);
 	add(ccwCB);
+	gridbag.setConstraints(keepCenterCB, c);
+	add(keepCenterCB);
 	JPanel buttonPane = new JPanel();
 	GridBagLayout gridbag2 = new GridBagLayout();
 	buttonPane.setLayout(gridbag2);
@@ -3874,6 +3890,30 @@ public class EPTSWindow {
 	    tmpArcPath = null;
 	    dialog.setVisible(true);
 	    if (iapane.getStatus()) {
+		if (iapane.keepCenter()) {
+		    String lname = null;
+		    while (lname == null) {
+			lname = JOptionPane.showInputDialog
+			    (frame, localeString("PleaseEnterVariableName"),
+			     localeString("ScriptingLanguageVariableName"),
+			     JOptionPane.PLAIN_MESSAGE);
+			if (lname == null) break;
+			PointTMR lrow = new
+			    PointTMR(lname, EPTS.Mode.LOCATION,
+				     row.getX(), row.getY(),
+				     row.getXP(), row.getYP());
+			try {
+			    ptmodel.addRow(lrow);
+			} catch (Exception e) {
+				JOptionPane.showMessageDialog
+				    (frame, e.getMessage(),
+				     localeString("errorTitle"),
+				     JOptionPane.ERROR_MESSAGE);
+			    lname = null;
+			}
+		    }
+		}
+
 		Path2D arcPath = iapane.getArc(null);
 		int start = ptmodel.findStart(selectedRow);
 		int penultimateIndex = ptmodel.findEnd(selectedRow) - 2;

@@ -765,16 +765,20 @@ The <code>Edit</code> menu contains the following items:
     adjacent to that point must be straight-line segments, and for
     open paths, the point must not start or terminate the path.  A
     dialog box will allow one to specify a radius in GCS coordinates,
-    the units for the radius, and whether the arc should go clockwise
-    or counterclockwise relative to the path's direction. Whan a point
+    the units for the radius, whether the arc should go clockwise
+    or counterclockwise relative to the path's direction, and
+    whether the selected point should be converted into a location
+    (in which case EPTS will ask for a new name). Whan a point
     on a path has not been selected, this option will provide a hint
     on the line just below the menus, and will ignore any points that
-    are are not part of path. When a point (which is denoted by a
+    are are not part of the path. When a point (which is denoted by a
     round black circle) has been selected, that point will be used,
     but this option will be disabled if the point's adjacent segments
     are not straight lines.  One use of this option occurs when
     specifying a path to be cut in a metal sheet&mdash;it can be used
     to add "relief notches" at points where the metal should be bent.
+    If the selected points are converted into locations, those can be
+    used to draw lines representing where bends should occur.
   <LI><B><CODE>Transform an Existing Path</CODE></B>. This option will
     scale, rotate, and/or translate an existing path. The
     transformation is specified by a dialog box.  As with the previous
