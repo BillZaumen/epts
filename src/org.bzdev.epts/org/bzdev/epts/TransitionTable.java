@@ -53,6 +53,9 @@ public class TransitionTable {
 
     private static JMenuItem vectorMenuItem =
 	new JMenuItem(localeString("Vector"));
+    private static JMenuItem shiftMenuItem =
+	new JMenuItem(localeString("Shift"));
+
     private static JMenuItem arcMenuItem = new JMenuItem(localeString("Arc"));
     private static JMenuItem gotoMenuItem =
 	new JMenuItem(localeString("GotoExistingPoint"));
@@ -63,6 +66,8 @@ public class TransitionTable {
     static {
 	vectorMenuItem.setEnabled(false);
 	vectorMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, 0));
+	shiftMenuItem.setEnabled(false);
+	shiftMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, 0));
 	arcMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, 0));
 	arcMenuItem.setEnabled(false);
 	gotoMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, 0));
@@ -79,6 +84,7 @@ public class TransitionTable {
     }
 
     static JMenuItem getVectorMenuItem() {return vectorMenuItem;}
+    static JMenuItem getShiftMenuItem() {return shiftMenuItem;}
     static JMenuItem getArcMenuItem() {return arcMenuItem;}
     static JMenuItem getGotoMenuItem() {return gotoMenuItem;}
     static JMenuItem getLocMenuItem() {return locMenuItem;}
@@ -181,6 +187,7 @@ public class TransitionTable {
 	    item.setSelected(false);
 	}
 	vectorMenuItem.setEnabled(false);
+	shiftMenuItem.setEnabled(false);
 	arcMenuItem.setEnabled(false);
 	gotoMenuItem.setEnabled(false);
 	locMenuItem.setEnabled(false);
@@ -210,6 +217,7 @@ public class TransitionTable {
 	passedSE = false;
 	currentState = mode;
 	vectorMenuItem.setEnabled(false);
+	shiftMenuItem.setEnabled(false);
 	arcMenuItem.setEnabled(false);
 	boolean result = false;
 	for (int i = start+1 ; i <= index; i++) {
@@ -230,6 +238,7 @@ public class TransitionTable {
 	    }
 	    currentState = EPTS.Mode.PATH_END;
 	    vectorMenuItem.setEnabled(false);
+	    shiftMenuItem.setEnabled(false);
 	    arcMenuItem.setEnabled(false);
 	    for (Enum state: menuItemMap.keySet()) {
 		JMenuItem item = menuItemMap.get(state);
@@ -337,12 +346,17 @@ public class TransitionTable {
 		vectorMenuItem.setEnabled(false);
 		arcMenuItem.setEnabled(false);
 	    }
-	    if (currentState != EPTS.Mode.PATH_END) {
+	    if (currentState != EPTS.Mode.PATH_END
+		&& currentState != EPTS.Mode.LOCATION) {
 		gotoMenuItem.setEnabled(true);
+		shiftMenuItem
+		    .setEnabled(currentState != null
+				&& currentState != EPTS.Mode.PATH_START);
 		locMenuItem.setEnabled(true);
 	    } else {
 		gotoMenuItem.setEnabled(false);
 		locMenuItem.setEnabled(false);
+		shiftMenuItem.setEnabled(false);
 	    }
 	    return result; 
 	}

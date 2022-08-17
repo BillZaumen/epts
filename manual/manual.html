@@ -1033,7 +1033,7 @@ displayed in textual form. This menu contains the following items:
     changed as appropriate. Typically, it uses data associated with each
     reference path, and notices if single paths have been created for a
     base path.
-  <LI> When the <B><CODE>Create a B&eacute;zier Path</CODE></B> or
+  <LI> <A name="BOption"></A>When the <B><CODE>Create a B&eacute;zier Path</CODE></B> or
     the edit menu&#39;s <B><CODE>Append to a B&eacute;zier Path</CODE></B>
     options are in effect, a series of radio buttons specifying the type for
     the next point along a curve will be enabled:
@@ -1069,12 +1069,12 @@ displayed in textual form. This menu contains the following items:
 	<BR>
 	In the figure, the tangent lines leading to the control points
 	shown as squares are not part of the curve itself.
-      <LI><B><CODE>End Curve/Line Segment</CODE></B>. This option
-	indicates that the next point is the end of a segment. A
-	segment with no intermediate control
-	or <A href="#splines">spline</A> points is a straight-line
-	segment.  Like spline points, the end-of-segment points are
-	shown as black circles with white borders.
+      <LI><A NAME="EOption"></A><B><CODE>End Curve/Line
+	Segment</CODE></B>.  This option indicates that the next point
+	is the end of a segment. A segment with no intermediate
+	control or <A href="#splines">spline</A> points is a
+	straight-line segment.  Like spline points, the end-of-segment
+	points are shown as black circles with white borders.
     </UL>
   <LI>Two menu items provide Options for ending a path:
     <UL>
@@ -1086,8 +1086,9 @@ displayed in textual form. This menu contains the following items:
       <LI><B><CODE>Path Ended</CODE></B>. This option ends the current path
 	without closing it.
     </UL>
-  <LI>Three Menu items provide explicit coordinates by opening a dialog
-    box with fields containing various coordinates, lengths, and angles:
+  <LI>Four Menu items provide explicit coordinates by opening a dialog
+    box with fields containing various coordinates, lengths, and angles,
+    or by reading the coordinates from an existing point:
     <UL>
       <LI><B><CODE>Get X-Y Coordinates (GCS)</CODE></B>. This menu item
 	will configure EPTS so that the X and Y coordinates of a point
@@ -1096,7 +1097,9 @@ displayed in textual form. This menu contains the following items:
 	meet at points with exactly the same coordinates.  The existing
 	points are shown as filled circles (black surrounded by a white
 	ring). These points are not linked in any way so that transforming
-	one path will not transform another.
+	one path will not transform another. This option can be used
+	when creating a path, or when a point on a path or a location has
+	been selected.
       <LI><B><CODE>Set X-Y Coordinates (GCS)</CODE></B>. This menu item
 	will open a dialog box that will ask for the X and Y
 	coordinates of a point specified in GCS units:
@@ -1107,6 +1110,17 @@ displayed in textual form. This menu contains the following items:
 	clicking the left-mouse button when the cross-hair cursor is
 	displayed.  Both coordinate fields have an adjacent pull-down
 	menu that allows units to be specified.
+      <LI><B><CODE>Set/Move to current coordinates + (&Delta;X, &Delta;Y) (GCS)</CODE></B>.
+	When creating a path, this option places the next point at the
+	GCS coordinates (X + &Delta;X, Y + &Delta;Y) where (X, Y) is
+	the position of the current point. The type of the point is
+	determined by the current
+	<A HREF="#BOption">B&eacute;zier-path option</A>. If that option
+	is <A HREF="#EOption">End Curve/Line Segment</A>, then this
+	option can be used to add a vector specified using Cartesian
+	coordinates.  Otherwise, if a point has been selected, this
+	option will move the point by incrementing its X and Y
+	coordinates by &Delta;X and &Delta;Y respectively.
       <LI><B><CODE>Add Vector</CODE></B>. This menu item will open a
 	dialog box that will ask for a length and an angle:
 	<BR><BR>
@@ -1127,7 +1141,8 @@ displayed in textual form. This menu contains the following items:
 	the tangent for this segment. The angle can be changed if desired.
 	In cases where straight-line segments should be connected with
 	arcs whenever the direction changes, the preset angle will have
-	the desired value.
+	the desired value. This option always produces a straight-line
+	segment.
       <LI><B><CODE>Add Arc</CODE></B>. This menu item will open a
 	dialog box that will ask for a radius, angle, angle direction,
 	and arc-accuracy level:

@@ -1250,6 +1250,176 @@ class LocPane extends JPanel {
     }
 }
 
+class ShiftPane extends JPanel {
+    static int xindexSaved = 0;
+    static int yindexSaved = 0;
+    int xindex = xindexSaved;
+    int yindex = yindexSaved;
+
+    void saveIndices() {
+	xindexSaved = xindex;
+	yindexSaved = yindex;
+    }
+
+
+    static String errorMsg(String key, Object... args) {
+	return EPTS.errorMsg(key, args);
+    }
+
+    static String localeString(String key) {
+	return EPTS.localeString(key);
+    }
+
+    VTextField xtf;		// X text field
+    VTextField ytf;		// Y text field
+    JComboBox<String> xunits = new JComboBox<>(ConfigGCSPane.units);
+    JComboBox<String> yunits = new JComboBox<>(ConfigGCSPane.units);
+
+    boolean firstTime = true;
+    CharDocFilter cdf = new CharDocFilter();
+    InputVerifier tfiv = new InputVerifier() {
+	    public boolean verify(JComponent input) {
+		JTextField tf = (VTextField)input;
+		String string = tf.getText();
+		if (string == null) string = "";
+		string = string.trim();
+		try {
+		    if (string.length() == 0) {
+			if (firstTime) {
+			    firstTime = false;
+			    return false;
+			} else {
+			    return true;
+			}
+		    }
+		    double value = Double.parseDouble(string);
+		    return true;
+		} catch (Exception e) {
+		    return false;
+		}
+	    }
+	};
+
+    double xcoord = 0.0;
+    double ycoord = 0.0;
+
+    public double getXCoord() {
+	return ConfigGCSPane.convert[xindex].valueAt(xcoord);
+    }
+
+    public double getYCoord() {
+	return ConfigGCSPane.convert[yindex].valueAt(ycoord);
+    }
+
+    public void setXCoord(double x) {
+	xcoord = ConfigGCSPane.inverseConvert[xindex].valueAt(x);
+	Formatter f = new Formatter();
+	xtf.setText(f.format("%10.6g",xcoord).toString().trim());
+    }
+    public void setYCoord(double y) {
+	ycoord = ConfigGCSPane.inverseConvert[yindex].valueAt(y);
+	Formatter f = new Formatter();
+	ytf.setText(f.format("%10.6g",ycoord).toString().trim());
+    }
+
+    boolean noPrevErrors = true;
+
+    public ShiftPane() {
+	super();
+	boolean firstTime = true;
+	cdf.setAllowedChars("09eeEE..,,++--");
+	JLabel xl = new JLabel(localeString("DeltaX"));
+	JLabel yl = new JLabel(localeString("DeltaY"));
+	xtf = new VTextField("", 10) {
+		@Override
+		protected void onAccepted() {
+		    String text = getText();
+		    text = text.trim();
+		    if (text == null || text.length() == 0) {
+			xcoord = 0.0;
+		    } else {
+			xcoord = Double.valueOf(text);
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    if (noPrevErrors) {
+			// Hack to control focus.
+			// When this panel first comes visible,
+			// it requests the focus but the container
+			// it is in does the same thing a bit later.
+			// A VTextField will notice the focus loss and
+			// check the validity of its value. We return
+			// false so that the keyboard focus will be
+			// requested again.
+			noPrevErrors = false;
+			String text = getText();
+			if (text == null || text.trim().length() == 0) {
+			    return false;
+			}
+		    }
+		    JOptionPane.showMessageDialog
+			(this, localeString("needRealNumber"),
+			 localeString("errorTitle"), JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+	((AbstractDocument)xtf.getDocument()).setDocumentFilter(cdf);
+	xtf.setInputVerifier(tfiv);
+	ytf = new VTextField("", 10) {
+		@Override
+		protected void onAccepted() {
+		    String text = getText();
+		    if (text == null || text.length() == 0) {
+			ycoord = 0.0;
+		    } else {
+			ycoord = Double.valueOf(text);
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    JOptionPane.showMessageDialog
+			(this, localeString("needRealNumber"),
+			 localeString("errorTitle"), JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+	((AbstractDocument)ytf.getDocument()).setDocumentFilter(cdf);
+	ytf.setInputVerifier(tfiv);
+	GridBagLayout gridbag = new GridBagLayout();
+	GridBagConstraints c = new GridBagConstraints();
+	setLayout(gridbag);
+	c.insets = new Insets(5, 5, 5, 5);
+	c.ipadx = 5;
+	c.ipady = 5;
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = 1;
+	gridbag.setConstraints(xl, c);
+	add(xl);
+	gridbag.setConstraints(xtf, c);
+	add(xtf);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(xunits, c);
+	add(xunits);
+	c.gridwidth = 1;
+	gridbag.setConstraints(yl, c);
+	add(yl);
+	gridbag.setConstraints(ytf, c);
+	add(ytf);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(yunits, c);
+	add(yunits);
+	xunits.setSelectedIndex(xindex);
+	yunits.setSelectedIndex(yindex);
+	xunits.addActionListener((ae) -> {
+		xindex = xunits.getSelectedIndex();
+	    });
+	yunits.addActionListener((ae) -> {
+		yindex = yunits.getSelectedIndex();
+	    });
+    }
+}
+
 class ArcPane extends JPanel {
 
     static String errorMsg(String key, Object... args) {
@@ -3013,7 +3183,11 @@ public class EPTSWindow {
 	    if (locState == false) {
 		// when locState is true, the prevModeline test
 		// doesn't work
-		endGotoMode();
+		if (selectedRow == -1 ||
+		    ptmodel.getRow(selectedRow).getMode()
+		    != EPTS.Mode.LOCATION) {
+		    endGotoMode();
+		}
 	    }
 	}
 	modeline.setText(" " + line);
@@ -5552,6 +5726,8 @@ public class EPTSWindow {
 			    setModeline("");
 			    TransitionTable.getGotoMenuItem().setEnabled(false);
 			    TransitionTable.getLocMenuItem().setEnabled(false);
+			    TransitionTable.getShiftMenuItem()
+				.setEnabled(false);
 			    resetState ();
 			} else {
 			    if (selectedRow != -1) {
@@ -5581,6 +5757,131 @@ public class EPTSWindow {
 				TransitionTable.getGotoMenuItem()
 				    .setEnabled(false);
 				TransitionTable.getLocMenuItem()
+				    .setEnabled(false);
+				TransitionTable.getShiftMenuItem()
+				    .setEnabled(false);
+			    }
+			}
+			JViewport vp = scrollPane.getViewport();
+			int vpw = vp.getWidth();
+			int vph = vp.getHeight();
+			int ipx = (int)(Math.round(xp*zoom - vpw/2));
+			int ipy = (int)(Math.round(yp*zoom - vph/2));
+			if (ipx < 0) ipx = 0;
+			if (ipy < 0) ipy = 0;
+			vp.setViewPosition(new Point(ipx, ipy));
+			scrollPane.repaint();
+		    }
+		}
+	    });
+	toolMenu.add(menuItem);
+	menuItem = TransitionTable.getShiftMenuItem();
+	menuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    final ShiftPane spane = new ShiftPane();
+		    spane.addAncestorListener(new AncestorListener() {
+			    @Override
+			    public void ancestorAdded(AncestorEvent e) {
+				// spane.xtf.requestFocusInWindow();
+				SwingOps.tryRequestFocusInWindow(spane.xtf, 0);
+			    }
+			    @Override
+			    public void ancestorMoved(AncestorEvent e) {}
+			    @Override
+			    public void ancestorRemoved(AncestorEvent e) {}
+			});
+		    int status = JOptionPane.showConfirmDialog
+			(frame, spane, localeString("shiftLocation"),
+			 JOptionPane.OK_CANCEL_OPTION,
+			 JOptionPane.QUESTION_MESSAGE);
+		    if (status == 0) {
+			spane.saveIndices();
+			double ix, iy;
+			if (selectedRow != -1) {
+			    PointTMR srow = ptmodel.getRow(selectedRow);
+			    ix = srow.getX();
+			    iy = srow.getY();
+			} else {
+			    PointTMR srow = ptmodel.getLastRow();
+			    Enum<?> mode = srow.getMode();
+			    if (mode instanceof EPTS.Mode
+				|| mode == SplinePathBuilder.CPointType.CLOSE) {
+				// should not happen if we disable the
+				// menu item when not in the right state
+				JOptionPane.showMessageDialog
+				    (frame, "Cannot get starting location",
+				     localeString("errorTitle"),
+				     JOptionPane.ERROR_MESSAGE);
+				return;
+			    } else {
+				ix = srow.getX();
+				iy = srow.getY();
+			    }
+			}
+			double x = ix + spane.getXCoord();
+			double y = iy + spane.getYCoord();
+			double xp = (x - xrefpoint) / scaleFactor;
+			double yp = (y - yrefpoint) / scaleFactor;
+			yp = height - yp;
+			if (xp < 0.0 || xp > width || yp < 0.0 || yp > height) {
+			    JOptionPane.showMessageDialog
+				(frame, "New point out of range",
+				 localeString("errorTitle"),
+				 JOptionPane.ERROR_MESSAGE);
+			    return;
+			}
+			if (locState) {
+			    if (selectedRow != -1) {
+				if (moveLocOrPath) {
+				    ptmodel.moveObject(selectedRow,
+						       x, y, xp, yp, true);
+				    cancelPathOps();
+				} else {
+				    ptmodel.changeCoords(selectedRow,
+							 x, y, xp, yp, true);
+				}
+			    } else {
+				ptmodel.addRow(varname, EPTS.Mode.LOCATION,
+					       x, y, xp, yp);
+				deletePathMenuItem.setEnabled(true);
+			    }
+			    locState = false;
+			    setModeline("");
+			    TransitionTable.getGotoMenuItem().setEnabled(false);
+			    TransitionTable.getLocMenuItem().setEnabled(false);
+			    TransitionTable.getShiftMenuItem()
+				.setEnabled(false);
+			    resetState ();
+			} else {
+			    if (selectedRow != -1) {
+				if (moveLocOrPath) {
+				    ptmodel.moveObject(selectedRow,
+						       x, y, xp, yp, true);
+				    cancelPathOps();
+				} else {
+				    ptmodel.changeCoords(selectedRow,
+							 x, y, xp, yp, true);
+				}
+				selectedRow = -1;
+				selectedClosedPath = false;
+				insertArcMenuItem.setEnabled(true);
+				addToPathMenuItem.setEnabled(canAddToBezier());
+			    } else {
+				ptmodel.addRow("", nextState, x, y, xp, yp);
+			    }
+			    if (nextState != null) {
+				ttable.nextState(nextState);
+				JRadioButtonMenuItem rbmi =
+				    (JRadioButtonMenuItem)
+				    TransitionTable.getMenuItem(nextState);
+				rbmi.setSelected(true);
+			    } else {
+				resetState();
+				TransitionTable.getGotoMenuItem()
+				    .setEnabled(false);
+				TransitionTable.getLocMenuItem()
+				    .setEnabled(false);
+				TransitionTable.getShiftMenuItem()
 				    .setEnabled(false);
 			    }
 			}
@@ -6936,6 +7237,7 @@ public class EPTSWindow {
 	    }
 	    ttable.setState(ptmodel, endIndex);
 	    TransitionTable.getLocMenuItem().setEnabled(true);
+	    TransitionTable.getShiftMenuItem().setEnabled(true);
 	    TransitionTable.getGotoMenuItem().setEnabled(true);
 	} else {
 	    endIndex = ptmodel.getRowCount()-1;
@@ -6956,6 +7258,7 @@ public class EPTSWindow {
 	    }
 	    ttable.setState(ptmodel, endIndex);
 	    TransitionTable.getLocMenuItem().setEnabled(true);
+	    TransitionTable.getShiftMenuItem().setEnabled(true);
 	    TransitionTable.getGotoMenuItem().setEnabled(true);
 	}
 	if (nextState != null) {
@@ -7835,6 +8138,7 @@ public class EPTSWindow {
 	    nextState = null;
 	    TransitionTable.getGotoMenuItem().setEnabled(false);
 	    TransitionTable.getLocMenuItem().setEnabled(false);
+	    TransitionTable.getShiftMenuItem().setEnabled(false);
 	    saveMenuItem.setEnabled(true);
 	    saveAsMenuItem.setEnabled(true);
 	    ttable = null;
@@ -7849,6 +8153,10 @@ public class EPTSWindow {
 	if (ptmodel.pathVariableNameCount() > 0) {
 	    rotMenuItem.setEnabled(true);
 	    scaleMenuItem.setEnabled(true);
+	}
+	for (TransitionTable.Pair item:
+		 TransitionTable.getMenuItemsWithState()) {
+	    item.getMenuItem().setEnabled(false);
 	}
     }
 
@@ -7882,10 +8190,13 @@ public class EPTSWindow {
 	setModeline(localeString("LeftClickCreate"));
 	TransitionTable.getGotoMenuItem().setEnabled(true);
 	TransitionTable.getLocMenuItem().setEnabled(true);
+	TransitionTable.getShiftMenuItem().setEnabled(true);
 	distState = 0; 
 	locState = true;
 	savedCursorDist = panel.getCursor();
 	panel.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+	TransitionTable.getShiftMenuItem().setEnabled(false);
+
     }
 
     TransitionTable ttable = null;
@@ -7966,6 +8277,7 @@ public class EPTSWindow {
 	nextState = SplinePathBuilder.CPointType.MOVE_TO;
 	TransitionTable.getGotoMenuItem().setEnabled(true);
 	TransitionTable.getLocMenuItem().setEnabled(true);
+	TransitionTable.getShiftMenuItem().setEnabled(true);
 	// addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	addToPathMenuItem.setEnabled(canAddToBezier());
 	deletePathMenuItem.setEnabled(ptmodel.variableNameCount() > 0);
@@ -7974,6 +8286,7 @@ public class EPTSWindow {
 	newTFMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	saveMenuItem.setEnabled(false);
 	saveAsMenuItem.setEnabled(false);
+	TransitionTable.getShiftMenuItem().setEnabled(false);
     }
 
     boolean mouseMoved = false;
@@ -8061,6 +8374,30 @@ public class EPTSWindow {
 			    return;
 			}
 			p = new Point((int)lx, (int)ly);
+			if (selectedRow != -1) {
+			    PointTMR srow = ptmodel.getRow(selectedRow);
+			    Enum<?> smode = srow.getMode();
+			    if (smode == EPTS.Mode.LOCATION
+				|| smode instanceof
+				SplinePathBuilder.CPointType) {
+				// Special case - we are moving a location
+				// to the position of an existing point.
+				endGotoMode();
+				double xp =(p.x/zoom);
+				double yp = (p.y/zoom);
+				double x = xp;
+				double y = height - yp;
+				x *= scaleFactor;
+				y *= scaleFactor;
+				x += xrefpoint;
+				y += yrefpoint;
+				srow.setX(x, xp);
+				srow.setY(y, yp);
+				resetState();
+				panel.repaint();
+				return;
+			    }
+			}
 			endGotoMode();
 		    }
 		    if (insertRowIndex != -1) {
@@ -8109,6 +8446,12 @@ public class EPTSWindow {
 				ptmodel.addRow(varname, EPTS.Mode.LOCATION,
 					       x, y, xp, yp);
 				deletePathMenuItem.setEnabled(true);
+				TransitionTable.getLocMenuItem()
+				    .setEnabled(false);
+				TransitionTable.getGotoMenuItem()
+				    .setEnabled(false);
+				TransitionTable.getShiftMenuItem()
+				    .setEnabled(false);
 				location = String.format("%s = {x: %g, y: %g};",
 							 varname, x, y);
 			    }
@@ -8251,6 +8594,8 @@ public class EPTSWindow {
 					.setEnabled(true);
 				    TransitionTable.getLocMenuItem()
 					.setEnabled(true);
+				    TransitionTable.getShiftMenuItem()
+					.setEnabled(true);
 				} else if (rotatePath) {
 				    // will not be called if the point
 				    // is a location instead of a point on
@@ -8298,6 +8643,8 @@ public class EPTSWindow {
 				TransitionTable.getGotoMenuItem()
 				    .setEnabled(true);
 				TransitionTable.getLocMenuItem()
+				    .setEnabled(true);
+				TransitionTable.getShiftMenuItem()
 				    .setEnabled(true);
 			    }
 			} else {
@@ -8361,6 +8708,8 @@ public class EPTSWindow {
 			    if (selectedRow != -1 && nextState == null) {
 				TransitionTable
 				    .getLocMenuItem().setEnabled(false);
+				TransitionTable
+				    .getShiftMenuItem().setEnabled(false);
 			    }
 			    selectedRow = -1;
 			    selectedClosedPath = false;
@@ -8392,6 +8741,15 @@ public class EPTSWindow {
 		    if (selectedRow != -1 && nextState == null) {
 			TransitionTable.getGotoMenuItem().setEnabled(false);
 			TransitionTable.getLocMenuItem().setEnabled(false);
+			TransitionTable.getShiftMenuItem().setEnabled(false);
+		    }
+		    if (gotoMode && selectedRow != -1) {
+			 if (nextState == null && locState == false) {
+			     // Case were we are moving a location to overlay
+			     // an existing point.
+			     panel.repaint();
+			     return;
+			 }
 		    }
 		    selectedRow = -1;
 		    selectedClosedPath = false;
