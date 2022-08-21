@@ -187,7 +187,9 @@ RESOURCES = manual/manual.xml \
 	docs/manual/NTPDialog.png \
 	docs/manual/NTPWindow.png \
 	docs/manual/AddVector.png \
-	docs/manual/AddArc.png
+	docs/manual/AddArc.png \
+	docs/manual/besselGCS.png \
+	docs/manual/bessel.png
 
 DTD = epts-1.0.dtd
 

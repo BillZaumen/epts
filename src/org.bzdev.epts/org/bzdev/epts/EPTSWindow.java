@@ -6,11 +6,14 @@ import java.awt.image.*;
 import java.awt.datatransfer.*;
 import java.awt.print.PrinterException;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URL;
@@ -28,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.Vector;
+import java.util.concurrent.TimeUnit;
 import javax.imageio.ImageIO;
 import javax.script.ScriptException;
 import javax.swing.*;
@@ -54,6 +58,9 @@ import org.bzdev.graphs.RefPointName;
 import org.bzdev.lang.MathOps;
 import org.bzdev.lang.UnexpectedExceptionError;
 import org.bzdev.imageio.BlockingImageObserver;
+import org.bzdev.io.CSVReader;
+import org.bzdev.io.LineReader;
+import org.bzdev.io.LineReader.Delimiter;
 import org.bzdev.math.Functions;
 import org.bzdev.math.VectorOps;
 import org.bzdev.net.WebEncoder;
@@ -1419,6 +1426,266 @@ class ShiftPane extends JPanel {
 	    });
     }
 }
+
+class PipePane extends JPanel {
+    static String errorMsg(String key, Object... args) {
+	return EPTS.errorMsg(key, args);
+    }
+
+    static String localeString(String key) {
+	return EPTS.localeString(key);
+    }
+
+    private static int savedUnitsIndex = 0;
+    private int unitsIndex = savedUnitsIndex;
+
+    private static Vector<String> modes = new Vector<>(2);
+    static {
+	modes.add(localeString("pipeCmd"));
+	modes.add(localeString("pipeFile"));
+    }
+    private static int savedModeIndex = 0;
+    private int modeIndex = savedModeIndex;
+
+    private JComboBox<String> modeComboBox = new JComboBox<>(modes);
+
+    private int caretPosition = 0;
+    private JTextField cmdTextField = new JTextField(50);
+    private JButton fileButton = new JButton(localeString("pipeFileButton"));
+
+    private JComboBox<String> unitsComboBox = new
+	JComboBox<>(ConfigGCSPane.units);
+
+    private boolean savedHashdr = false;
+    boolean hashdr = savedHashdr;
+
+    private JCheckBox hashdrCheckBox =
+	new JCheckBox(localeString("pipeHasHdr"),  hashdr);
+
+    private static Vector<String> delims = new Vector<>(3);
+    static {
+	delims.add(localeString("SystemEOL"));
+	delims.add(localeString("CRLF"));
+	delims.add(localeString("LF"));
+	delims.add(localeString("CR"));
+    }
+
+    LineReader.Delimiter getDelimiter(int ind) {
+	switch (ind) {
+	case 0: return null;
+	case 1: return LineReader.Delimiter.CRLF;
+	case 2: return LineReader.Delimiter.LF;
+	case 3: return LineReader.Delimiter.CR;
+	}
+	return null;
+    }
+
+    private static int savedDelimIndex = 0;
+    private int delimIndex = savedDelimIndex;
+    private JComboBox<String> delimComboBox = new JComboBox<>(delims);
+
+    public int getUnitsIndex() {
+	return unitsIndex;
+    }
+
+    private static File savedDir = new File(System.getProperty("user.dir"));
+    private File dir = savedDir;
+
+    void saveState() {
+	savedModeIndex = modeIndex;
+	savedHashdr = hashdr;
+	savedDelimIndex = delimIndex;
+	savedDir = dir;
+    }
+
+    Process p = null;
+    Thread monitor = null;
+    public boolean isAlive() {
+	if (p == null) return false;
+	try {
+	    p.waitFor(5, TimeUnit.SECONDS);
+	} catch (Exception e){}
+	return (p != null) && p.isAlive();
+    }
+
+    public void kill() {
+	if (p != null) {
+	    try {
+		p.destroyForcibly().waitFor();
+	    } catch (Exception e){}
+	}
+    }
+
+    StringBuilder errmsg = new StringBuilder();
+    boolean msgDone = false;
+    boolean  msgReady() {
+	try {
+	    monitor.join();
+	} catch (Exception e) {}
+	return msgDone;
+    }
+    public String errmsg() {
+	return  errmsg.toString();
+    }
+
+    public int exitValue() {
+	return (p == null)? 0: p.exitValue();
+    }
+
+    public CSVReader getReader() throws Exception {
+	InputStream is;
+	if (modeIndex == 0) {
+	    p = Runtime.getRuntime().exec(cmdTextField.getText());
+	    is = p.getInputStream();
+	    monitor = new Thread(() -> {
+		    try {
+			InputStream eis = p.getErrorStream();
+			Reader er = new
+			    InputStreamReader(eis, Charset.forName("UTF-8"));
+			int ch;
+			while ((ch = er.read()) != -1) {
+			    errmsg.append((char)ch);
+			}
+		    } catch (Exception e) {
+			errmsg.append("\n" + e.getMessage());
+		    } finally {
+			msgDone = true;
+		    }
+	    });
+	    monitor.start();
+	} else if (modeIndex == 1) {
+	    is = new FileInputStream(cmdTextField.getText());
+	} else {
+	    return null;
+	}
+	Reader r = new InputStreamReader(is, Charset.forName("UTF-8"));
+	return new CSVReader(r, hashdr, getDelimiter(delimIndex));
+    }
+
+    boolean status = false;
+    public boolean getStatus() {return status;}
+
+    public PipePane(JFrame frame) {
+	modeComboBox.setSelectedIndex(modeIndex);
+	fileButton.setEnabled(true);
+	unitsComboBox.setSelectedIndex(unitsIndex);
+	hashdrCheckBox.setSelected(hashdr);
+	delimComboBox.setSelectedIndex(delimIndex);
+
+	modeComboBox.addActionListener((e) -> {
+		modeIndex = modeComboBox.getSelectedIndex();
+	    });
+	unitsComboBox.addActionListener((e) -> {
+		unitsIndex = unitsComboBox.getSelectedIndex();
+	    });
+	hashdrCheckBox.addActionListener((e) -> {
+		hashdr = hashdrCheckBox.isSelected();
+	    });
+	delimComboBox.addActionListener((e) -> {
+		delimIndex = delimComboBox.getSelectedIndex();
+	    });
+
+	cmdTextField.addCaretListener((ce) -> {
+		caretPosition = ce.getDot();
+	    });
+
+	fileButton.addActionListener((e) -> {
+		JFileChooser fc = new JFileChooser(dir);
+		int status = fc.showDialog(frame,
+					   localeString("pipeFileAction"));
+		if (status == JFileChooser.APPROVE_OPTION) {
+		    File f = fc.getSelectedFile();
+		    dir = f.getParentFile();
+		    String path = f.getPath();
+		    System.out.println("path = " + path);
+		    try {
+			cmdTextField.getDocument()
+			    .insertString(caretPosition, path, null);
+		    } catch (Exception ee) {
+			System.err.println("insertion failed");
+		    }
+		}
+	    });
+
+
+	JButton okButton = new JButton(localeString("okButton"));
+	JButton cancelButton = new JButton(localeString("cancelButton"));
+
+	cancelButton.addActionListener((e) -> {
+		status = false;
+		Window w = SwingUtilities.getWindowAncestor(PipePane.this);
+		w.setVisible(false);
+	    });
+	okButton.addActionListener((e) -> {
+		status = true;
+		saveState();
+		Window w = SwingUtilities.getWindowAncestor(PipePane.this);
+		w.setVisible(false);
+	    });
+
+
+	GridBagLayout gridbag = new GridBagLayout();
+	GridBagConstraints c = new GridBagConstraints();
+	setLayout(gridbag);
+	c.insets = new Insets(5, 5, 5, 5);
+	c.ipadx = 5;
+	c.ipady = 5;
+	c.anchor = GridBagConstraints.LINE_START;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(modeComboBox, c);
+	add(modeComboBox);
+	c.gridwidth = 1;
+	gridbag.setConstraints(cmdTextField, c);
+	add(cmdTextField);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(fileButton, c);
+	add(fileButton);
+	gridbag.setConstraints(hashdrCheckBox, c);
+	add(hashdrCheckBox);
+	c.gridwidth = 1;
+	JPanel leftPane = new JPanel();
+	leftPane.setLayout(new FlowLayout(FlowLayout.LEADING));
+	JLabel label = new JLabel(localeString("inputUnits"));
+	leftPane.add(label);
+	leftPane.add(unitsComboBox);
+	gridbag.setConstraints(label, c);
+	c.gridwidth = 1;
+	gridbag.setConstraints(leftPane, c);
+	add(leftPane);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	label = new JLabel("");
+	gridbag.setConstraints(label, c);
+	add(label);
+	c.gridwidth = 1;
+	leftPane = new JPanel();
+	leftPane.setLayout(new FlowLayout(FlowLayout.LEADING));
+	label = new JLabel(localeString("pipeCSVDelimiter"));
+	leftPane.add(label);
+	leftPane.add(delimComboBox);
+	c.gridwidth = 1;
+	gridbag.setConstraints(leftPane, c);
+	add(leftPane);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	label = new JLabel("");
+	gridbag.setConstraints(label, c);
+	add(label);
+
+	JPanel buttonPane = new JPanel();
+	GridBagLayout gridbag2 = new GridBagLayout();
+	buttonPane.setLayout(gridbag2);
+	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.CENTER;
+	gridbag2.setConstraints(okButton, c);
+	buttonPane.add(okButton);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag2.setConstraints(cancelButton, c);
+	buttonPane.add(cancelButton);
+	c.anchor = GridBagConstraints.CENTER;
+	gridbag.setConstraints(buttonPane, c);
+	add(buttonPane);
+    }
+}
+
 
 class ArcPane extends JPanel {
 
@@ -3325,6 +3592,9 @@ public class EPTSWindow {
 				 SplinePathBuilder.CPointType);
 		    }
 		    addToPathMenuItem.setEnabled(canAddToBezier());
+		    TransitionTable.getPipeMenuItem().setEnabled(false);
+		    TransitionTable.getArcMenuItem().setEnabled(false);
+		    TransitionTable.getVectorMenuItem().setEnabled(false);
 		    saveMenuItem.setEnabled(true);
 		}
 		break;
@@ -4428,6 +4698,8 @@ public class EPTSWindow {
 			if (n == 0) {
 			    resetState();
 			    setModeline("");
+			    TransitionTable.getPipeMenuItem()
+				.setEnabled(false);
 			} else {
 			    PointTMR row = ptmodel.getRow(--n);
 			    Enum mode = row.getMode();
@@ -4437,10 +4709,14 @@ public class EPTSWindow {
 				case LOCATION:
 				    resetState();
 				    setModeline("");
+				    TransitionTable.getPipeMenuItem()
+					.setEnabled(false);
 				    break;
 				case PATH_END:
 				    resetState();
 				    setModeline("");
+				    TransitionTable.getPipeMenuItem()
+					.setEnabled(false);
 				    break;
 				case PATH_START:
 				    cancelPathOps();
@@ -5725,6 +6001,7 @@ public class EPTSWindow {
 			    locState = false;
 			    setModeline("");
 			    TransitionTable.getGotoMenuItem().setEnabled(false);
+			    TransitionTable.getPipeMenuItem().setEnabled(false);
 			    TransitionTable.getLocMenuItem().setEnabled(false);
 			    TransitionTable.getShiftMenuItem()
 				.setEnabled(false);
@@ -5755,6 +6032,8 @@ public class EPTSWindow {
 			    } else {
 				resetState();
 				TransitionTable.getGotoMenuItem()
+				    .setEnabled(false);
+				TransitionTable.getPipeMenuItem()
 				    .setEnabled(false);
 				TransitionTable.getLocMenuItem()
 				    .setEnabled(false);
@@ -5848,6 +6127,7 @@ public class EPTSWindow {
 			    locState = false;
 			    setModeline("");
 			    TransitionTable.getGotoMenuItem().setEnabled(false);
+			    TransitionTable.getPipeMenuItem().setEnabled(false);
 			    TransitionTable.getLocMenuItem().setEnabled(false);
 			    TransitionTable.getShiftMenuItem()
 				.setEnabled(false);
@@ -5878,6 +6158,8 @@ public class EPTSWindow {
 			    } else {
 				resetState();
 				TransitionTable.getGotoMenuItem()
+				    .setEnabled(false);
+				TransitionTable.getPipeMenuItem()
 				    .setEnabled(false);
 				TransitionTable.getLocMenuItem()
 				    .setEnabled(false);
@@ -6269,6 +6551,139 @@ public class EPTSWindow {
 			    scrollPane.repaint();
 			}
 		    }
+		}
+	    });
+	toolMenu.add(menuItem);
+	menuItem = TransitionTable.getPipeMenuItem();
+	menuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    final PipePane pipePane = new PipePane(frame);
+		    JDialog dialog = new JDialog(frame,
+						 localeString("pipePaneTitle"),
+						 true);
+		    dialog.setLocationRelativeTo(frame);
+		    dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		    dialog.add(pipePane);
+		    dialog.pack();
+		    dialog.setVisible(true);
+		    if (pipePane.getStatus()) {
+			int unitsIndex = pipePane.getUnitsIndex();
+			int lineno = 0;
+			PointTMR lrow;
+			double x, y;
+			double xp, yp;
+			Enum<?> lmode;
+			try {
+			    CSVReader r = pipePane.getReader();
+			    String[] fields;
+			    boolean firstTime = true;
+			    double baseX = 0.0;
+			    double baseY = 0.0;;
+			    lrow = ptmodel.getLastRow();
+			    lmode = lrow.getMode();
+			    Enum<?> ns = null;
+			    System.out.println("reading rows");
+			    while ((fields = r.nextRow()) != null) {
+				lineno++;
+				if (fields.length < 3) {
+				    String msg = errorMsg("pipeFieldLen");
+				    throw new Exception(msg);
+				}
+				if (firstTime &&
+				    !fields[0].trim().equals("MOVE_TO")) {
+				    throw new Exception(errorMsg("pipeMOVETO"));
+				}
+				x = Double.parseDouble(fields[1].trim())
+				    + baseX;
+				y = Double.parseDouble(fields[2].trim())
+				    + baseY;
+				x = ConfigGCSPane.convert[unitsIndex]
+				    .valueAt(x);
+				y = ConfigGCSPane.convert[unitsIndex]
+				    .valueAt(y);
+				xp = (x - xrefpoint) / scaleFactor;
+				yp = (y - yrefpoint) / scaleFactor;
+				yp = height - yp;
+				if (fields[0].trim().equals("MOVE_TO")) {
+				    if (lmode != EPTS.Mode.PATH_START) {
+					baseX = lrow.getX() - x;
+					baseY = lrow.getY() - y;
+					firstTime = false;
+					continue;
+				    } else {
+					ns = SplinePathBuilder.CPointType
+					    .MOVE_TO;
+					ptmodel.addRow("", ns, x, y, xp, yp);
+				    }
+				} else if (fields[0].trim().equals("SEG_END")) {
+				    ns = SplinePathBuilder.CPointType.SEG_END;
+				    ptmodel.addRow("", ns, x, y, xp, yp);
+				} else if (fields[0].trim().equals("CONTROL")) {
+				    ns = SplinePathBuilder.CPointType.CONTROL;
+				    ptmodel.addRow("", ns, x, y, xp, yp);
+				} else if (fields[0].trim().equals("SPLINE")) {
+				    ns = SplinePathBuilder.CPointType.SPLINE;
+				    ptmodel.addRow("", ns, x, y, xp, yp);
+				} else if (fields[0].trim().equals("CLOSE")) {
+				    throw new Exception("NoClose");
+				} else {
+				    String msg =
+					errorMsg("unknownField", fields[0])
+					.trim();
+				    throw new Exception(msg);
+				}
+				ttable.nextState(ns);
+				firstTime = false;
+				fields = null;
+			    }
+			    r.close();
+			    if (pipePane.isAlive() == false
+				&& pipePane.exitValue() != 0) {
+				if (pipePane.msgReady()) {
+				    String msg = pipePane.errmsg();
+				    JOptionPane.showMessageDialog
+					(frame, msg, localeString("errorTitle"),
+					 JOptionPane.ERROR_MESSAGE);
+				}
+			    }
+			} catch (Exception ex) {
+			    // First check if we can find a useful
+			    // error message
+			    if (pipePane.isAlive() == false
+				&& pipePane.exitValue() != 0) {
+				if (pipePane.msgReady()) {
+				    String msg = pipePane.errmsg();
+				    JOptionPane.showMessageDialog
+					(frame, msg, localeString("errorTitle"),
+					 JOptionPane.ERROR_MESSAGE);
+				}
+			    } else {
+				String s = ex.getMessage();
+				String msg = errorMsg("pipeReadErr", lineno, s);
+				JOptionPane.showMessageDialog
+				    (frame, msg, localeString("errorTitle"),
+				     JOptionPane.ERROR_MESSAGE);
+			    }
+			}
+			lrow = ptmodel.getLastRow();
+			lmode = lrow.getMode();
+			if (lmode instanceof SplinePathBuilder.CPointType) {
+			    if (lmode != SplinePathBuilder.CPointType.CLOSE) {
+				xp = lrow.getXP();
+				yp = lrow.getYP();
+				JViewport vp = scrollPane.getViewport();
+				int vpw = vp.getWidth();
+				int vph = vp.getHeight();
+				int ipx = (int)(Math.round(xp*zoom - vpw/2));
+				int ipy = (int)(Math.round(yp*zoom - vph/2));
+				if (ipx < 0) ipx = 0;
+				if (ipy < 0) ipy = 0;
+				vp.setViewPosition(new Point(ipx, ipy));
+				scrollPane.repaint();
+			    }
+			}
+		    }
+		    panel.repaint();
 		}
 	    });
 	toolMenu.add(menuItem);
@@ -8276,6 +8691,7 @@ public class EPTSWindow {
 	setModeline(SplinePathBuilder.CPointType.MOVE_TO);
 	nextState = SplinePathBuilder.CPointType.MOVE_TO;
 	TransitionTable.getGotoMenuItem().setEnabled(true);
+	TransitionTable.getPipeMenuItem().setEnabled(true);
 	TransitionTable.getLocMenuItem().setEnabled(true);
 	TransitionTable.getShiftMenuItem().setEnabled(true);
 	// addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
@@ -8449,6 +8865,8 @@ public class EPTSWindow {
 				TransitionTable.getLocMenuItem()
 				    .setEnabled(false);
 				TransitionTable.getGotoMenuItem()
+				    .setEnabled(false);
+				TransitionTable.getPipeMenuItem()
 				    .setEnabled(false);
 				TransitionTable.getShiftMenuItem()
 				    .setEnabled(false);
@@ -8740,6 +9158,7 @@ public class EPTSWindow {
 		    }
 		    if (selectedRow != -1 && nextState == null) {
 			TransitionTable.getGotoMenuItem().setEnabled(false);
+			TransitionTable.getPipeMenuItem().setEnabled(false);
 			TransitionTable.getLocMenuItem().setEnabled(false);
 			TransitionTable.getShiftMenuItem().setEnabled(false);
 		    }

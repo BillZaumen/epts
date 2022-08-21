@@ -53,6 +53,8 @@ public class TransitionTable {
 
     private static JMenuItem vectorMenuItem =
 	new JMenuItem(localeString("Vector"));
+    private static JMenuItem pipeMenuItem =
+	new JMenuItem(localeString("Pipe"));
     private static JMenuItem shiftMenuItem =
 	new JMenuItem(localeString("Shift"));
 
@@ -66,6 +68,8 @@ public class TransitionTable {
     static {
 	vectorMenuItem.setEnabled(false);
 	vectorMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, 0));
+	pipeMenuItem.setEnabled(false);
+	pipeMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, 0));
 	shiftMenuItem.setEnabled(false);
 	shiftMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, 0));
 	arcMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, 0));
@@ -84,6 +88,7 @@ public class TransitionTable {
     }
 
     static JMenuItem getVectorMenuItem() {return vectorMenuItem;}
+    static JMenuItem getPipeMenuItem() {return pipeMenuItem;}
     static JMenuItem getShiftMenuItem() {return shiftMenuItem;}
     static JMenuItem getArcMenuItem() {return arcMenuItem;}
     static JMenuItem getGotoMenuItem() {return gotoMenuItem;}
@@ -187,6 +192,7 @@ public class TransitionTable {
 	    item.setSelected(false);
 	}
 	vectorMenuItem.setEnabled(false);
+	pipeMenuItem.setEnabled(false);
 	shiftMenuItem.setEnabled(false);
 	arcMenuItem.setEnabled(false);
 	gotoMenuItem.setEnabled(false);
@@ -217,6 +223,7 @@ public class TransitionTable {
 	passedSE = false;
 	currentState = mode;
 	vectorMenuItem.setEnabled(false);
+	pipeMenuItem.setEnabled(true);
 	shiftMenuItem.setEnabled(false);
 	arcMenuItem.setEnabled(false);
 	boolean result = false;
@@ -238,6 +245,7 @@ public class TransitionTable {
 	    }
 	    currentState = EPTS.Mode.PATH_END;
 	    vectorMenuItem.setEnabled(false);
+	    pipeMenuItem.setEnabled(false);
 	    shiftMenuItem.setEnabled(false);
 	    arcMenuItem.setEnabled(false);
 	    for (Enum state: menuItemMap.keySet()) {
@@ -337,13 +345,18 @@ public class TransitionTable {
 	    currentState = newState;
 	    if (currentState == SplinePathBuilder.CPointType.MOVE_TO) {
 		vectorMenuItem.setEnabled(true);
+		pipeMenuItem.setEnabled(true);
 		gotoMenuItem.setEnabled(true);
 		arcMenuItem.setEnabled(true);
 	    } else if (currentState == SplinePathBuilder.CPointType.SEG_END) {
 		vectorMenuItem.setEnabled(true);
+		pipeMenuItem.setEnabled(true);
 		arcMenuItem.setEnabled(true);
 	    } else {
 		vectorMenuItem.setEnabled(false);
+		boolean pipestate = (currentState == null
+				     || currentState == EPTS.Mode.PATH_START);
+		pipeMenuItem.setEnabled(pipestate);
 		arcMenuItem.setEnabled(false);
 	    }
 	    if (currentState != EPTS.Mode.PATH_END
