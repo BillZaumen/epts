@@ -3232,6 +3232,7 @@ alf.createObject("background", [
   If <CODE>scrunner</CODE> has been installed, the following ESP script
   (ESP is scrunner&apos;s default scripting language&mdash;a minimal
   scripting language that uses the Java streams package for iteration)
+  will describe a path:
     <BLOCKQUOTE><CODE><PRE>
 #!/usr/bin/scrunner -sE:true
 import (org.bzdev.math.Functions);
@@ -3250,16 +3251,17 @@ IntStream.rangeClosed(1, 100)
 w.flush();
 w.close();
     </PRE></CODE></BLOCKQUOTE>
-    will generate a CSV stream suitable for creating a path
-    based on a 0<sup>th</sup> order Bessel function.  The
-    points are given by (x, 10J<sub>0</sub>(x)) for a range
-    of x values. For an image 1200 by 750 in user space,
-    and graph coordinate space configured as follows:
+    In particular, this script will generate a CSV stream suitable for
+    creating a path based on a 0<sup>th</sup> order Bessel function.
+    The points are given by (x, 10J<sub>0</sub>(x)) for a range of x
+    values. For an image 1200 by 750 in user space, and graph
+    coordinate space configured as follows,
 <BR>
 <BR>
 <CENTER><IMG src="besselGCS.png"></CENTER>
 <BR>
-The flag <CODE>-sE:true</CODE> on the first line tells
+the path will be centered within the image.
+The flag <CODE>-sE:true</CODE> on the first line of the script tells
 <CODE>scrunner</CODE> that it can exit immediately after
 the scripts are executed: there is no need to check for
 any threads that might still be running.
