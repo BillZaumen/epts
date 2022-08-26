@@ -1030,6 +1030,13 @@ class OffsetPane extends JPanel {
 	add(lunits2);
 
 	c.gridwidth = 1;
+	gridbag.setConstraints(ml, c);
+	add(ml);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(modesCB, c);
+	add(modesCB);
+
+	c.gridwidth = 1;
 	gridbag.setConstraints(d3l, c);
 	add(d3l);
 	gridbag.setConstraints(d3tf, c);
@@ -1037,13 +1044,6 @@ class OffsetPane extends JPanel {
 	c.gridwidth = GridBagConstraints.REMAINDER;
 	gridbag.setConstraints(lunits3, c);
 	add(lunits3);
-
-	c.gridwidth = 1;
-	gridbag.setConstraints(ml, c);
-	add(ml);
-	c.gridwidth = GridBagConstraints.REMAINDER;
-	gridbag.setConstraints(modesCB, c);
-	add(modesCB);
 
 
 	if (dist1 != 0.0) d1tf.setText("" + dist1);
@@ -5601,35 +5601,6 @@ public class EPTSWindow {
 	offsetPathMenuItem = menuItem;
 
 	menuItem.addActionListener(new ActionListener() {
-		/*
-		Runnable repeat = null;
-		int limit = 0;
-		JComponent target = null;
-		private void setup(OffsetPane offsetPane) {
-		    target = offsetPane.getTargetTF();
-		    limit = 0;
-		    SwingUtilities.invokeLater(() -> {
-			    Toolkit.getDefaultToolkit().sync();
-			});
-		    if (repeat == null) {
-			repeat = () -> {
-			    if (target.requestFocusInWindow()) {
-				System.out.println("request focus succeeded");
-			    } else {
-				limit++;
-				// if something goes wrong, we don't want
-				// this to run forever.
-				if (limit > 256) return;
-				System.out.println("try again");
-				SwingUtilities.invokeLater(() -> {
-					Toolkit.getDefaultToolkit().sync();
-					SwingUtilities.invokeLater(repeat);
-				    });
-			    }
-			};
-		    }
-		}
-		*/
 		public void actionPerformed(ActionEvent e) {
 		    terminatePartialPath();
 		    // System.out.println("creating an offset ...");
@@ -5671,8 +5642,8 @@ public class EPTSWindow {
 			    do {
 				opathName = JOptionPane
 				    .showInputDialog(frame,
-						     "opathName",
-						     "opathTitle",
+						     localeString("opathName"),
+						     localeString("opathTitle"),
 						     JOptionPane.PLAIN_MESSAGE);
 				if (opathName == null) return;
 				opathName = opathName.trim();
@@ -5702,7 +5673,11 @@ public class EPTSWindow {
 				}
 			    } else {
 				boolean ccw = offsetPane.requestsCCWPath();
-				// System.out.println("ccw = " + ccw);
+				if (ccw && dist1 < dist3) {
+				    dist1 = dist3;
+				} else if (dist2 < dist3) {
+				    dist2 = dist3;
+				}
 				opath = Paths2D.offsetBy(basePath,
 							 dist1, dist2, dist3,
 							 ccw, mdelta);
@@ -5759,19 +5734,60 @@ public class EPTSWindow {
 				    // System.out.println(opathName);
 				} while (pvnames.contains(opathName2));
 			    }
-			    if (opath == null) return;
-			    offsetPane.saveIndices();
-			    offsetPane.saveDistances();
-			    offsetPane.saveBaseMap();
-			    OffsetPane.addOurPathName(opathName, bpn);
-			    ptmodel.addRow(new PointTMR(opathName,
-							EPTS.Mode.PATH_START,
-							0.0, 0.0, 0.0, 0.0));
-			    double xstart = 0.0;
-			    double ystart = 0.0;
-			    double nx, ny, nxp, nyp;
+			}
+			if (opath == null) return;
+			offsetPane.saveIndices();
+			offsetPane.saveDistances();
+			offsetPane.saveBaseMap();
+			OffsetPane.addOurPathName(opathName, bpn);
+			ptmodel.addRow(new PointTMR(opathName,
+						    EPTS.Mode.PATH_START,
+						    0.0, 0.0, 0.0, 0.0));
+			double xstart = 0.0;
+			double ystart = 0.0;
+			double nx, ny, nxp, nyp;
+			for (SplinePathBuilder.CPoint cp:
+				 Path2DInfo.getCPoints(opath)) {
+			    SplinePathBuilder.CPointType cptype
+				= (SplinePathBuilder.CPointType) cp.type;
+			    switch(cptype) {
+			    case MOVE_TO:
+				xstart = cp.x;
+				ystart = cp.y;
+			    case SEG_END:
+			    case CONTROL:
+				nx = cp.x;
+				ny = cp.y;
+				nxp = (nx - xrefpoint) / scaleFactor;
+				nyp = (ny - yrefpoint) / scaleFactor;
+				nyp = height - nyp;
+				ptmodel.addRow("", cp.type, nx, ny,
+					       nxp, nyp);
+				break;
+			    case CLOSE:
+				nxp = (xstart - xrefpoint) / scaleFactor;
+				nyp = (ystart - yrefpoint) / scaleFactor;
+				nyp = height - nyp;
+				ptmodel.addRow("", cp.type, xstart, ystart,
+					       nxp, nyp);
+				break;
+			    default:
+				break;
+			    }
+			}
+			ptmodel.addRow(new PointTMR("",
+						    EPTS.Mode.PATH_END,
+						    0.0, 0.0, 0.0, 0.0));
+			if (opath2 != null) {
+			    OffsetPane.addOurPathName(opathName2, bpn);
+			    ptmodel.addRow(new PointTMR
+					   (opathName2,
+					    EPTS.Mode.PATH_START,
+					    0.0, 0.0, 0.0, 0.0));
+			    xstart = 0.0;
+			    ystart = 0.0;
 			    for (SplinePathBuilder.CPoint cp:
-				     Path2DInfo.getCPoints(opath)) {
+				     Path2DInfo.getCPoints(opath2)) {
 				SplinePathBuilder.CPointType cptype
 				    = (SplinePathBuilder.CPointType) cp.type;
 				switch(cptype) {
@@ -5792,7 +5808,8 @@ public class EPTSWindow {
 				    nxp = (xstart - xrefpoint) / scaleFactor;
 				    nyp = (ystart - yrefpoint) / scaleFactor;
 				    nyp = height - nyp;
-				    ptmodel.addRow("", cp.type, xstart, ystart,
+				    ptmodel.addRow("", cp.type,
+						   xstart, ystart,
 						   nxp, nyp);
 				    break;
 				default:
@@ -5801,53 +5818,8 @@ public class EPTSWindow {
 			    }
 			    ptmodel.addRow(new PointTMR("",
 							EPTS.Mode.PATH_END,
-							0.0, 0.0, 0.0, 0.0));
-			    if (opath2 != null) {
-				OffsetPane.addOurPathName(opathName2, bpn);
-				ptmodel.addRow(new PointTMR
-					       (opathName2,
-						EPTS.Mode.PATH_START,
-						0.0, 0.0, 0.0, 0.0));
-				xstart = 0.0;
-				ystart = 0.0;
-				for (SplinePathBuilder.CPoint cp:
-					 Path2DInfo.getCPoints(opath2)) {
-				    SplinePathBuilder.CPointType cptype
-					= (SplinePathBuilder.CPointType)
-					cp.type;
-				    switch(cptype) {
-				    case MOVE_TO:
-					xstart = cp.x;
-					ystart = cp.y;
-				    case SEG_END:
-				    case CONTROL:
-					nx = cp.x;
-					ny = cp.y;
-					nxp = (nx - xrefpoint) / scaleFactor;
-					nyp = (ny - yrefpoint) / scaleFactor;
-					nyp = height - nyp;
-					ptmodel.addRow("", cp.type, nx, ny,
-						       nxp, nyp);
-					break;
-				    case CLOSE:
-					nxp = (xstart - xrefpoint)
-					    / scaleFactor;
-					nyp = (ystart - yrefpoint)
-					    / scaleFactor;
-					nyp = height - nyp;
-					ptmodel.addRow("", cp.type,
-						       xstart, ystart,
-						       nxp, nyp);
-					break;
-				    default:
-					break;
-				    }
-				}
-				ptmodel.addRow(new PointTMR("",
-							    EPTS.Mode.PATH_END,
-							    0.0, 0.0,
-							    0.0, 0.0));
-			    }
+							0.0, 0.0,
+							0.0, 0.0));
 			}
 		    }
 		}
