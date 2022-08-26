@@ -984,16 +984,16 @@ displayed in textual form. This menu contains the following items:
 	the other in the clockwise direction. Where the reference path is
 	a smooth path, these additional paths are offset from the reference
 	path by specified distances.
-      <LI><B><CODE>CCW Distance</CODE></B>. The distance from the reference
-	path to the associated path in the counterclockwise direction.
-      <LI><B><CODE>CW Distance</CODE></B>. The distance from the reference
-	path to the associated path in the clockwise direction.
-      <LI><B><CODE>Single-Path Distance</CODE></B>. For some modes (see
-	below), only a single path will be created. This provides the distance
-	of that path from the reference path.  When single paths are created,
-	the path will be offset from the associated paths, but may deviate
-	from the reference path (typically at points were the reference path
-	is not smooth).
+      <LI><B><CODE>CCW Distance</CODE></B>. The distance from the
+	reference path to the associated path in the counterclockwise
+	direction.  This distance is the distance in graph coordinate
+	space, and an adjacent control allows one to pick specify the
+	units.
+      <LI><B><CODE>CW Distance</CODE></B>. The distance from the
+	reference path to the associated path in the clockwise
+	direction.  This distance is the distance in graph coordinate
+	space, and an adjacent control allows one to pick specify the
+	units.
       <LI><B><CODE>Mode</CODE></B>. This specifies the mode used to create
 	a path. The modes are
 	<UL>
@@ -1027,6 +1027,19 @@ displayed in textual form. This menu contains the following items:
 	    path will be on the clockwise side of the reference path
 	    and will run in the opposite direction.
 	</UL>
+      <LI><B><CODE>Single-Path Distance</CODE></B>. For some modes
+	(see below), only a single path will be created. This provides
+	the distance of that path from the reference path.  When
+	single paths are created, the path will be offset from the
+	associated paths, but may deviate from this at some points
+	(typically at points were the reference path is not smooth).
+	The CCW and CW distances control the shape of this path.  The
+	value of the single-path distance should be no greater than
+	the CCW or CW distance, depeding on whether the generated path
+	is on the CCW or CW side of the original path respectively.
+	The single-path distance is the distance in graph coordinate
+	space, and an adjacent control allows one to pick specify the
+	units.
     </UL>
     The <B><CODE>Offset Path</CODE></B> uses various heuristics to
     guess appropriate values for various fields. These values can be
