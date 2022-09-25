@@ -2040,6 +2040,7 @@ abstract class InsertArcPane extends JPanel {
 		    try {
 			if (string.length() == 0) string = "0.0";
 			double value = Double.valueOf(string);
+			value = ConfigGCSPane.convert[rindex].valueAt(value);
 			if (value >= 0.0 && value < maxRadius) {
 			    return true;
 			} else {
@@ -2065,7 +2066,7 @@ abstract class InsertArcPane extends JPanel {
 		@Override
 		protected boolean handleError() {
 		    JOptionPane.showMessageDialog
-			(this, localeString("notNonNegative"),
+			(this, localeString("notNonNegativeLimit"),
 			 localeString("Error"), JOptionPane.ERROR_MESSAGE);
 		    return false;
 		}
