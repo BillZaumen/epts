@@ -1378,9 +1378,10 @@ public class
 		    } else if (km.get("type").equals("CLOSE")) {
 			km.remove("hasParameterInfo");
 		    } else {
-			System.err.print("epts: at index " + ind + " (type "
-					 + km.get("type") + "), ");
-			System.err.println(errorMsg("maxpathparm"));
+			System.err.print("epts: ");
+			String type =(String) km.get("type");
+			String msg = errorMsg("maxpathparm", ind, type);
+			System.err.println(msg);
 		    }
 		}
 	    }
@@ -1417,6 +1418,8 @@ public class
 	int index = 0;
 	int vindex = 0;
 	int pindex = 0;
+	boolean multipath = false;
+	boolean firstName = true;
 	BasicSplinePathBuilder spb = null;
 	int u = -1;
 	for (EPTS.FilterInfo filter: filters) {
@@ -1484,6 +1487,11 @@ public class
 		    hasLast = false;
 		    if (isOurPath(names, row.getVariableName())) {
 			ignore = false;
+			if (firstName) {
+			    firstName = false;
+			} else {
+			    multipath = true;
+			}
 			spb = new BasicSplinePathBuilder();
 			u = -1;
 			subvarname = row.getVariableName();
@@ -1717,11 +1725,20 @@ public class
 				km.put("s",  "" + spath.s(uu));
 			    } else if (km.get("type").equals("CLOSE")) {
 				km.remove("hasParamterInfo");
-			    } else {
-				System.err.print("epts: at index " + ind
-						 + " (type "
-						 + km.get("type") + "), ");
-				System.err.println(errorMsg("maxpathparm"));
+			    } else if (!multipath) {
+				// The multipath test is for the case where
+				// we create multiple paths that are part of
+				// something used for a layer.
+				// Note: see if there is a more precise way
+				// to do this.  For a continuous, we want to
+				// add a path-length parameter, but don't
+				// want an error message if we have
+				// concatenated paths for purposes such as
+				// creating shapes with holes in them.
+				System.err.print("epts: ");
+				String type = (String)km.get("type");
+				String msg = errorMsg("maxpathparm", ind, type);
+				System.err.println(msg);
 			    }
 			}
 			spb = null;
