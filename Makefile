@@ -248,8 +248,7 @@ nst:
 $(JROOT_JARDIR)/epts.jar: $(FILES) $(TEMPLATES) $(CRLF_TEMPLATES)\
 	$(RESOURCES) $(DTD) $(BLDPOLICY) $(SCRIPTS) $(ICONS)
 	mkdir -p $(EPTS_JDIR)
-	javac -Xlint:unchecked -Xlint:deprecation \
-		-d mods/org.bzdev.epts -p $(EXTLIBS) \
+	javac --release 11 -d mods/org.bzdev.epts -p $(EXTLIBS) \
 		src/org.bzdev.epts/module-info.java $(JFILES)
 	cp $(PROPERTIES) $(EPTS_JDIR)
 	for i in $(ICON_WIDTHS) ; do \
