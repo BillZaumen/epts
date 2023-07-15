@@ -4117,7 +4117,7 @@ public class EPTS {
 				    int ind2 = stroke.lastIndexOf(")");
 				    String opacity = stroke.substring(ind1+1,
 								      ind2);
-				    stroke = "rgb" + stroke.substring(5, ind1)
+				    stroke = "rgb" + stroke.substring(4, ind1)
 					+ ")";
 				    kmap.put("strokeOpacity", opacity);
 				}
@@ -4130,7 +4130,7 @@ public class EPTS {
 				    int ind2 = fill.lastIndexOf(")");
 				    String opacity = fill.substring(ind1+1,
 								     ind2);
-				    fill = "rgb" + fill.substring(5, ind1)
+				    fill = "rgb" + fill.substring(4, ind1)
 					+ ")";
 				    kmap.put("fillOpacity", opacity);
 				}
