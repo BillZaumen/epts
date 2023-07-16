@@ -561,8 +561,10 @@ public class TemplateSetup {
     static JLabel drawColorExample = null;
     static JButton drawColorButton = null;
     static JCheckBox fillColorCheckBox = null;
+    static ColorChooser drawColorChooser = null;
     static JLabel fillColorExample = null;
     static JButton fillColorButton = null;
+    static ColorChooser fillColorChooser = null;
     static JLabel capLabel = null;
     static JComboBox<String> capCB = null;
     static JLabel dashIncrLabel = null;
@@ -628,6 +630,23 @@ public class TemplateSetup {
             dialog.setVisible(true);
             return result;
         }
+
+	// Sometimes the color passed to showDialog is not
+	// immediately recognized, possibly due to the JRE code
+	// using the event queue.  This method lets us set the
+	// color preemtively.  The color is still needed in showDialog
+	// to handle the case where the dialog box is canceled.
+	// The reason for the eratic behavior is not clear. It was
+	// first noticed with a color that used an alpha channel.
+	// A test indicated that using this method solves, or at least
+	// papers over, this issue.
+	public void setColor(Color color) {
+	    cc.setColor(color);
+	}
+
+	public Color getColor() {
+	    return cc.getColor();
+	}
     }
     /*
     private static class ColorChooser {
@@ -753,8 +772,10 @@ public class TemplateSetup {
 	strokeGCSCheckBox.setSelected(currentPLI.strokeGCS);
 	drawColorCheckBox.setSelected(currentPLI.draw);
 	drawColorExample.setBackground(currentPLI.drawColor);
+	drawColorChooser.setColor(currentPLI.drawColor);
 	fillColorCheckBox.setSelected(currentPLI.fill);
 	fillColorExample.setBackground(currentPLI.fillColor);
+	fillColorChooser.setColor(currentPLI.fillColor);
 	capCB.setSelectedIndex(currentPLI.capIndex);
 	dashIncrTF.setText("" + currentPLI.dashIncr);
 	dashPatternTF.setText(currentPLI.dashPattern);
@@ -1153,8 +1174,8 @@ public class TemplateSetup {
 	drawColorExample = new JLabel("    ");
 	drawColorExample.setOpaque(true);
 	drawColorButton = new JButton(localeString("ChooseColor"));
-	final ColorChooser drawColorChooser = new
-	    ColorChooser(dataPanel, localeString("drawColorChooser"));
+	drawColorChooser = new ColorChooser(dataPanel,
+					    localeString("drawColorChooser"));
 	drawColorButton.addActionListener((ae) -> {
 		currentPLI.drawColor
 		    = drawColorChooser.showDialog(currentPLI.drawColor);
@@ -1167,8 +1188,8 @@ public class TemplateSetup {
 	fillColorExample = new JLabel("    ");
 	fillColorExample.setOpaque(true);
 	fillColorButton = new JButton(localeString("ChooseColor"));
-	final ColorChooser fillColorChooser = new
-	    ColorChooser(dataPanel, localeString("fillColorChooser"));
+	fillColorChooser = new ColorChooser(dataPanel,
+					    localeString("fillColorChooser"));
 	fillColorButton.addActionListener((ae) -> {
 		currentPLI.fillColor
 		    = fillColorChooser.showDialog(currentPLI.fillColor);
