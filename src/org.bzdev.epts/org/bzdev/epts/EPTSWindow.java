@@ -1597,7 +1597,6 @@ class PipePane extends JPanel {
 		    File f = fc.getSelectedFile();
 		    dir = f.getParentFile();
 		    String path = f.getPath();
-		    System.out.println("path = " + path);
 		    try {
 			cmdTextField.getDocument()
 			    .insertString(caretPosition, path, null);
@@ -6555,7 +6554,7 @@ public class EPTSWindow {
 			    lrow = ptmodel.getLastRow();
 			    lmode = lrow.getMode();
 			    Enum<?> ns = null;
-			    System.out.println("reading rows");
+			    // System.out.println("reading rows");
 			    while ((fields = r.nextRow()) != null) {
 				lineno++;
 				if (fields.length < 3) {
@@ -8749,7 +8748,10 @@ public class EPTSWindow {
 		    }
 		    if (gotoMode) {
 			int ind = ptmodel.findRowXPYP(p.x/zoom, p.y/zoom, zoom);
-			if (ind == -1) return;
+			if (ind == -1) {
+			    Toolkit.getDefaultToolkit().beep();
+			    return;
+			}
 			PointTMR row = ptmodel.getRow(ind);
 			long lx = Math.round(row.getXP()*zoom);
 			long ly = Math.round(row.getYP()*zoom);
@@ -8770,7 +8772,8 @@ public class EPTSWindow {
 				|| smode instanceof
 				SplinePathBuilder.CPointType) {
 				// Special case - we are moving a location
-				// to the position of an existing point.
+				// or path point to the position of an
+				// existing point.
 				endGotoMode();
 				double xp =(p.x/zoom);
 				double yp = (p.y/zoom);
@@ -8780,8 +8783,13 @@ public class EPTSWindow {
 				y *= scaleFactor;
 				x += xrefpoint;
 				y += yrefpoint;
-				srow.setX(x, xp);
-				srow.setY(y, yp);
+				if (moveLocOrPath) {
+				    ptmodel.moveObject(selectedRow,
+						       x, y, xp, yp, true);
+				} else {
+				    srow.setX(x, xp);
+				    srow.setY(y, yp);
+				}
 				resetState();
 				panel.repaint();
 				return;
