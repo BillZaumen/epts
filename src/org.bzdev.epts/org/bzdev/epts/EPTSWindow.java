@@ -2165,7 +2165,6 @@ abstract class InsertArcPane extends JPanel {
 
 }
 
-
 abstract class TransformPane extends JPanel {
     static String errorMsg(String key, Object... args) {
 	return EPTS.errorMsg(key, args);
@@ -2691,6 +2690,529 @@ abstract class TransformPane extends JPanel {
 	okButton.addActionListener((e) -> {
 		status = true;
 		Window w = SwingUtilities.getWindowAncestor(TransformPane.this);
+		w.setVisible(false);
+		saveIndices();
+		ok();
+	    });
+
+	spacer = new JLabel(" ");
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(spacer, c);
+	add(spacer);
+
+	JPanel zoomPane = new JPanel();
+	GridBagLayout gridbagZ = new GridBagLayout();
+	zoomPane.setLayout(gridbagZ);
+	c.gridwidth = 1;
+	gridbagZ.setConstraints(zoomLabel, c);
+	zoomPane.add(zoomLabel);
+	gridbagZ.setConstraints(zoomIn, c);
+	zoomPane.add(zoomIn);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbagZ.setConstraints(zoomOut, c);
+	zoomPane.add(zoomOut);
+	c.anchor = GridBagConstraints.CENTER;
+	gridbag.setConstraints(zoomPane, c);
+	add(zoomPane);
+	JPanel buttonPane = new JPanel();
+	GridBagLayout gridbag2 = new GridBagLayout();
+	buttonPane.setLayout(gridbag2);
+	c.gridwidth = 1;
+	c.anchor = GridBagConstraints.CENTER;
+	gridbag2.setConstraints(okButton, c);
+	buttonPane.add(okButton);
+	// c.anchor = GridBagConstraints.CENTER;
+	gridbag2.setConstraints(acceptButton, c);
+	buttonPane.add(acceptButton);
+	// c.anchor  = GridBagConstraints.LINE_END;
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag2.setConstraints(cancelButton, c);
+	buttonPane.add(cancelButton);
+
+	c.anchor = GridBagConstraints.CENTER;
+	gridbag.setConstraints(buttonPane, c);
+	add(buttonPane);
+	setZoomEnabled();
+    }
+
+    public abstract void accept();
+    public abstract void cancel();
+    public abstract void ok();
+
+    public abstract void doZoomIn();
+    public abstract void doZoomOut();
+    protected abstract void setZoomEnabled();
+}
+
+abstract class TransformSelectedPane extends JPanel {
+    static String errorMsg(String key, Object... args) {
+	return EPTS.errorMsg(key, args);
+    }
+
+    static String localeString(String key) {
+	return EPTS.localeString(key);
+    }
+
+    AffineTransform af = null;
+    Path2D oldpath = null;
+    // Path2D newpath = null;
+
+    Point2D ref = null;
+    Point2D getRef() {return ref;}
+
+    double scale1 = 1.0;
+    double scale2 = 1.0;
+
+    // double shear12 = 0.0;
+    // double shear21 = 0.0;
+
+    static int lindexSaved = 0;
+    static int aindexSaved = 0;
+
+    double rotAngle = 0.0;
+    static Vector<String> av = new Vector<>(2);
+    static {
+	av.add("Degrees");
+	av.add("Radians");
+    }
+    JComboBox<String> aunits = new JComboBox<>(av);
+    int aindex = aindexSaved;
+
+    JComboBox<String> lunits = new JComboBox<>(ConfigGCSPane.units);
+    int lindex = lindexSaved;
+
+    double principalAngle = 0.0;
+    double tx = 0.0;
+    double ty = 0.0;
+
+    void saveIndices() {
+	lindexSaved = lindex;
+	aindexSaved = aindex;
+    }
+
+    public AffineTransform getTransform() {
+	double x = ConfigGCSPane.convert[lindex].valueAt(tx);
+	double y = ConfigGCSPane.convert[lindex].valueAt(ty);
+	AffineTransform af =
+	    AffineTransform.getTranslateInstance(x+ref.getX(), y+ref.getY());
+	int quadrants = 0;
+	double rangle;
+	if (aindex == 0) {
+	    if (rotAngle == 0.0) {
+		rangle = 0.0;
+	    } else if (rotAngle == 90.0) {
+		rangle = 0.0;
+		quadrants = 1;
+	    } else if (rotAngle == 180.0) {
+		rangle = 0.0;
+		quadrants = 2;
+	    } else if (rotAngle == 270.0) {
+		rangle = 0.0;
+		quadrants = 3;
+	    } else if (rotAngle == -90.0) {
+		rangle = 0.0;
+		quadrants = 3;
+	    } else if (rotAngle == -180.0) {
+		rangle = 0.0;
+		quadrants = -2;
+	    } else if (rotAngle == -270.0) {
+		rangle = 0.0;
+		quadrants = 1;
+	    } else {
+		quadrants = 0;
+		rangle = Math.toRadians(rotAngle);
+	    }
+	} else {
+	    rangle = rotAngle;
+	}
+	if (quadrants > 0) {
+	    af.quadrantRotate(quadrants);
+	}
+	af.rotate(rangle+principalAngle);
+	// af.shear(shear12, shear21);
+	af.scale(scale1, scale2);
+	af.rotate(-principalAngle);
+	af.translate(-ref.getX(), -ref.getY());
+	return af;
+    }
+
+    PointTableModel ptmodel;
+
+    public Path2D getOldPath() {
+	return oldpath;
+    }
+
+    public Path2D getNewPath() {
+	Path2D newpath = ptmodel.getSelectablePaths(getTransform());
+	return newpath;
+    }
+
+    private JCheckBox reversePathCB;
+
+    public boolean requestsReversed() {
+	return reversePathCB.isSelected();
+    }
+
+    CharDocFilter cdf = new CharDocFilter();
+
+    boolean status =  false;
+    public boolean getStatus() {return status;}
+
+
+    Line2D paline1;
+    Line2D paline2;
+
+    public Line2D principalAxis1() {
+	return paline1;
+    }
+    public Line2D principalAxis2() {
+	return paline2;
+    }
+
+    JButton zoomIn = new JButton(localeString("ZoomIn"));
+    JButton zoomOut = new JButton(localeString("ZoomOut"));
+
+    protected void enableIn(boolean enabled) {
+	zoomIn.setEnabled(enabled);
+    }
+    protected void enableOut(boolean enabled) {
+	zoomOut.setEnabled(enabled);
+    }
+
+    public TransformSelectedPane(PointTableModel ptmodel, double scaleFactor)
+    {
+	super();
+	this.ptmodel = ptmodel;
+	oldpath = ptmodel.getSelectablePaths();
+	ref = Path2DInfo.centerOfMassOf(oldpath);
+	double[][] moments = (ref == null)? null:
+	    Path2DInfo.momentsOf(ref, oldpath);
+	double[] principalMoments = (moments == null)? null:
+	    Moments.principalMoments(moments);
+	double mean = (moments == null)? 0.0:
+	    (principalMoments[0] + principalMoments[1])/2;
+	if (mean == 0.0) {
+	    // punt - the area must be zero.
+	    if (principalMoments == null) {
+		if (ref == null) {
+		    double[] ar = EPTSWindow
+			.getDefaultPrincipalAngleAndRef(oldpath);
+		    principalAngle = ar[0];
+		    ref = new Point2D.Double(ar[1], ar[2]);
+		} else {
+		    principalAngle = 0.0;
+		}
+	    } else {
+		principalAngle = 0.0;
+	    }
+	    double dx =  20*scaleFactor*Math.cos(principalAngle);
+	    double dy =  20*scaleFactor*Math.sin(principalAngle);
+	    paline1 = new Line2D.Double(ref.getX(), ref.getY(),
+					ref.getX() + dx, ref.getY() + dy);
+	    paline2 = new Line2D.Double(ref.getX(), ref.getY(),
+					ref.getX() - .3*dy, ref.getY() + .3*dx);
+	} else if (Math.abs((principalMoments[0]
+			     - principalMoments[1])/mean) < 0.01) {
+	    // we can't see the difference so use X and Y axes
+	    principalAngle = 0.0;
+	    paline1 = new Line2D.Double(ref.getX(),  ref.getY(),
+					ref.getX() + Math.sqrt(mean),
+					ref.getY());
+	    paline2 = new Line2D.Double(ref.getX(),  ref.getY(),
+					ref.getX(),
+					ref.getY() + Math.sqrt(mean));
+	} else {
+	    double[][]principalAxes =
+		Moments.principalAxes(moments, principalMoments);
+	    principalAngle = Math.atan2(principalAxes[0][1],
+					principalAxes[0][0]);
+	    double len = Math.sqrt(principalMoments[0]);
+	    paline1 = new Line2D.Double(ref.getX(), ref.getY(),
+					ref.getX() + len*principalAxes[0][0],
+					ref.getY() + len*principalAxes[0][1]);
+	    len = Math.sqrt(principalMoments[1]);
+	    paline2 = new Line2D.Double(ref.getX(), ref.getY(),
+					ref.getX() + len*principalAxes[1][0],
+					ref.getY() + len*principalAxes[1][1]);
+	}
+
+	reversePathCB = new JCheckBox(localeString("reversePath"));
+	reversePathCB.setEnabled(true);
+	reversePathCB.setSelected(false);
+
+	cdf.setAllowedChars("09eeEE..,,++--");
+	InputVerifier tfiv = new InputVerifier() {
+		public boolean verify(JComponent input) {
+		    JTextField tf = (VTextField)input;
+		    String string = tf.getText();
+		    if (string == null) string = "";
+		    string = string.trim();
+		    try {
+			if (string.length() == 0) return true;
+			double value = Double.parseDouble(string);
+			return true;
+		    } catch (Exception e) {
+			return false;
+		    }
+		}
+	    };
+	JLabel scale1Label = new JLabel(localeString("scale1Label"));
+	VTextField scale1TF = new VTextField(10) {
+		@Override
+		protected void onAccepted() {
+		    String text = getText();
+		    if (text == null || text.length() == 0) {
+			scale1 = 1.0;
+		    } else {
+			scale1 = Double.valueOf(text);
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    JOptionPane.showMessageDialog
+			(this, localeString("needRealNumber"),
+			 localeString("errorTitle"), JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+	JLabel scale2Label = new JLabel(localeString("scale2Label"));
+	VTextField scale2TF = new VTextField(10) {
+		@Override
+		protected void onAccepted() {
+		    String text = getText();
+		    if (text == null || text.length() == 0) {
+			scale2 = 1.0;
+		    } else {
+			scale2 = Double.valueOf(text);
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    JOptionPane.showMessageDialog
+			(this, localeString("needRealNumber"),
+			 localeString("errorTitle"), JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+	JLabel rotLabel = new JLabel(localeString("rotation"));
+	JLabel rotUnitsLabel = new JLabel(localeString("rotUnits"));
+	VTextField rotTF = new VTextField(10) {
+		@Override
+		protected void onAccepted() {
+		    String text = getText();
+		    if (text == null || text.length() == 0) {
+			rotAngle = 0.0;
+		    } else {
+			rotAngle = Double.valueOf(text);
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    JOptionPane.showMessageDialog
+			(this, localeString("needRealNumber"),
+			 localeString("errorTitle"), JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+	aunits.setSelectedIndex(aindex);
+	aunits.addActionListener((e) -> {
+		aindex = aunits.getSelectedIndex();
+	    });
+	lunits.setSelectedIndex(lindex);
+	lunits.addActionListener((e) -> {
+		lindex = lunits.getSelectedIndex();
+	    });
+
+	JLabel transXLabel = new JLabel(localeString("translateX"));
+	VTextField transXTF = new VTextField(10) {
+		@Override
+		protected void onAccepted() {
+		    String text = getText();
+		    if (text == null || text.length() == 0) {
+			tx = 0.0;
+		    } else {
+			tx = Double.valueOf(text);
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    JOptionPane.showMessageDialog
+			(this, localeString("needRealNumber"),
+			 localeString("errorTitle"), JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+	JLabel transYLabel = new JLabel(localeString("translateY"));
+	VTextField transYTF = new VTextField(10) {
+		@Override
+		protected void onAccepted() {
+		    String text = getText();
+		    if (text == null || text.length() == 0) {
+			ty = 0.0;
+		    } else {
+			ty = Double.valueOf(text);
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    JOptionPane.showMessageDialog
+			(this, localeString("needRealNumber"),
+			 localeString("errorTitle"), JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+	JLabel translateUnitsLabel = new JLabel(localeString("translateUnits"));
+
+	JLabel zoomLabel = new JLabel(localeString("ZoomWindow"));
+	zoomIn.addActionListener((e) -> {
+		doZoomIn();
+		setZoomEnabled();
+	    });
+	zoomOut.addActionListener((e) -> {
+		doZoomOut();
+		setZoomEnabled();
+	    });
+
+	JButton okButton = new JButton(localeString("okButton"));
+	JButton acceptButton = new JButton(localeString("acceptButton"));
+	JButton cancelButton = new JButton(localeString("cancelButton"));
+
+	((AbstractDocument)scale1TF.getDocument()).setDocumentFilter(cdf);
+	scale1TF.setInputVerifier(tfiv);
+	((AbstractDocument)scale2TF.getDocument()).setDocumentFilter(cdf);
+	scale2TF.setInputVerifier(tfiv);
+	/*
+	  ((AbstractDocument)shear12TF.getDocument()).setDocumentFilter(cdf);
+	  shear12TF.setInputVerifier(tfiv);
+	  ((AbstractDocument)shear21TF.getDocument()).setDocumentFilter(cdf);
+	  shear21TF.setInputVerifier(tfiv);
+	*/
+	((AbstractDocument)rotTF.getDocument()).setDocumentFilter(cdf);
+	rotTF.setInputVerifier(tfiv);
+	((AbstractDocument)transXTF.getDocument()).setDocumentFilter(cdf);
+	transXTF.setInputVerifier(tfiv);
+	((AbstractDocument)transYTF.getDocument()).setDocumentFilter(cdf);
+	transYTF.setInputVerifier(tfiv);
+
+
+	GridBagLayout gridbag = new GridBagLayout();
+	GridBagConstraints c = new GridBagConstraints();
+	setLayout(gridbag);
+	c.insets = new Insets(5, 5, 5, 5);
+	c.ipadx = 5;
+	c.ipady = 5;
+	c.anchor  = GridBagConstraints.LINE_START;
+	c.gridwidth = 1;
+	/*
+	  JPanel rbPanel = new JPanel();
+	  GridBagLayout gridbag1 = new GridBagLayout();
+	  rbPanel.setLayout(gridbag1);
+	  gridbag1.setConstraints(cmButton, c);
+	  rbPanel.add(cmButton);
+	  c.gridwidth = GridBagConstraints.REMAINDER;
+	  gridbag1.setConstraints(bbButton, c);
+	  rbPanel.add(bbButton);
+
+	  c.gridwidth = GridBagConstraints.CENTER;
+	  gridbag.setConstraints(rbPanel, c);
+	  add(rbPanel);
+
+	  c.gridwidth = GridBagConstraints.REMAINDER;
+	  JLabel spacer = new JLabel(" ");
+	  gridbag.setConstraints(spacer, c);
+	  add(spacer);
+	*/
+	gridbag.setConstraints(scale1Label, c);
+	add(scale1Label);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(scale1TF, c);
+	add(scale1TF);
+	c.gridwidth = 1;
+	gridbag.setConstraints(scale2Label, c);
+	add(scale2Label);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(scale2TF, c);
+	add(scale2TF);
+	c.gridwidth = 1;
+	gridbag.setConstraints(reversePathCB, c);
+	add(reversePathCB);
+	JLabel spacer = new JLabel(" ");
+	gridbag.setConstraints(spacer, c);
+	add(spacer);
+	spacer = new JLabel(" ");
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(spacer, c);
+	add(spacer);
+
+	/*
+	  c.gridwidth = 1;
+	  gridbag.setConstraints(shear12Label, c);
+	  add(shear12Label);
+	  c.gridwidth = GridBagConstraints.REMAINDER;
+	  gridbag.setConstraints(shear12TF, c);
+	  add(shear12TF);
+	  c.gridwidth = 1;
+	  gridbag.setConstraints(shear21Label, c);
+	  add(shear21Label);
+	  c.gridwidth = GridBagConstraints.REMAINDER;
+	  gridbag.setConstraints(shear21TF, c);
+	  add(shear21TF);
+
+	  spacer = new JLabel(" ");
+	  gridbag.setConstraints(spacer, c);
+	  add(spacer);
+	*/
+	c.gridwidth = 1;
+	gridbag.setConstraints(rotLabel, c);
+	add(rotLabel);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(rotTF, c);
+	add(rotTF);
+	c.gridwidth = 1;
+	gridbag.setConstraints(rotUnitsLabel, c);
+	add(rotUnitsLabel);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(aunits, c);
+	add(aunits);
+
+	spacer = new JLabel(" ");
+	gridbag.setConstraints(spacer, c);
+	add(spacer);
+
+	c.gridwidth = 1;
+	gridbag.setConstraints(transXLabel, c);
+	add(transXLabel);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(transXTF, c);
+	add(transXTF);
+	c.gridwidth = 1;
+	gridbag.setConstraints(transYLabel, c);
+	add(transYLabel);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(transYTF, c);
+	add(transYTF);
+	c.gridwidth = 1;
+	gridbag.setConstraints(translateUnitsLabel, c);
+	add(translateUnitsLabel);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(lunits, c);
+	add(lunits);
+
+	acceptButton.addActionListener((e) -> {
+		status = true;
+		accept();
+	    });
+	cancelButton.addActionListener((e) -> {
+		status = false;
+		Window w = SwingUtilities
+		    .getWindowAncestor(TransformSelectedPane.this);
+		w.setVisible(false);
+		cancel();
+	    });
+	okButton.addActionListener((e) -> {
+		status = true;
+		Window w = SwingUtilities
+		    .getWindowAncestor(TransformSelectedPane.this);
 		w.setVisible(false);
 		saveIndices();
 		ok();
@@ -4478,9 +5000,32 @@ public class EPTSWindow {
 	onNewTransformedPath(oldPathName, copyMode);
     }
 
-
+    private void transformSelectedPathsAction(boolean copyMode) {
+	if (selectedRow != -1) {
+	}
+	// complete the current path.
+	if (nextState != null) {
+	    PointTMR lastrow = ptmodel.getLastRow();
+	    Enum lrmode = lastrow.getMode();
+	    if (lrmode == SplinePathBuilder.CPointType
+		.CONTROL || lrmode == SplinePathBuilder.CPointType.SPLINE) {
+		ptmodel.setLastRowMode(SplinePathBuilder.CPointType.SEG_END);
+	    }
+	    // This can call a radio-button menu item's
+	    // action listener's actionPeformed
+	    // method, and that sets the
+	    // nextState variable.
+	    ttable.nextState(EPTS.Mode.PATH_END);
+	    ptmodel.addRow("", EPTS.Mode.PATH_END, 0.0, 0.0, 0.0, 0.0);
+	}
+	resetState();
+	onNewTransformedSelectedPaths(copyMode);
+    }
     JMenuItem zoomOutMI;
     JMenuItem zoomInMI;
+
+    JMenuItem tfSelectedMI;
+    JMenuItem ntfSelectedMI;
 
 
     private void setMenus(JFrame frame, double w, double h) {
@@ -6700,9 +7245,34 @@ public class EPTSWindow {
 		public void actionPerformed(ActionEvent e) {
 		    ptfilters.clear();
 		    filterMenu.setText(localeString("Filters"));
+		    tfSelectedMI.setEnabled(false);
+		    ntfSelectedMI.setEnabled(false);
 		    panel.repaint();
 		}
 	    });
+	filterMenu.add(menuItem);
+	menuItem =new JMenuItem(localeString("TransformSelected"),
+				vk("VK_TransformSelected"));
+	tfSelectedMI = menuItem;
+	menuItem.setEnabled(false);
+	menuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    // Transform all the seleted paths for the current filter.
+		    onNewTransformedSelectedPaths(false);
+		}
+	    });
+	filterMenu.add(menuItem);
+	menuItem =new JMenuItem(localeString("newTransformedSelected"),
+				vk("VK_newTransformedSelected"));
+	ntfSelectedMI = menuItem;
+	menuItem.setEnabled(false);
+	menuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    // Transform all the seleted paths for the current filter.
+		    onNewTransformedSelectedPaths(true);
+		}
+	    });
+	ptfilters.setTFSMenuItems(tfSelectedMI, ntfSelectedMI);
 	filterMenu.add(menuItem);
 	filterMenu.addSeparator();
 
@@ -7114,6 +7684,7 @@ public class EPTSWindow {
 		    ptmodel.fireTableChanged(ind1, ind2,
 					     PointTableModel.Mode.ADDED);
 		} else {
+		    int ind1 = ptmodel.getRowCount();
 		    for (int index = start; index < n; index++) {
 			PointTMR row = ptmodel.getRow(index);
 			Enum mode = row.getMode();
@@ -7138,6 +7709,9 @@ public class EPTSWindow {
 							x, y, xp, yp));
 			}
 		    }
+		    int ind2 = ptmodel.getRowCount()-1;
+		    ptmodel.fireTableChanged(ind1, ind2,
+					     PointTableModel.Mode.ADDED);
 		}
 	    } else {
 		int start = ptmodel.findStart(oldPathName);
@@ -7169,6 +7743,7 @@ public class EPTSWindow {
 		    ptmodel.fireTableChanged(start, end,
 					     PointTableModel.Mode.MODIFIED);
 		} else {
+		    int end = ptmodel.findEnd(start);
 		    for (int index = start; index < n; index++) {
 			PointTMR row = ptmodel.getRow(index);
 			Enum ourmode = row.getMode();
@@ -7187,6 +7762,8 @@ public class EPTSWindow {
 			    break;
 			}
 		    }
+		    ptmodel.fireTableChanged(start, end,
+					     PointTableModel.Mode.MODIFIED);
 		}
 	    }
 	    selectedRow = -1;
@@ -7197,6 +7774,285 @@ public class EPTSWindow {
 	    } else {
 		String fmt = localeString("tformExisting");
 		setModeline(String.format(fmt, oldPathName));
+	    }
+	} else {
+	    selectedRow = -1;
+	    resetState();
+	    setModeline("");
+	}
+	panel.repaint();
+    }
+
+    private long copyIndex = 0;
+    private void onNewTransformedSelectedPaths(boolean copyMode) {
+	final TransformSelectedPane tfpane = new
+	    TransformSelectedPane(ptmodel, scaleFactor) {
+		Point vpp = scrollPane.getViewport().getViewPosition();
+		public void accept(){
+		    tmpTransformedPath = getNewPath();
+		    adjustForNTP(vpp, getOldPath(), getRef(),
+				 tmpTransformedPath);
+		    panel.repaint();
+		}
+		public void cancel(){
+		    adjustForNTP(vpp, getOldPath(), getRef(), null);
+		    tmpTransformedPath = null;
+		}
+		public void ok() {
+		    adjustForNTP(vpp, getOldPath(), getRef(), getNewPath());
+		    tmpTransformedPath = null;
+		}
+
+		public void doZoomIn() {
+		    int lastIndex = zoomIndex;
+		    double lastZoom = zoom;
+		    if (zoom > zoomTable[zoomTable.length - 1]) {
+			// no change
+		    } else if (zoom >= zoomTable[zoomIndex]) {
+			zoomIndex++;
+			if (zoomIndex >= zoomTable.length) {
+			    zoomIndex = zoomTable.length - 1;
+			}
+			zoom = zoomTable[zoomIndex];
+		    }
+		    if (zoom != lastZoom /*lastIndex != zoomIndex*/) {
+			rezoom(zoom, lastZoom);
+			if (getStatus()) {
+			    accept();
+			} else {
+			    adjustForNTP(vpp, getOldPath(), getRef(),
+					 getOldPath());
+			    panel.repaint();
+			}
+		    }
+		}
+		public void doZoomOut() {
+		    int lastIndex = zoomIndex;
+		    double lastZoom = zoom;
+		    if (zoom < zoomTable[0]) {
+			// no change
+		    } else if (zoom == zoomTable[zoomIndex]) {
+			zoomIndex--;
+			if (zoomIndex < 0) {
+			    zoomIndex = 0;
+			}
+			zoom = zoomTable[zoomIndex];
+		    } else {
+			// no change to the index.
+			zoom = zoomTable[zoomIndex];
+		    }
+		    if (zoom != lastZoom /*lastIndex != zoomIndex*/) {
+			rezoom(zoom, lastZoom);
+			if (getStatus()) {
+			    accept();
+			} else {
+			    adjustForNTP(vpp, getOldPath(), getRef(),
+					 getOldPath());
+			    panel.repaint();
+			}
+		    }
+		}
+		protected void setZoomEnabled() {
+		    enableIn(zoom < zoomTable[zoomTable.length - 1]);
+		    enableOut(zoom > zoomTable[0]);
+		    // enableIn(zoomIndex < zoomTable.length - 1);
+		    // enableOut(zoomIndex > 0);
+		}
+	    };
+	paxis1 = tfpane.principalAxis1();
+	paxis2 = tfpane.principalAxis2();
+	// if (paxis1 == null) System.out.println("paxis1 = null");
+	panel.repaint();
+	// panel.getToolkit().sync();
+	String title = copyMode? localeString("newTransformedSelected1"):
+	    localeString("TransformSelected");
+	final JDialog dialog = new JDialog(frame,
+				    title,
+				    true);
+	dialog.setLocationRelativeTo(frame);
+	dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+	dialog.add(tfpane);
+	dialog.pack();
+	tmpTransformedPath = null;
+	dialog.setVisible(true);
+	paxis1 = null;
+	paxis2 = null;
+	tmpTransformedPath = null;
+	if (tfpane.getStatus()) {
+	    String suffix = null;
+	    if (copyMode) {
+		copyIndex++;
+		// Make sure we have a unique suffix.
+		suffix = "_" + copyIndex;
+		boolean incr;
+		do {
+		    incr = false;
+		    for (PointTMR row: ptmodel.getRows()) {
+			Enum<?> mode = row.getMode();
+			if (mode == EPTS.Mode.LOCATION
+			    || mode == EPTS.Mode.PATH_START) {
+			    String vname = row.getVariableName();
+			    if (vname.endsWith(suffix)) {
+				incr = true;
+				copyIndex++;
+				suffix = "_" + copyIndex;
+			    }
+			}
+		    }
+		} while (incr);
+	    }
+	    int n = ptmodel.getRowCount();
+	    AffineTransform af = tfpane.getTransform();
+	    boolean reverse = tfpane.requestsReversed();
+	    double[] tcoords = new double[4];
+	    if (copyMode) {
+		int start = 0;
+		while (start < n) {
+		    PointTMR row = ptmodel.getRow(start);
+		    if (row.getMode() == EPTS.Mode.LOCATION
+			|| !row.isSelectable()) {
+			start++;
+			continue;
+		    }
+		    if (row.getMode() != EPTS.Mode.PATH_START) {
+			start++;
+			continue;
+		    }
+		    String newPathName = row.getVariableName() + suffix;
+		    if (reverse) {
+			int ind1 = ptmodel.getRowCount();
+			ptmodel.addRow(new PointTMR(newPathName,
+						    EPTS.Mode.PATH_START,
+						    0.0, 0.0, 0.0, 0.0));
+			start++;
+			for (SplinePathBuilder.CPoint cp:
+				 ptmodel.getCPoints(start,true, null)) {
+			    Enum mode = cp.type;
+			    tcoords[0] = cp.x;
+			    tcoords[1] = cp.y;
+			    af.transform(tcoords, 0, tcoords, 2, 1);
+			    double x = tcoords[2];
+			    double y = tcoords[3];
+			    double xp = (x - xrefpoint) / scaleFactor;
+			    double yp = (y - yrefpoint) / scaleFactor;
+			    yp = height - yp;
+			    // add to table.
+			    ptmodel.addRow(new PointTMR("", mode,
+							x, y, xp, yp));
+			    start++;
+			}
+			ptmodel.addRow(new PointTMR("", EPTS.Mode.PATH_END,
+						    0.0, 0.0, 0.0, 0.0));
+			start++;
+			int ind2 = ptmodel.getRowCount()-1;
+			ptmodel.fireTableChanged(ind1, ind2,
+						 PointTableModel.Mode.ADDED);
+		    } else {
+			int ind1 = ptmodel.getRowCount();
+			int ind2 = ind1;
+			for (int index = start; index < n; index++) {
+			    row = ptmodel.getRow(index);
+			    Enum mode = row.getMode();
+			    if (mode == EPTS.Mode.PATH_START) {
+				ptmodel.addRow(new PointTMR(newPathName, mode,
+							    0.0, 0.0,
+							    0.0, 0.0));
+			    } else if (mode == EPTS.Mode.PATH_END) {
+				ptmodel.addRow(new PointTMR("", mode,
+							    0.0, 0.0,
+							    0.0, 0.0));
+				start = index+1;
+				break;
+			    } else {
+				tcoords[0] = row.getX();
+				tcoords[1] = row.getY();
+				af.transform(tcoords, 0, tcoords, 2, 1);
+				double x = tcoords[2];
+				double y = tcoords[3];
+				double xp = (x - xrefpoint) / scaleFactor;
+				double yp = (y - yrefpoint) / scaleFactor;
+				yp = height - yp;
+				// add to table.
+				ptmodel.addRow(new PointTMR("", mode,
+							    x, y, xp, yp));
+			    }
+			}
+			ind2 = ptmodel.getRowCount()-1;
+			ptmodel.fireTableChanged(ind1, ind2,
+						 PointTableModel.Mode.ADDED);
+		    }
+		}
+	    } else {
+		int start = 0;
+		while (start < n) {
+		    PointTMR row = ptmodel.getRow(start);
+		    if (row.getMode() == EPTS.Mode.LOCATION
+			|| !row.isSelectable()) {
+			start++;
+			continue;
+		    }
+		    if (row.getMode() != EPTS.Mode.PATH_START) {
+			start++;
+			continue;
+		    }
+		    if (reverse) {
+			int index = start + 1;
+			int end = ptmodel.findEnd(start);
+			for (SplinePathBuilder.CPoint cp:
+				 ptmodel.getCPoints(start,true, null)) {
+			    tcoords[0] = cp.x;
+			    tcoords[1] = cp.y;
+			    af.transform(tcoords, 0, tcoords, 2, 1);
+			    double x = tcoords[2];
+			    double y = tcoords[3];
+			    double xp = (x - xrefpoint) / scaleFactor;
+			    double yp = (y - yrefpoint) / scaleFactor;
+			    yp = height - yp;
+			    row = ptmodel.getRow(index);
+			    row.setMode(cp.type);
+			    row.setX(x, xp);
+			    row.setY(y, yp);
+			    index++;
+			}
+			ptmodel.fireTableChanged(start, end,
+						 PointTableModel.Mode.MODIFIED);
+			start = end + 1;
+		    } else {
+			int ind1 = start;
+			int end = ptmodel.findEnd(start);
+			for (int index = start; index < n; index++) {
+			    row = ptmodel.getRow(index);
+			    Enum ourmode = row.getMode();
+			    if (ourmode
+				instanceof SplinePathBuilder.CPointType) {
+				tcoords[0] = row.getX();
+				tcoords[1] = row.getY();
+				af.transform(tcoords, 0, tcoords, 2, 1);
+				double x = tcoords[2];
+				double y = tcoords[3];
+				double xp = (x - xrefpoint) / scaleFactor;
+				double yp = (y - yrefpoint) / scaleFactor;
+				yp = height - yp;
+				row.setX(x, xp);
+				row.setY(y, yp);
+			    } else if (ourmode == EPTS.Mode.PATH_END) {
+				break;
+			    }
+			}
+			ptmodel.fireTableChanged(start, end,
+						 PointTableModel.Mode.MODIFIED);
+			start = end+1;
+		    }
+		}
+	    }
+	    selectedRow = -1;
+	    resetState();
+	    if (copyMode) {
+		String fmt = localeString("tformNewSelected");
+		setModeline(fmt);
+	    } else {
+		String fmt = localeString("tformExistingSelected");
+		setModeline(fmt);
 	    }
 	} else {
 	    selectedRow = -1;

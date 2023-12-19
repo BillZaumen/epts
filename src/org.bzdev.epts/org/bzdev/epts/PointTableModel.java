@@ -278,6 +278,43 @@ public class
 	return pb.getPath();
     }
 
+    public Path2D getSelectablePaths() {
+	int end = rows.size()-1;
+	if (end == -1) return null;
+	int start = 0;
+	start++;
+	if (start >= end) return null;
+	if (start+1 >= end) return null;
+	// System.out.format("start = %d, end = %d\n", start, end);
+	SplinePathBuilder pb = new SplinePathBuilder();
+	boolean found = false;
+	while (start < end) {
+	    PointTMR row = getRow(start++);
+	    Enum rmode = row.getMode();
+	    boolean selected = row.isSelectable();
+	    if (rmode instanceof SplinePathBuilder.CPointType && selected) {
+		SplinePathBuilder.CPointType
+		    mode = (SplinePathBuilder.CPointType) rmode;
+		double x = row.getX();
+		double y = row.getY();
+		switch (mode) {
+		case SPLINE:
+		case SEG_END:
+		case CONTROL:
+		    found = true;
+		case MOVE_TO:
+		    pb.append(new SplinePathBuilder.CPoint(mode, x, y));
+		    break;
+		case CLOSE:
+		    pb.append(new SplinePathBuilder.CPoint(mode));
+		    break;
+		}
+	    }
+	}
+	return found? pb.getPath(): null;
+    }
+
+
     double[] originalxy = new double[2];
     double[] modifiedxy = new double[2];
     public Path2D getPath(String pname, AffineTransform af) {
@@ -316,6 +353,46 @@ public class
 	    }
 	}
 	return pb.getPath();
+    }
+
+    public Path2D getSelectablePaths( AffineTransform af) {
+	int end = rows.size()-1;
+	if (end == -1) return null;
+	int start = 0;
+	start++;
+	if (start >= end) return null;
+	if (start+1 >= end) return null;
+	// System.out.format("start = %d, end = %d\n", start, end);
+	SplinePathBuilder pb = new SplinePathBuilder();
+	boolean found = false;
+	while (start < end) {
+	    PointTMR row = getRow(start++);
+	    Enum rmode = row.getMode();
+	    boolean selected = row.isSelectable();
+	    if (rmode instanceof SplinePathBuilder.CPointType && selected) {
+		SplinePathBuilder.CPointType
+		    mode = (SplinePathBuilder.CPointType) rmode;
+		switch (mode) {
+		case SPLINE:
+		case SEG_END:
+		case CONTROL:
+		    found = true;
+		case MOVE_TO:
+		    originalxy[0] = row.getX();
+		    originalxy[1] = row.getY();
+		    af.transform(originalxy, 0, modifiedxy, 0, 1);
+		    // double x = row.getX();
+		    // double y = row.getY();
+		    pb.append(new SplinePathBuilder.CPoint(mode, modifiedxy[0],
+							   modifiedxy[1]));
+		    break;
+		case CLOSE:
+		    pb.append(new SplinePathBuilder.CPoint(mode));
+		    break;
+		}
+	    }
+	}
+	return found? pb.getPath(): null;
     }
 
     public PointTMR getNextToLastRow() {

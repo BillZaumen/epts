@@ -296,7 +296,7 @@ configure graph-coordinate space.  The procedure is as follows:
     (or type the sequence <B><CODE>ALT-F</CODE></B> followed by
     <B><CODE>C</CODE></B>)  to open a dialog box for configuring
     graph coordinate space.
-  <LI> Copy the measured distance in the the <CODE>User-Space Distance</CODE>
+  <LI> Copy the measured distance in the <CODE>User-Space Distance</CODE>
     text field.
   <LI> Set the GCS distance field to the known "real-world" distance and,
     if necessary, supply units.  The value will be converted to meters.
@@ -768,7 +768,7 @@ The <code>Edit</code> menu contains the following items:
     the units for the radius, whether the arc should go clockwise
     or counterclockwise relative to the path's direction, and
     whether the selected point should be converted into a location
-    (in which case EPTS will ask for a new name). Whan a point
+    (in which case EPTS will ask for a new name). When a point
     on a path has not been selected, this option will provide a hint
     on the line just below the menus, and will ignore any points that
     are are not part of the path. When a point (which is denoted by a
@@ -779,12 +779,13 @@ The <code>Edit</code> menu contains the following items:
     to add "relief notches" at points where the metal should be bent.
     If the selected points are converted into locations, those can be
     used to draw lines representing where bends should occur.
-  <LI><B><CODE>Transform an Existing Path</CODE></B>. This option will
-    scale, rotate, and/or translate an existing path. The
-    transformation is specified by a dialog box.  As with the previous
-    operations, the <A href="#centerOfMass">center of mass</A> for the
-    path and its <A href="#principalAxes">principal axes</A> are
-    shown.  For example, the following dialog box
+  <LI><B><CODE><A NAME="transE">Transform an Existing
+    Path</A></CODE></B>.  This option will scale, rotate, and/or
+    translate an existing path. The transformation is specified by a
+    dialog box.  As with the previous operations,
+    the <A href="#centerOfMass">center of mass</A> for the path and
+    its <A href="#principalAxes">principal axes</A> are shown.  For
+    example, the following dialog box
     <BR><BR>
     <CENTER><IMG src="TPDialog.png" HEIGHT="360"></CENTER>
     <BR>
@@ -825,10 +826,11 @@ The <code>Edit</code> menu contains the following items:
     dialog box is visible.  The dialog box, however, does provide
     buttons allowing one to zoom in or zoom out. This dialog box
     includes an option for reversing the path.
-   <LI><B><CODE>New Transformed Path</CODE></B>. This option&#39;s behavior
-    is nearly identical to the <CODE>Transform an Existing Path</CODE>
-    option, but instead of altering the original shape, a new one is
-    added. EPTS will ask for a new variable name.
+  <LI><B><CODE><A NAME="transNew">New Transformed Path</A></CODE></B>.
+    This option&#39;s behavior is nearly identical to the
+    <CODE>Transform an Existing Path</CODE> option, but instead of
+    altering the original shape, a new one is added. EPTS will ask for
+    a new variable name.
   <LI><B><CODE>Delete a Location / B&eacute;zier Path</CODE></B>. This
     option will delete a location or path. If a location or one of a path&#39;s
     nodes has been selected, that location or path will be deleted. Otherwise
@@ -1035,7 +1037,7 @@ displayed in textual form. This menu contains the following items:
 	(typically at points were the reference path is not smooth).
 	The CCW and CW distances control the shape of this path.  The
 	value of the single-path distance should be no greater than
-	the CCW or CW distance, depeding on whether the generated path
+	the CCW or CW distance, depending on whether the generated path
 	is on the CCW or CW side of the original path respectively.
 	The single-path distance is the distance in graph coordinate
 	space, and an adjacent control allows one to pick specify the
@@ -1169,7 +1171,7 @@ displayed in textual form. This menu contains the following items:
 	arc&#39;s tangent at the current point is parallel to the tangent
 	vector at the current point and a negative value indicating
 	that the arc&#39;s tangent at the current point is anti-parallel to
-	the the tangent vector at the current point.
+	the tangent vector at the current point.
 	The <B><CODE>Counterclockwise</CODE></B> checkbox indicates
 	whether the arc, when the angle is positive, turns clockwise
 	or counterclockwise in graph coordinate space (counterclockwise
@@ -1219,12 +1221,28 @@ Menu items that are not applicable are disabled.
 <H2><A name = "filtersMenu">The Filters menu</A></H2>
 The <CODE>Filter</CODE> menu lets the user define filters that, when
 applied, will configure which paths and locations are displayed.
-Two menu items are always present:
+Four menu items are always present:
 <UL>
   <LI><B><CODE>New Filter</CODE></B>. This option creates new filters.
     Each filter has a name that will appear in the Filter menu below
     the first two menu items.
-   <LI><B><CODE>Clear</CODE></B>. This option turns filtering off.
+  <LI><B><CODE>Clear</CODE></B>. This option turns filtering off.
+  <LI><B><CODE>Tranform Selected Paths</CODE></B>. When a filter has been
+    selected, the combined paths will be used to find a center of mass
+    and principal axes, and an affine transformation will be applied to these
+    paths as specified by a dialog box, essentially a copy of the dialog
+    box provided by the Edit menu's
+    <A HREF="#transE"><B><CODE>Transform an Existing Path</B><CODE></A>
+    menu item.
+  <LI><B><CODE>New Transformed Paths</CODE></B>.  When a filter has been
+    selected,  the combined paths will be used to find a center of mass
+    and principal axes, and an affine transformation will be applied to these
+    paths as specified by a dialog box, essentially a copy of the dialog
+    box provided by the Edit menu's
+    <A HREF="#transE"><B><CODE>New Transformed Path</B><CODE></A>
+    menu item. In this case, a new set of paths will be created with names
+    based on the existing paths' names by appending an underscore followed
+    by a number.
 </UL>
 <P>
 When a new filter is created or when an existing filter&#39;s menu item is
@@ -4289,7 +4307,7 @@ The path names for these documents, of course, are system dependent.
  -->
 <!--  LocalWords:  menubar png config dragImage builtins tbltemplates
  -->
-<!--  LocalWords:  templateSyntax pitemplates cli filewindow IFILE
+<!--  LocalWords:  templateSyntax pitemplates cli filewindow IFILE th
  -->
 <!--  LocalWords:  scriptOptions templateOptions cartesian runtime
  -->
@@ -4321,7 +4339,7 @@ The path names for these documents, of course, are system dependent.
  -->
 <!--  LocalWords:  pathmapEntry yrunner crosshairs descr mapName HREF
  -->
-<!--  LocalWords:  Javadoc optcomma endOC dialogs JDK Nashorn XSL
+<!--  LocalWords:  Javadoc optcomma endOC dialogs JDK Nashorn XSL CCW
  -->
 <!--  LocalWords:  makefile NoScript
  -->
