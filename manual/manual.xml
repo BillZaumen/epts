@@ -7,29 +7,32 @@
     <node title="Introduction"
 	  uri="resource:org/bzdev/epts/manual/manual.html#intro"
 	  href="manual.html#intro">
-      <node title="Starting EPTS"
-	    uri="resource:org/bzdev/epts/manual/manual.html#startingEPTS"
-	    href="manual.html#startingEPTS">
-	<node title="Image background"
-	      uri="resource:org/bzdev/epts/manual/manual.html#imageBackground"
-	      href="manual.html#imageBackground" />
-	<node title="Script background"
-	      uri="resource:org/bzdev/epts/manual/manual.html#scriptBackground"
-	      href="manual.html#scriptBackground" />
-	<node title="Enhanced background"
-	  uri="resource:org/bzdev/epts/manual/manual.html#enhancedBackground"
-	  href="manual.html#enhancedBackgroung" />
-	<node title="Configuring templates"
-	      uri="resource:org/bzdev/epts/manual/manual.html#templateSetup"
-	      href="manual.html#templateSetup" />
-      </node>
+      <node title="Quirks"
+	    uri="resource:org/bzdev/epts/manual/manual.html#quirks"
+	    href="manual.html#quirks" />
+    </node>
+    <node title="Starting EPTS"
+	  uri="resource:org/bzdev/epts/manual/manual.html#startingEPTS"
+	  href="manual.html#startingEPTS">
+      <node title="Image background"
+	    uri="resource:org/bzdev/epts/manual/manual.html#imageBackground"
+	    href="manual.html#imageBackground" />
+      <node title="Script background"
+	    uri="resource:org/bzdev/epts/manual/manual.html#scriptBackground"
+	    href="manual.html#scriptBackground" />
+      <node title="Enhanced background"
+	    uri="resource:org/bzdev/epts/manual/manual.html#enhancedBackground"
+	    href="manual.html#enhancedBackgroung" />
+      <node title="Configuring templates"
+	    uri="resource:org/bzdev/epts/manual/manual.html#templateSetup"
+	    href="manual.html#templateSetup" />
+    </node>
     <node title="EPTS concepts"
 	  uri="resource:org/bzdev/epts/manual/manual.html#usingEPTS"
 	  href="manual.html#usingEPTS"/>
-    </node>
     <node title="The menu bar"
 	  uri="resource:org/bzdev/epts/manual/manual.html#menus"
-	href="manual.html#menus">
+	  href="manual.html#menus">
       <node title="The File menu"
 	    uri="resource:org/bzdev/epts/manual/manual.html#fileMenu"
 	    href="manual.html#fileMenu"/>

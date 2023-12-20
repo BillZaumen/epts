@@ -7,29 +7,32 @@
     <node title="Introduction"
 	  uri="resource:org/bzdev/epts/manual/manual.dm.html#intro"
 	  href="manual.dm.html#intro">
-      <node title="Starting EPTS"
-	    uri="resource:org/bzdev/epts/manual/manual.dm.html#startingEPTS"
-	    href="manual.dm.html#startingEPTS">
-	<node title="Image background"
-	      uri="resource:org/bzdev/epts/manual/manual.dm.html#imageBackground"
-	      href="manual.dm.html#imageBackground" />
-	<node title="Script background"
-	      uri="resource:org/bzdev/epts/manual/manual.dm.html#scriptBackground"
-	      href="manual.dm.html#scriptBackground" />
-	<node title="Enhanced background"
-	  uri="resource:org/bzdev/epts/manual/manual.dm.html#enhancedBackground"
-	  href="manual.dm.html#enhancedBackgroung" />
-	<node title="Configuring templates"
-	      uri="resource:org/bzdev/epts/manual/manual.dm.html#templateSetup"
-	      href="manual.dm.html#templateSetup" />
-      </node>
+      <node title="Quirks"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#quirks"
+	    href="manual.dm.html#quirks" />
+    </node>
+    <node title="Starting EPTS"
+	  uri="resource:org/bzdev/epts/manual/manual.dm.html#startingEPTS"
+	  href="manual.dm.html#startingEPTS">
+      <node title="Image background"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#imageBackground"
+	    href="manual.dm.html#imageBackground" />
+      <node title="Script background"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#scriptBackground"
+	    href="manual.dm.html#scriptBackground" />
+      <node title="Enhanced background"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#enhancedBackground"
+	    href="manual.dm.html#enhancedBackgroung" />
+      <node title="Configuring templates"
+	    uri="resource:org/bzdev/epts/manual/manual.dm.html#templateSetup"
+	    href="manual.dm.html#templateSetup" />
+    </node>
     <node title="EPTS concepts"
 	  uri="resource:org/bzdev/epts/manual/manual.dm.html#usingEPTS"
 	  href="manual.dm.html#usingEPTS"/>
-    </node>
     <node title="The menu bar"
 	  uri="resource:org/bzdev/epts/manual/manual.dm.html#menus"
-	href="manual.dm.html#menus">
+	  href="manual.dm.html#menus">
       <node title="The File menu"
 	    uri="resource:org/bzdev/epts/manual/manual.dm.html#fileMenu"
 	    href="manual.dm.html#fileMenu"/>

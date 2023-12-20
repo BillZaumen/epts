@@ -25,14 +25,15 @@
 <H1><A name="intro"></A>Introduction</H1>
 
 EPTS (Edit PoinTS) is a special-purpose graphics editor. Its purpose
-is to make it easy to take a background, typically an image, overlay a
-series of points or curves on top of it, and then scale and/or
-translate the positions of the points and curves so that the locations
-of the points or control points are expressed in a specific coordinate
-system.  The points and paths can then be written to an output stream
-in a variety of text formats, each specified by a template, for use
-by other programs.  A unique feature of EPTS is that it will typically
-be run in two phases:
+is to make it easy to take a background, typically an image or a blank
+background, overlay a series of points or curves on top of it, and
+then scale and/or translate the positions of the points and curves so
+that the locations of the points or control points are expressed in a
+specific coordinate system.  The points and paths, but not the
+background, can then be written to an output stream in a variety of
+text formats, each specified by a template, for use by other programs.
+A unique feature of EPTS is that it will typically be run in two
+phases:
 <UL>
   <LI> the first phase uses a graphics editor for creating and editing
     paths.  Each path is given a name.
@@ -83,7 +84,38 @@ file formats as well:
     alternative to providing a long series of command-line options.
 </UL>
 
-<H2><A name="startingEPTS"></A>Starting EPTS</H2>
+<H2><A name="quirks"></A>Quirks</H2>
+
+EPTS has a few quirks:
+<UL>
+  <LI>All points (locations) and paths have user-defined names, primarily
+    because of templates that use these names as variable names in programs.
+  <LI> There are no groups or layers.  Instead,
+    <A HREF="#filtersMenu">Filters</A> classify paths as to whether they are
+    visible, drawable, or selectable.  This can be used to control the
+    complexity of the main window, particularly when there are a number of
+    paths, but this can also be used to transform a subset of the paths,
+    treating those as a group. The menu items for these transformations are
+    found in the <A HREF="#filtersMenu">Filters</A> menu.  For template
+    processing, one can define new paths that are the concatenation of existing
+    paths.  This allows one to define shapes with holes in them or ensure that
+    multiple paths use the same colors, etc.
+  <LI> <EM>Undo</EM> operations are limited. A user can remove points added
+    to a path, but can not restore a point moved accidentally.
+  <LI>Paths start with a 'move-to' point, followed by spline points,
+    segment-end points, and intermediate control points.  The visual
+    representation is different from most graphics editors. There can be
+    at most two intermediate control points in a row.
+  <LI> Shapes defined by paths can be rotated around a center of mass
+    (assuming a shape of uniform density), and can be stretched along the
+    shape's principal axes. As a result, stretches and rotations commute.
+  <LI> Creating circles requires two steps. The first is to create a
+    straight line starting at the circle's center and extending for the
+    circle's radius.  The second step is to select a menu item that
+    converts this line into a circle.
+</UL>
+
+<H1><A name="startingEPTS"></A>Starting EPTS</H1>
 
 The simplest way to start EPTS is to either double-click the EPTS icon
 representing its desktop file:
@@ -97,7 +129,6 @@ terminal:
 <BR>
 <CENTER><IMG src="terminal.png"></CENTER>
 <BR>
-
 
 This will bring up a standard dialog (its appearance depends on
 operating system, window system, and JDK in use, as do most of the
@@ -193,7 +224,7 @@ The procedure for opening these files depends on the file type:
 How EPTS should be started in order to create a new session is task
 dependent.  Several use cases are shown in the following subsections.
 
-<H3><A name="imageBackground"></A>Background images from files</H3>
+<H2><A name="imageBackground"></A>Background images from files</H2>
 
 The typical way of setting up EPTS to display a background image is to
 either start EPTS with no arguments (for example, by double-clicking
@@ -219,7 +250,7 @@ a file chooser to pick an image file.  Alternatively one can type the
 image-file name, or a URL, into the <CODE>Input File</CODE> field.
 One can also add options supported by the <CODE>java</CODE> command.
 
-<H3><A name="scriptBackground"></A>Background images from scripts</H3>
+<H2><A name="scriptBackground"></A>Background images from scripts</H2>
 
 
 One of the design goals for EPTS is to simplify creating animations
@@ -311,7 +342,7 @@ To restart a saved sessions, run EPTS with the saved file as its
 argument or double-click on the saved-state file&#39;s icon in a file-manager
 window.
 
-<H3><A name="enhancedBackground"></A>Enhancing a background</H3>
+<H2><A name="enhancedBackground"></A>Enhancing a background</H2>
 
 Scripts can also be used to enhance a background image, whether
 created using an image file or by running other scripts. The first
@@ -352,7 +383,7 @@ configuration, run EPTS with the session-configuration file as its
 argument or double-click on the session-configuration file&#39;s icon in a
 file-manager window.
 
-<H3><A name="templateSetup"></A>Configuring templates</H3>
+<H2><A name="templateSetup"></A>Configuring templates</H2>
 
 Templates-configuration files (the extension is "eptt") are typically
 generated after a saved state file is created and
@@ -1227,22 +1258,26 @@ Four menu items are always present:
     Each filter has a name that will appear in the Filter menu below
     the first two menu items.
   <LI><B><CODE>Clear</CODE></B>. This option turns filtering off.
-  <LI><B><CODE>Tranform Selected Paths</CODE></B>. When a filter has been
-    selected, the combined paths will be used to find a center of mass
+  <LI><B><CODE>Tranform Selectable Paths</CODE></B>. For paths that
+    are selectable, the combined path will be used to find a center of mass
     and principal axes, and an affine transformation will be applied to these
     paths as specified by a dialog box, essentially a copy of the dialog
     box provided by the Edit menu's
     <A HREF="#transE"><B><CODE>Transform an Existing Path</B><CODE></A>
-    menu item.
-  <LI><B><CODE>New Transformed Paths</CODE></B>.  When a filter has been
-    selected,  the combined paths will be used to find a center of mass
-    and principal axes, and an affine transformation will be applied to these
-    paths as specified by a dialog box, essentially a copy of the dialog
-    box provided by the Edit menu's
-    <A HREF="#transE"><B><CODE>New Transformed Path</B><CODE></A>
-    menu item. In this case, a new set of paths will be created with names
+    menu item. A filter can be applied so that only  specific paths are
+    selectable, but any new path added after the filter was applied will
+    be selectable until a filter is applied or reapplied.
+  <LI><B><CODE>New Transformed Selectable Paths</CODE></B>.  When a
+    filter has been selected, the combined paths will be used to find
+    a center of mass and principal axes, and an affine transformation
+    will be applied to these paths as specified by a dialog box,
+    essentially a copy of the dialog box provided by the Edit menu's
+    <A HREF="#transE"><B><CODE>New Transformed Path</B><CODE></A> menu item.
+    In this case, a new set of paths will be created with names
     based on the existing paths' names by appending an underscore followed
-    by a number.
+    by a number.  A filter can be applied so that only  specific paths are
+    selectable, but any new path added after the filter was applied will
+    be selectable until a filter is applied or reapplied.
 </UL>
 <P>
 When a new filter is created or when an existing filter&#39;s menu item is
@@ -4341,5 +4376,5 @@ The path names for these documents, of course, are system dependent.
  -->
 <!--  LocalWords:  Javadoc optcomma endOC dialogs JDK Nashorn XSL CCW
  -->
-<!--  LocalWords:  makefile NoScript
+<!--  LocalWords:  makefile NoScript incrementing
  -->

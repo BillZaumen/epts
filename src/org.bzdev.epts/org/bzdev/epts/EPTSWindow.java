@@ -7245,8 +7245,6 @@ public class EPTSWindow {
 		public void actionPerformed(ActionEvent e) {
 		    ptfilters.clear();
 		    filterMenu.setText(localeString("Filters"));
-		    tfSelectedMI.setEnabled(false);
-		    ntfSelectedMI.setEnabled(false);
 		    panel.repaint();
 		}
 	    });
@@ -7254,7 +7252,7 @@ public class EPTSWindow {
 	menuItem =new JMenuItem(localeString("TransformSelected"),
 				vk("VK_TransformSelected"));
 	tfSelectedMI = menuItem;
-	menuItem.setEnabled(false);
+	menuItem.setEnabled(true);
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    // Transform all the seleted paths for the current filter.
@@ -7265,14 +7263,13 @@ public class EPTSWindow {
 	menuItem =new JMenuItem(localeString("newTransformedSelected"),
 				vk("VK_newTransformedSelected"));
 	ntfSelectedMI = menuItem;
-	menuItem.setEnabled(false);
+	menuItem.setEnabled(true);
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    // Transform all the seleted paths for the current filter.
 		    onNewTransformedSelectedPaths(true);
 		}
 	    });
-	ptfilters.setTFSMenuItems(tfSelectedMI, ntfSelectedMI);
 	filterMenu.add(menuItem);
 	filterMenu.addSeparator();
 
@@ -7864,7 +7861,7 @@ public class EPTSWindow {
 	// if (paxis1 == null) System.out.println("paxis1 = null");
 	panel.repaint();
 	// panel.getToolkit().sync();
-	String title = copyMode? localeString("newTransformedSelected1"):
+	String title = copyMode? localeString("newTransformedSelected"):
 	    localeString("TransformSelected");
 	final JDialog dialog = new JDialog(frame,
 				    title,

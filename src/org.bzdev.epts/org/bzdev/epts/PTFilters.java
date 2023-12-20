@@ -67,15 +67,6 @@ public class PTFilters {
 	ArrayList<Entry> entries;
     }
 
-    JMenuItem tfsMenuItem;
-    JMenuItem ntfsMenuItem;
-
-    // So we can enable these menu items when a filter is accepcted.
-   public void setTFSMenuItems(JMenuItem tfsMenuItem, JMenuItem ntfsMenuItem) {
-	this.tfsMenuItem = tfsMenuItem;
-	this.ntfsMenuItem = ntfsMenuItem;
-    }
-
     PTFilter currentFilter = null;
 
     // to restore a filter from a saved-state file
@@ -100,8 +91,6 @@ public class PTFilters {
 		    filter.apply();
 		    panel.repaint();
 		    menu.setText(localeString("FilterInUse"));
-		    tfsMenuItem.setEnabled(true);
-		    ntfsMenuItem.setEnabled(true);
 		    currentFilter = filter;
 		    return;
 		},
@@ -113,8 +102,6 @@ public class PTFilters {
 		    map.remove(filter.getName());
 		    menu.remove(item);
 		    if (currentFilter == filter) {
-			tfsMenuItem.setEnabled(false);
-			ntfsMenuItem.setEnabled(false);
 			currentFilter = null;
 
 		    }
@@ -141,8 +128,6 @@ public class PTFilters {
 		    filter.apply();
 		    panel.repaint();
 		    menu.setText(localeString("FilterInUse"));
-		    tfsMenuItem.setEnabled(true);
-		    ntfsMenuItem.setEnabled(true);
 		    currentFilter = filter;
 		    return;
 		},
@@ -154,8 +139,6 @@ public class PTFilters {
 		    map.remove(filter.getName());
 		    menu.remove(item);
 		    if (currentFilter == filter) {
-			tfsMenuItem.setEnabled(false);
-			ntfsMenuItem.setEnabled(false);
 			currentFilter = null;
 
 		    }
