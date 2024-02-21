@@ -3924,7 +3924,7 @@ public class EPTSWindow {
 	throws Exception
     {
 	if (ews == null) {
-	    ews = new EmbeddedWebServer(port, 48, 2, null);
+	    ews = new EmbeddedWebServer(port, 48, 2);
 	    if (port == 0) port = ews.getPort();
 	    ews.add("/", ResourceWebMap.class, "org/bzdev/epts/manual/",
 		    null, true, false, true);
