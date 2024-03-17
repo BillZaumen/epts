@@ -4268,7 +4268,6 @@ public class EPTSWindow {
 	    yrefpoint -= height*scaleFactor;
 	    break;
 	}
-
     }
 
     boolean restartOptionShown = false;
@@ -5083,9 +5082,8 @@ public class EPTSWindow {
 					 SplinePathBuilder.CPointType.CLOSE)) {
 				     double xp = row.getXP();
 				     double yp = row.getYP();
-				    
 				     double x = xp * scaleFactor;
-				     double y = yp * scaleFactor;
+				     double y = (height- yp) * scaleFactor;
 				     x += xrefpoint;
 				     y += yrefpoint;
 				     row.setX(x, xp);
@@ -5135,7 +5133,8 @@ public class EPTSWindow {
 						 double xp = row.getXP();
 						 double yp = row.getYP();
 						 double x = xp * scaleFactor;
-						 double y = yp * scaleFactor;
+						 double y =
+						     (height-yp) * scaleFactor;
 						 x += xrefpoint;
 						 y += yrefpoint;
 						 row.setX(x, xp);

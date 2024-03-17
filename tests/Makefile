@@ -28,3 +28,8 @@ trans3:
 	javac -d classes \
 	-classpath ../jar/epts.jar:/usr/share/java/libbzdev.jar *.java 
 	$(JAVA) TTest3
+
+otto:
+	(cd .. ; make)
+	cp ottoman3.epts.sv ottoman3.epts
+	java -p ../jar -m org.bzdev.epts ottoman3.epts
