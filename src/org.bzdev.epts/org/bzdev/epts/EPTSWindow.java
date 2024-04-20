@@ -3986,6 +3986,7 @@ public class EPTSWindow {
     ActionListener createLMIActionListener(final LocationFormat fmt) {
 	return new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
+		clearLSR();
 		resetState();
 		setModeline("");
 		JMenuItem item = (JMenuItem)(e.getSource());
@@ -4211,6 +4212,7 @@ public class EPTSWindow {
 
     private ActionListener quitListener = new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
+		clearLSR();
 		if (needSave) {
 		    int result = JOptionPane.showConfirmDialog
 			(frame, localeString ("confirmSave"),
@@ -4656,6 +4658,7 @@ public class EPTSWindow {
     private int circleMaxDeltaDivisor = 2;
 
     private void toCircleAction() {
+	clearLSR();
 	String oldPathName = null;
 	if (selectedRow == -1) {
 	    Set<String> vnameSet = ptmodel.getToCircleVariableNames();
@@ -4803,6 +4806,7 @@ public class EPTSWindow {
     private boolean insertingArc = false;
     Path2D tmpArcPath = null;
     private void insertArcAction() {
+	clearLSR();
 	if (selectedRow == -1) {
 	    insertingArc = true;
 	    setModeline(localeString("insertingArc"));
@@ -5043,6 +5047,7 @@ public class EPTSWindow {
 				(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
 	saveMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    doSave(false);
 		}
 	    });
@@ -5052,6 +5057,7 @@ public class EPTSWindow {
 				       vk("VK_SAVE_AS"));
 	saveAsMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    doSave(true);
 		}
 	    });
@@ -5062,6 +5068,7 @@ public class EPTSWindow {
 				 vk("VK_ConfigureGCS"));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    configGCSPane.saveState();
 		     int status = JOptionPane.showConfirmDialog
 			(frame, configGCSPane,
@@ -5179,6 +5186,7 @@ public class EPTSWindow {
 				(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSRM();
 		    try {
 			/*
 			ptable.print(JTable.PrintMode.FIT_WIDTH,
@@ -5203,6 +5211,7 @@ public class EPTSWindow {
 				 vk("VK_CreateTemplate"));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSRM();
 		    try {
 			// System.out.println(EPTS.initialModulePath);
 			// System.out.println(EPTS.EPTSmodule);
@@ -5236,6 +5245,18 @@ public class EPTSWindow {
 				(KeyEvent.VK_Z, InputEvent.CTRL_DOWN_MASK));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    if (lastSelectedRow != -2 && lastSelectedRowMoved) {
+			PointTMR row = ptmodel.getRow(lastSelectedRow);
+			row.setX(lastXSelected, lastXPSelected);
+			row.setY(lastYSelected, lastYPSelected);
+			clearLSR();
+			selectedRow = -1;
+			panel.repaint();
+			return;
+		    } else {
+			clearLSR();
+			selectedRow = -1;
+		    }
 		    int n = ptmodel.getRowCount();
 		    if (n > 0) {
 			ptmodel.deleteRow(--n);
@@ -5318,6 +5339,7 @@ public class EPTSWindow {
 		public void actionPerformed(ActionEvent e) {
 		    // select a path.
 		    int index = -1;
+		    clearLSR();
 		    if (selectedRow == -1 || selectedClosedPath) {
 			Set<String> vnameSet =
 			    ptmodel.getOpenPathVariableNames();
@@ -5397,6 +5419,7 @@ public class EPTSWindow {
 	mpMenuItem.setEnabled(false);
 	mpMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSRM();
 		    if (nextState != null) return;
 		    if (locState) return;
 		    cancelPathOps();
@@ -5419,6 +5442,7 @@ public class EPTSWindow {
 	rotMenuItem.setEnabled(false);
 	rotMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    cancelPathOps();
 		    if (nextState != null) return;
 		    if (locState) return;
@@ -5429,6 +5453,7 @@ public class EPTSWindow {
 		    } else {
 			// will not do anything if the object
 			// is a location instead of a path
+			clearLSR();
 			if (rotPathSetup()) {
 			    setModeline(pathOpsModelineString());
 			    panel.repaint();
@@ -5454,6 +5479,7 @@ public class EPTSWindow {
 	scaleMenuItem.setEnabled(false);
 	scaleMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    cancelPathOps();
 		    if (nextState != null) return;
 		    if (locState) return;
@@ -5464,6 +5490,7 @@ public class EPTSWindow {
 		    } else {
 			// will not do anything if the object
 			// is a location instead of a path
+			clearLSR();
 			if (scalePathSetup()) {
 			    setModeline(pathOpsModelineString());
 			    PointTMR row = ptmodel.getRow(selectedRow);
@@ -5486,6 +5513,7 @@ public class EPTSWindow {
 	menuItem = new JMenuItem(localeString("circleMaxDeltaDivisor"));
 	menuItem.setEnabled(true);
 	menuItem.addActionListener(cmdevt -> {
+		clearLSRM();
 		Object[] options = {
 		    Integer.valueOf(1),
 		    Integer.valueOf(2),
@@ -5518,6 +5546,7 @@ public class EPTSWindow {
 
 	toCircleMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    toCircleAction();
 		}
 	    });
@@ -5532,6 +5561,7 @@ public class EPTSWindow {
 
 	insertArcMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    insertArcAction();
 		}
 	    });
@@ -5550,6 +5580,7 @@ public class EPTSWindow {
 	tfMenuItem.setEnabled(false);
 	tfMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    transformPathAction(false);
 		}
 	    });
@@ -5566,6 +5597,7 @@ public class EPTSWindow {
 	newTFMenuItem.setEnabled(false);
 	newTFMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    transformPathAction(true);
 		}
 	    });
@@ -5582,6 +5614,7 @@ public class EPTSWindow {
 	menuItem.setEnabled(false);
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    // select a path.
 		    int index = -1;
 		    if (selectedRow == -1) {
@@ -5633,6 +5666,7 @@ public class EPTSWindow {
 				 vk("VK_MakeCurrent"));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    int index = -1;
 		    if (selectedRow == -1) {
 			Set<String> vnameSet = ptmodel.getVariableNames();
@@ -5670,6 +5704,7 @@ public class EPTSWindow {
 				 vk("VK_CopyTableECMAScript"));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSRM();
 		    try {
 			StringWriter writer = new
 			    StringWriter(128*ptmodel.getRowCount());
@@ -5927,6 +5962,7 @@ public class EPTSWindow {
 				 vk("VK_ImageSpaceDistance"));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    measureDistance(false);
 		}
 	    });
@@ -5940,6 +5976,7 @@ public class EPTSWindow {
 				(KeyEvent.VK_G, InputEvent.ALT_DOWN_MASK));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    measureDistance(true);
 		}
 	    });
@@ -5966,6 +6003,7 @@ public class EPTSWindow {
 				(KeyEvent.VK_E, InputEvent.CTRL_DOWN_MASK));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    InputTablePane.ColSpec colspec[] = {
 			new InputTablePane.ColSpec
 			(localeString("VariableOrIndex"),
@@ -6041,6 +6079,7 @@ public class EPTSWindow {
 				 vk("VK_SetMaxDelta"));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSRM();
 		    Integer newlevel = (Integer) JOptionPane.showInputDialog
 			(frame, localeString("selectMaxdelta"),
 			 localeString("setMaxDelta"),
@@ -6062,6 +6101,7 @@ public class EPTSWindow {
 	menuItem.addActionListener(new ActionListener() {
 		long pointIndex = 1;
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    terminatePartialPath();
 		    // if (!cleanupPartialPath(false)) return;
 		    if (locationFormat == LocationFormat.STATEMENT) {
@@ -6134,6 +6174,7 @@ public class EPTSWindow {
 				(KeyEvent.VK_B, InputEvent.ALT_DOWN_MASK));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    terminatePartialPath();
 		    // if (!cleanupPartialPath(false)) return;
 		    createPath();
@@ -6146,6 +6187,7 @@ public class EPTSWindow {
 
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    terminatePartialPath();
 		    // System.out.println("creating an offset ...");
 		    OffsetPane offsetPane = new OffsetPane(ptmodel);
@@ -6393,6 +6435,7 @@ public class EPTSWindow {
 	    toolMenu.add(mi);
 	    mi.addActionListener(new ActionListener() {
 		    public void actionPerformed(ActionEvent e) {
+			clearLSRM();
 			nextState = state;
 			if (state instanceof SplinePathBuilder.CPointType) {
 			    SplinePathBuilder.CPointType pstate =
@@ -6462,6 +6505,7 @@ public class EPTSWindow {
 	menuItem = TransitionTable.getLocMenuItem();
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    final LocPane lpane = new LocPane();
 		    if (selectedRow != -1) {
 			PointTMR row = ptmodel.getRow(selectedRow);
@@ -6506,6 +6550,8 @@ public class EPTSWindow {
 						       x, y, xp, yp, true);
 				    cancelPathOps();
 				} else {
+				    lastSelectedRowMoved =
+					(lastSelectedRow == selectedRow);
 				    ptmodel.changeCoords(selectedRow,
 							 x, y, xp, yp, true);
 				}
@@ -6529,6 +6575,8 @@ public class EPTSWindow {
 						       x, y, xp, yp, true);
 				    cancelPathOps();
 				} else {
+				    lastSelectedRowMoved =
+					(lastSelectedRow == selectedRow);
 				    ptmodel.changeCoords(selectedRow,
 							 x, y, xp, yp, true);
 				}
@@ -6573,6 +6621,7 @@ public class EPTSWindow {
 	menuItem = TransitionTable.getShiftMenuItem();
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    final ShiftPane spane = new ShiftPane();
 		    spane.addAncestorListener(new AncestorListener() {
 			    @Override
@@ -6632,6 +6681,8 @@ public class EPTSWindow {
 						       x, y, xp, yp, true);
 				    cancelPathOps();
 				} else {
+				    lastSelectedRowMoved =
+					(lastSelectedRow == selectedRow);
 				    ptmodel.changeCoords(selectedRow,
 							 x, y, xp, yp, true);
 				}
@@ -6655,6 +6706,8 @@ public class EPTSWindow {
 						       x, y, xp, yp, true);
 				    cancelPathOps();
 				} else {
+				    lastSelectedRowMoved =
+					(lastSelectedRow == selectedRow);
 				    ptmodel.changeCoords(selectedRow,
 							 x, y, xp, yp, true);
 				}
@@ -6699,6 +6752,7 @@ public class EPTSWindow {
 	menuItem = TransitionTable.getVectorMenuItem();
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    final VectorPane vpane = new VectorPane();
 		    PointTMR lastRow = ptmodel.getLastRow();
 		    PointTMR prevRow = ptmodel.getNextToLastRow();
@@ -6856,6 +6910,7 @@ public class EPTSWindow {
 	menuItem = TransitionTable.getArcMenuItem();
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    final ArcPane apane = new ArcPane();
 		    apane.addAncestorListener(new AncestorListener() {
 			    @Override
@@ -7073,6 +7128,7 @@ public class EPTSWindow {
 	menuItem = TransitionTable.getPipeMenuItem();
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    final PipePane pipePane = new PipePane(frame);
 		    JDialog dialog = new JDialog(frame,
 						 localeString("pipePaneTitle"),
@@ -7212,6 +7268,7 @@ public class EPTSWindow {
 				 vk("VK_newFilter"));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSRM();
 		    // create a new menu item.
 		    // get the name
 		    String name = null;
@@ -7242,6 +7299,7 @@ public class EPTSWindow {
 				 vk("VK_clearFilter"));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSRM();
 		    ptfilters.clear();
 		    filterMenu.setText(localeString("Filters"));
 		    panel.repaint();
@@ -7254,6 +7312,7 @@ public class EPTSWindow {
 	menuItem.setEnabled(true);
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    // Transform all the seleted paths for the current filter.
 		    onNewTransformedSelectedPaths(false);
 		}
@@ -7265,6 +7324,7 @@ public class EPTSWindow {
 	menuItem.setEnabled(true);
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    // Transform all the seleted paths for the current filter.
 		    onNewTransformedSelectedPaths(true);
 		}
@@ -7279,6 +7339,7 @@ public class EPTSWindow {
 				 vk("VK_Manual"));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    showManual();
 		}
 	    });
@@ -7288,6 +7349,7 @@ public class EPTSWindow {
 				 vk("VK_PrintManual"));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    printManual();
 		}
 	    });
@@ -7297,6 +7359,7 @@ public class EPTSWindow {
 				 vk("VK_Browser"));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    showManualInBrowser();
 		}
 	    });
@@ -7312,6 +7375,7 @@ public class EPTSWindow {
 	    portTextField.setDefaultValue(0);
 	    portMenuItem.addActionListener(new ActionListener() {
 		    public void actionPerformed(ActionEvent e) {
+			clearLSR();
 			if (JOptionPane.OK_OPTION ==
 			    JOptionPane.showConfirmDialog(frame,
 							  portTextField,
@@ -7492,6 +7556,7 @@ public class EPTSWindow {
     }
 
     private void onNewTransformedPath(String oldPathName, boolean copyMode) {
+	clearLSR();
 	final TransformPane tfpane = new
 	    TransformPane(ptmodel, oldPathName, scaleFactor) {
 		Point vpp = scrollPane.getViewport().getViewPosition();
@@ -7781,6 +7846,7 @@ public class EPTSWindow {
 
     private long copyIndex = 0;
     private void onNewTransformedSelectedPaths(boolean copyMode) {
+	clearLSR();
 	final TransformSelectedPane tfpane = new
 	    TransformSelectedPane(ptmodel, scaleFactor) {
 		Point vpp = scrollPane.getViewport().getViewPosition();
@@ -8129,6 +8195,7 @@ public class EPTSWindow {
     }
 
     private void onDelete() {
+	clearLSR();
 	Enum mode = ptmodel.getRow(selectedRow).getMode();
 	if (mode == EPTS.Mode.LOCATION) {
 	    ptmodel.deleteRow(selectedRow);
@@ -8425,6 +8492,7 @@ public class EPTSWindow {
     }
 
     private void onExtendPath() {
+	clearLSR();
 	if (selectedRow == -1) {
 	    return;
 	}
@@ -8532,6 +8600,7 @@ public class EPTSWindow {
 	deleteMenuItem = new JMenuItem(localeString("DeletePoint"));
 	deleteMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    cancelPathOps();
 		    onDelete();
 		}
@@ -8541,6 +8610,7 @@ public class EPTSWindow {
 	changeMenuItem = new JMenuItem(localeString("ChangePointType"));
 	changeMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    cancelPathOps();
 		    onChangeType();
 		}
@@ -8550,6 +8620,7 @@ public class EPTSWindow {
 	insertBeforeMenuItem = new JMenuItem(localeString("InsertBeforePoint"));
 	insertBeforeMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    cancelPathOps();
 		    onInsertBefore();
 		}
@@ -8559,6 +8630,7 @@ public class EPTSWindow {
 	insertAfterMenuItem = new JMenuItem(localeString("InsertAfterPoint"));
 	insertAfterMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    cancelPathOps();
 		    onInsertAfter();
 		}
@@ -8569,6 +8641,7 @@ public class EPTSWindow {
 	breakLoopMenuItem.setEnabled(false);
 	breakLoopMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    cancelPathOps();
 		    onBreakLoop();
 		}
@@ -8579,6 +8652,7 @@ public class EPTSWindow {
 	extendPathMenuItem.setEnabled(true);
 	extendPathMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    cancelPathOps();
 		    onExtendPath();
 		}
@@ -8589,6 +8663,7 @@ public class EPTSWindow {
 	toSegEndMenuItem = new JMenuItem(localeString("ModeToSEGEND"));
 	toSegEndMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    ptmodel.setLastRowMode
 			(SplinePathBuilder.CPointType.SEG_END);
 		    int lastPointIndex = ptmodel.getRowCount()-1;
@@ -8606,6 +8681,7 @@ public class EPTSWindow {
 	toSplineMenuItem = new JMenuItem(localeString("ModeToSPLINE"));
 	toSplineMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    ptmodel.setLastRowMode(SplinePathBuilder.CPointType.SPLINE);
 		    int lastPointIndex = ptmodel.getRowCount()-1;
 		    nextState = SplinePathBuilder.CPointType.SPLINE;
@@ -8622,6 +8698,7 @@ public class EPTSWindow {
 	toControlMenuItem = new JMenuItem(localeString("ModeToCONTROL"));
 	toControlMenuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
 		    ptmodel.setLastRowMode
 			(SplinePathBuilder.CPointType.CONTROL);
 		    int lastPointIndex = ptmodel.getRowCount()-1;
@@ -8961,6 +9038,7 @@ public class EPTSWindow {
 			    }
 			}
 		    } else if (selectedRow != -1) {
+			// clearLSR();
 			if (hasPathOps()) {
 			    cancelPathOps();
 			} else {
@@ -9068,6 +9146,7 @@ public class EPTSWindow {
 		    scrollPane.repaint();
 		} else {
 		    if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+			clearLSR();
 			if (insertingArc) {
 			    insertingArc = false;
 			    resetState();
@@ -9147,6 +9226,8 @@ public class EPTSWindow {
 						    1.0, 1.0, pathStart, true);
 				cancelPathOps();
 			    } else {
+				lastSelectedRowMoved =
+				    (lastSelectedRow == selectedRow);
 				ptmodel.changeCoords(selectedRow,
 						     lastXSelected,
 						     lastYSelected,
@@ -9175,15 +9256,16 @@ public class EPTSWindow {
 			    setModeline("");
 			}
 		    } else if (scalePath && selectedRow != -1) {
-		       boolean lock = ((modifiers & KEY_MASK) ==
+			clearLSR();
+			boolean lock = ((modifiers & KEY_MASK) ==
 				       InputEvent.SHIFT_DOWN_MASK);
-		       if (scaleLine == null) {
-			   scaleInitializedWhenClicked = true;
-			   initialX = scaleCMP.getX()*zoom;
-			   initialY = scaleCMP.getY()*zoom;
-			   scaleLine = new Line2D.Double(initialX, initialY,
-							 initialX, initialY);
-		       }
+			if (scaleLine == null) {
+			    scaleInitializedWhenClicked = true;
+			    initialX = scaleCMP.getX()*zoom;
+			    initialY = scaleCMP.getY()*zoom;
+			    scaleLine = new Line2D.Double(initialX, initialY,
+							  initialX, initialY);
+			}
 			double px = scaleLine.getX2();
 			double py = scaleLine.getY2();
 			switch (e.getKeyCode()) {
@@ -9253,6 +9335,7 @@ public class EPTSWindow {
 		    } else if (selectedRow != -1) {
 			PointTMR row = ptmodel.getRow(selectedRow);
 			if (row == null) {
+			    clearLSR();
 			    selectedRow = -1;
 			    selectedClosedPath = false;
 			    insertArcMenuItem.setEnabled(true);
@@ -9307,6 +9390,8 @@ public class EPTSWindow {
 						     rotStart, pathStart,
 						     x, y, xp, yp, false);
 			    } else {
+				lastSelectedRowMoved =
+				    (lastSelectedRow == selectedRow);
 				ptmodel.changeCoords(selectedRow, x, y,
 						     xp, yp, true);
 			    }
@@ -9549,6 +9634,33 @@ public class EPTSWindow {
 
 
     // boolean selectedRowClick = false;
+    int lastSelectedRow = -2;
+    boolean lastSelectedRowMoved = false;
+
+    // Called by action listeners.  If the user selects a
+    // menu item while there is a selected row, we want to
+    // reset lastXSelected, etc., to the values at the row's
+    // current position
+    private void clearLSRM() {
+	if (lastSelectedRow != -2 && selectedRow != -1) {
+	    lastSelectedRow = selectedRow;
+	    PointTMR row = ptmodel.getRow(selectedRow);
+	    lastXSelected = row.getX();
+	    lastYSelected = row.getY();
+	    lastXPSelected = row.getXP();
+	    lastYPSelected = row.getYP();
+	} else if (selectedRow == -1) {
+	    lastSelectedRow = -2;
+	}
+	lastSelectedRowMoved = false;
+    }
+
+
+    private void clearLSR() {
+	lastSelectedRow = -2;
+	lastSelectedRowMoved = false;
+    }
+
     double lastXSelected = 0.0;
     double lastYSelected = 0.0;
     double lastXPSelected = 0.0;
@@ -9639,6 +9751,8 @@ public class EPTSWindow {
 				    ptmodel.moveObject(selectedRow,
 						       x, y, xp, yp, true);
 				} else {
+				    lastSelectedRowMoved =
+					(lastSelectedRow == selectedRow);
 				    srow.setX(x, xp);
 				    srow.setY(y, yp);
 				}
@@ -9819,6 +9933,8 @@ public class EPTSWindow {
 				    return;
 				}
 			    }
+			    lastSelectedRow = selectedRow;
+			    lastSelectedRowMoved = false;
 			    lastXSelected = row.getX();
 			    lastYSelected = row.getY();
 			    lastXPSelected = row.getXP();
@@ -9899,6 +10015,7 @@ public class EPTSWindow {
 				    .setEnabled(true);
 			    }
 			} else {
+			    clearLSR();
 			    selectedClosedPath = false;
 			    insertArcMenuItem.setEnabled(true);
 			    if (hasPathOps()) {
@@ -10137,6 +10254,8 @@ public class EPTSWindow {
 				initialY = p.y;
 			    }
 			} else {
+			    lastSelectedRowMoved =
+				(lastSelectedRow == selectedRow);
 			    ptmodel.changeCoords(selectedRow, x, y,
 						 xp, yp, false);
 			}
