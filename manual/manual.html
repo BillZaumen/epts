@@ -975,15 +975,17 @@ displayed in textual form. This menu contains the following items:
     variable names for locations and paths, plus their <B>key</B>,
     <B>link</B>, and <B>description</B> parameters. The variable
     parameters can be edited, but not the variable names.
-  <LI><B><CODE>Set Arc-Angle Level</CODE></B>. This option allows the
-    user to set the arc-angle level.  When circular arcs are drawn,
-    multiple segments will be used when the desired angle is larger
-    than a limit.  Four levels are provided: Level 1 corresponds to a
-    limit of 90 degrees, Level 2 corresponds to a limit of 45 degrees,
-    Level 3 corresponds to a limit of 22.5 degrees, and level 4
-    corresponds to a limit of 11.25 degrees. Circular arcs can be
-    drawn by using the <B><CODE>Add Arc</CODE></B> operation and
-    the <B><CODE>Offset Path</CODE></B> option provided by this menu. The
+  <LI><A NAME="SetArcAngleLevel"></A><B><CODE>Set Arc-Angle
+    Level</CODE></B>. This option allows the user to set the arc-angle
+    level.  When circular arcs are drawn, multiple segments will be
+    used when the desired angle is larger than a limit.  Four levels
+    are provided: Level 1 corresponds to a limit of 90 degrees, Level
+    2 corresponds to a limit of 45 degrees, Level 3 corresponds to a
+    limit of 22.5 degrees, and level 4 corresponds to a limit of 11.25
+    degrees. Circular arcs can be drawn by using
+    the <B><CODE><A HREF="#AddArc">Add Arc</A></CODE></B> operation and
+    the <B><CODE><A HREF="#OffsetPath">Offset Path</A></CODE></B> option
+    provided by this menu. The
     <B><CODE>Offset Path</CODE></B> option will draw a circular arc only
     when necessary.
   <LI><B><CODE>Create a Point</CODE></B>. This option will create a new,
@@ -1004,8 +1006,9 @@ displayed in textual form. This menu contains the following items:
     variable name is left as an empty string, a new variable name will
     be generated, starting the string "path" and followed by a number
     (e.g., <CODE>path24</CODE>.)
-  <LI><B><CODE>Offset Path</CODE></B>. This option will allow one to
-    create offset paths by bringing up a dialog box:
+  <LI><A NAME="OffsetPath"></A><B><CODE>Offset Path</CODE></B>. This
+    option will allow one to create offset paths by bringing up a
+    dialog box:
     <BR>
     <CENTER><IMG src="offsetPane.png" WIDTH="360"></CENTER>
     <BR>
@@ -1082,7 +1085,7 @@ displayed in textual form. This menu contains the following items:
 	space, and an adjacent control allows one to pick specify the
 	units.
     </UL>
-    The <B><CODE>Offset Path</CODE></B> uses various heuristics to
+    The <B><CODE>Offset Path</CODE></B> tool uses various heuristics to
     guess appropriate values for various fields. These values can be
     changed as appropriate. Typically, it uses data associated with each
     reference path, and notices if single paths have been created for a
@@ -1201,36 +1204,45 @@ displayed in textual form. This menu contains the following items:
 	arcs whenever the direction changes, the preset angle will have
 	the desired value. This option always produces a straight-line
 	segment.
-      <LI><B><CODE>Add Arc</CODE></B>. This menu item will open a
-	dialog box that will ask for a radius, angle, angle direction,
-	and arc-accuracy level:
+      <LI><A NAME="AddArc"></A><B><CODE>Add Arc</CODE></B>. This menu
+	item will open a dialog box that will ask for a radius, the
+	kink angle or tangent angle, and the angle the arc sustends,
+	and angle direction (clockwise or counterclockwise):
 	<BR><BR>
 	<CENTER><IMG src="AddArc.png" WIDTH="360"></CENTER>
 	<BR>
-	The <B><CODE>Radius</CODE></B> field
-	provides the radius of the arc in GCS units.
-	The <B><CODE>Angle</CODE></B> field provides the angular
+	The <B><CODE>Radius</CODE></B> field provides the radius of
+	the arc in GCS units.  The <CODE>Kink Angle</CODE> is the
+	angle in the couterclockwise direction relative to the tangent
+	of the existing portion of the path, wheraas the <CODE>Tangent
+	Angle</CODE> is the angle (again in the counterclockwise
+	direction) a tangent vector at the start of the arc, in the
+	direction of the arc, makes with the X axis when the arc is at
+	the start of a path. When left blank, these fields default to
+	0.  The <B><CODE>Angle</CODE></B> field provides the angular
 	extent of the arc, with positive value indicating that the
-	arc&#39;s tangent at the current point is parallel to the tangent
-	vector at the current point and a negative value indicating
-	that the arc&#39;s tangent at the current point is anti-parallel to
-	the tangent vector at the current point.
+	arc&#39;s tangent at the current point is parallel to the
+	tangent vector at the current point and a negative value
+	indicating that the arc&#39;s tangent at the current point is
+	anti-parallel to the tangent vector at the current point.
 	The <B><CODE>Counterclockwise</CODE></B> checkbox indicates
 	whether the arc, when the angle is positive, turns clockwise
-	or counterclockwise in graph coordinate space (counterclockwise
-	is defined as turning from the positive X axis towards the positive
-	Y axis). This checkbox determines the position of the circle
-	containing the arc regardless of the sign of the angle. Finally,
-	a pull-down menu indicates the accuracy of the arc.  A circular
-	arc is approximated by a sequence of cubic B&eacute;zier curves
-	and the arc accuracy sets the maximum angular extent of each.
-	When the arc accuracy is set to 1 (the default), the maximum
+	or counterclockwise in graph coordinate space
+	(counterclockwise is defined as turning from the positive X
+	axis towards the positive Y axis). This checkbox determines
+	the position of the circle containing the arc regardless of
+	the sign of the angle. Finally, a pull-down menu indicates the
+	accuracy of the arc.  A circular arc is approximated by a
+	sequence of cubic B&eacute;zier curves and the arc accuracy
+	sets the maximum angular extent of each.  The arc accuracy can
+	be set in advance by using the
+	<A HREF="#SetArcAngleLevel">Set Arc-Angle Level</A> menu item.
+	When the level is set to 1 (the default is 2), the maximum
 	angular extent for a cubic B&eacute;zier curve segment is 90
-	degrees. Increasing the arc accuracy by 1 halves this angle.
-	For the case where an arc occurs at the start of a path, a
-	dialog box will appear asking for an initial angle. This
-	initial angle is measure counterclockwise from the positive
-	X axis.
+	degrees. Increasing the arc level by 1 halves this angle.  For
+	the case where an arc occurs at the start of a path, a dialog
+	box will appear asking for an initial angle. This initial
+	angle is measure counterclockwise from the positive X axis.
       <LI><B><CODE>Add points by running a command or opening a file</CODE></B>.
 	This menu item opens a dialog box for obtaining points along a path
 	by running a command or reading from a file.  In either case, the

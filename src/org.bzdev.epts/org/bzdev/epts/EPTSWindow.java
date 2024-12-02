@@ -191,6 +191,7 @@ class Moments {
     }
 }
 
+/*
 class AnglePane extends JPanel {
     static int aindexSaved = 0;
     int aindex = aindexSaved;
@@ -265,18 +266,6 @@ class AnglePane extends JPanel {
 		Window w = SwingUtilities.getWindowAncestor(AnglePane.this);
 		w.setVisible(false);
 	    });
-
-	/*
-	okButton.addFocusListener(new FocusListener() {
-		public void focusGained(FocusEvent e) {
-		    System.out.println("okButton has Focus");
-		}
-		public void focusLost(FocusEvent e) {
-		    System.out.println("okButton lost Focus");
-		}
-	    });
-	*/
-
 	// Normally the OK button will only respond to a 'space'.
 	// we want it to respond to a return so it works like a
 	// normal dialog box.
@@ -324,6 +313,7 @@ class AnglePane extends JPanel {
 	    });
     }
 }
+*/
 
 class VectorPane extends JPanel {
     static int lindexSaved = 0;
@@ -1696,16 +1686,21 @@ class ArcPane extends JPanel {
 	return EPTS.localeString(key);
     }
 
+    boolean canKink;
+
     static int lindexSaved = 0;
     static int aindexSaved = 0;
+    static int kindexSaved = 0;
     // static int nsegIndexSaved = 1;
     int lindex = lindexSaved;
     int aindex = aindexSaved;
+    int kindex = kindexSaved;
     // int nsegIndex = nsegIndexSaved;
 
     void saveIndices() {
 	lindexSaved = lindex;
 	aindexSaved = aindex;
+	kindexSaved = kindex;
 	// nsegIndexSaved = nsegIndex;
     }
 
@@ -1723,6 +1718,7 @@ class ArcPane extends JPanel {
 
     VTextField rtf;		// radius text field
     VTextField atf;		// angle text field
+    VTextField ktf;		// kinkAngle text field
     JComboBox<String> lunits = new JComboBox<>(ConfigGCSPane.units);
     static Vector<String> av = new Vector<>(2);
     static {
@@ -1730,6 +1726,7 @@ class ArcPane extends JPanel {
 	av.add("Radians");
     }
     JComboBox<String> aunits = new JComboBox<>(av);
+    JComboBox<String> kunits = new JComboBox<>(av);
 
     boolean firstTime = true;
     CharDocFilter cdf = new CharDocFilter();
@@ -1775,6 +1772,7 @@ class ArcPane extends JPanel {
 
     double radius = 0.0;
     double angle = 0.0;
+    double kangle = 0.0;
 
     public double getRadius() {
 	return ConfigGCSPane.convert[lindex].valueAt(radius);
@@ -1784,24 +1782,38 @@ class ArcPane extends JPanel {
 	return (aindex == 0)? Math.toRadians(angle): angle;
     }
 
+    public double getTangentAngle() {
+	if (canKink) {
+	    return 0.0;
+	} else {
+	    if (kangle == 0) return 0.0;
+	    else return (kindex == 0)? Math.toRadians(kangle): kangle;
+	}
+    }
+
+    public double getKinkAngle() {
+	if (canKink) {
+	    if (kangle == 0) return 0.0;
+	    else return (kindex == 0)? Math.toRadians(kangle): kangle;
+	} else {
+	    return 0.0;
+	}
+    }
+
     public boolean isCounterClockwise() {
 	return ccwCheckBox.isSelected();
     }
 
-    /*
-    public double getMaxDelta() {
-	int divisor = 1 << nsegComboBox.getSelectedIndex();
-	return (Math.PI/2.0)/(divisor);
-    }
-    */
-
     boolean noPrevErrors = true;
 
-    public ArcPane() {
+    public ArcPane(boolean canKink) {
 	super();
+	this.canKink = canKink;
 	cdf.setAllowedChars("09eeEE..,,++--");
 	JLabel ll = new JLabel(localeString("Radius"));
 	JLabel al = new JLabel(localeString("Angle"));
+	JLabel kl = canKink? new JLabel(localeString("KinkAngle")):
+	    new JLabel(localeString("TangentAngle"));
 	JLabel nsl = new JLabel(localeString("NSegs"));
 	rtf = new VTextField("", 10) {
 		@Override
@@ -1858,6 +1870,27 @@ class ArcPane extends JPanel {
 	    };
 	((AbstractDocument)atf.getDocument()).setDocumentFilter(cdf);
 	atf.setInputVerifier(atfiv);
+	ktf = new VTextField("", 10) {
+		@Override
+		protected void onAccepted() {
+		    String text = getText();
+		    if (text == null || text.length() == 0) {
+			kangle = 0.0;
+		    } else {
+			kangle = Double.valueOf(text);
+		    }
+		}
+		@Override
+		protected boolean handleError() {
+		    JOptionPane.showMessageDialog
+			(this, localeString("needRealNumber"),
+			 localeString("errorTitle"),
+			 JOptionPane.ERROR_MESSAGE);
+		    return false;
+		}
+	    };
+	((AbstractDocument)ktf.getDocument()).setDocumentFilter(cdf);
+	ktf.setInputVerifier(atfiv);
 	GridBagLayout gridbag = new GridBagLayout();
 	GridBagConstraints c = new GridBagConstraints();
 	setLayout(gridbag);
@@ -1873,6 +1906,16 @@ class ArcPane extends JPanel {
 	c.gridwidth = GridBagConstraints.REMAINDER;
 	gridbag.setConstraints(lunits, c);
 	add(lunits);
+
+	c.gridwidth = 1;
+	gridbag.setConstraints(kl, c);
+	add(kl);
+	gridbag.setConstraints(ktf, c);
+	add(ktf);
+	c.gridwidth = GridBagConstraints.REMAINDER;
+	gridbag.setConstraints(kunits, c);
+	add(kunits);
+
 	c.gridwidth = 1;
 	gridbag.setConstraints(al, c);
 	add(al);
@@ -1885,19 +1928,6 @@ class ArcPane extends JPanel {
 	gridbag.setConstraints(ccwCheckBox, c);
 	add(ccwCheckBox);
 	ccwCheckBox.setSelected(true);
-	/*
-	c.gridwidth = 1;
-	gridbag.setConstraints(nsl, c);
-	add(nsl);
-	c.gridwidth = GridBagConstraints.REMAINDER;
-	gridbag.setConstraints(nsegComboBox, c);
-	add(nsegComboBox);
-
-	nsegComboBox.setSelectedIndex(nsegIndex);
-	nsegComboBox.addActionListener((le) -> {
-		nsegIndex = nsegComboBox.getSelectedIndex();
-	    });
-	*/
 	lunits.setSelectedIndex(lindex);
 	aunits.setSelectedIndex(aindex);
 	lunits.addActionListener((le) -> {
@@ -6911,7 +6941,16 @@ public class EPTSWindow {
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    clearLSR();
-		    final ArcPane apane = new ArcPane();
+		    boolean canKink = false;
+		    int lastind = ptmodel.getRowCount()-1;
+		    if (lastind >= 0) {
+			Enum<?> mode = ptmodel.getRow(lastind).getMode();
+			if (mode instanceof SplinePathBuilder.CPointType
+			    && mode != SplinePathBuilder.CPointType.MOVE_TO) {
+			    canKink = true;
+			}
+		    }
+		    final ArcPane apane = new ArcPane(canKink);
 		    apane.addAncestorListener(new AncestorListener() {
 			    @Override
 			    public void ancestorAdded(AncestorEvent e) {
@@ -6935,7 +6974,6 @@ public class EPTSWindow {
 			double angle = apane.getAngle();
 			double maxdelta = getMaxDelta ();
 			boolean ccw = apane.isCounterClockwise();
-			int lastind = ptmodel.getRowCount()-1;
 			int prevind = lastind - 1;
 			PointTMR row2 = ptmodel.getRow(lastind);
 			PointTMR row1 = ptmodel.getRow(prevind);
@@ -6943,38 +6981,12 @@ public class EPTSWindow {
 			if ((row2.getMode()
 			     == SplinePathBuilder.CPointType.MOVE_TO)
 			    && (mode == EPTS.Mode.PATH_START)) {
-			    final AnglePane angPane = new AnglePane();
-			    angPane.addAncestorListener(new AncestorListener() {
-				    @Override
-				    public void ancestorAdded(AncestorEvent e) {
-					// angPane.atf.requestFocusInWindow();
-					SwingOps.tryRequestFocusInWindow
-					    (angPane.atf, 0);
-				    }
-				    @Override
-				    public void ancestorMoved(AncestorEvent e) {
-				    }
-				    @Override
-				    public void ancestorRemoved
-					(AncestorEvent e) {
-				    }
-				});
-			    final JDialog dialog =
-				new JDialog(frame,
-					    localeString("setInitAngle"),
-					    true);
-			    dialog.setLocationRelativeTo(frame);
-			    dialog.setDefaultCloseOperation
-				(JDialog.DISPOSE_ON_CLOSE);
-			    dialog.add(angPane);
-			    dialog.pack();
-			    dialog.setVisible(true);
-			    angPane.saveIndices();
 			    // set row1 to a fake value. We only use
 			    // x, and y, not xp, or yp.
 			    // This will let us compute the tangent to the
 			    // curve correctly.
-			    double theta = angPane.getAngle();
+			    // double theta = angPane.getAngle();
+			    double theta = apane.getTangentAngle();
 			    double fakeX = row2.getX() - Math.cos(theta);
 			    double fakeY = row2.getY() - Math.sin(theta);
 			    mode = SplinePathBuilder.CPointType.MOVE_TO;
@@ -7019,9 +7031,17 @@ public class EPTSWindow {
 			    default:
 				throw new Error("bad case: " + type);
 			    }
-			    Path2D arc = Paths2D.createArc(segment, radius,
-							   ccw, angle,
-							   maxdelta);
+			    System.out.println("canKink = " + canKink);
+			    System.out.println("kinkAngle = "
+					       + apane.getKinkAngle());
+			    Path2D arc = canKink?
+				Paths2D.createArc(segment, radius,
+						  apane.getKinkAngle(),
+						  ccw, angle,
+						  maxdelta):
+				Paths2D.createArc(segment, radius,
+						  ccw, angle,
+						  maxdelta);
 			    PathIterator pi = arc.getPathIterator(null);
 			    double[] coords = new double[6];
 			    int ptype = pi.currentSegment(coords);
