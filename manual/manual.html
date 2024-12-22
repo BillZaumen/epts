@@ -1205,44 +1205,51 @@ displayed in textual form. This menu contains the following items:
 	the desired value. This option always produces a straight-line
 	segment.
       <LI><A NAME="AddArc"></A><B><CODE>Add Arc</CODE></B>. This menu
-	item will open a dialog box that will ask for a radius, the
-	kink angle or tangent angle, and the angle the arc sustends,
-	and angle direction (clockwise or counterclockwise):
+	item will open a dialog box that will ask for a radius,
+	whether or not the kink angle should be measured from the
+	tangent to the curve or from the X axis, the kink angle (or
+	tangent angle for the first point on the curve), the angle
+	the arc subtends, and the angle direction (clockwise or
+	counterclockwise):
 	<BR><BR>
 	<CENTER><IMG src="AddArc.png" WIDTH="360"></CENTER>
 	<BR>
-	The <B><CODE>Radius</CODE></B> field provides the radius of
-	the arc in GCS units.  The <CODE>Kink Angle</CODE> is the
-	angle in the couterclockwise direction relative to the tangent
-	of the existing portion of the path, wheraas the <CODE>Tangent
-	Angle</CODE> is the angle (again in the counterclockwise
-	direction) a tangent vector at the start of the arc, in the
-	direction of the arc, makes with the X axis when the arc is at
-	the start of a path. When left blank, these fields default to
-	0.  The <B><CODE>Angle</CODE></B> field provides the angular
-	extent of the arc, with positive value indicating that the
-	arc&#39;s tangent at the current point is parallel to the
-	tangent vector at the current point and a negative value
-	indicating that the arc&#39;s tangent at the current point is
-	anti-parallel to the tangent vector at the current point.
-	The <B><CODE>Counterclockwise</CODE></B> checkbox indicates
-	whether the arc, when the angle is positive, turns clockwise
-	or counterclockwise in graph coordinate space
-	(counterclockwise is defined as turning from the positive X
-	axis towards the positive Y axis). This checkbox determines
-	the position of the circle containing the arc regardless of
-	the sign of the angle. Finally, a pull-down menu indicates the
-	accuracy of the arc.  A circular arc is approximated by a
-	sequence of cubic B&eacute;zier curves and the arc accuracy
-	sets the maximum angular extent of each.  The arc accuracy can
-	be set in advance by using the
-	<A HREF="#SetArcAngleLevel">Set Arc-Angle Level</A> menu item.
-	When the level is set to 1 (the default is 2), the maximum
-	angular extent for a cubic B&eacute;zier curve segment is 90
-	degrees. Increasing the arc level by 1 halves this angle.  For
-	the case where an arc occurs at the start of a path, a dialog
-	box will appear asking for an initial angle. This initial
-	angle is measure counterclockwise from the positive X axis.
+	This dialog box's controls are as follows.
+	<UL>
+	  <LI> The <B><CODE>Radius</CODE></B> field provides the radius of
+	    the arc in GCS units.
+	  <LI> A <CODE>Kink</CODE> checkbox appears if the arc is not
+	    at the start of a path and indicates if the kink angle
+	    (described below) is relative to the tangent of the path
+	    or the positive X axis. When present, the default is for
+	    the checkbox to be unchecked.
+	  <LI> The <CODE>Kink Angle</CODE> field provides the angle in the
+	    counterclockwise direction relative to either the tangent
+	    of the existing portion of the path or the positive X axis
+	    as determined by the preceding checkbox. This will be
+	    labeled as the tangent angle from the X axis when the path
+	    contains a single point.  These angles are positive in the
+	    counterclockwise direction.When left blank, this field
+	    default to 0.
+	  <LI> The <B><CODE>Angle</CODE></B> field provides the angular
+	    extent of the arc, with positive value indicating that the
+	    arc&#39;s tangent at the current point is parallel to the
+	    tangent vector at the current point and a negative value
+	    indicating that the arc&#39;s tangent at the current point is
+	    anti-parallel to the tangent vector at the current point.
+	  <LI> The <B><CODE>Counterclockwise</CODE></B> checkbox indicates
+	    whether the arc, when the angle is positive, turns clockwise
+	    or counterclockwise in graph coordinate space
+	    (counterclockwise is defined as turning from the positive X
+	    axis towards the positive Y axis). This checkbox determines
+	    the position of the circle containing the arc regardless of
+	    the sign of the angle. The arc accuracy can
+	    be set in advance by using the
+	    <A HREF="#SetArcAngleLevel">Set Arc-Angle Level</A> menu item.
+	    When the level is set to 1 (the default is 2), the maximum
+	    angular extent for a cubic B&eacute;zier curve segment is 90
+	    degrees. Increasing the arc level by 1 halves this angle.
+	</UL>
       <LI><B><CODE>Add points by running a command or opening a file</CODE></B>.
 	This menu item opens a dialog box for obtaining points along a path
 	by running a command or reading from a file.  In either case, the

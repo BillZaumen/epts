@@ -1812,6 +1812,8 @@ class ArcPane extends JPanel {
 	cdf.setAllowedChars("09eeEE..,,++--");
 	JLabel ll = new JLabel(localeString("Radius"));
 	JLabel al = new JLabel(localeString("Angle"));
+	JCheckBox acb = canKink? new JCheckBox(localeString("kinkFromXAxis")):
+	    null;
 	JLabel kl = canKink? new JLabel(localeString("KinkAngle")):
 	    new JLabel(localeString("TangentAngle"));
 	JLabel nsl = new JLabel(localeString("NSegs"));
@@ -1906,6 +1908,15 @@ class ArcPane extends JPanel {
 	c.gridwidth = GridBagConstraints.REMAINDER;
 	gridbag.setConstraints(lunits, c);
 	add(lunits);
+
+	if (canKink) {
+	    c.gridwidth = GridBagConstraints.REMAINDER;
+	    gridbag.setConstraints(acb, c);
+	    add(acb);
+	    acb.addActionListener(event -> {
+		    ArcPane.this.canKink = !acb.isSelected();
+		});
+	}
 
 	c.gridwidth = 1;
 	gridbag.setConstraints(kl, c);
@@ -7031,12 +7042,22 @@ public class EPTSWindow {
 			    default:
 				throw new Error("bad case: " + type);
 			    }
-			    System.out.println("canKink = " + canKink);
-			    System.out.println("kinkAngle = "
-					       + apane.getKinkAngle());
+			    double kinkAngle = apane.getKinkAngle();
+			    if (canKink && !apane.canKink) {
+				// The user asked for a kink relative
+				// to the X axis.
+				double[] tarray = new double[2];
+				if (Path2DInfo.getTangent
+				    (segment, Path2DInfo.Location.END,
+				     tarray, 0)) {
+				    double tang = Math.atan2(tarray[1],
+							     tarray[0]);
+				    kinkAngle -= tang;
+				}
+			    }
 			    Path2D arc = canKink?
 				Paths2D.createArc(segment, radius,
-						  apane.getKinkAngle(),
+						  kinkAngle,
 						  ccw, angle,
 						  maxdelta):
 				Paths2D.createArc(segment, radius,
