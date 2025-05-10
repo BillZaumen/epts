@@ -1160,7 +1160,8 @@ displayed in textual form. This menu contains the following items:
 	ring). These points are not linked in any way so that transforming
 	one path will not transform another. This option can be used
 	when creating a path, or when a point on a path or a location has
-	been selected.
+	been selected. When inserting a point before or after an existing
+	point on a path, this option affects the position of the new point.
       <LI><B><CODE>Set X-Y Coordinates (GCS)</CODE></B>. This menu item
 	will open a dialog box that will ask for the X and Y
 	coordinates of a point specified in GCS units:
@@ -1170,18 +1171,23 @@ displayed in textual form. This menu contains the following items:
 	It is equivalent to positioning the mouse at that point and
 	clicking the left-mouse button when the cross-hair cursor is
 	displayed.  Both coordinate fields have an adjacent pull-down
-	menu that allows units to be specified.
+	menu that allows units to be specified. When inserting a point
+	before or after an existing point on a path, this option
+	affects the position of the new point.
       <LI><B><CODE>Set/Move to current coordinates + (&Delta;X, &Delta;Y) (GCS)</CODE></B>.
 	When creating a path, this option places the next point at the
 	GCS coordinates (X + &Delta;X, Y + &Delta;Y) where (X, Y) is
 	the position of the current point. The type of the point is
 	determined by the current
-	<A HREF="#BOption">B&eacute;zier-path option</A>. If that option
-	is <A HREF="#EOption">End Curve/Line Segment</A>, then this
-	option can be used to add a vector specified using Cartesian
-	coordinates.  Otherwise, if a point has been selected, this
-	option will move the point by incrementing its X and Y
-	coordinates by &Delta;X and &Delta;Y respectively.
+	<A HREF="#BOption">B&eacute;zier-path option</A>. If that
+	option is <A HREF="#EOption">End Curve/Line Segment</A>, then
+	this option can be used to add a vector specified using
+	Cartesian coordinates.  Otherwise, if a point has been
+	selected, this option will move the point by incrementing its
+	X and Y coordinates by &Delta;X and &Delta;Y
+	respectively. When inserting a point before or after an
+	existing point on a path, this option affects the position of
+	the new point.
       <LI><B><CODE>Add Vector</CODE></B>. This menu item will open a
 	dialog box that will ask for a length and an angle:
 	<BR><BR>
@@ -1451,10 +1457,16 @@ the following options:
     be changed. One can, however, break the loop and extend the path so that
     the last point is a <CODE>SEG_END</CODE>point whose location is the
     same as the initial point on the path.
-  <LI><B><CODE>Insert Before Point</CODE></B>. This option allows one to insert
-    a new point into a path before the selected point.
-  <LI><B><CODE>Insert After Point</CODE></B>.  This option allows one to insert
-    a new point into a path after the selected point.
+  <LI><B><CODE>Insert Before Point</CODE></B>. This option allows one
+    to insert a new point into a path before the selected point. One
+    may click the mouse after moving it to the desired point, or one
+    may use one of the menu items in the Tools menu that will get or
+    set a point (these have the shortcuts G, P, and M).
+  <LI><B><CODE>Insert After Point</CODE></B>.  This option allows one
+    to insert a new point into a path after the selected point.  One
+    may click the mouse after moving it to the desired point, or one
+    may use one of the menu items in the Tools menu that will get or
+    set a point (these have the shortcuts G, P, and M).
   <LI><B><CODE>Break Loop</CODE></B>. This option turns a closed path into an
     open path.
   <LI><B><CODE>Extend Path</CODE></B>. This option allows one to add new
@@ -1485,9 +1497,9 @@ extensions respectively):
     from a saved state or configuration, the corresponding file will be
     replaced.
 </UL>
-The remaining shortcuts apply to saved states.
+The remaining shortcuts apply to EPTS sessions.
 
-Some saved-state shortcuts apply regardless of the current mode:
+Some session shortcuts apply regardless of the current mode:
 <UL>
   <LI> Control-Minus. Zoom out.
   <LI> Control-Plus.  Zoom in. The <CODE>Zoom</CODE> menu will list this
@@ -1561,6 +1573,12 @@ Some saved-state shortcuts apply regardless of the current mode:
     EPTS treats these parameters as purely annotative, but they will
     be accessible in templates. The use in these cases is template
     specific. All are optional unless required by a template.
+  <LI> Control-P. This will print the table.
+  <LI> Ctrl-T. Display the table in a separate window.
+</UL>
+<P>
+By contrast, some key combinations apply only when a path or location exists:
+<UL>
   <LI> Ctrl+Alt-M. Move an existing point or path.
   <LI> Ctrl+Alt-N. Create a new path by applying an affine
     transformation that scales an existing path along its
@@ -1569,12 +1587,10 @@ Some saved-state shortcuts apply regardless of the current mode:
     translation. The translation&#39;s values determines the offsets of
     the center of mass from its starting location to its new location.
     A dialog box sets up the affine  transformation.
-  <LI> Control-P. This will print the table.
   <LI> Ctrl+Alt-R. Rotate an existing path.
   <LI> Ctrl+Alt-S. Scale an existing path as described in the
     <A href="#scalePath">menu-item documentation</A> (which includes a
     description of the use of modifier keys).
-  <LI> Ctrl-T. Display the table in a separate window.
   <LI> Ctrl+Alt-T. Modify an existing path by applying an affine
     transformation that scales the existing path along its
     <A href="#principalAxes">principal axes</A>, rotates the path, and
@@ -1583,13 +1599,9 @@ Some saved-state shortcuts apply regardless of the current mode:
     <A href="#centerOfMass">center of mass</A> from its starting
     location to its new location.  A dialog box sets up the affine
     transformation.
-  <LI> Alt-X. Delete a location or B&eacute;zier path (at least one path or
-    location must exist).
-  <LI> Control-Z. This is an "undo" operation. It undoes the last entry to
-    the table, which may not always be the last operation performed.
+  <LI> Alt-X. Delete a location or B&eacute;zier path.
 </UL>
-<P>
-By contrast, some key combinations apply only when adding a point to
+In addition, some key combinations apply only when adding a point to
 a path or creating an isolated point at a specific location:
 <UL>
   <LI> Right-Arrow. When this key is clicked, a cross-hair cursor will
@@ -1641,6 +1653,8 @@ a path or creating an isolated point at a specific location:
     of whether the caps-lock key is in use), the current path will remain
     open and will be ended.  The type of the last point will be changed to
     an end-of-segment point.
+  <LI> Control-Z. This is an "undo" operation. It undoes the last entry to
+    a path when a path is being created or extended.
 </UL>
 <P>
 

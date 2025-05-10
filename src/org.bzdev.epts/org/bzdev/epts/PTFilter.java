@@ -26,13 +26,30 @@ public class PTFilter {
 
     PointTMR.FilterMode defaultMode  = PointTMR.FilterMode.INVISIBLE;
 
-    public PTFilter(String name, PointTableModel ptmodel) {
-	this(name, ptmodel, true);
+    JMenuItem menuItem;
+
+    static final String CHECKMARK = "\u2714 ";
+
+    // used by PTFilters
+    public void setSelected(boolean selected) {
+	if (selected) {
+	    menuItem.setText(CHECKMARK + name);
+	} else {
+	    menuItem.setText(name);
+	}
     }
 
-    public PTFilter(String name, PointTableModel ptmodel, boolean fillRows) {
+    public PTFilter(String name, PointTableModel ptmodel, JMenuItem mi) {
+	this(name, ptmodel, mi, true);
+    }
+
+
+    public PTFilter(String name, PointTableModel ptmodel, JMenuItem mi,
+		    boolean fillRows)
+    {
 	this.name = name;
 	this.ptmodel = ptmodel;
+	this.menuItem = mi;
 	fmodel = new PTFilterModel(ptmodel, fillRows);
     }
 

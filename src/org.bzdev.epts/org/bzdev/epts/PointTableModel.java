@@ -84,16 +84,51 @@ public class
 	return Collections.unmodifiableSet(names);
     }
 
+    public Set<String>getVisibleVariableNames() {
+	// just the variable names that are selectable (e.g., when
+	// a filter is being used).
+	TreeSet<String> vnames = new TreeSet<>();
+	for (String vn: names) {
+	    int start = findStart(vn);
+	    int end = findEnd(start) - 1;
+	    boolean selectable = start >= 0 && rows.get(start).isSelectable();
+	    if (selectable) {
+		vnames.add(vn);
+	    }
+	}
+	return vnames;
+    }
+
+
     public Set<String> getPathVariableNames() {
 	return Collections.unmodifiableSet(pnames);
     }
 
+    public Set<String>getVisiblePathVariableNames() {
+	// just the path-variable names that are selectable (e.g., when
+	// a filter is being used).
+	TreeSet<String> vpnames = new TreeSet<>();
+	for (String vn: pnames) {
+	    int start = findStart(vn);
+	    int end = findEnd(start) - 1;
+	    boolean selectable = start >= 0 && rows.get(start).isSelectable();
+	    if (selectable) {
+		vpnames.add(vn);
+	    }
+	}
+	return vpnames;
+    }
+
+
     public Set<String> getOpenPathVariableNames() {
+	// only rows that are selectable are shown so that the choices
+	// ignore paths hidden or not selectable when a filter is used.
 	TreeSet<String> opnames =new TreeSet<>();
 	for (String vn: pnames) {
 	    int start = findStart(vn);
 	    int end = findEnd(start) - 1;
-	    if (end > start) {
+	    boolean selectable = start >= 0 && rows.get(start).isSelectable();
+	    if (end > start && selectable) {
 		if (rows.get(end).getMode()
 		    != SplinePathBuilder.CPointType.CLOSE) {
 		    opnames.add(vn);

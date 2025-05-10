@@ -823,7 +823,7 @@ class OffsetPane extends JPanel {
 	Vector<String> pathnames =
 	    new Vector<>(ptmodel.pathVariableNameCount() + 2);
 	pathnames.add(localeString("PCBHDR"));
-	for (String name: ptmodel.getPathVariableNames()) {
+	for (String name: ptmodel.getVisiblePathVariableNames()) {
 	    pathnames.add(name);
 	}
 
@@ -4106,6 +4106,8 @@ public class EPTSWindow {
 		    ptmodel.addRow("", EPTS.Mode.PATH_END,
 				   0.0, 0.0, 0.0, 0.0);
 		    setModeline("Path Complete");
+		    extendingPath = false;
+		    extendPathIndex = 0;
 		}
 		resetState();
 		panel.repaint();
@@ -4147,14 +4149,22 @@ public class EPTSWindow {
 	    case JOptionPane.OK_OPTION:
 		{
 		    int n = ptmodel.getRowCount();
-		    if (n > 0) {
+		    System.out.println("n = " + n + ", extendPathIndex = "
+				       + extendPathIndex);
+		    if (n > (extendingPath? extendPathIndex: 0)) {
 			do {
-			    ptmodel.deleteRow(--n);
-			    lastrow = ptmodel.getLastRow();
+			    if (!extendingPath || n > extendPathIndex) {
+				ptmodel.deleteRow(--n);
+				lastrow = ptmodel.getLastRow();
+				System.out.println("n = " + n);
+			    } else {
+				lastrow = null;
+			    }
 			} while (lastrow != null
 				 && lastrow.getMode() instanceof
 				 SplinePathBuilder.CPointType);
 		    }
+		    undoMenuItem.setEnabled(false);
 		    addToPathMenuItem.setEnabled(canAddToBezier());
 		    TransitionTable.getPipeMenuItem().setEnabled(false);
 		    TransitionTable.getArcMenuItem().setEnabled(false);
@@ -4166,16 +4176,25 @@ public class EPTSWindow {
 		return false;
 	    }
 	}
-	// expect only one iteration, but allow more in case of
-	// an unanticipated error.
-	while (lastrow != null
-	    && lastrow.getMode() == EPTS.Mode.PATH_START) {
-	    int n = ptmodel.getRowCount();
-	    if (n > 0) {
-		ptmodel.deleteRow(--n);
+	if (extendingPath) {
+	    // Need to terminate the path after deleting newly added
+	    // points.
+	    ptmodel.addRow("", EPTS.Mode.PATH_END, 0.0, 0.0, 0.0, 0.0);
+	} else {
+	    // expect only one iteration, but allow more in case of
+	    // an unanticipated error.
+	    while (lastrow != null
+		   && lastrow.getMode() == EPTS.Mode.PATH_START) {
+		int n = ptmodel.getRowCount();
+		if (n > 0) {
+		    ptmodel.deleteRow(--n);
+		}
+		lastrow = ptmodel.getLastRow();
 	    }
-	    lastrow = ptmodel.getLastRow();
 	}
+	extendingPath = false;
+	extendPathIndex = 0;
+	undoMenuItem.setEnabled(false);
 	// addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	addToPathMenuItem.setEnabled(canAddToBezier());
 	deletePathMenuItem.setEnabled(ptmodel.variableNameCount() > 0);
@@ -4185,6 +4204,7 @@ public class EPTSWindow {
 	return true;
     }
 
+    JMenuItem undoMenuItem;	// for undo operations.
     JMenuItem saveMenuItem;
     JMenuItem saveAsMenuItem;
     JMenuItem addToPathMenuItem; // for Edit menu.
@@ -4764,6 +4784,8 @@ public class EPTSWindow {
 	    // nextState variable.
 	    ttable.nextState(EPTS.Mode.PATH_END);
 	    ptmodel.addRow("", EPTS.Mode.PATH_END, 0.0, 0.0, 0.0, 0.0);
+	    extendingPath = false;
+	    extendPathIndex = 0;
 	}
 	resetState();
 	// We have found a line segment.
@@ -4836,6 +4858,9 @@ public class EPTSWindow {
 	    i++;
 	}
 	ptmodel.addRow("", EPTS.Mode.PATH_END, 0.0, 0.0, 0.0, 0.0);
+	extendingPath = false;
+	undoMenuItem.setEnabled(false);
+	extendPathIndex = 0;
 	end = ptmodel.getRowCount() - 1;
 	ptmodel.fireTableChanged(start, end, PointTableModel.Mode.MODIFIED);
 	selectedRow = -1;
@@ -5001,7 +5026,7 @@ public class EPTSWindow {
 	// select a path.
 	String oldPathName = null;
 	if (selectedRow == -1) {
-	    Set<String> vnameSet = ptmodel.getPathVariableNames();
+	    Set<String> vnameSet = ptmodel.getVisiblePathVariableNames();
 	    if (vnameSet.isEmpty()) return;
 	    String[] vnames =
 		vnameSet.toArray(new String[vnameSet.size()]);
@@ -5039,6 +5064,9 @@ public class EPTSWindow {
 	    // nextState variable.
 	    ttable.nextState(EPTS.Mode.PATH_END);
 	    ptmodel.addRow("", EPTS.Mode.PATH_END, 0.0, 0.0, 0.0, 0.0);
+	    extendingPath = false;
+	    extendPathIndex = 0;
+	    undoMenuItem.setEnabled(false);
 	}
 	resetState();
 	onNewTransformedPath(oldPathName, copyMode);
@@ -5061,6 +5089,9 @@ public class EPTSWindow {
 	    // nextState variable.
 	    ttable.nextState(EPTS.Mode.PATH_END);
 	    ptmodel.addRow("", EPTS.Mode.PATH_END, 0.0, 0.0, 0.0, 0.0);
+	    extendingPath = false;
+	    extendPathIndex = 0;
+	    undoMenuItem.setEnabled(false);
 	}
 	resetState();
 	onNewTransformedSelectedPaths(copyMode);
@@ -5071,6 +5102,7 @@ public class EPTSWindow {
     JMenuItem tfSelectedMI;
     JMenuItem ntfSelectedMI;
 
+    JMenu filterMenu = new JMenu(localeString("Filters"));
 
     private void setMenus(JFrame frame, double w, double h) {
 	JMenuBar menubar = new JMenuBar();
@@ -5300,7 +5332,39 @@ public class EPTSWindow {
 		    }
 		    int n = ptmodel.getRowCount();
 		    if (n > 0) {
-			ptmodel.deleteRow(--n);
+			Enum rmd = ptmodel.getRowMode(--n);
+			if (rmd != null  && rmd instanceof EPTS.Mode) {
+			    switch((EPTS.Mode)rmd) {
+			    case PATH_END:
+			    case LOCATION:
+				// We only want to undo while entering points.
+				// Otherwise the behavior is unpredictable to
+				// users.
+				return;
+			    default:
+				break;
+			    }
+			}
+			if (extendingPath) {
+			    if (n >= extendPathIndex) {
+				ptmodel.deleteRow(n);
+			    } else {
+				n++;
+			    }
+			} else {
+			    ptmodel.deleteRow(n);
+			}
+			if (extendingPath) {
+			    System.out.println("n = " + n +
+					       ", extendPathIndex = "
+					       + extendPathIndex);
+			    if (n == extendPathIndex) {
+				n++;
+				ptmodel.addRow("", EPTS.Mode.PATH_END,
+				       0.0, 0.0, 0.0, 0.0);
+				undoMenuItem.setEnabled(false);
+			    }
+			}
 			if (n == 0) {
 			    resetState();
 			    setModeline("");
@@ -5368,7 +5432,9 @@ public class EPTSWindow {
 		    panel.repaint();
 		}
 	    });
+	menuItem.setEnabled(false);
 	editMenu.add(menuItem);
+	undoMenuItem = menuItem;
 
 	menuItem = new JMenuItem(localeString("AppendBezier"),
 				 vk("VK_AppendBezier"));
@@ -5428,6 +5494,7 @@ public class EPTSWindow {
 			    savedCursorPath = panel.getCursor();
 			    panel.setCursor(Cursor.getPredefinedCursor
 					    (Cursor.CROSSHAIR_CURSOR));
+			    filterMenu.setEnabled(false);
 			    createPathFinalAction();
 			    return;
 			}
@@ -5438,12 +5505,17 @@ public class EPTSWindow {
 			ttable.nextState(EPTS.Mode.PATH_END);
 			ptmodel.addRow("", EPTS.Mode.PATH_END,
 				       0.0, 0.0, 0.0, 0.0);
+			extendingPath = false;
+			extendPathIndex = 0;
+			undoMenuItem.setEnabled(false);
 		    }
 		    resetState();
 		    if (selectedRow == -1) {
 			if (index != -1) index++;
 			selectedRow = index;
 		    }
+		    filterMenu.setEnabled(false);
+		    undoMenuItem.setEnabled(true);
 		    onExtendPath();
 		}
 	    });
@@ -5710,7 +5782,8 @@ public class EPTSWindow {
 		    clearLSR();
 		    int index = -1;
 		    if (selectedRow == -1) {
-			Set<String> vnameSet = ptmodel.getVariableNames();
+			Set<String> vnameSet = ptmodel
+			    .getVisibleVariableNames();
 			if (vnameSet.isEmpty()) return;
 			String vname = null;
 			String[] vnames =
@@ -6218,6 +6291,7 @@ public class EPTSWindow {
 		    clearLSR();
 		    terminatePartialPath();
 		    // if (!cleanupPartialPath(false)) return;
+		    undoMenuItem.setEnabled(true);
 		    createPath();
 		}
 	    });
@@ -6454,7 +6528,6 @@ public class EPTSWindow {
 
 	toolMenu.add(menuItem);
 
-
 	toolMenu.addSeparator();
 	toolMenu.add(new JLabel(localeString("BezierPathOptions")));
 	JMenuItem lastMI = null;
@@ -6487,8 +6560,11 @@ public class EPTSWindow {
 					       .CLOSE, 0.0, 0.0, 0.0, 0.0);
 				ptmodel.addRow("", EPTS.Mode.PATH_END,
 					       0.0, 0.0, 0.0, 0.0);
+				extendingPath = false;
+				extendPathIndex = 0;
 				// setModeline("Path Complete");
 				resetState();
+				undoMenuItem.setEnabled(false);
 				setModeline(localeString("LoopComplete"));
 			    } else {
 				JRadioButtonMenuItem rbmi =
@@ -6500,6 +6576,7 @@ public class EPTSWindow {
 			    EPTS.Mode mstate = (EPTS.Mode) state;
 			    switch (mstate) {
 			    case PATH_END:
+				undoMenuItem.setEnabled(false);
 				PointTMR lastrow = ptmodel.getLastRow();
 				Enum lrmode = lastrow.getMode();
 				if (lrmode == SplinePathBuilder.CPointType
@@ -6516,6 +6593,9 @@ public class EPTSWindow {
 				    ttable.nextState(EPTS.Mode.PATH_END);
 				    ptmodel.addRow("", EPTS.Mode.PATH_END,
 						   0.0, 0.0, 0.0, 0.0);
+				    extendingPath = false;
+				    extendPathIndex = 0;
+				    undoMenuItem.setEnabled(false);
 				} else {
 				    if (lrmode == EPTS.Mode.PATH_START) {
 					ptmodel.deleteRow
@@ -6610,7 +6690,26 @@ public class EPTSWindow {
 				.setEnabled(false);
 			    resetState ();
 			} else {
-			    if (selectedRow != -1) {
+			    if (insertRowIndex != -1) {
+				// reference point
+				System.out.println("[1] insertRowIndex = " +
+						   insertRowIndex);
+				System.out.println("replacementMode = "
+						   + replacementMode);
+				if (replacementMode != null) {
+				    ptmodel.changeMode(insertionSelectedRow,
+						       replacementMode);
+				}
+				ptmodel.insertRow(insertRowIndex, "",
+						  insertMode,
+						  x, y, xp, yp);
+				insertRowIndex = -1;
+				insertionSelectedRow = -1;
+				selectedRow = -1;
+				selectedClosedPath = false;
+				addToPathMenuItem.setEnabled(canAddToBezier());
+				resetState();
+			    } else if (selectedRow != -1) {
 				if (moveLocOrPath) {
 				    ptmodel.moveObject(selectedRow,
 						       x, y, xp, yp, true);
@@ -6741,7 +6840,26 @@ public class EPTSWindow {
 				.setEnabled(false);
 			    resetState ();
 			} else {
-			    if (selectedRow != -1) {
+			    if (insertRowIndex != -1) {
+				// reference point
+				System.out.println("[2] insertRowIndex = " +
+						   insertRowIndex);
+				System.out.println("replacementMode = "
+						   + replacementMode);
+				if (replacementMode != null) {
+				    ptmodel.changeMode(insertionSelectedRow,
+						       replacementMode);
+				}
+				ptmodel.insertRow(insertRowIndex, "",
+						  insertMode,
+						  x, y, xp, yp);
+				insertRowIndex = -1;
+				insertionSelectedRow = -1;
+				selectedRow = -1;
+				selectedClosedPath = false;
+				addToPathMenuItem.setEnabled(canAddToBezier());
+				resetState();
+			    } else if (selectedRow != -1) {
 				if (moveLocOrPath) {
 				    ptmodel.moveObject(selectedRow,
 						       x, y, xp, yp, true);
@@ -7301,15 +7419,23 @@ public class EPTSWindow {
 	    });
 	toolMenu.add(menuItem);
 
-	final JMenu filterMenu = new JMenu(localeString("Filters"));
+	// final JMenu filterMenu = new JMenu(localeString("Filters"));
 	filterMenu.setMnemonic(vk("VK_Filters"));
 	menubar.add(filterMenu);
-	ptfilters = new PTFilters(frame, filterMenu, ptmodel);
+	ptfilters = new PTFilters(frame, filterMenu, ptmodel, () -> {
+		return terminatePathOps();});
 	menuItem = new JMenuItem(localeString("newFilter"),
 				 vk("VK_newFilter"));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    if (!terminatePathOps()) return;
+		    // terminatePathOps(true);
+		    /*
+		    if (selectedRow != -1) {
+			selectedRowCleanup();
+		    }
 		    clearLSRM();
+		    */
 		    // create a new menu item.
 		    // get the name
 		    String name = null;
@@ -7340,7 +7466,14 @@ public class EPTSWindow {
 				 vk("VK_clearFilter"));
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    if (!terminatePathOps()) return;
+		    // terminatePathOps(true);
+		    /*
+		    if (selectedRow != -1) {
+			selectedRowCleanup();
+		    }
 		    clearLSRM();
+		    */
 		    ptfilters.clear();
 		    filterMenu.setText(localeString("Filters"));
 		    panel.repaint();
@@ -7353,7 +7486,14 @@ public class EPTSWindow {
 	menuItem.setEnabled(true);
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    if (!terminatePathOps()) return;
+		    // terminatePathOps(true);
+		    /*
+		    if (selectedRow != -1) {
+			selectedRowCleanup();
+		    }
 		    clearLSR();
+		    */
 		    // Transform all the seleted paths for the current filter.
 		    onNewTransformedSelectedPaths(false);
 		}
@@ -7365,7 +7505,14 @@ public class EPTSWindow {
 	menuItem.setEnabled(true);
 	menuItem.addActionListener(new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
+		    if (!terminatePathOps()) return;
+		    // terminatePathOps(true);
+		    /*
+		    if (selectedRow != -1) {
+			selectedRowCleanup();
+		    }
 		    clearLSR();
+		    */
 		    // Transform all the seleted paths for the current filter.
 		    onNewTransformedSelectedPaths(true);
 		}
@@ -8532,6 +8679,9 @@ public class EPTSWindow {
 	breakLoopMenuItem.setEnabled(false);
     }
 
+    boolean extendingPath = false;
+    int  extendPathIndex = 0;
+
     private void onExtendPath() {
 	clearLSR();
 	if (selectedRow == -1) {
@@ -8612,6 +8762,15 @@ public class EPTSWindow {
 	if (nextState != null) {
 	    saveMenuItem.setEnabled(false);
 	    saveAsMenuItem.setEnabled(false);
+	}
+	System.out.println("onExtend: ptmodel.getRowCount() = " +
+			   ptmodel.getRowCount());
+	extendPathIndex = ptmodel.getRowCount();
+	if (extendPathIndex > 0) {
+	    Enum pmode = ptmodel.getRowMode(extendPathIndex-1);
+	    if (pmode instanceof SplinePathBuilder.CPointType) {
+		extendingPath = true;
+	    }
 	}
     }
 
@@ -8975,6 +9134,140 @@ public class EPTSWindow {
     double starty = -1;
     boolean mouseTracked = false;
 
+    // For selectedRow != -1 when handling VK_ESCAPE
+    // put also used to clean up if a filter is used when a row
+    // is selected.
+    private void selectedRowCleanup() {
+	if (moveLocOrPath) {
+	    ptmodel.moveObject(selectedRow,
+			       lastXSelected,
+			       lastYSelected,
+			       lastXPSelected,
+			       lastYPSelected,
+			       true);
+	    cancelPathOps();
+	} else if (rotatePath) {
+	    double cmxp = (centerOfMass.getX() - xrefpoint)
+		/scaleFactor;
+	    double cmyp = (centerOfMass.getY() - yrefpoint)
+		/ scaleFactor;
+	    cmyp = height - cmyp;
+	    Point2D cmp = new Point2D.Double(cmxp, cmyp);
+	    double xx = rotStart.getX();
+	    double yy = rotStart.getY();
+	    double xxp = (xx - xrefpoint) / scaleFactor;
+	    double yyp = (yy - yrefpoint) / scaleFactor;
+	    yyp = height - yyp;
+	    ptmodel.rotateObject(rotRows, centerOfMass, cmp,
+				 rotStart, pathStart,
+				 xx, yy, xxp, yyp, true);
+	    cancelPathOps();
+	} else if (scalePath) {
+	    double cmxp = (centerOfMass.getX() - xrefpoint)
+		/scaleFactor;
+	    double cmyp = (centerOfMass.getY() - yrefpoint)
+		/ scaleFactor;
+	    cmyp = height - cmyp;
+	    Point2D cmp = new Point2D.Double(cmxp, cmyp);
+	    ptmodel.scaleObject(scaleRows, centerOfMass,
+				cmp, paX1, paY1,
+				1.0, 1.0, pathStart, true);
+	    cancelPathOps();
+	} else {
+	    lastSelectedRowMoved =
+		(lastSelectedRow == selectedRow);
+	    ptmodel.changeCoords(selectedRow,
+				 lastXSelected,
+				 lastYSelected,
+				 lastXPSelected,
+				 lastYPSelected,
+				 true);
+	}
+	selectedRow = -1;
+	selectedClosedPath = false;
+	insertArcMenuItem.setEnabled(true);
+	addToPathMenuItem.setEnabled(canAddToBezier());
+	setModeline("");
+	panel.repaint();
+	return;
+    }
+
+    private boolean terminatePathOps() {
+	clearLSR();
+	if (insertingArc) {
+	    insertingArc = false;
+	    resetState();
+	    panel.setCursor
+		(Cursor.getPredefinedCursor
+		 (Cursor.DEFAULT_CURSOR));
+	    setModeline("");
+	    panel.repaint();
+	    return true;
+	}
+	if (gotoMode) {
+	    endGotoMode();
+	    return true;
+	}
+	String frameText = localeString("CancelCurrentOps");
+	String frameTitle = localeString("Cancel");
+	if (insertRowIndex != -1) {
+	    insertRowIndex = -1;
+	    selectedRow = -1;
+	    selectedClosedPath = false;
+	    insertArcMenuItem.setEnabled(true);
+	    addToPathMenuItem.setEnabled(canAddToBezier());
+	    resetState();
+	    setModeline("");
+	    return true;
+	} else if (distState != 0) {
+	    resetState();
+	    setModeline("");
+	    return true;
+	} else if (locState) {
+	    resetState();
+	    setModeline("");
+	    return true;
+	} else if (nextState != null) {
+	    int lastrowInd = ptmodel.getRowCount()-1;
+	    int lastStart = ptmodel.findStart(lastrowInd);
+	    String vname = ptmodel.getRow(lastStart)
+		.getVariableName();
+	    frameText = String.format
+		(localeString("UndoCurrentPathSegs"), vname);
+	    frameTitle =
+		localeString("UndoCurrentPathSegsTitle");
+	} else if (selectedRow != -1) {
+	    selectedRowCleanup();
+	    return true;
+	} else {
+	    return true;
+	}
+	/*
+	if (force) {
+	    cleanupPartialPath(true);
+	    resetState();
+	    setModeline("");
+	} else {
+	*/
+	    int result =
+		JOptionPane.showConfirmDialog(frame, frameText, frameTitle,
+					      JOptionPane.OK_CANCEL_OPTION,
+					      JOptionPane.QUESTION_MESSAGE);
+	    if (result == JOptionPane.OK_OPTION) {
+		cleanupPartialPath(true);
+		resetState();
+		setModeline("");
+		undoMenuItem.setEnabled(false);
+		return true;
+	    } else {
+		return false;
+	    }
+	    /*
+	}
+	    */
+    }
+
+
     KeyAdapter kba = new KeyAdapter() {
 	    public void keyTyped(KeyEvent e) {
 		int lastZoomInd = zoomIndex;
@@ -9187,6 +9480,9 @@ public class EPTSWindow {
 		    scrollPane.repaint();
 		} else {
 		    if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+			terminatePathOps();
+			// terminatePathOps(false);
+			/*
 			clearLSR();
 			if (insertingArc) {
 			    insertingArc = false;
@@ -9231,57 +9527,7 @@ public class EPTSWindow {
 			    frameTitle =
 				localeString("UndoCurrentPathSegsTitle");
 			} else if (selectedRow != -1) {
-			    if (moveLocOrPath) {
-				ptmodel.moveObject(selectedRow,
-						   lastXSelected,
-						   lastYSelected,
-						   lastXPSelected,
-						   lastYPSelected,
-						   true);
-				cancelPathOps();
-			    } else if (rotatePath) {
-				double cmxp = (centerOfMass.getX() - xrefpoint)
-				    /scaleFactor;
-				double cmyp = (centerOfMass.getY() - yrefpoint)
-				    / scaleFactor;
-				cmyp = height - cmyp;
-				Point2D cmp = new Point2D.Double(cmxp, cmyp);
-				double xx = rotStart.getX();
-				double yy = rotStart.getY();
-				double xxp = (xx - xrefpoint) / scaleFactor;
-				double yyp = (yy - yrefpoint) / scaleFactor;
-				yyp = height - yyp;
-				ptmodel.rotateObject(rotRows, centerOfMass, cmp,
-						     rotStart, pathStart,
-						     xx, yy, xxp, yyp, true);
-				cancelPathOps();
-			    } else if (scalePath) {
-				double cmxp = (centerOfMass.getX() - xrefpoint)
-				    /scaleFactor;
-				double cmyp = (centerOfMass.getY() - yrefpoint)
-				    / scaleFactor;
-				cmyp = height - cmyp;
-				Point2D cmp = new Point2D.Double(cmxp, cmyp);
-				ptmodel.scaleObject(scaleRows, centerOfMass,
-						    cmp, paX1, paY1,
-						    1.0, 1.0, pathStart, true);
-				cancelPathOps();
-			    } else {
-				lastSelectedRowMoved =
-				    (lastSelectedRow == selectedRow);
-				ptmodel.changeCoords(selectedRow,
-						     lastXSelected,
-						     lastYSelected,
-						     lastXPSelected,
-						     lastYPSelected,
-						     true);
-			    }
-			    selectedRow = -1;
-			    selectedClosedPath = false;
-			    insertArcMenuItem.setEnabled(true);
-			    addToPathMenuItem.setEnabled(canAddToBezier());
-			    setModeline("");
-			    panel.repaint();
+			    selectedRowCleanup();
 			    return;
 			} else {
 			    return;
@@ -9296,6 +9542,7 @@ public class EPTSWindow {
 			    resetState();
 			    setModeline("");
 			}
+			*/
 		    } else if (scalePath && selectedRow != -1) {
 			clearLSR();
 			boolean lock = ((modifiers & KEY_MASK) ==
@@ -9523,6 +9770,7 @@ public class EPTSWindow {
 		 TransitionTable.getMenuItemsWithState()) {
 	    item.getMenuItem().setEnabled(false);
 	}
+	filterMenu.setEnabled(true);
     }
 
 
@@ -9630,6 +9878,7 @@ public class EPTSWindow {
 	if (key != null) keys.put(varname, key);
 	if (link != null) links.put(varname, link);
 	if (descr != null) descriptions.put(varname, descr);
+	filterMenu.setEnabled(false);
 	ptmodel.addRow(varname, EPTS.Mode.PATH_START, 0.0, 0.0, 0.0, 0.0);
 	savedCursorPath = panel.getCursor();
 	panel.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
@@ -9788,7 +10037,26 @@ public class EPTSWindow {
 				y *= scaleFactor;
 				x += xrefpoint;
 				y += yrefpoint;
-				if (moveLocOrPath) {
+				if (insertRowIndex != -1) {
+				    System.out.println("[3] insertRowIndex = " +
+						       insertRowIndex);
+				    System.out.println("replacementMode = "
+						       + replacementMode);
+				    if (replacementMode != null) {
+					ptmodel.changeMode(insertionSelectedRow,
+							   replacementMode);
+				    }
+				    ptmodel.insertRow(insertRowIndex, "",
+						      insertMode,
+						      x, y, xp, yp);
+				    insertRowIndex = -1;
+				    insertionSelectedRow = -1;
+				    selectedRow = -1;
+				    selectedClosedPath = false;
+				    addToPathMenuItem
+					.setEnabled(canAddToBezier());
+				    // resetState();
+				} else if (moveLocOrPath) {
 				    ptmodel.moveObject(selectedRow,
 						       x, y, xp, yp, true);
 				} else {
@@ -9813,6 +10081,7 @@ public class EPTSWindow {
 			y *= scaleFactor;
 			x += xrefpoint;
 			y += yrefpoint;
+			// reference point
 			if (replacementMode != null) {
 			    ptmodel.changeMode(insertionSelectedRow,
 					       replacementMode);
