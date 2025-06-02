@@ -149,11 +149,14 @@ public class TransitionTable {
 			   SplinePathBuilder.CPointType.SEG_END};
 
     static Enum enum2[] = {SplinePathBuilder.CPointType.SPLINE,
+			   SplinePathBuilder.CPointType.CONTROL,
 			   SplinePathBuilder.CPointType.SEG_END,
 			   SplinePathBuilder.CPointType.CLOSE};
 
     static Enum enum3[] = {SplinePathBuilder.CPointType.CONTROL,
-			   SplinePathBuilder.CPointType.SEG_END};
+			   SplinePathBuilder.CPointType.SPLINE,
+			   SplinePathBuilder.CPointType.SEG_END,
+			   SplinePathBuilder.CPointType.CLOSE};
 
     static Enum enum4[] = {SplinePathBuilder.CPointType.SEG_END,
 			   SplinePathBuilder.CPointType.SPLINE,
@@ -238,6 +241,10 @@ public class TransitionTable {
      * @return true if there is only one menu selection; false otherwise.
      */
     public boolean nextState(Enum newState) {
+	/*
+	System.out.println("currentState = " + currentState
+			   + ", newState = "  + newState);
+	*/
 	if (newState == EPTS.Mode.PATH_END) {
 	    if (currentState == EPTS.Mode.PATH_END ||
 		currentState == EPTS.Mode.PATH_START) {
@@ -256,6 +263,7 @@ public class TransitionTable {
 	    return false;
 	}
 	Transition t = transitions.get(currentState);
+	boolean splineNotAllowed = false; // true to disable SPLINE menu item
 	if (!t.next.contains(newState)) {
 	    String msg = errorMsg("stateSuccession", newState, currentState);
 	    throw new IllegalArgumentException(msg);
@@ -270,11 +278,17 @@ public class TransitionTable {
 			successiveCount--;
 			throw new IllegalArgumentException
 			    (errorMsg("successiveControlPoints"));
+		    } else if (successiveCount == 2) {
+			splineNotAllowed = true;
 		    }
 		} else  {
 		    successiveCount = 0;
 		}
 	    }
+	    /*
+	    System.out.println("splineNotAllowed = " + splineNotAllowed
+			       + ", successiveCount = " + successiveCount);
+	    */
 	    Transition nt = transitions.get(newState);
 	    if (nt.trigger == SplinePathBuilder.CPointType.SEG_END) {
 		passedSE = true;
@@ -285,24 +299,61 @@ public class TransitionTable {
 		}
 	    }
 	    int count = 0;
+	    if (successiveCount == 1
+		&& currentState == SplinePathBuilder.CPointType.SPLINE) {
+		splineNotAllowed = true;
+	    }
 	    for (Enum state: menuItemMap.keySet()) {
 		JMenuItem item = menuItemMap.get(state);
 		if (nt.next.contains(state)) {
-		    if (successiveCount == 2 && state == newState) {
+		    if (state == newState
+			&& newState == SplinePathBuilder.CPointType.CONTROL
+			&& currentState == SplinePathBuilder.CPointType.SPLINE
+			&& successiveCount == 1) {
 			item.setEnabled(false);
+			menuItemMap.get(SplinePathBuilder.CPointType.SPLINE)
+			    .setEnabled(false);
+		    } else if (successiveCount == 2 && state == newState) {
+			/*
+			System.out.println("... handling successiveCount == 2"
+					   + ", " + splineNotAllowed);
+			*/
+			item.setEnabled(false);
+			if (splineNotAllowed) {
+			    menuItemMap.get(SplinePathBuilder.CPointType.SPLINE)
+				.setEnabled(false);
+			}
 		    } else if (state == SplinePathBuilder.CPointType.CLOSE
 			       && nt.mode
 			       == Transition.NO_CLOSE_AFTER_SEG_END
 			       && passedSE) {
 			item.setEnabled(false);
 		    } else {
-			item.setEnabled(true);
+			if (splineNotAllowed
+			    && state == SplinePathBuilder.CPointType.SPLINE) {
+			    // the order of iteration for 'state' is not
+			    // predictable because menuItemMap is a hash map.
+			    item.setEnabled(false);
+			} else {
+			    item.setEnabled(true);
+			}
 			count++;
 		    }
 		} else {
 		    item.setEnabled(false);
 		}
 	    }
+	    /*
+	    if (splineNotAllowed) {
+		JMenuItem smi =
+		    menuItemMap.get(SplinePathBuilder.CPointType.SPLINE);
+		if (smi.isEnabled()) {
+		    System.out.println("... trying again - "
+				       + currentState + " -> " + newState);
+		    smi.setEnabled(false);
+		}
+	    }
+	    */
 	    for (Enum state: nt.next) {
 		JMenuItem item = menuItemMap.get(state);
 		if (item.isEnabled()) {

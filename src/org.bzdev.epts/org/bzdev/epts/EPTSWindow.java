@@ -4108,6 +4108,7 @@ public class EPTSWindow {
 		    setModeline("Path Complete");
 		    extendingPath = false;
 		    extendPathIndex = 0;
+		    extendPathStart = 0;
 		}
 		resetState();
 		panel.repaint();
@@ -4149,14 +4150,16 @@ public class EPTSWindow {
 	    case JOptionPane.OK_OPTION:
 		{
 		    int n = ptmodel.getRowCount();
+		    /*
 		    System.out.println("n = " + n + ", extendPathIndex = "
 				       + extendPathIndex);
+		    */
 		    if (n > (extendingPath? extendPathIndex: 0)) {
 			do {
 			    if (!extendingPath || n > extendPathIndex) {
 				ptmodel.deleteRow(--n);
 				lastrow = ptmodel.getLastRow();
-				System.out.println("n = " + n);
+				// System.out.println("n = " + n);
 			    } else {
 				lastrow = null;
 			    }
@@ -4194,6 +4197,7 @@ public class EPTSWindow {
 	}
 	extendingPath = false;
 	extendPathIndex = 0;
+	extendPathStart = 0;
 	undoMenuItem.setEnabled(false);
 	// addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	addToPathMenuItem.setEnabled(canAddToBezier());
@@ -4786,6 +4790,7 @@ public class EPTSWindow {
 	    ptmodel.addRow("", EPTS.Mode.PATH_END, 0.0, 0.0, 0.0, 0.0);
 	    extendingPath = false;
 	    extendPathIndex = 0;
+	    extendPathStart = 0;
 	}
 	resetState();
 	// We have found a line segment.
@@ -4861,6 +4866,7 @@ public class EPTSWindow {
 	extendingPath = false;
 	undoMenuItem.setEnabled(false);
 	extendPathIndex = 0;
+	extendPathStart = 0;
 	end = ptmodel.getRowCount() - 1;
 	ptmodel.fireTableChanged(start, end, PointTableModel.Mode.MODIFIED);
 	selectedRow = -1;
@@ -5066,6 +5072,7 @@ public class EPTSWindow {
 	    ptmodel.addRow("", EPTS.Mode.PATH_END, 0.0, 0.0, 0.0, 0.0);
 	    extendingPath = false;
 	    extendPathIndex = 0;
+	    extendPathStart = 0;
 	    undoMenuItem.setEnabled(false);
 	}
 	resetState();
@@ -5091,6 +5098,7 @@ public class EPTSWindow {
 	    ptmodel.addRow("", EPTS.Mode.PATH_END, 0.0, 0.0, 0.0, 0.0);
 	    extendingPath = false;
 	    extendPathIndex = 0;
+	    extendPathStart = 0;
 	    undoMenuItem.setEnabled(false);
 	}
 	resetState();
@@ -5355,14 +5363,19 @@ public class EPTSWindow {
 			    ptmodel.deleteRow(n);
 			}
 			if (extendingPath) {
+			    /*
 			    System.out.println("n = " + n +
 					       ", extendPathIndex = "
 					       + extendPathIndex);
+			    */
 			    if (n == extendPathIndex) {
 				n++;
 				ptmodel.addRow("", EPTS.Mode.PATH_END,
 				       0.0, 0.0, 0.0, 0.0);
 				undoMenuItem.setEnabled(false);
+				extendingPath = false;
+				extendPathStart = 0;
+				extendPathIndex = 0;
 			    }
 			}
 			if (n == 0) {
@@ -5507,6 +5520,7 @@ public class EPTSWindow {
 				       0.0, 0.0, 0.0, 0.0);
 			extendingPath = false;
 			extendPathIndex = 0;
+			extendPathStart = 0;
 			undoMenuItem.setEnabled(false);
 		    }
 		    resetState();
@@ -5738,6 +5752,16 @@ public class EPTSWindow {
 			String vname;
 			if (vnames.length == 1) {
 			    vname = vnames[0];
+			    if (JOptionPane.OK_OPTION !=
+				JOptionPane.showConfirmDialog
+				(frame,
+				 String.format(localeString("confirmDel"),
+					       vname),
+				 localeString("confirmDelCPL"),
+				 JOptionPane.OK_CANCEL_OPTION,
+				 JOptionPane.QUESTION_MESSAGE)) {
+				return;
+			    }
 			} else {
 			    vname = (String)JOptionPane.showInputDialog
 				(frame, localeString("SelectPathDelete"),
@@ -5766,6 +5790,7 @@ public class EPTSWindow {
 			// we reached the end of a path that had not been
 			// completed.
 			iend = ptmodel.getRowCount() - 1;
+			resetState();
 		    }
 		    iend += 1;
 		    ptmodel.deleteRows(istart, iend);
@@ -6562,6 +6587,7 @@ public class EPTSWindow {
 					       0.0, 0.0, 0.0, 0.0);
 				extendingPath = false;
 				extendPathIndex = 0;
+				extendPathStart = 0;
 				// setModeline("Path Complete");
 				resetState();
 				undoMenuItem.setEnabled(false);
@@ -6595,7 +6621,8 @@ public class EPTSWindow {
 						   0.0, 0.0, 0.0, 0.0);
 				    extendingPath = false;
 				    extendPathIndex = 0;
-				    undoMenuItem.setEnabled(false);
+				    extendPathStart = 0;
+					undoMenuItem.setEnabled(false);
 				} else {
 				    if (lrmode == EPTS.Mode.PATH_START) {
 					ptmodel.deleteRow
@@ -6692,10 +6719,12 @@ public class EPTSWindow {
 			} else {
 			    if (insertRowIndex != -1) {
 				// reference point
+				/*
 				System.out.println("[1] insertRowIndex = " +
 						   insertRowIndex);
 				System.out.println("replacementMode = "
 						   + replacementMode);
+				*/
 				if (replacementMode != null) {
 				    ptmodel.changeMode(insertionSelectedRow,
 						       replacementMode);
@@ -6842,10 +6871,12 @@ public class EPTSWindow {
 			} else {
 			    if (insertRowIndex != -1) {
 				// reference point
+				/*
 				System.out.println("[2] insertRowIndex = " +
 						   insertRowIndex);
 				System.out.println("replacementMode = "
 						   + replacementMode);
+				*/
 				if (replacementMode != null) {
 				    ptmodel.changeMode(insertionSelectedRow,
 						       replacementMode);
@@ -8518,6 +8549,68 @@ public class EPTSWindow {
 	return true;
     }
 
+    // Sequences
+
+    // [MOVE_TO] -- no change
+
+    // SEG_END [SEG_END] PATH_END
+    // SEG_END [CONTROL] PATH_END
+    // SEG_END [SPLINE] PATH_END
+
+    // SEG_END [SEG_END] CLOSE
+    // SEG_END [CONTROL] CLOSE
+    // SEG_END [SPLINE] CLOSE
+
+    // SEG_END [SEG_END] SEG_END
+    // SEG_END [CONTROL] SEG_END
+    // SEG_END [SPLINE] SEG_END
+
+    // SEG_END [SEG_END] SPLINE
+    // SEG_END [CONTROL] SPLINE
+    // SEG_END [SPLINE] SPLINE
+
+    // SPLINE [SEG_END] SEG_END
+    // SPLINE [CONTROL] SEG_END
+    // SPLINE [SPLINE] SEG_END
+
+    // SPLINE [SEG_END] PATH_END
+    // SPLINE [CONTROL] PATH_END
+    // SPLINE [SPLINE] PATH_END
+
+    // SEG_END CONTROL [SEG_END] SEG_END
+    // SEG_END CONTROL [SPLINE] SEG_END
+    // SEG_END CONTROL [CONTROL] SEG_END
+
+    // SEG_END CONTROL [SEG_END] PATH_END
+    // SEG_END CONTROL [SPLINE] PATH_END
+    // SEG_END CONTROL [CONTROL] PATH_END
+
+
+    // SEG_END [SEG_END] CONTROL SEG_END
+    // SEG_END [CONTROL] CONTROL SEG_END
+    // SEG_END [SPLINE] CONTROL SEG_END
+
+    // SEG_END [SEG_END] CONTROL PATH_END
+    // SEG_END [CONTROL] CONTROL PATH_END
+    // SEG_END [SPLINE] CONTROL PATH_END
+
+
+    // SEG_END [SEG_END] CONTROL SPLINE
+    // SEG_END [SPLINE] CONTROL SPLINE
+
+    // SPLINE [SEG_END] SPLINE
+    // SPLINE [SPLINE] SPLINE
+
+    // SPLINE [SEG_END] CONTROL SEG_END
+    // SPLINE [SPLINE] CONTROL SEG_END
+
+    // SEG_END CONTROL [SEG_END] SPLINE
+    // SEG_END CONTROL [SPLINE] SPLINE
+
+    // SPLINE CONTROL [SEG_END]    -- no change of type possible
+    // SPLINE [SEG_END] CONTROL SPLINE -- no change of type possible
+
+
     static final Object splineOptions[] = {
 	SplinePathBuilder.CPointType.SEG_END,
 	SplinePathBuilder.CPointType.SPLINE,
@@ -8543,14 +8636,416 @@ public class EPTSWindow {
 	SplinePathBuilder.CPointType.SPLINE,
 	SplinePathBuilder.CPointType.CONTROL,
 	SplinePathBuilder.CPointType.SEG_END,
-
     };
+
+    static final Object splineControlOptionsReversed[] = {
+	SplinePathBuilder.CPointType.SEG_END,
+	SplinePathBuilder.CPointType.CONTROL,
+	SplinePathBuilder.CPointType.SPLINE,
+    };
+
+    private static class ChangeTypeOptions {
+	Enum prevPrevMode;
+	Enum prevMode;
+	Enum mode;
+	Enum nextMode;
+	Enum nextNextMode;
+	Object[] options;
+	Enum preferred;
+	ChangeTypeOptions(Enum pp, Enum p, Enum m, Enum n, Enum nn,
+			  Object[] o, Enum pref)
+	{
+	    prevPrevMode = pp;
+	    prevMode = p;
+	    mode= m;
+	    nextMode = n;
+	    nextNextMode = nn;
+	    options = o;
+	    preferred = pref;
+	}
+	boolean test(PointTableModel ptm, int selectedRow) {
+	    Enum ppmode = null;
+	    Enum pmode = null;
+	    Enum md = ptm.getRowMode(selectedRow);
+	    Enum nmode = null;
+	    Enum nnmode = null;
+	    if (md != mode) return false;
+	    if (mode != SplinePathBuilder.CPointType.MOVE_TO) {
+		pmode = ptm.getRowMode(selectedRow - 1);
+		if (pmode != SplinePathBuilder.CPointType.MOVE_TO) {
+		    ppmode = ptm.getRowMode(selectedRow - 2);
+		    if (ppmode == SplinePathBuilder.CPointType.MOVE_TO) {
+			ppmode = SplinePathBuilder.CPointType.SEG_END;
+		    }
+		} else {
+		    // treat a previous MOVE_TO as a SEG_END
+		    pmode = SplinePathBuilder.CPointType.SEG_END;
+		}
+
+		nmode = ptm.getRowMode(selectedRow + 1);
+		if (nmode == SplinePathBuilder.CPointType.CLOSE) {
+		    nmode = SplinePathBuilder.CPointType.SEG_END;
+		} else if (nmode != EPTS.Mode.PATH_END) {
+		    nnmode = ptm.getRowMode(selectedRow + 2);
+		    if (nnmode == SplinePathBuilder.CPointType.CLOSE) {
+			nnmode = SplinePathBuilder.CPointType.SEG_END;
+		    }
+		}
+	    }
+	    return (prevPrevMode == null || prevPrevMode == ppmode)
+		&& (prevMode == null || prevMode == pmode)
+		&& (nextMode == null || nextMode == nmode)
+		&& (nextNextMode == null || nextNextMode == nnmode);
+	}
+    }
+
+
+    static Object[] createOpts(Object... options) {
+	return options;
+    }
+
+    ChangeTypeOptions ctoptions[] = {
+	// [MOVE_TO] -- no change
+	new ChangeTypeOptions(null, null,
+			      SplinePathBuilder.CPointType.MOVE_TO,
+			      null, null, null,
+			      SplinePathBuilder.CPointType.MOVE_TO),
+	// SEG_END [SEG_END] PATH_END
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.SEG_END,
+			      EPTS.Mode.PATH_END, null,
+			      createOpts(SplinePathBuilder.CPointType.SPLINE,
+					 SplinePathBuilder.CPointType.SEG_END,
+					 SplinePathBuilder.CPointType.CONTROL),
+			      SplinePathBuilder.CPointType.SPLINE),
+	// SEG_END [CONTROL] PATH_END
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.CONTROL,
+			      EPTS.Mode.PATH_END, null,
+			      createOpts(SplinePathBuilder.CPointType.SEG_END,
+					 SplinePathBuilder.CPointType.SPLINE,
+					 SplinePathBuilder.CPointType.CONTROL),
+			      SplinePathBuilder.CPointType.SEG_END),
+	// SEG_END [SPLINE] PATH_END
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.SPLINE,
+			      EPTS.Mode.PATH_END, null,
+			      createOpts(SplinePathBuilder.CPointType.SEG_END,
+					SplinePathBuilder.CPointType.SPLINE,
+					SplinePathBuilder.CPointType.CONTROL),
+			      SplinePathBuilder.CPointType.SEG_END),
+	// SEG_END [SEG_END] CLOSE
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.SPLINE,
+			      SplinePathBuilder.CPointType.CLOSE, null,
+			      createOpts(SplinePathBuilder.CPointType.CONTROL,
+					SplinePathBuilder.CPointType.SPLINE,
+					SplinePathBuilder.CPointType.SEG_END),
+			      SplinePathBuilder.CPointType.CONTROL),
+	// SEG_END [CONTROL] CLOSE
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.CONTROL,
+			      SplinePathBuilder.CPointType.CLOSE, null,
+			      createOpts(SplinePathBuilder.CPointType.SEG_END,
+					SplinePathBuilder.CPointType.SPLINE,
+					SplinePathBuilder.CPointType.CONTROL),
+			      SplinePathBuilder.CPointType.CONTROL),
+	// SEG_END [SPLINE] CLOSE
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.SPLINE,
+			      SplinePathBuilder.CPointType.CLOSE, null,
+			      createOpts(SplinePathBuilder.CPointType.SEG_END,
+					SplinePathBuilder.CPointType.CONTROL,
+					SplinePathBuilder.CPointType.SPLINE),
+			      SplinePathBuilder.CPointType.SEG_END),
+	// SEG_END [SEG_END] SEG_END
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.SEG_END, null,
+			      createOpts(SplinePathBuilder.CPointType.SPLINE,
+					SplinePathBuilder.CPointType.CONTROL,
+					SplinePathBuilder.CPointType.SEG_END),
+			      SplinePathBuilder.CPointType.SPLINE),
+	// SEG_END [CONTROL] SEG_END
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.CONTROL,
+			      SplinePathBuilder.CPointType.SEG_END, null,
+			      createOpts(SplinePathBuilder.CPointType.SPLINE,
+					SplinePathBuilder.CPointType.CONTROL,
+					SplinePathBuilder.CPointType.SEG_END),
+			      SplinePathBuilder.CPointType.SPLINE),
+	// SEG_END [SPLINE] SEG_END
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.SPLINE,
+			      SplinePathBuilder.CPointType.SEG_END, null,
+			      createOpts(SplinePathBuilder.CPointType.SEG_END,
+					SplinePathBuilder.CPointType.CONTROL,
+					SplinePathBuilder.CPointType.SPLINE),
+			      SplinePathBuilder.CPointType.SEG_END),
+
+	// SEG_END [SEG_END] SPLINE
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.SPLINE, null,
+			      createOpts(SplinePathBuilder.CPointType.SPLINE,
+					SplinePathBuilder.CPointType.CONTROL,
+					SplinePathBuilder.CPointType.SEG_END),
+			      SplinePathBuilder.CPointType.SPLINE),
+	// SEG_END [CONTROL] SPLINE
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.CONTROL,
+			      SplinePathBuilder.CPointType.SPLINE, null,
+			      createOpts(SplinePathBuilder.CPointType.SPLINE,
+					SplinePathBuilder.CPointType.SEG_END,
+					SplinePathBuilder.CPointType.CONTROL),
+			      SplinePathBuilder.CPointType.SPLINE),
+	// SEG_END [SPLINE] SPLINE
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.SPLINE,
+			      SplinePathBuilder.CPointType.SPLINE, null,
+			      createOpts(SplinePathBuilder.CPointType.SEG_END,
+					SplinePathBuilder.CPointType.CONTROL,
+					SplinePathBuilder.CPointType.SPLINE),
+			      SplinePathBuilder.CPointType.SEG_END),
+	// SPLINE [SEG_END] SEG_END
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SPLINE,
+			      SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.SEG_END, null,
+			      createOpts(SplinePathBuilder.CPointType.SPLINE,
+					SplinePathBuilder.CPointType.CONTROL,
+					SplinePathBuilder.CPointType.SEG_END),
+			      SplinePathBuilder.CPointType.SPLINE),
+	// SPLINE [CONTROL] SEG_END
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SPLINE,
+			      SplinePathBuilder.CPointType.CONTROL,
+			      SplinePathBuilder.CPointType.SEG_END, null,
+			      createOpts(SplinePathBuilder.CPointType.SPLINE,
+					SplinePathBuilder.CPointType.SEG_END,
+					SplinePathBuilder.CPointType.CONTROL),
+			      SplinePathBuilder.CPointType.SPLINE),
+	// SPLINE [SPLINE] SEG_END
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SPLINE,
+			      SplinePathBuilder.CPointType.SPLINE,
+			      SplinePathBuilder.CPointType.SEG_END, null,
+			      createOpts(SplinePathBuilder.CPointType.SEG_END,
+					SplinePathBuilder.CPointType.CONTROL,
+					SplinePathBuilder.CPointType.SPLINE),
+			      SplinePathBuilder.CPointType.SEG_END),
+	// SPLINE [SEG_END] PATH_END
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SPLINE,
+			      SplinePathBuilder.CPointType.SEG_END,
+			      EPTS.Mode.PATH_END, null,
+			      createOpts(SplinePathBuilder.CPointType.SPLINE,
+					SplinePathBuilder.CPointType.CONTROL,
+					SplinePathBuilder.CPointType.SEG_END),
+			      SplinePathBuilder.CPointType.SPLINE),
+	// SPLINE [CONTROL] PATH_END
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SPLINE,
+			      SplinePathBuilder.CPointType.CONTROL,
+			      EPTS.Mode.PATH_END, null,
+			      createOpts(SplinePathBuilder.CPointType.SPLINE,
+					SplinePathBuilder.CPointType.SEG_END,
+					SplinePathBuilder.CPointType.CONTROL),
+			      SplinePathBuilder.CPointType.SPLINE),
+	// SPLINE [SPLINE] PATH_END
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SPLINE,
+			      SplinePathBuilder.CPointType.SPLINE,
+			      EPTS.Mode.PATH_END, null,
+			      createOpts(SplinePathBuilder.CPointType.SEG_END,
+					SplinePathBuilder.CPointType.CONTROL,
+					SplinePathBuilder.CPointType.SPLINE),
+			      SplinePathBuilder.CPointType.SEG_END),
+	// SEG_END CONTROL [SEG_END] SEG_END
+	new ChangeTypeOptions(SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.CONTROL,
+			      SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.SEG_END, null,
+			      createOpts(SplinePathBuilder.CPointType.CONTROL,
+					SplinePathBuilder.CPointType.SPLINE,
+					SplinePathBuilder.CPointType.SEG_END),
+			      SplinePathBuilder.CPointType.CONTROL),
+	// SEG_END CONTROL [SPLINE] SEG_END
+	new ChangeTypeOptions(SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.CONTROL,
+			      SplinePathBuilder.CPointType.SPLINE,
+			      SplinePathBuilder.CPointType.SEG_END, null,
+			      createOpts(SplinePathBuilder.CPointType.CONTROL,
+					SplinePathBuilder.CPointType.SEG_END,
+					SplinePathBuilder.CPointType.SPLINE),
+			      SplinePathBuilder.CPointType.CONTROL),
+	// SEG_END CONTROL [CONTROL] SEG_END
+	new ChangeTypeOptions(SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.CONTROL,
+			      SplinePathBuilder.CPointType.CONTROL,
+			      SplinePathBuilder.CPointType.SEG_END, null,
+			      createOpts(SplinePathBuilder.CPointType.SEG_END,
+					SplinePathBuilder.CPointType.SPLINE,
+					SplinePathBuilder.CPointType.CONTROL),
+			      SplinePathBuilder.CPointType.SEG_END),
+
+	// SEG_END CONTROL [SEG_END] PATH_END
+	new ChangeTypeOptions(SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.CONTROL,
+			      SplinePathBuilder.CPointType.SEG_END,
+			      EPTS.Mode.PATH_END, null,
+			      createOpts(SplinePathBuilder.CPointType.CONTROL,
+					SplinePathBuilder.CPointType.SPLINE,
+					SplinePathBuilder.CPointType.SEG_END),
+			      SplinePathBuilder.CPointType.CONTROL),
+	// SEG_END CONTROL [SPLINE] PATH_END
+	new ChangeTypeOptions(SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.CONTROL,
+			      SplinePathBuilder.CPointType.SPLINE,
+			      EPTS.Mode.PATH_END, null,
+			      createOpts(SplinePathBuilder.CPointType.SEG_END,
+					SplinePathBuilder.CPointType.CONTROL,
+					SplinePathBuilder.CPointType.SPLINE),
+			      SplinePathBuilder.CPointType.SEG_END),
+	// SEG_END CONTROL [CONTROL] PATH_END
+	new ChangeTypeOptions(SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.CONTROL,
+			      SplinePathBuilder.CPointType.CONTROL,
+			      EPTS.Mode.PATH_END, null,
+			      createOpts(SplinePathBuilder.CPointType.SEG_END,
+					SplinePathBuilder.CPointType.SPLINE,
+					SplinePathBuilder.CPointType.CONTROL),
+			      SplinePathBuilder.CPointType.SEG_END),
+
+	// SEG_END [SEG_END] CONTROL SEG_END
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.CONTROL,
+			      SplinePathBuilder.CPointType.SEG_END,
+			      createOpts(SplinePathBuilder.CPointType.CONTROL,
+					SplinePathBuilder.CPointType.SPLINE,
+					SplinePathBuilder.CPointType.SEG_END),
+			      SplinePathBuilder.CPointType.CONTROL),
+	// SEG_END [CONTROL] CONTROL SEG_END
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.CONTROL,
+			      SplinePathBuilder.CPointType.CONTROL,
+			      SplinePathBuilder.CPointType.SEG_END,
+			      createOpts(SplinePathBuilder.CPointType.SEG_END,
+					SplinePathBuilder.CPointType.SPLINE,
+					SplinePathBuilder.CPointType.CONTROL),
+			      SplinePathBuilder.CPointType.SEG_END),
+	// SEG_END [SPLINE] CONTROL SEG_END
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.SPLINE,
+			      SplinePathBuilder.CPointType.CONTROL,
+			      SplinePathBuilder.CPointType.SEG_END,
+			      createOpts(SplinePathBuilder.CPointType.SEG_END,
+					SplinePathBuilder.CPointType.CONTROL,
+					SplinePathBuilder.CPointType.SPLINE),
+			      SplinePathBuilder.CPointType.SEG_END),
+
+	// SEG_END [SEG_END] CONTROL PATH_END
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.CONTROL,
+			      EPTS.Mode.PATH_END,
+			      createOpts(SplinePathBuilder.CPointType.CONTROL,
+					 SplinePathBuilder.CPointType.SPLINE,
+					 SplinePathBuilder.CPointType.SEG_END),
+			      SplinePathBuilder.CPointType.CONTROL),
+	// SEG_END [CONTROL] CONTROL PATH_END
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.CONTROL,
+			      SplinePathBuilder.CPointType.CONTROL,
+			      EPTS.Mode.PATH_END,
+			      createOpts(SplinePathBuilder.CPointType.SEG_END,
+					 SplinePathBuilder.CPointType.SPLINE,
+					 SplinePathBuilder.CPointType.CONTROL),
+			      SplinePathBuilder.CPointType.SEG_END),
+	// SEG_END [SPLINE] CONTROL PATH_END
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.SPLINE,
+			      SplinePathBuilder.CPointType.CONTROL,
+			      EPTS.Mode.PATH_END,
+			      createOpts(SplinePathBuilder.CPointType.SEG_END,
+					 SplinePathBuilder.CPointType.CONTROL,
+					 SplinePathBuilder.CPointType.SPLINE),
+			      SplinePathBuilder.CPointType.SEG_END),
+	// SEG_END [SEG_END] CONTROL SPLINE -- nothing to change
+	// SEG_END [SPLINE] CONTROL SPLINE  -- does not occur
+	// SPLINE [SEG_END] SPLINE
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SPLINE,
+			      SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.SPLINE, null,
+			      createOpts(SplinePathBuilder.CPointType.SPLINE,
+					 SplinePathBuilder.CPointType.SEG_END),
+			      SplinePathBuilder.CPointType.SPLINE),
+	// SPLINE [SPLINE] SPLINE
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SPLINE,
+			      SplinePathBuilder.CPointType.SPLINE,
+			      SplinePathBuilder.CPointType.SPLINE, null,
+			      createOpts(SplinePathBuilder.CPointType.SEG_END,
+					 SplinePathBuilder.CPointType.SPLINE),
+			      SplinePathBuilder.CPointType.SEG_END),
+	// SPLINE [SEG_END] CONTROL SEG_END
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SPLINE,
+			      SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.CONTROL,
+			      SplinePathBuilder.CPointType.SEG_END,
+			      createOpts(SplinePathBuilder.CPointType.SPLINE,
+					 SplinePathBuilder.CPointType.SEG_END),
+			      SplinePathBuilder.CPointType.SPLINE),
+	// SPLINE [SPLINE] CONTROL SEG_END
+	new ChangeTypeOptions(null, SplinePathBuilder.CPointType.SPLINE,
+			      SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.CONTROL,
+			      SplinePathBuilder.CPointType.SEG_END,
+			      createOpts(SplinePathBuilder.CPointType.SPLINE,
+					 SplinePathBuilder.CPointType.SEG_END),
+			      SplinePathBuilder.CPointType.SPLINE),
+	// SEG_END CONTROL [SEG_END] SPLINE
+	new ChangeTypeOptions(SplinePathBuilder.CPointType.SPLINE,
+			      SplinePathBuilder.CPointType.CONTROL,
+			      SplinePathBuilder.CPointType.SEG_END,
+			      SplinePathBuilder.CPointType.SPLINE, null,
+			      createOpts(SplinePathBuilder.CPointType.SPLINE,
+					 SplinePathBuilder.CPointType.SEG_END),
+			      SplinePathBuilder.CPointType.SPLINE),
+	// SEG_END CONTROL [SPLINE] SPLINE
+	new ChangeTypeOptions(SplinePathBuilder.CPointType.SPLINE,
+			      SplinePathBuilder.CPointType.CONTROL,
+			      SplinePathBuilder.CPointType.SPLINE,
+			      SplinePathBuilder.CPointType.SPLINE, null,
+			      createOpts(SplinePathBuilder.CPointType.SEG_END,
+					 SplinePathBuilder.CPointType.SPLINE),
+			      SplinePathBuilder.CPointType.SEG_END),
+	// SPLINE CONTROL [SEG_END]    -- no change of type possible
+	// SPLINE [SEG_END] CONTROL SPLINE -- no change of type possible
+    };
+
+    private ChangeTypeOptions getChangeTypeOptions() {
+	if (selectedRow == -1) return null;
+	for (ChangeTypeOptions ctops: ctoptions) {
+	    if (ctops.test(ptmodel, selectedRow)) {
+		return ctops;
+	    }
+	}
+	return null;
+    }
+
 
     private void onChangeType() {
 	Enum mode = ptmodel.getRow(selectedRow).getMode();
 	Object[] options = null;
 	Object preferred = null;
+	// System.out.println("got here: mode = " + mode);
+	ChangeTypeOptions ctops = getChangeTypeOptions();
+	if (ctops != null) {
+	    options = ctops.options;
+	    preferred = ctops.preferred;
+	    /*
+	    for (Object type: ctops.options) {
+		System.out.println("... " + type);
+	    }
+	    */
+	}
 	if (mode instanceof SplinePathBuilder.CPointType) {
+	    /*
 	    switch((SplinePathBuilder.CPointType) mode) {
 	    case MOVE_TO: // cannot change - we always need a starting point.
 	    case CLOSE: // cannot change because there is no point for it.
@@ -8641,6 +9136,7 @@ public class EPTSWindow {
 	    default:
 		throw new UnexpectedExceptionError();
 	    }
+	    */
 	    if (options != null) {
 		Enum nm = (Enum)JOptionPane.showInputDialog
 		    (frame, localeString("ChooseNewPointType"),
@@ -8680,7 +9176,8 @@ public class EPTSWindow {
     }
 
     boolean extendingPath = false;
-    int  extendPathIndex = 0;
+    int extendPathIndex = 0;
+    int extendPathStart = 0;
 
     private void onExtendPath() {
 	clearLSR();
@@ -8763,13 +9260,20 @@ public class EPTSWindow {
 	    saveMenuItem.setEnabled(false);
 	    saveAsMenuItem.setEnabled(false);
 	}
+	/*
 	System.out.println("onExtend: ptmodel.getRowCount() = " +
 			   ptmodel.getRowCount());
+	*/
 	extendPathIndex = ptmodel.getRowCount();
 	if (extendPathIndex > 0) {
+	    extendPathStart = ptmodel.findStart(extendPathIndex);
 	    Enum pmode = ptmodel.getRowMode(extendPathIndex-1);
 	    if (pmode instanceof SplinePathBuilder.CPointType) {
 		extendingPath = true;
+	    } else {
+		extendPathIndex = 0;
+		extendPathStart = 0;
+		extendingPath = false;
 	    }
 	}
     }
@@ -8927,9 +9431,41 @@ public class EPTSWindow {
 	    Enum mode = ptmodel.getLastRow().getMode();
 	    if (mode != null && mode instanceof SplinePathBuilder.CPointType) {
 		int rind = ptmodel.getRowCount() - 1;
+		/*
+		System.out.println("... " + ptmodel.getRowMode(rind-2)
+				   + " " + ptmodel.getRowMode(rind-1)
+				   + " " + ptmodel.getRowMode(rind));
+		*/
+		Enum prevMode = (mode == SplinePathBuilder.CPointType.MOVE_TO)?
+		    null: ptmodel.getRowMode(rind-1);
+		Enum pprevMode = (prevMode ==
+				  SplinePathBuilder.CPointType.MOVE_TO)?
+		    null: ptmodel.getRowMode(rind-2);
+
+		if (mode == SplinePathBuilder.CPointType.MOVE_TO) {
+		    mode = SplinePathBuilder.CPointType.SEG_END;
+		}
+		if (prevMode == SplinePathBuilder.CPointType.MOVE_TO) {
+		    prevMode = SplinePathBuilder.CPointType.SEG_END;
+		}
+		if (pprevMode == SplinePathBuilder.CPointType.MOVE_TO) {
+		    pprevMode = SplinePathBuilder.CPointType.SEG_END;
+		}
+
 		switch ((SplinePathBuilder.CPointType) mode) {
 		case SEG_END:
-		    {
+		    toSegEndMenuItem.setEnabled(true);
+		    if (prevMode == SplinePathBuilder.CPointType.CONTROL
+			&& (pprevMode == SplinePathBuilder.CPointType.CONTROL
+			    || pprevMode
+			    == SplinePathBuilder.CPointType.SPLINE)) {
+			toSplineMenuItem.setEnabled(false);
+			toControlMenuItem.setEnabled(false);
+		    } else {
+			toSplineMenuItem.setEnabled(true);
+			toControlMenuItem.setEnabled(true);
+		    }
+		    /*{
 			int sz = ptmodel.getRowCount();
 			Enum prevMode = ptmodel.getRowMode(sz-2);
 			Enum pprevMode =ptmodel.getRowMode(sz-3);
@@ -8944,11 +9480,13 @@ public class EPTSWindow {
 			    case SPLINE:
 				toSegEndMenuItem.setEnabled(true);
 				toSplineMenuItem.setEnabled(true);
-				toControlMenuItem.setEnabled(false);
+				toControlMenuItem.setEnabled(true);
 				break;
 			    case CONTROL:
 				if (pprevMode
-				    == SplinePathBuilder.CPointType.CONTROL) {
+				    == SplinePathBuilder.CPointType.CONTROL
+				    || prevMode
+				    == SplinePathBuilder.CPointType.SPLINE) {
 				    toControlMenuItem.setEnabled(false);
 				    toSegEndMenuItem.setEnabled(true);
 				    toSplineMenuItem.setEnabled(false);
@@ -8960,17 +9498,21 @@ public class EPTSWindow {
 				break;
 			    }
 			}
-		    }
+			}*/
 		    break;
 		case SPLINE:
-		    toSegEndMenuItem.setEnabled(true);
-		    toSplineMenuItem.setEnabled(true);
-		    toControlMenuItem.setEnabled(false);
+		    {
+			toSegEndMenuItem.setEnabled(true);
+			toSplineMenuItem.setEnabled(true);
+			toControlMenuItem.setEnabled(true);
+		    }
 		    break;
 		case CONTROL:
-		    toSegEndMenuItem.setEnabled(true);
-		    toSplineMenuItem.setEnabled(false);
-		    toControlMenuItem.setEnabled(false);
+		    {
+			toControlMenuItem.setEnabled(true);
+			toSegEndMenuItem.setEnabled(true);
+			toSplineMenuItem.setEnabled(true);
+		    }
 		    break;
 		default:
 		    toSegEndMenuItem.setEnabled(false);
@@ -9026,6 +9568,31 @@ public class EPTSWindow {
 				   != SplinePathBuilder.CPointType.SEG_END)) {
 			deleteMenuItem.setEnabled(false);
 			changeMenuItem.setEnabled(false);
+		    } else if (prevMode
+			       == SplinePathBuilder.CPointType.CONTROL
+			       && ptmodel.getRowMode(selectedRow-2)
+			       == SplinePathBuilder.CPointType.CONTROL) {
+			if (nextMode != SplinePathBuilder.CPointType.SEG_END
+			    && nextMode != SplinePathBuilder.CPointType.CLOSE) {
+			    changeMenuItem.setEnabled(false);
+			    deleteMenuItem.setEnabled(false);
+			} else {
+			    changeMenuItem.setEnabled(false);
+			    deleteMenuItem.setEnabled(true);
+			}
+		    } else if (nextMode
+			       == SplinePathBuilder.CPointType.CONTROL
+			       && ptmodel.getRowMode(selectedRow+2)
+			       == SplinePathBuilder.CPointType.CONTROL) {
+			if (prevMode != SplinePathBuilder.CPointType.SEG_END
+			    && prevMode
+			    != SplinePathBuilder.CPointType.MOVE_TO) {
+			    changeMenuItem.setEnabled(false);
+			    deleteMenuItem.setEnabled(false);
+			} else {
+			    changeMenuItem.setEnabled(false);
+			    deleteMenuItem.setEnabled(true);
+			}
 		    } else {
 			changeMenuItem.setEnabled(true);
 			deleteMenuItem.setEnabled(true);
@@ -10038,10 +10605,12 @@ public class EPTSWindow {
 				x += xrefpoint;
 				y += yrefpoint;
 				if (insertRowIndex != -1) {
+				    /*
 				    System.out.println("[3] insertRowIndex = " +
 						       insertRowIndex);
 				    System.out.println("replacementMode = "
 						       + replacementMode);
+				    */
 				    if (replacementMode != null) {
 					ptmodel.changeMode(insertionSelectedRow,
 							   replacementMode);
@@ -10875,8 +11444,10 @@ public class EPTSWindow {
     }
 
     private void drawRows(PointTableModel ptmodel, Graphics2D g2d,
-			  Graphics2D g2d2)
+			  Graphics2D g2d2, Graphics2D g2d3)
     {
+	double lastMoveToX = 0;
+	double lastMoveToY = 0;
 	double prevx = -1;
 	double prevy = -1;
 	double w = radius2/Math.sqrt(2.0);
@@ -10924,6 +11495,8 @@ public class EPTSWindow {
 		    (SplinePathBuilder.CPointType) mode;
 		switch(smode) {
 		case MOVE_TO:
+		    lastMoveToX = x;
+		    lastMoveToY = y;
 		    if (row.isSelectable()) {
 			g2d2.draw(new Ellipse2D.Double
 				  (x-radius, y-radius, radius2, radius2));
@@ -10946,8 +11519,10 @@ public class EPTSWindow {
 		    if (row.isSelectable()) {
 			g2d2.draw(new Ellipse2D.Double
 				  (x-radius, y-radius, radius2, radius2));
-			g2d.fill(new Ellipse2D.Double
-				 (x-radius, y-radius, radius2, radius2));
+			((extendingPath && index > extendPathStart
+			  && index < extendPathIndex)? g2d3: g2d)
+			    .fill(new Ellipse2D.Double
+				  (x-radius, y-radius, radius2, radius2));
 			if (index == selectedRow) {
 			    g2d2.draw(new Ellipse2D.Double
 				      (x-llradius, y-llradius,
@@ -10971,8 +11546,10 @@ public class EPTSWindow {
 		    if (row.isSelectable()) {
 			g2d2.draw(new Ellipse2D.Double
 				  (x-radius, y-radius, radius2, radius2));
-			g2d.fill(new Ellipse2D.Double
-				 (x-radius, y-radius, radius2, radius2));
+			((extendingPath && index > extendPathStart
+			 && index < extendPathIndex)? g2d3: g2d)
+			    .fill(new Ellipse2D.Double
+				  (x-radius, y-radius, radius2, radius2));
 			if (index == selectedRow) {
 			    g2d2.draw(new Ellipse2D.Double
 				      (x-llradius, y-llradius,
@@ -10996,7 +11573,9 @@ public class EPTSWindow {
 		    if (row.isSelectable()) {
 			g2d2.draw(new Rectangle.Double
 				  (x-radius, y-radius, radius2, radius2));
-			g2d.fill(new Rectangle2D.Double(x-hw, y-hw, w, w));
+			((extendingPath && index > extendPathStart
+			  && index < extendPathIndex)? g2d3: g2d)
+			    .fill(new Rectangle2D.Double(x-hw, y-hw, w, w));
 			if (index == selectedRow) {
 			    g2d2.draw(new Rectangle2D.Double
 				      (x-llradius, y-llradius,
@@ -11023,6 +11602,16 @@ public class EPTSWindow {
 		    prevy = y;
 		    break;
 		case CLOSE:
+		    if (lastMode == SplinePathBuilder.CPointType.CONTROL) {
+			if (row.isSelectable()) {
+			    g2d2.draw(new Line2D.Double(prevx, prevy,
+							lastMoveToX,
+							lastMoveToY));
+			    g2d.draw(new Line2D.Double(prevx, prevy,
+						       lastMoveToX,
+						       lastMoveToY));
+			}
+		    }
 		    pb.append(new SplinePathBuilder.CPoint(smode));
 		    break;
 		}
@@ -11099,6 +11688,7 @@ public class EPTSWindow {
 						      identityAF, null);
 				    }
 				    Graphics2D g2d2 = (Graphics2D)g2d.create();
+				    Graphics2D g2d3 = (Graphics2D)g2d.create();
 				    Stroke savedStroke = g2d.getStroke();
 				    Color savedColor = g2d.getColor();
 				    try {
@@ -11106,8 +11696,11 @@ public class EPTSWindow {
 					g2d.setColor(Color.BLACK);
 					g2d2.setStroke(new BasicStroke(4.0F));
 					g2d2.setColor(Color.WHITE);
+					g2d3.setStroke(new BasicStroke(2.0F));
+					g2d3.setColor(Color.BLUE);
+
 					if (ptmodel.getRowCount() > 0) {
-					    drawRows(ptmodel, g2d, g2d2);
+					    drawRows(ptmodel, g2d, g2d2, g2d3);
 					}
 					// g2d.setColor(Color.WHITE);
 					// g2d.setXORMode(Color.BLACK);

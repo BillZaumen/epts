@@ -280,6 +280,104 @@ units, and XP and YP must be the corresponding coordinates in image-space
 units, measured from the lower-left corner of the image so that X values
 go from left to right and Y values go from bottom to top.
 .PP
+There are restrictions on how rows are sequenced, based on their types:
+.TP
+.B LOCATION
+Rows with this type must contain the attributes
+.BR x ,
+.BR y ,
+.BR xp ,
+.BR yp ,
+.BR varname ,
+and indicates that a location with specific coordinates has been
+specified.
+.TP
+.B PATH_START
+Rows with this type must contain the attribute
+.BR varname ,
+and indicate that a path has been started.
+.TP
+.B MOVE_TO
+Rows with this type must contain the attributes
+.BR x ,
+.BR y ,
+.BR xp ,
+.BR yp ,
+and each specifies an initial point along a path. Only one
+.B MOVE_TO
+row is allowed for each path and must appear just after the
+.B PATH_START
+row.
+.TP
+.B SEG_END
+Rows with this type must contain the attributes
+.BR x ,
+.BR y ,
+.BR xp ,
+.BR yp ,
+and and each specifies a point along a path that terminates a spline,
+a straight-line segment, or a quadratic or cubic Bezier curve.
+.TP
+.B CONTROL
+Rows of this type must contain the attributes
+.BR x ,
+.BR y ,
+.BR xp ,
+.BR yp ,
+and each specifies an intermediate control row. There can be at most
+two control rows between two
+.B SEG_END
+rows or between a
+.B MOVE_TO
+row and a
+.B SEG_END
+row, and a single
+.B CONTROL
+row may precede or follow a sequence of
+.B SPLINE
+rows.
+.TP
+.B SPLINE
+Rows of this type must contain the attributes
+.BR x ,
+.BR y ,
+.BR xp ,
+.BR yp ,
+and each specifies a knot on a spline (a point that the
+spline is required to go though). Splines start with a
+.B MOVE_TO
+or
+.B SEG_END
+row and end with a
+.B SEG_END
+row or a
+.B CLOSE
+row. A sequence of
+.B SPLINE
+rows between the start and end rows defines additional knots for
+the spline.  Optionally, this sequence may include a
+.B CONTROL
+row at its start and/or end. These can be used to specify the tangents
+to the spline at its ends.
+.TP
+.B CLOSE
+Rows of this type indicate that a path is a closed path. Only one
+.B CLOSE
+row may appear in a path. With one exception, a row of this type
+indicates that a straight line segment be added to reach the initial
+point in the path, unless the path is already at that initial point.
+The exception is a path that consists only of
+.B SPLINE
+rows between the initial
+.B MOVE_TO
+row and the
+.B CLOSE
+row. In this case, a cyclic spline will be created so that there are no
+straight-line segments.
+.TP
+.B PATH_END
+Rows of this type indicate that a path has been terminated.
+.PP
 The table element is followed by an optional
 .B filters
 element, which contains a possibly empty sequence of
