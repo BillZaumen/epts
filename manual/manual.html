@@ -694,16 +694,17 @@ The <code>File</code> menu contains the following items:
 Some of the menu items provided by the Edit menu use the
 <A href="#centerOfMass">center of mass</A> of a path and the moments
 about the center of mass of the path (assuming the area enclosed by
-the path has a uniform density).  If the path is not closed, an
-additional line will be added to create a closed path.  In addition,
-the <A href="#principalMoments">principal moments</A> and the
-corresponding <A href="#principalAxes">principal axes</A> for the path
-are computed. The principal axes are basically the eigenvectors of the
-path&#39;s moments about the center of mass. These eigenvectors are
-orthogonal to each other. When an object is rotated, it will be
-rotated about its center of mass, and when scaled, it is scaled along
-its principal axes. When this is done, the order of the operations
-(translations, scaling, and rotations) does not matter.
+the path has a uniform density).  If the path does not end at its
+starting point,, an additional line will be added to create a closed
+path.  In addition, the <A href="#principalMoments">principal
+moments</A> and the corresponding <A href="#principalAxes">principal
+axes</A> for the path are computed. The principal axes are basically
+the eigenvectors of the path&#39;s moments about the center of
+mass. These eigenvectors are orthogonal to each other. When an object
+is rotated, it will be rotated about its center of mass, and when
+scaled, it is scaled along its principal axes. When this is done, the
+order of the operations (translations, scaling, and rotations) does
+not matter.
 
 The <code>Edit</code> menu contains the following items:
 <UL>
@@ -1138,15 +1139,19 @@ displayed in textual form. This menu contains the following items:
     </UL>
   <LI>Two menu items provide Options for ending a path:
     <UL>
-      <LI><B><CODE>Loop</CODE></B>. The path will be closed by connecting the
-	last point entered to the first point on the path.  A loop
-	must have an end-of-segment point as the last point entered
-	unless all the points except the first point have a type
-	equal to <CODE>SPLINE</CODE>, which is a special case. Loops
-	containing only <CODE>SPLINE</CODE> points, aside from its initial
-	point, will create a spline that does not have endpoints. As a
-	result, there are restrictions on whether the types of points
-	along such a path can be changed.
+      <LI><B><CODE>Loop</CODE></B>. The path will be closed by
+	connecting the last point entered to the first point on the
+	path.  Loops containing only <CODE>SPLINE</CODE> points, aside
+	from its initial point, will create a spline that forms a loop
+	without any kinks. This is a special case, and it will not be
+	possible to change the type of a spline point to something
+	else.  One can, however, select a node on the path and use a
+	pop-up menu item (accessible by clicking the right mouse
+	button) to break the loop. This will remove the segment connecting
+	the last point on the path to the initial point.  One can then
+	change the type of points on the path as desired.  Extending the
+	path will allow it be be closed again, but in this case, there may be
+	a kink at the starting point.
       <LI><B><CODE>Path Ended</CODE></B>. This option ends the current path
 	without closing it.
     </UL>
@@ -1471,7 +1476,7 @@ the following options:
     may use one of the menu items in the Tools menu that will get or
     set a point (these have the shortcuts G, P, and M).
   <LI><B><CODE>Break Loop</CODE></B>. This option turns a closed path into an
-    open path.
+    open path. To close it again, first extend the path.
   <LI><B><CODE>Extend Path</CODE></B>. This option allows one to add new
     points to a path. It will also re-order the table (for reasons
     of convenience, when a path is extended, it is moved to the end

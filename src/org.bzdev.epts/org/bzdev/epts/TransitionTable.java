@@ -168,8 +168,9 @@ public class TransitionTable {
     static Transition ttable[] = {
 	new Transition(EPTS.Mode.PATH_START, enum0),
 	new Transition(SplinePathBuilder.CPointType.MOVE_TO, enum1),
-	new Transition(SplinePathBuilder.CPointType.SPLINE, enum2,
-		       Transition.NO_CLOSE_AFTER_SEG_END),
+	// new Transition(SplinePathBuilder.CPointType.SPLINE, enum2,
+	//	       Transition.NO_CLOSE_AFTER_SEG_END),
+	new Transition(SplinePathBuilder.CPointType.SPLINE, enum2),
 	new Transition(SplinePathBuilder.CPointType.CONTROL, enum3,
 		       Transition.AT_MOST_TWO),
 	new Transition(SplinePathBuilder.CPointType.SEG_END, enum4),
