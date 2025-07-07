@@ -708,11 +708,11 @@ not matter.
 
 The <code>Edit</code> menu contains the following items:
 <UL>
-  <LI><B><CODE>Undo Point insertion or Move</CODE></B>. This
+  <LI><B><CODE>Undo Point Insertion or Move</CODE></B>. This
     essentially removes the last row (two rows for a closed path) from
     the table. If a previous path is extended via
     the <CODE>Edit</CODE> menu&#39;s
-    <CODE>Add to a B&eacute;zier Path</CODE> item, that path will be
+    <CODE>Append to a Bezier Path</CODE> item, that path will be
     moved to the end of the table. While creating a path, this option
     undoes the last change. The same is true when the menu item
     <CODE>Set Current Path/Location</CODE> is used: the point or path
@@ -722,13 +722,26 @@ The <code>Edit</code> menu contains the following items:
     'move' operation can be undone provided that the 'undo' operation
     occurs immediately (just clicking the mouse at a random point will
     prevent a 'move' operation from being undone).
-  <LI><B><CODE>Append to a B&eacute;zier Path</CODE></B>. This option
+  <LI><B><CODE>Append to a Bezier Path</CODE></B>. This option
     will extend a B&eacute;zier path. If one of a path&#39;s nodes has
     been selected, that path will be extended. Otherwise a dialog box
     will allow one to select the desired path. Existing specified
     points along the path (spline knots, segment end points, and
     intermediate control points) will be displayed using blue circles
-    to distinguish these from newly added points.
+    to distinguish these from newly added points. The
+    <CODE>Undo Point Insertion or Move</CODE> menu item can be used
+    to delete newly added points, but not the existing ones shown in
+    blue, nor the path's initial point.  Points can be added to the
+    path, and the path can be terminated, using the same operations
+    used when a path is newly created.  For a closed path, the loop
+    must be broken for this menu option to be used.
+  <LI><B><CODE>Extend a Bezier Path</CODE></B>. This option
+    will extend a B&eacute;zier path just as with the
+    <CODE>Append to a Bezier Path</CODE> menu item, but the
+    <CODE>Undo Point Insertion or Move</CODE> menu item can be used
+    to remove existing points on the path, not just the newly added
+    points. For a closed path, the loop
+    must be broken for this menu option to be used.
   <LI><B><CODE>Move Location/Path</CODE></B>. This option is used
     to move a path or location using the mouse or keyboard. One will
     select a control point (either before or after this option is selected),
@@ -1095,7 +1108,7 @@ displayed in textual form. This menu contains the following items:
     reference path, and notices if single paths have been created for a
     base path.
   <LI> <A name="BOption"></A>When the <B><CODE>Create a B&eacute;zier Path</CODE></B> or
-    the edit menu&#39;s <B><CODE>Append to a B&eacute;zier Path</CODE></B>
+    the edit menu&#39;s <B><CODE>Append to a Bezier Path</CODE></B>
     options are in effect, a series of radio buttons specifying the type for
     the next point along a curve will be enabled:
     <UL>
@@ -1477,12 +1490,19 @@ the following options:
     set a point (these have the shortcuts G, P, and M).
   <LI><B><CODE>Break Loop</CODE></B>. This option turns a closed path into an
     open path. To close it again, first extend the path.
-  <LI><B><CODE>Extend Path</CODE></B>. This option allows one to add new
+  <LI><B><CODE>Append To Path</CODE></B>. This option allows one to add new
     points to a path. It will also re-order the table (for reasons
     of convenience, when a path is extended, it is moved to the end
     of the table). Existing specified points along the path (spline knots,
     segment end points, and intermediate control points) will be displayed
     using blue circles to distinguish these from newly added points.
+    This provides the same behavior as the <CODE>Edit</CODE> menu option
+    <CODE>Append to a Bezier Path</CODE>.
+  <LI><B><CODE>Extend Path</CODE></B>. This option allows one to add
+    new points to a path. It will also re-order the table (for reasons
+    of convenience, when a path is extended, it is moved to the end of
+    the table).  This provides the same behavior as
+    the <CODE>Edit</CODE> menu option <CODE>Extend a Bezier Path</CODE>.
 </UL>
 The only popup-menu items that are enabled are those that are applicable
 given the current state of the curve. For example,
@@ -1519,8 +1539,24 @@ Some session shortcuts apply regardless of the current mode:
   <LI> Control-Left-Arrow. Move the horizontal scroll bar to the left.
   <LI> Control-Up-Arrow. Move the vertical scroll bar up.
   <LI> Control-Down-Arrow. Move the vertical scroll bar down.
-  <LI> Alt-A. Append points to a B&eacute;zier path  (at least one path must
-    exist)
+  <LI> Alt-A. Append points to a B&eacute;zier path (at least one path
+    must exist). Existing specified points along the path (spline
+    knots, segment end points, and intermediate control points) will
+    be displayed using blue circles to distinguish these from newly
+    added points. The <CODE>Undo Point Insertion or Move</CODE> menu
+    item, whose shortcut is Control-Z, can be used to delete newly
+    added points, but not the existing ones shown in blue, nor the
+    path's initial point.  Points can be added to the path, and the
+    path can be terminated, using the same operations used when a path
+    is newly created.  For a closed path, the loop must be broken for
+    this shortcut to be used.
+  <LI> Alt-E. Extend a Bezier path (at least one path must
+    exist). Points can be added to the path, and the path can be
+    terminated, using the same operations used when a path is newly
+    created.  For a closed path, the loop must be broken for this menu
+    option to be used. The <CODE>Undo Point Insertion or Move</CODE>
+    menu item, whose shortcut is Control-Z, can be used to delete
+    points from the chosen path, starting at the end of the path.
   <LI> Alt-B. Add a B&eacute;zier path. The user will be asked to
     supply a variable name that has not been used before. If that
     variable name is not provided or consists of just whitespace, a
@@ -1663,9 +1699,10 @@ a path or creating an isolated point at a specific location:
     of whether the caps-lock key is in use), the current path will remain
     open and will be ended.  The type of the last point will be changed to
     an end-of-segment point.
-  <LI> Control-Z. This is an "undo" operation. It undoes the last entry to
-    a path when a path is being created or extended, but will not modify
-    preexisting points on a curve being extended.
+  <LI> Control-Z. This is an "undo" operation. It undoes the last
+    entry to a path when a path is being created or extended, but will
+    not modify preexisting points belonging to the current path when
+    the <CODE> Append to a Bezier Path</CODE> edit-menu item is used.
 </UL>
 <P>
 

@@ -4119,8 +4119,8 @@ public class EPTSWindow {
 		panel.repaint();
 	    }
 	}
-	// addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	addToPathMenuItem.setEnabled(canAddToBezier());
+	continuePathMenuItem.setEnabled(canAddToBezier());
 	deletePathMenuItem.setEnabled(ptmodel.variableNameCount() > 0);
 	offsetPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	tfMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
@@ -4169,6 +4169,7 @@ public class EPTSWindow {
 		    }
 		    undoMenuItem.setEnabled(false);
 		    addToPathMenuItem.setEnabled(canAddToBezier());
+		    continuePathMenuItem.setEnabled(canAddToBezier());
 		    TransitionTable.getPipeMenuItem().setEnabled(false);
 		    TransitionTable.getArcMenuItem().setEnabled(false);
 		    TransitionTable.getVectorMenuItem().setEnabled(false);
@@ -4199,8 +4200,8 @@ public class EPTSWindow {
 	extendPathIndex = 0;
 	extendPathStart = 0;
 	undoMenuItem.setEnabled(false);
-	// addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	addToPathMenuItem.setEnabled(canAddToBezier());
+	continuePathMenuItem.setEnabled(canAddToBezier());
 	deletePathMenuItem.setEnabled(ptmodel.variableNameCount() > 0);
 	offsetPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	tfMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
@@ -4212,6 +4213,7 @@ public class EPTSWindow {
     JMenuItem saveMenuItem;
     JMenuItem saveAsMenuItem;
     JMenuItem addToPathMenuItem; // for Edit menu.
+    JMenuItem continuePathMenuItem; // for Edit menu.
     JMenuItem deletePathMenuItem; // for Edit menu.
     JMenuItem makeCurrentMenuItem; // for Edit menu
     JMenuItem newTFMenuItem;	  // for Edit menu (copy a path)
@@ -5442,6 +5444,7 @@ public class EPTSWindow {
 			saveAsMenuItem.setEnabled(false);
 		    }
 		    addToPathMenuItem.setEnabled(canAddToBezier());
+		    continuePathMenuItem.setEnabled(canAddToBezier());
 		    panel.repaint();
 		}
 	    });
@@ -5455,7 +5458,7 @@ public class EPTSWindow {
 				(KeyEvent.VK_A, InputEvent.ALT_DOWN_MASK));
 	addToPathMenuItem = menuItem;
 	menuItem.setEnabled(false);
-	menuItem.addActionListener(new ActionListener() {
+	ActionListener appendToBezierAL = new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 		    // select a path.
 		    int index = -1;
@@ -5481,6 +5484,7 @@ public class EPTSWindow {
 			selectedRow = -1;
 			selectedClosedPath = false;
 			addToPathMenuItem.setEnabled(canAddToBezier());
+			continuePathMenuItem.setEnabled(canAddToBezier());
 			insertArcMenuItem.setEnabled(true);
 			index = ptmodel.findStart(vname);
 		    }
@@ -5531,6 +5535,24 @@ public class EPTSWindow {
 		    filterMenu.setEnabled(false);
 		    undoMenuItem.setEnabled(true);
 		    onExtendPath();
+		}
+	};
+
+	menuItem.addActionListener(appendToBezierAL);
+	editMenu.add(menuItem);
+
+	menuItem = new JMenuItem(localeString("ExtendBezier"),
+				 vk("VK_ExtendBezier"));
+	menuItem.setAccelerator(KeyStroke.getKeyStroke
+				(KeyEvent.VK_E, InputEvent.ALT_DOWN_MASK));
+	continuePathMenuItem = menuItem;
+	menuItem.setEnabled(false);
+	menuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    appendToBezierAL.actionPerformed(e);
+		    if (extendingPath) {
+			extendPathIndex = extendPathStart;
+		    }
 		}
 	    });
 	editMenu.add(menuItem);
@@ -5589,6 +5611,7 @@ public class EPTSWindow {
 			    selectedClosedPath = false;
 			    insertArcMenuItem.setEnabled(true);
 			    addToPathMenuItem.setEnabled(canAddToBezier());
+			    continuePathMenuItem.setEnabled(canAddToBezier());
 			    setModeline("Rotate: select a point (not the "
 					+ "center of mass) on a path; "
 					+ "then drag to rotate");
@@ -5629,6 +5652,7 @@ public class EPTSWindow {
 			    selectedClosedPath = false;
 			    insertArcMenuItem.setEnabled(true);
 			    addToPathMenuItem.setEnabled(canAddToBezier());
+			    continuePathMenuItem.setEnabled(canAddToBezier());
 			    setModeline("Scale: select a point on a path; "
 					+ "then drag to scale");
 			}
@@ -5796,6 +5820,7 @@ public class EPTSWindow {
 		    ptmodel.deleteRows(istart, iend);
 		    panel.repaint();
 		    addToPathMenuItem.setEnabled(canAddToBezier());
+		    continuePathMenuItem.setEnabled(canAddToBezier());
 		}
 	    });
 	editMenu.add(menuItem);
@@ -6629,6 +6654,8 @@ public class EPTSWindow {
 					    (ptmodel.getRowCount() - 1);
 					addToPathMenuItem.setEnabled
 					    (canAddToBezier());
+					continuePathMenuItem.setEnabled
+					    (canAddToBezier());
 
 				    }
 				}
@@ -6636,6 +6663,7 @@ public class EPTSWindow {
 			    setModeline("Path Complete");
 			    resetState();
 			    addToPathMenuItem.setEnabled(canAddToBezier());
+			    continuePathMenuItem.setEnabled(canAddToBezier());
 			    panel.repaint();
 			}
 		    }
@@ -6737,6 +6765,8 @@ public class EPTSWindow {
 				selectedRow = -1;
 				selectedClosedPath = false;
 				addToPathMenuItem.setEnabled(canAddToBezier());
+				continuePathMenuItem.setEnabled
+				    (canAddToBezier());
 				resetState();
 			    } else if (selectedRow != -1) {
 				if (moveLocOrPath) {
@@ -6753,6 +6783,8 @@ public class EPTSWindow {
 				selectedClosedPath = false;
 				insertArcMenuItem.setEnabled(true);
 				addToPathMenuItem.setEnabled(canAddToBezier());
+				continuePathMenuItem.setEnabled
+				    (canAddToBezier());
 			    } else {
 				ptmodel.addRow("", nextState, x, y, xp, yp);
 			    }
@@ -6889,6 +6921,8 @@ public class EPTSWindow {
 				selectedRow = -1;
 				selectedClosedPath = false;
 				addToPathMenuItem.setEnabled(canAddToBezier());
+				continuePathMenuItem.setEnabled
+				    (canAddToBezier());
 				resetState();
 			    } else if (selectedRow != -1) {
 				if (moveLocOrPath) {
@@ -6905,6 +6939,8 @@ public class EPTSWindow {
 				selectedClosedPath = false;
 				insertArcMenuItem.setEnabled(true);
 				addToPathMenuItem.setEnabled(canAddToBezier());
+				continuePathMenuItem.setEnabled
+				    (canAddToBezier());
 			    } else {
 				ptmodel.addRow("", nextState, x, y, xp, yp);
 			    }
@@ -8423,6 +8459,7 @@ public class EPTSWindow {
 	    selectedClosedPath = false;
 	    deletePathMenuItem.setEnabled(ptmodel.variableNameCount() > 0);
 	    addToPathMenuItem.setEnabled(canAddToBezier());
+	    continuePathMenuItem.setEnabled(canAddToBezier());
 	} else 	if (mode instanceof SplinePathBuilder.CPointType) {
 	    int prevRowInd = selectedRow - 1;
 	    int nextRowInd = selectedRow + 1;
@@ -8509,11 +8546,11 @@ public class EPTSWindow {
 		ptmodel.deleteRow(selectedRow);
 		ptmodel.deleteRow(prevRowInd);
 	    }
-	    // addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount()>0);
 	    selectedRow = -1;
 	    insertArcMenuItem.setEnabled(true);
 	    selectedClosedPath = false;
 	    addToPathMenuItem.setEnabled(canAddToBezier());
+	    continuePathMenuItem.setEnabled(canAddToBezier());
 	    deletePathMenuItem.setEnabled(ptmodel.variableNameCount() > 0);
 	    offsetPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	    tfMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
@@ -9168,6 +9205,7 @@ public class EPTSWindow {
 			    (index, SplinePathBuilder.CPointType.SEG_END);
 		    }
 		    addToPathMenuItem.setEnabled(canAddToBezier());
+		    continuePathMenuItem.setEnabled(canAddToBezier());
 		    break;
 		} 
 	    }
@@ -9195,6 +9233,7 @@ public class EPTSWindow {
 	    selectedClosedPath = false;
 	    insertArcMenuItem.setEnabled(true);
 	    addToPathMenuItem.setEnabled(canAddToBezier());
+	    continuePathMenuItem.setEnabled(canAddToBezier());
 	    return;
 	}
 	if (endIndex != n-1) {
@@ -9215,6 +9254,7 @@ public class EPTSWindow {
 	    selectedClosedPath = false;
 	    insertArcMenuItem.setEnabled(true);
 	    addToPathMenuItem.setEnabled(canAddToBezier());
+	    continuePathMenuItem.setEnabled(canAddToBezier());
 	    // This calls ttable.nextState,
 	    // which calls a menu item's
 	    // action listener's actionPeformed
@@ -9241,6 +9281,7 @@ public class EPTSWindow {
 	    selectedClosedPath = false;
 	    insertArcMenuItem.setEnabled(true);
 	    addToPathMenuItem.setEnabled(canAddToBezier());
+	    continuePathMenuItem.setEnabled(canAddToBezier());
 	    if (ttable == null) {
 		// reconstruct the last path up to
 		// the point where the path was about
@@ -9296,6 +9337,7 @@ public class EPTSWindow {
     JMenuItem changeMenuItem; 
     JMenuItem breakLoopMenuItem;
     JMenuItem extendPathMenuItem;
+    JMenuItem contPathMenuItem;
     JMenuItem insertBeforeMenuItem;
     JMenuItem insertAfterMenuItem;
 
@@ -9359,9 +9401,28 @@ public class EPTSWindow {
 		    clearLSR();
 		    cancelPathOps();
 		    onExtendPath();
+		    if (extendingPath) {
+			undoMenuItem.setEnabled(true);
+		    }
 		}
 	    });
 	popupMenu.add(extendPathMenuItem);
+
+	contPathMenuItem = new JMenuItem(localeString("ContPath"));
+	contPathMenuItem.setEnabled(true);
+	contPathMenuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
+		    cancelPathOps();
+		    onExtendPath();
+		    if (extendingPath) {
+			extendPathIndex = extendPathStart;
+			undoMenuItem.setEnabled(true);
+		    }
+		}
+	    });
+	popupMenu.add(contPathMenuItem);
+
 
 	editingMenu = new JPopupMenu();
 	toSegEndMenuItem = new JMenuItem(localeString("ModeToSEGEND"));
@@ -9523,17 +9584,20 @@ public class EPTSWindow {
 	    editingMenu.show(e.getComponent(), e.getX(), e.getY());
 	} else if (selectedRow != -1 && e.isPopupTrigger()) {
 	    breakLoopMenuItem.setEnabled(hasLoop(selectedRow));
+	    extendPathMenuItem.setEnabled(!hasLoop(selectedRow));
+	    contPathMenuItem.setEnabled(!hasLoop(selectedRow));
 	    Enum mode = ptmodel.getRow(selectedRow).getMode();
 	    if (mode == EPTS.Mode.LOCATION) {
 		changeMenuItem.setEnabled(false);
 		deleteMenuItem.setEnabled(true);
 		extendPathMenuItem.setEnabled(false);
+		contPathMenuItem.setEnabled(false);
 		insertBeforeMenuItem.setEnabled(false);
 		insertAfterMenuItem.setEnabled(false);
 	    } else {
 		insertBeforeMenuItem.setEnabled(true);
 		insertAfterMenuItem.setEnabled(true);
-		extendPathMenuItem.setEnabled(true);
+		// extendPathMenuItem.setEnabled(true);
 		switch((SplinePathBuilder.CPointType) mode) {
 		case MOVE_TO:
 		    changeMenuItem.setEnabled(false);
@@ -9754,6 +9818,7 @@ public class EPTSWindow {
 	selectedClosedPath = false;
 	insertArcMenuItem.setEnabled(true);
 	addToPathMenuItem.setEnabled(canAddToBezier());
+	continuePathMenuItem.setEnabled(canAddToBezier());
 	setModeline("");
 	panel.repaint();
 	return;
@@ -9783,6 +9848,7 @@ public class EPTSWindow {
 	    selectedClosedPath = false;
 	    insertArcMenuItem.setEnabled(true);
 	    addToPathMenuItem.setEnabled(canAddToBezier());
+	    continuePathMenuItem.setEnabled(canAddToBezier());
 	    resetState();
 	    setModeline("");
 	    return true;
@@ -9949,6 +10015,7 @@ public class EPTSWindow {
 			selectedClosedPath = false;
 			insertArcMenuItem.setEnabled(true);
 			addToPathMenuItem.setEnabled(canAddToBezier());
+			continuePathMenuItem.setEnabled(canAddToBezier());
 		    } else if (nextState != null
 			       && nextState instanceof
 			       SplinePathBuilder.CPointType) {
@@ -10048,68 +10115,6 @@ public class EPTSWindow {
 		} else {
 		    if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
 			terminatePathOps();
-			// terminatePathOps(false);
-			/*
-			clearLSR();
-			if (insertingArc) {
-			    insertingArc = false;
-			    resetState();
-			    panel.setCursor
-				(Cursor.getPredefinedCursor
-				 (Cursor.DEFAULT_CURSOR));
-			    setModeline("");
-			    panel.repaint();
-			    return;
-			}
-			if (gotoMode) {
-			    endGotoMode();
-			    return;
-			}
-			String frameText = localeString("CancelCurrentOps");
-			String frameTitle = localeString("Cancel");
-			if (insertRowIndex != -1) {
-			    insertRowIndex = -1;
-			    selectedRow = -1;
-			    selectedClosedPath = false;
-			    insertArcMenuItem.setEnabled(true);
-			    addToPathMenuItem.setEnabled(canAddToBezier());
-			    resetState();
-			    setModeline("");
-			    return;
-			} else if (distState != 0) {
-			    resetState();
-			    setModeline("");
-			    return;
-			} else if (locState) {
-			    resetState();
-			    setModeline("");
-			    return;
-			} else if (nextState != null) {
-			    int lastrowInd = ptmodel.getRowCount()-1;
-			    int lastStart = ptmodel.findStart(lastrowInd);
-			    String vname = ptmodel.getRow(lastStart)
-				.getVariableName();
-			    frameText = String.format
-				(localeString("UndoCurrentPathSegs"), vname);
-			    frameTitle =
-				localeString("UndoCurrentPathSegsTitle");
-			} else if (selectedRow != -1) {
-			    selectedRowCleanup();
-			    return;
-			} else {
-			    return;
-			}
-			int result =
-			    JOptionPane.showConfirmDialog
-			    (frame, frameText, frameTitle,
-			     JOptionPane.OK_CANCEL_OPTION,
-			     JOptionPane.QUESTION_MESSAGE);
-			if (result == JOptionPane.OK_OPTION) {
-			    cleanupPartialPath(true);
-			    resetState();
-			    setModeline("");
-			}
-			*/
 		    } else if (scalePath && selectedRow != -1) {
 			clearLSR();
 			boolean lock = ((modifiers & KEY_MASK) ==
@@ -10195,6 +10200,7 @@ public class EPTSWindow {
 			    selectedClosedPath = false;
 			    insertArcMenuItem.setEnabled(true);
 			    addToPathMenuItem.setEnabled(canAddToBezier());
+			    continuePathMenuItem.setEnabled(canAddToBezier());
 			    resetState();
 			    setModeline("");
 			    panel.repaint();
@@ -10460,8 +10466,8 @@ public class EPTSWindow {
 	TransitionTable.getPipeMenuItem().setEnabled(true);
 	TransitionTable.getLocMenuItem().setEnabled(true);
 	TransitionTable.getShiftMenuItem().setEnabled(true);
-	// addToPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	addToPathMenuItem.setEnabled(canAddToBezier());
+	continuePathMenuItem.setEnabled(canAddToBezier());
 	deletePathMenuItem.setEnabled(ptmodel.variableNameCount() > 0);
 	offsetPathMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
 	tfMenuItem.setEnabled(ptmodel.pathVariableNameCount() > 0);
@@ -10624,6 +10630,8 @@ public class EPTSWindow {
 				    selectedClosedPath = false;
 				    addToPathMenuItem
 					.setEnabled(canAddToBezier());
+				    continuePathMenuItem
+					.setEnabled(canAddToBezier());
 				    // resetState();
 				} else if (moveLocOrPath) {
 				    ptmodel.moveObject(selectedRow,
@@ -10662,6 +10670,7 @@ public class EPTSWindow {
 			selectedRow = -1;
 			selectedClosedPath = false;
 			addToPathMenuItem.setEnabled(canAddToBezier());
+			continuePathMenuItem.setEnabled(canAddToBezier());
 			resetState();
 		    } else if (locState) {
 			double x = p.x / zoom;
@@ -10786,6 +10795,7 @@ public class EPTSWindow {
 				 JOptionPane.ERROR_MESSAGE);
 			    ptmodel.deleteRow(ptmodel.getRowCount()-1);
 			    addToPathMenuItem.setEnabled(canAddToBezier());
+			    continuePathMenuItem.setEnabled(canAddToBezier());
 			    resetState();
 			    return;
 			}
@@ -10808,6 +10818,8 @@ public class EPTSWindow {
 				    selectedClosedPath = false;
 				    insertArcMenuItem.setEnabled(true);
 				    addToPathMenuItem.setEnabled
+					(canAddToBezier());
+				    continuePathMenuItem.setEnabled
 					(canAddToBezier());
 				    return;
 				}
@@ -10832,6 +10844,8 @@ public class EPTSWindow {
 				    (ptmodel.getRowMode(penultimateIndex) ==
 				     SplinePathBuilder.CPointType.CLOSE);
 				addToPathMenuItem.setEnabled(canAddToBezier());
+				continuePathMenuItem.setEnabled
+				    (canAddToBezier());
 			    }
 			    if (hasPathOps()) {
 				setModeline(pathOpsModelineString());
@@ -10851,6 +10865,8 @@ public class EPTSWindow {
 					selectedClosedPath = false;
 					insertArcMenuItem.setEnabled(true);
 					addToPathMenuItem.setEnabled
+					    (canAddToBezier());
+					continuePathMenuItem.setEnabled
 					    (canAddToBezier());
 					setModeline("Rotate: select a point "
 						    + "(not the center of "
@@ -10962,6 +10978,7 @@ public class EPTSWindow {
 			    selectedClosedPath = false;
 			    insertArcMenuItem.setEnabled(true);
 			    addToPathMenuItem.setEnabled(canAddToBezier());
+			    continuePathMenuItem.setEnabled(canAddToBezier());
 			    setModeline("");
 			}
 		    }
@@ -11003,6 +11020,7 @@ public class EPTSWindow {
 		    selectedClosedPath = false;
 		    insertArcMenuItem.setEnabled(true);
 		    addToPathMenuItem.setEnabled(canAddToBezier());
+		    continuePathMenuItem.setEnabled(canAddToBezier());
 		    // selectedRowClick = false;
 		    if (nextState == null) {
 			if (locState == false) {
@@ -11500,8 +11518,10 @@ public class EPTSWindow {
 		    if (row.isSelectable()) {
 			g2d2.draw(new Ellipse2D.Double
 				  (x-radius, y-radius, radius2, radius2));
-			g2d.fill(new Ellipse2D.Double
-				 (x-radius, y-radius, radius2, radius2));
+			((extendingPath && index > extendPathStart
+			  && index < extendPathIndex)? g2d3: g2d)
+			    .fill(new Ellipse2D.Double
+				  (x-radius, y-radius, radius2, radius2));
 			if (index == selectedRow) {
 			    g2d2.draw(new Ellipse2D.Double
 				      (x-llradius, y-llradius,
@@ -11916,9 +11936,8 @@ public class EPTSWindow {
 			    for (PointTMR row: parser.getRows()) {
 				ptmodel.addRow(row);
 			    }
-			    // addToPathMenuItem.setEnabled
-			    // (ptmodel.pathVariableNameCount() > 0);
 			    addToPathMenuItem.setEnabled(canAddToBezier());
+			    continuePathMenuItem.setEnabled(canAddToBezier());
 			    if (ptmodel.getRowCount() > 0) {
 				makeCurrentMenuItem.setEnabled(true);
 				mpMenuItem.setEnabled(true);
@@ -12012,9 +12031,8 @@ public class EPTSWindow {
 			for (PointTMR row: rows) {
 			    ptmodel.addRow(row);
 			}
-			// addToPathMenuItem.setEnabled
-			//    (ptmodel.pathVariableNameCount() > 0);
 			addToPathMenuItem.setEnabled(canAddToBezier());
+			continuePathMenuItem.setEnabled(canAddToBezier());
 			if (ptmodel.getRowCount() > 0) {
 			    makeCurrentMenuItem.setEnabled(true);
 			    mpMenuItem.setEnabled(true);
