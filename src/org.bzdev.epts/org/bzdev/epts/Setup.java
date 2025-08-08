@@ -1131,6 +1131,10 @@ public class Setup {
     static boolean imageFlag = false;
 
     public static String[] getSetupArgs(ZipDocFile zf, File zfile) {
+	if (GraphicsEnvironment.isHeadless()) {
+	    System.err.println(errorMsg("headless"));
+	    System.exit(1);
+	}
 	try {
 	    results = null;
 	    savedStateFile = zfile;

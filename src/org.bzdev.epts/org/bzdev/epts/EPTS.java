@@ -1723,6 +1723,10 @@ public class EPTS {
 
     private static final Runnable fileDialogRunnable = new Runnable() {
 	    public void run() {
+		if (GraphicsEnvironment.isHeadless()) {
+		    System.err.println(errorMsg("headless"));
+		    System.exit(1);
+		}
 		String cdir = System.getProperty("user.dir");
 		OpeningFileChooser ofc = new
 		    OpeningFileChooser(localeString("EPTSFiles"),
@@ -3110,6 +3114,10 @@ public class EPTS {
 		} else if (argv[index].equals("--mksUnits")) {
 		    custom = false;
 		} else if (argv[index].equals("--gui")) {
+		    if (GraphicsEnvironment.isHeadless()) {
+			System.err.println(errorMsg("headless"));
+			System.exit(1);
+		    }
 		    guiMode = true;
 		    argsList.add(argv[index]);
 		}  else if (argv[index].equals("-w")) {
@@ -3440,6 +3448,10 @@ public class EPTS {
 
 	    SwingUtilities.invokeAndWait(new Runnable() {
 		    public void run() {
+			if (GraphicsEnvironment.isHeadless()) {
+			    System.err.println(errorMsg("headless"));
+			    System.exit(1);
+			}
 			File f;
 			OpeningFileChooser ofc = new
 			    OpeningFileChooser(localeString("EPTSSavedStates"),
@@ -4356,8 +4368,10 @@ public class EPTS {
     }
 
     public static void main(String argv[]) {
-	DarkmodeMonitor.setSystemPLAF();
-	DarkmodeMonitor.init();
+	if (!GraphicsEnvironment.isHeadless()) {
+	    DarkmodeMonitor.setSystemPLAF();
+	    DarkmodeMonitor.init();
+	}
 	try {
 
 	    String url  = (new File(ourCodebase)).toURI().toURL().toString();

@@ -11917,6 +11917,10 @@ public class EPTSWindow {
     public EPTSWindow(final EPTSParser parser, File inputFile)
 	throws IllegalStateException, IOException, InterruptedException
     {
+	if (GraphicsEnvironment.isHeadless()) {
+	    System.err.println(errorMsg("headless"));
+	    System.exit(1);
+	}
 	savedFile = inputFile;
 	if (parser != null) {
 	    savedStateCodebase = parser.getCodebase();
@@ -11973,6 +11977,10 @@ public class EPTSWindow {
     public EPTSWindow(Image image, URI imageURI)
 	throws IOException, InterruptedException
     {
+	if (GraphicsEnvironment.isHeadless()) {
+	    System.err.println(errorMsg("headless"));
+	    System.exit(1);
+	}
 	this.imageURI = imageURI;
 	init(image, true, null);
     }
@@ -11988,6 +11996,10 @@ public class EPTSWindow {
 		      final EPTSParser parser,
 		      File inputFile)
     {
+	if (GraphicsEnvironment.isHeadless()) {
+	    System.err.println(errorMsg("headless"));
+	    System.exit(1);
+	}
 	this.imageURI = imageURI;
 	this.savedFile = inputFile;
 	try {

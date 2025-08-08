@@ -2654,6 +2654,10 @@ public class TemplateSetup {
     public static String[] getSetupArgs(ZipDocFile zf, File zfile,
 					String eptsFile)
     {
+	if (GraphicsEnvironment.isHeadless()) {
+	    System.err.println(errorMsg("headless"));
+	    System.exit(1);
+	}
 	try {
 	    base = cdir.getCanonicalFile().toPath();
 	    results = null;
