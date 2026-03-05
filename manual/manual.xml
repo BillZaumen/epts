@@ -22,7 +22,7 @@
 	    href="manual.html#scriptBackground" />
       <node title="Enhanced background"
 	    uri="resource:org/bzdev/epts/manual/manual.html#enhancedBackground"
-	    href="manual.html#enhancedBackgroung" />
+	    href="manual.html#enhancedBackground" />
       <node title="Configuring templates"
 	    uri="resource:org/bzdev/epts/manual/manual.html#templateSetup"
 	    href="manual.html#templateSetup" />

@@ -68,7 +68,7 @@ file formats as well:
 <UL>
   <LI>EPTS saved-state files. These files must use the file-name extension
     <B><CODE>epts</CODE></B>. They provide the data needed to reconstruct
-    the background  and the paths and points that were configured.
+    the background and the paths and points that were configured.
   <LI>EPTS session-configuration files.  These files must use the
     file-name extension <B><CODE>eptc</CODE></B>. They provide EPTS
     configuration data specific to a given session: information needed
@@ -77,12 +77,18 @@ file formats as well:
     can be set, and arguments that should be passed to
     the <CODE>java</CODE> command used to start the Java virtual
     machine (e.g., arguments to adjust the amount of memory allocated
-    to the JVM).
+    to the JVM). Session-configuration files are generally not needed
+    for casual use.
   <LI>EPTS template-configuration files. These files must use the
     file-name extension <B><CODE>eptt</CODE></B>, and provide EPTS
     configuration data for template processing. These files are an
     alternative to providing a long series of command-line options.
 </UL>
+When a session-configuration file is available, epts should be started
+using that file instead of a corresponding saved-state file to configure
+Java and EPTS appropriately. The session-configuration file will open
+the appropriate saved state file on behalf of the user when the "Accept"
+button is clicked.
 
 <H2><A name="quirks"></A>Quirks</H2>
 
@@ -349,12 +355,12 @@ Scripts can also be used to enhance a background image, whether
 created using an image file or by running other scripts. The first
 step is to create a session-configuration file (e.g., by using the
 <B>Configure Session</B> action). In this case, the input file will
-be a saved-state file with the file-name extension <CODE>epts</CODE>
-(e.g., test.epts):
+be a saved-state file with the file-name extension <CODE>eptc</CODE>
+(e.g., test.eptc):
 <BR><BR>
 <CENTER><IMG src="configSession3.png" WIDTH="600"></CENTER>
 <BR>
-When the input file name has an <CODE>epts</CODE>
+When the input file name has an <CODE>eptc</CODE>
 extension, the <CODE>Scripts</CODE> pane will be enabled and one can
 use this pane to add scripts.  The button <CODE>Insert Built-in</CODE>
 will allow one to use predefined scripts:
@@ -951,16 +957,26 @@ on the menu.
 <H2><A name="measureMenu"></A>The Measure-Distance menu</H2>
 The <CODE>Measure Distance</CODE> menu contains the following items:
 <UL>
-  <LI><B><CODE>Image space distance</CODE></B>. This option measures distances
+  <LI><B><CODE>Image-Space Distance</CODE></B>. This option measures distances
     in image-space units. This is particularly useful just before using
     the <CODE>File</CODE> menu&#39;s <CODE>Configure GCS</CODE> option as the
     value measured will be automatically copied to the clipboard and
     can be pasted into the user-space-distance field which the
     <CODE>Configure GCS</CODE> dialog box will show.
-  <LI><B><CODE>GCS distance</CODE></B>. This option measures distances in graph
+  <LI><B><CODE>GCS Distance</CODE></B>. This option measures distances in graph
     coordinate space units. Until the <CODE>File</CODE> menu&#39;s
     <CODE>Configure GCS</CODE> option is used, the ratio of GCS distances
     to the corresponding image-space distances is 1 to 1.
+  <LI><B><CODE>GCS Path Length</CODE></B>. This provides the total length
+    of a path in GCS units. If a path is not selected, a dialog box will
+    list the available paths. If a filter is installed, only the selectable
+    paths will appear. If a location is selected, the path length will be
+    0.
+  <LI><B><CODE>GCS Area</CODE></B>.  This provides the total area
+    of a path in GCS units. If a path is not selected, a dialog box will
+    list the available paths. If a filter is installed, only the selectable,
+    closed paths will appear.  If an open path or a location is selected,
+    the area will be 0.
 </UL>
 When either of these options is selected, the cursor will change to a
 cross-hair cursor.  One should then click on a starting point, followed by

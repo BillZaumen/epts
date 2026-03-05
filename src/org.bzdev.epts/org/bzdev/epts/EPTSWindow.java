@@ -6145,6 +6145,101 @@ public class EPTSWindow {
 		}
 	    });
 	measureMenu.add(menuItem);
+	menuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    clearLSR();
+		    measureDistance(true);
+		}
+	    });
+
+	menuItem = new JMenuItem(localeString("GCSPathLength"));
+	measureMenu.add(menuItem);
+	menuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    // clearLSR(); -- not needed because we restore selectRow
+		    // terminatePartialPath();
+		    int oldSelectedRow = selectedRow;
+		    if (selectedRow == -1) {
+			Set<String> vnameSet =
+			    ptmodel.getVisiblePathVariableNames();
+			if (vnameSet.isEmpty()) return;
+			String[] vnames =
+			    vnameSet.toArray(new String[vnameSet.size()]);
+			String vname;
+			if (vnames.length == 1) {
+			    vname = vnames[0];
+			} else {
+			    vname = (String)JOptionPane.showInputDialog
+				(frame, localeString("SelectPathMeasureLen"),
+				 localeString("SelectPath"),
+				 JOptionPane.PLAIN_MESSAGE, null,
+				 vnames, vnames[0]);
+			}
+			if (vname == null || vname.length() == 0) return;
+			selectedRow = ptmodel.findStart(vname);
+		    }
+		    int start = ptmodel.findStart(selectedRow);
+		    double pathlen = (ptmodel.getRow(start).getMode()
+				      == EPTS.Mode.LOCATION)?
+			0:
+			Path2DInfo.pathLength(ptmodel.getPath(start));
+		    String pathlenString = String.format("%g", pathlen);
+		    setModeline(String.format(localeString("pathLengthIs"),
+					      pathlenString));
+		    Clipboard cb =
+			panel.getToolkit().getSystemClipboard();
+		    StringSelection selection =
+			new StringSelection(pathlenString);
+		    cb.setContents(selection, selection);
+		    selectedRow = oldSelectedRow;
+		}
+	    });
+
+	menuItem = new JMenuItem(localeString("GCSArea"));
+	measureMenu.add(menuItem);
+	menuItem.addActionListener(new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    // clearLSR(); -- not needed because we restore selectRow
+		    // terminatePartialPath();
+		    int oldSelectedRow = selectedRow;
+		    if (selectedRow == -1) {
+			Set<String> vnameSet =
+			    ptmodel.getClosedPathVariableNames();
+			if (vnameSet.isEmpty()) return;
+			String[] vnames =
+			    vnameSet.toArray(new String[vnameSet.size()]);
+			String vname;
+			if (vnames.length == 1) {
+			    vname = vnames[0];
+			} else {
+			    vname = (String)JOptionPane.showInputDialog
+				(frame, localeString("SelectPathMeasureArea"),
+				 localeString("SelectPath"),
+				 JOptionPane.PLAIN_MESSAGE, null,
+				 vnames, vnames[0]);
+			}
+			if (vname == null || vname.length() == 0) return;
+			selectedRow = ptmodel.findStart(vname);
+		    }
+		    int start = ptmodel.findStart(selectedRow);
+		    int end = ptmodel.findEnd(start) - 1;
+		    double area = (ptmodel.getRow(start).getMode()
+				      == EPTS.Mode.LOCATION)?
+			0: (start < end && ptmodel.getRow(end).getMode()
+			    != SplinePathBuilder.CPointType.CLOSE)?
+			0:
+			Path2DInfo.areaOf(ptmodel.getPath(start));
+		    String areaString = String.format("%g", area);
+		    setModeline(String.format(localeString("areaIs"),
+					      areaString));
+		    Clipboard cb =
+			panel.getToolkit().getSystemClipboard();
+		    StringSelection selection =
+			new StringSelection(areaString);
+		    cb.setContents(selection, selection);
+		    selectedRow = oldSelectedRow;
+		}
+	    });
 
 	JMenu toolMenu = new JMenu(localeString("Tools"));
 	toolMenu.setMnemonic(vk("VK_Tools"));
