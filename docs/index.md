@@ -49,7 +49,7 @@ server that allows this manual to be shared, there is also a
 ## Installation
 
 To install, visit the
-[Debian Repository](https://billzaumen.github.io/bzdev/) page and
+[Debian Repository](https://billzaumen.github.io/bzdev/) page,
 follow the instructions for setting up /etc/apt to access that
 repository, and install libbzdev-java, which requires
 libbzdev-base-java, libbzdev-ejws-java, libbzdev-esp-java,
